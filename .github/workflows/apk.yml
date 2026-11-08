@@ -10,18 +10,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Aktuelle Web-App als Offline-Version einbauen
         run: cp web/index.html android/app/src/main/assets/www/index.html
       - name: APK bauen
         working-directory: android
         run: |
           chmod +x gradlew
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           REPO="${GITHUB_REPOSITORY#*/}"
           ./gradlew assembleDebug --no-daemon -PwebUrl="https://$OWNER.github.io/$REPO/"
