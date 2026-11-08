@@ -3,21 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#0B0D12">
+<meta name="theme-color" content="#171512">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Klavier Trainer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0B0D12;--s1:#12151C;--s2:#181C25;--s3:#20252F;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);
-  --tx:#ECEEF3;--mu:#8A92A3;--mu2:#5D6474;--ac:#7C9CFF;--ac2:#5B7CF0;--gold:#FFC94D;--bad:#FF6B6B;--good:#5EE89A;
-  --r:16px;--font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* the instrument itself: black lacquer, ivory keys, brass (pedals, hinges), red felt strip above the keys */
+  --bg:#171512;--s1:#201D19;--s2:#27231E;--s3:#312C25;--bd:rgba(236,228,210,.08);--bd2:rgba(236,228,210,.15);
+  --tx:#ECE4D2;--mu:#A39A88;--mu2:#6F6759;--ac:#C29A5B;--ac2:#A8824A;--acs:rgba(194,154,91,.16);--gold:#D2AE6C;--bad:#D9705F;--good:#7FB685;--felt:#8F2A2A;--ink:#171512;
+  --r:14px;--font:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--serif:'Literata',Georgia,'Times New Roman',serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:15px/1.4 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
-body.desk{background:radial-gradient(circle at 50% 30%,#161a24,#050608 70%);display:flex;align-items:center;justify-content:center}
+body.desk{background:#0e0d0b;display:flex;align-items:center;justify-content:center}
 #app{position:relative;width:100%;height:100%;overflow:hidden;overflow:clip;background:var(--bg)}
 body.desk.frame #app{border:11px solid #050507;border-radius:38px;box-shadow:0 0 0 1.5px #2a2d35,0 30px 80px rgba(0,0,0,.8)}
 body.desk.frame.land #app{width:844px;height:390px}
@@ -36,27 +37,35 @@ html,body{overflow-x:hidden;max-width:100vw}.scroll{overflow-x:hidden;touch-acti
 .goal>*,.cont>*,.week div,.li>*,.meta>*{min-width:0}.meta{flex-wrap:wrap;overflow:hidden}.week{min-width:0}.mu,.meta span{overflow-wrap:anywhere}
 .scroll::-webkit-scrollbar{display:none}
 svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* loading screen */
+#splash{position:absolute;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease}
+#splash .logo{width:132px;height:132px}
+#splash .lbar{animation:lfall .7s cubic-bezier(.5,0,.75,0) .1s both}
+#splash .sname{font:600 22px var(--serif);color:var(--tx)}
+#splash.out{opacity:0;pointer-events:none}
+@keyframes lfall{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){#splash .lbar{animation:none}}
 /* buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--s3);border:1px solid var(--bd);border-radius:12px;padding:10px 16px;font-weight:600;font-size:14px;color:var(--tx);white-space:nowrap;transition:transform .1s,background .15s}
 .btn:active{transform:scale(.97)}
-.btn.pri{background:var(--ac);border-color:transparent;color:#0B0D12}
+.btn.pri{background:var(--ac);border-color:transparent;color:var(--ink)}
 .btn.ghost{background:transparent}
 .btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
 .btn.danger{color:var(--bad)}
 .ib{width:40px;height:40px;display:inline-grid;place-items:center;border-radius:12px;background:transparent;border:none;color:var(--tx);flex:none}
 .ib:active{background:var(--s3)}
-.ib.on{background:rgba(124,156,255,.16);color:var(--ac)}
+.ib.on{background:var(--acs);color:var(--ac)}
 /* layout */
 .main{flex:1;padding:0 18px 28px;padding-top:max(14px,env(safe-area-inset-top))}
 .hdr{display:flex;align-items:center;gap:10px;padding:6px 0 14px}
-.hdr h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0;flex:1}
+.hdr h1{font:600 26px/1.15 var(--serif);margin:0;flex:1}
 .hdr .sub{color:var(--mu);font-size:13px;font-weight:500}
 .sect{display:flex;align-items:center;margin:22px 0 10px}
-.sect h2{font-size:16px;font-weight:700;margin:0;flex:1;letter-spacing:-.01em}
+.sect h2{font:600 18px var(--serif);margin:0;flex:1}
 .sect a{color:var(--ac);font-size:13px;font-weight:600;cursor:pointer}
 .card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:16px}
 .mu{color:var(--mu)}.sm{font-size:13px}.xs{font-size:12px}
-.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#0B0D12;flex:none;border:none;cursor:pointer}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:var(--ink);flex:none;border:none;cursor:pointer}
 .avatar.big{width:84px;height:84px;font-size:30px;cursor:default}
 .field{display:block;width:100%;margin-top:6px;background:var(--s3);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;color:var(--tx);outline:none;font-size:15px}
 .field:focus{border-color:var(--ac)}
@@ -83,20 +92,21 @@ body.short .tabbar button{flex-direction:row;justify-content:center;gap:8px;padd
 .week div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
 .week i{display:block;width:100%;max-width:22px;border-radius:5px;background:var(--s3);min-height:4px}
 .week i.met{background:var(--ac)}
-.week i.today{outline:2px solid rgba(124,156,255,.4);outline-offset:1px}
+.week i.today{outline:2px solid rgba(194,154,91,.45);outline-offset:1px}
 .week span{font-size:10px;color:var(--mu2);font-weight:600}
 /* continue */
-.cont{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#1b2235,#141823);border:1px solid var(--bd2)}
-.cover{width:56px;height:56px;border-radius:14px;flex:none;display:grid;place-items:center;font-weight:800;font-size:18px;color:rgba(255,255,255,.95);position:relative;overflow:hidden}
+.cont{display:flex;gap:14px;align-items:center;background:var(--s1);border:1px solid var(--bd2);border-left:3px solid var(--ac)}
+.cover{width:56px;height:56px;border-radius:10px;flex:none;position:relative;overflow:hidden;background:#100F0C;border:1px solid var(--bd)}
+.cover svg{display:block;width:100%;height:100%}
 .cover.lg{width:64px;height:64px}
 .cover .yt{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);border-radius:6px;padding:1px 4px;font-size:9px}
 .grow{flex:1;min-width:0}
 .modecard{width:100%;display:flex;gap:14px;align-items:center;text-align:left;color:var(--tx);cursor:pointer}
 .modecard.on{border-color:var(--ac)}
 .modecard .mic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none}
-.modechip{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:7px;margin-right:6px;vertical-align:1px}
-.modechip.learn{background:rgba(94,232,154,.16);color:#7FF0B0}.modechip.play{background:rgba(124,156,255,.16);color:#A9BCFF}
-.ttl{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modechip{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;margin-right:6px;vertical-align:1px}
+.modechip.learn{background:rgba(127,182,133,.16);color:#A6D2AA}.modechip.play{background:var(--acs);color:var(--ac)}
+.ttl{font-weight:700;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meta{color:var(--mu);font-size:12px;margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 /* song list */
 .song{display:flex;align-items:center;gap:12px;padding:10px;border-radius:14px;cursor:pointer}
@@ -107,12 +117,14 @@ body.short .tabbar button{flex-direction:row;justify-content:center;gap:8px;padd
 .seg{display:inline-flex;background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:3px;gap:2px}
 .seg button{background:none;border:none;color:var(--mu);font-weight:600;font-size:13px;padding:7px 12px;border-radius:9px}
 .seg button.on{background:var(--s3);color:var(--tx)}
-.fab{position:absolute;right:18px;bottom:74px;width:54px;height:54px;border-radius:18px;background:var(--ac);color:#0B0D12;border:none;display:grid;place-items:center;box-shadow:0 10px 30px rgba(124,156,255,.35);z-index:5}
+.fab{position:absolute;right:18px;bottom:74px;width:54px;height:54px;border-radius:18px;background:var(--ac);color:var(--ink);border:none;display:grid;place-items:center;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:5}
 .fab svg{stroke-width:2.6}
 .empty{text-align:center;color:var(--mu);padding:30px 10px;font-size:14px}
 /* stats */
-.big{font-size:26px;font-weight:800;letter-spacing:-.02em}
-.kpi .mu{font-size:12px;font-weight:600;margin-top:2px}
+.big{font:600 28px var(--serif)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;padding:0}
+.kpis .kpi{padding:14px 16px}.kpis .kpi:nth-child(odd){border-right:1px solid var(--bd)}.kpis .kpi:nth-child(-n+2){border-bottom:1px solid var(--bd)}
+.kpi .mu{font-size:13px;margin-top:2px}
 .bars{display:flex;gap:4px;align-items:flex-end;height:110px;margin-top:12px}
 .bars div{flex:1;background:var(--s3);border-radius:4px 4px 2px 2px;min-height:3px;position:relative}
 .bars div.met{background:var(--ac)}
@@ -152,7 +164,7 @@ body.wide .sheet.on{transform:none}
 .sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--bd2);margin:8px auto 0}
 body.wide .sheet .grab{display:none}
 .sheet .sb{padding:4px 16px 20px;flex:1}
-.lbl{font-size:12px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin:18px 4px 8px}
+.lbl{font:600 15px var(--serif);color:var(--mu);margin:20px 4px 8px}
 /* modal */
 .modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;z-index:32;width:min(360px,92%);max-height:92%;overflow:auto;background:var(--s1);border:1px solid var(--bd2);border-radius:24px;padding:22px;text-align:center;transition:all .2s}
 .modal.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
@@ -172,11 +184,11 @@ body.wide .sheet .grab{display:none}
 body.inplayer .toast{top:34%;font-size:14px}
 @keyframes tin{from{opacity:0;transform:translate(-50%,-8px)}}
 /* player */
-#player{background:#07090D}
+#player{background:#100E0B}
 #cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
 .ovl{transition:opacity .35s}
 #player.idle .ovl{opacity:0;pointer-events:none}
-.ptop{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:6px;padding:8px 8px 22px;background:linear-gradient(#07090Dee,#07090D00);z-index:3}
+.ptop{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:6px;padding:8px 8px 22px;background:linear-gradient(#100E0Bee,#100E0B00);z-index:3}
 .ptop .grow{padding:0 4px;min-width:0}
 .ptop .ttl{font-size:14px}
 .ptop .meta{margin-top:1px}
@@ -185,22 +197,22 @@ body.inplayer .toast{top:34%;font-size:14px}
 #player:not(.idle) #prog{height:6px}
 #progFill{position:absolute;left:0;top:0;bottom:0;background:var(--ac)}
 #progLoop{position:absolute;top:0;bottom:0;background:rgba(255,201,77,.35)}
-.pill{position:absolute;top:56px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;background:rgba(18,21,28,.92);border:1px solid var(--bd2);border-radius:18px;padding:5px;z-index:3;backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:calc(100% - 16px);min-width:min(372px,calc(100% - 16px));flex-wrap:wrap;justify-content:center;row-gap:4px}
+.pill{position:absolute;top:56px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;background:rgba(32,29,25,.94);border:1px solid var(--bd2);border-radius:18px;padding:5px;z-index:3;backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:calc(100% - 16px);min-width:min(372px,calc(100% - 16px));flex-wrap:wrap;justify-content:center;row-gap:4px}
 .pill::-webkit-scrollbar{display:none}
 .pill .ib{width:40px;height:40px;border-radius:13px}
-.pill .play{width:46px;height:46px;border-radius:15px;background:#fff;color:#0B0D12;margin:0 4px}
-.pill .play svg{fill:#0B0D12;stroke:none}
+.pill .play{width:46px;height:46px;border-radius:15px;background:#fff;color:var(--ink);margin:0 4px}
+.pill .play svg{fill:var(--ink);stroke:none}
 .pill .sp{min-width:44px;text-align:center;font-weight:700;font-size:13px}
 .pill .sep{width:1px;height:24px;background:var(--bd2);margin:0 4px;flex:none}
 .pill .hb{min-width:40px;height:40px;border-radius:13px;background:none;border:none;color:var(--tx);font-weight:700;font-size:13px;padding:0 8px;display:inline-flex;align-items:center;gap:6px}
 .mseg{display:inline-flex;background:var(--s3);border-radius:12px;padding:3px;gap:2px;flex:none}
 .mseg button{background:none;border:none;color:var(--mu);font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:9px}
-.mseg button.on{background:var(--ac);color:#0B0D12}
-.pill .hb.on{background:rgba(124,156,255,.16);color:var(--ac)}
+.mseg button.on{background:var(--ac);color:var(--ink)}
+.pill .hb.on{background:var(--acs);color:var(--ac)}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 #player:not(.idle) #score{visibility:hidden}
 #score{position:absolute;left:10px;top:10px;display:flex;gap:6px;z-index:2;pointer-events:none}
-#score .chip{background:rgba(18,21,28,.85)}
+#score .chip{background:rgba(32,29,25,.88)}
 #hint{position:absolute;left:0;right:0;text-align:center;color:var(--mu);font-size:13px;font-weight:600;pointer-events:none;z-index:2}
 #count{position:absolute;left:0;right:0;top:32%;text-align:center;font-size:64px;font-weight:800;pointer-events:none;z-index:2;color:#fff;text-shadow:0 4px 30px rgba(124,156,255,.6)}
 /* youtube */
@@ -214,7 +226,7 @@ body.inplayer .toast{top:34%;font-size:14px}
 #calib .cb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:6px 16px 12px;text-align:center;min-height:0}
 #calRing{position:relative;width:180px;height:180px;display:grid;place-items:center;flex:none}
 #calRing svg{position:absolute;inset:0;transform:rotate(-90deg)}
-#calRing .pulse{position:absolute;inset:16px;border-radius:50%;background:rgba(124,156,255,.10);transition:background .4s}
+#calRing .pulse{position:absolute;inset:16px;border-radius:50%;background:rgba(194,154,91,.10);transition:background .4s}
 #calRing.ok .pulse{background:rgba(94,232,154,.28);transform:scale(1)}
 #calRing.ok #calArc{stroke:#5EE89A}
 #calRing.bad{}
@@ -258,6 +270,8 @@ body.short #onbDots{margin:8px 0}
 <body>
 <div id="deskBar"><button id="dLand">Handy quer</button><button id="dPort">Handy hochkant</button><button id="dFull">Ganzes Fenster</button></div>
 <div id="app">
+<!-- short loading screen: the brass bar falls once onto the felt strip -->
+<div id="splash"><svg viewBox="0 0 108 108" class="logo" aria-hidden="true"><rect width="108" height="108" rx="24" fill="#171512"/><rect class="lbar" x="50" y="24" width="12" height="22" rx="2" fill="#C29A5B"/><rect x="33" y="51" width="42" height="4" fill="#9B2E2E"/><g fill="#ECE4D2"><rect x="33" y="55" width="13" height="25.5" rx="1.5"/><rect x="47.5" y="55" width="13" height="25.5" rx="1.5"/><rect x="62" y="55" width="13" height="25.5" rx="1.5"/></g><g fill="#171512"><rect x="42.5" y="55" width="8.5" height="14"/><rect x="57" y="55" width="8.5" height="14"/></g></svg><div class="sname">Klavier Trainer</div></div>
 
 <svg width="0" height="0" style="position:absolute">
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
@@ -274,6 +288,7 @@ body.short #onbDots{margin:8px 0}
   <symbol id="i-loop" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
   <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/></symbol>
   <symbol id="i-wait" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></symbol>
   <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
@@ -292,14 +307,14 @@ body.short #onbDots{margin:8px 0}
 
     <section id="vStart">
       <div class="hdr">
-        <div class="grow"><div class="sub" id="greetSub">Heute</div><h1 id="greet">Hallo!</h1></div>
+        <div class="grow"><h1 id="greet">Hallo!</h1></div>
         <span class="chip streak" id="streakChip"><svg class="i" style="width:15px;height:15px"><use href="#i-flame"/></svg><span>0 Tage</span></span>
         <button class="ib" data-go="settings" title="Einstellungen"><svg class="i"><use href="#i-gear"/></svg></button>
         <button class="avatar" id="homeAv" data-go="profile" title="Profil">?</button>
       </div>
       <div class="cols two">
         <div class="card goal">
-          <div class="ring"><svg width="76" height="76"><circle cx="38" cy="38" r="32" stroke="#20252F" stroke-width="8" fill="none"/><circle id="goalArc" cx="38" cy="38" r="32" stroke="#7C9CFF" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201"/></svg><b id="goalPct">0%</b></div>
+          <div class="ring"><svg width="76" height="76"><circle cx="38" cy="38" r="32" stroke="#312C25" stroke-width="8" fill="none"/><circle id="goalArc" cx="38" cy="38" r="32" stroke="#C29A5B" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201"/></svg><b id="goalPct">0%</b></div>
           <div class="grow">
             <div style="font-weight:700">Tagesziel</div>
             <div class="mu sm" id="goalTxt">0 von 15 Min</div>
@@ -309,7 +324,7 @@ body.short #onbDots{margin:8px 0}
         <div id="contWrap"></div>
       </div>
       <div id="calCard" class="card hidden" style="margin-top:12px;display:flex;gap:14px;align-items:center">
-        <div class="cover" style="background:linear-gradient(135deg,#2a3557,#1a2033)"><svg class="i" style="width:26px;height:26px"><use href="#i-mic"/></svg></div>
+        <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-mic"/></svg></div>
         <div class="grow"><div class="ttl">Klavier kalibrieren</div><div class="meta" id="calCardTxt">Einmal alle Tasten spielen, damit die Erkennung genau wird.</div></div>
         <button class="btn sm pri" data-go="calib">Start</button>
       </div>
@@ -326,9 +341,9 @@ body.short #onbDots{margin:8px 0}
 
     <section id="vStats" class="hidden">
       <div class="hdr"><h1>Fortschritt</h1></div>
-      <div class="grid2" id="kpis"></div>
+      <div class="card kpis" id="kpis"></div>
       <div class="card" style="margin-top:12px">
-        <div style="display:flex;align-items:center"><b class="grow">Übungszeit · 14 Tage</b><span class="mu xs" id="avgTxt"></span></div>
+        <div style="display:flex;align-items:center"><b class="grow">Übungszeit der letzten 14 Tage</b><span class="mu xs" id="avgTxt"></span></div>
         <div class="bars" id="bars14"></div><div class="blab" id="blab14"></div>
       </div>
       <div class="sect"><h2>Songs</h2></div>
@@ -345,7 +360,7 @@ body.short #onbDots{margin:8px 0}
 
 <!-- ===================== PROFILE ===================== -->
 <div id="profile" class="screen hidden">
-  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Profil</div></div>
+  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Profil</div><button class="ib" id="pfSave" title="Speichern" style="color:var(--good)"><svg class="i" style="stroke-width:2.6"><use href="#i-check"/></svg></button></div>
   <div class="scroll" style="flex:1;padding:0 16px 30px">
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px 0 6px"><div class="avatar big" id="pfAv">?</div><div class="mu sm" id="pfSince"></div></div>
     <div class="lbl">Persönliche Daten</div>
@@ -356,7 +371,7 @@ body.short #onbDots{margin:8px 0}
     </div>
     <div class="mu xs" style="margin:8px 4px">Deine Daten bleiben nur auf diesem Handy gespeichert.</div>
     <div class="lbl">Mein Fortschritt</div>
-    <div class="grid2" id="pfStats"></div>
+    <div class="card kpis" id="pfStats"></div>
     <div class="lbl">Daten</div>
     <div class="list">
       <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
@@ -404,7 +419,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.9</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.0</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -483,9 +498,9 @@ body.short #onbDots{margin:8px 0}
   <!-- mode chooser -->
   <div class="modal" id="modeModal" style="text-align:left;width:min(420px,94%)">
     <div style="font-size:18px;font-weight:800;margin-bottom:12px;text-align:center">Wie möchtest du spielen?</div>
-    <button class="card modecard" data-pick="play"><div class="mic" style="background:linear-gradient(135deg,#3b5bdb,#5f3dc4)"><svg class="i" style="fill:#fff;stroke:none"><use href="#i-play"/></svg></div>
+    <button class="card modecard" data-pick="play"><div class="mic" style="background:var(--acs);color:var(--ac)"><svg class="i" style="fill:currentColor;stroke:none"><use href="#i-play"/></svg></div>
       <div class="grow"><div class="ttl">Abspielen</div><div class="meta" style="display:block">Der Song läuft mit Klavierklang durch – zum Anhören und Mitspielen.</div></div></button>
-    <button class="card modecard" data-pick="learn" style="margin-top:10px"><div class="mic" style="background:linear-gradient(135deg,#1E9E5A,#0c7a6e)"><svg class="i"><use href="#i-mic"/></svg></div>
+    <button class="card modecard" data-pick="learn" style="margin-top:10px"><div class="mic" style="background:rgba(127,182,133,.16);color:#A6D2AA"><svg class="i"><use href="#i-mic"/></svg></div>
       <div class="grow"><div class="ttl">Üben</div><div class="meta" style="display:block">Die Noten warten, bis du richtig spielst. Die App hört über das Mikrofon zu.</div></div></button>
   </div>
   <!-- result -->
@@ -531,7 +546,7 @@ body.short #onbDots{margin:8px 0}
     </div>
   </div>
   <div class="ybar hidden">
-    <button class="ib play" id="yPlay" style="background:#fff;color:#0B0D12"><svg class="i" style="fill:#0B0D12;stroke:none" id="yPlayI"><use href="#i-play"/></svg></button>
+    <button class="ib play" id="yPlay" style="background:#fff;color:var(--ink)"><svg class="i" style="fill:var(--ink);stroke:none" id="yPlayI"><use href="#i-play"/></svg></button>
     <button class="ib" id="yBackS" title="5 s zurück"><svg class="i"><use href="#i-rew"/></svg></button>
     <button class="ib" id="ySlower"><svg class="i"><use href="#i-minus"/></svg></button><span id="ySpeed" style="min-width:44px;text-align:center;font-weight:700;font-size:13px">100%</span><button class="ib" id="yFaster"><svg class="i"><use href="#i-plus"/></svg></button>
     <span class="sep" style="width:1px;height:24px;background:var(--bd2);margin:0 4px"></span>
@@ -548,7 +563,7 @@ body.short #onbDots{margin:8px 0}
   <div id="calRun" class="cb">
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
       <div class="mu sm" id="calStep" style="font-weight:600">Taste 1 von 88</div>
-      <div id="calRing"><div class="pulse"></div><svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="80" stroke="#20252F" stroke-width="7" fill="none"/><circle id="calArc" cx="90" cy="90" r="80" stroke="#7C9CFF" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="502.7" stroke-dashoffset="502.7"/></svg>
+      <div id="calRing"><div class="pulse"></div><svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="80" stroke="#312C25" stroke-width="7" fill="none"/><circle id="calArc" cx="90" cy="90" r="80" stroke="#C29A5B" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="502.7" stroke-dashoffset="502.7"/></svg>
         <div class="in"><div id="calNote">A0</div></div></div>
       <div id="calHintTxt">Die Taste ganz links</div>
       <div class="meter" style="width:120px"><i id="calLvl"></i></div>
@@ -598,13 +613,13 @@ body.short #onbDots{margin:8px 0}
   <div class="sh"><b>Song hinzufügen</b><button class="ib" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
   <div class="sb scroll">
     <button class="card" id="midiAdd" style="width:100%;display:flex;gap:14px;align-items:center;text-align:left;color:var(--tx)">
-      <div class="cover" style="background:linear-gradient(135deg,#3b5bdb,#5f3dc4)"><svg class="i" style="width:26px;height:26px"><use href="#i-file"/></svg></div>
+      <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-file"/></svg></div>
       <div class="grow"><div class="ttl">MIDI-Datei</div><div class="meta">Alle Funktionen: Hände, Lern-Modus, Takte, Sterne</div></div>
     </button>
     <input type="file" id="midiFile" accept=".mid,.midi,audio/midi,audio/x-midi" class="hidden">
     <div class="card" style="margin-top:10px">
       <div style="display:flex;gap:14px;align-items:center">
-        <div class="cover" style="background:linear-gradient(135deg,#e03131,#a61e4d)"><svg class="i" style="width:26px;height:26px"><use href="#i-yt"/></svg></div>
+        <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-yt"/></svg></div>
         <div class="grow"><div class="ttl">YouTube-Video → Song</div><div class="meta">Klavier-Video mit fallenden Noten einfügen – die App macht daraus einen Song</div></div>
       </div>
       <div class="search" style="margin:12px 0 0"><input id="ytUrl" placeholder="YouTube-Link einfügen"><button class="btn sm pri" id="ytAdd">Umwandeln</button></div>
@@ -612,7 +627,7 @@ body.short #onbDots{margin:8px 0}
       <button class="hidden" id="ytJustAdd"></button>
     </div>
     <button class="card" id="vidAdd" style="width:100%;display:flex;gap:14px;align-items:center;text-align:left;color:var(--tx);margin-top:10px">
-      <div class="cover" style="background:linear-gradient(135deg,#f08c00,#d9480f)"><svg class="i" style="width:26px;height:26px"><use href="#i-file"/></svg></div>
+      <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-file"/></svg></div>
       <div class="grow"><div class="ttl">Video-Datei → Song</div><div class="meta">Klavier-Video mit fallenden Noten vom Handy hochladen – am genauesten (jedes Bild wird gelesen)</div></div>
     </button>
     <input type="file" id="vidFile" accept="video/*" class="hidden">
@@ -650,8 +665,11 @@ function b64FromBuf(buf){let s='';const u=new Uint8Array(buf);for(let i=0;i<u.le
 function bufFromB64(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer}
 const fmtMin=s=>{s=Math.round(s/60);return s<60?s+' Min':Math.floor(s/60)+' h '+(s%60?s%60+' Min':'')};
 const hash=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)};
-function coverHTML(it,lg){const h=hash(it.title)%360;const ini=it.title.replace(/[^A-Za-zÄÖÜäöü0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')||'♪';
-  return `<div class="cover${lg?' lg':''}" style="background:linear-gradient(135deg,hsl(${h},55%,45%),hsl(${(h+50)%360},60%,30%))">${esc(ini)}${it.type==='yt'?'<span class="yt">YT</span>':''}</div>`}
+// song picture: a little piano roll (bars falling onto a felt strip and keys) – always the same for the same song
+function coverHTML(it,lg){let h=hash(it.title+'|'+it.id)>>>0;const rnd=()=>{h=(h*1103515245+12345)>>>0;return (h>>>8)/16777216};
+  let bars='';for(let i=0;i<7;i++){const x=3+i*7.4,ln=6+rnd()*22,y=38-ln-rnd()*18;if(rnd()<0.18)continue;bars+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="5.2" height="${ln.toFixed(1)}" rx="1.4" fill="${rnd()<0.55?'var(--pr,#7FA8E0)':'var(--pl,#7FC59A)'}" opacity="${(0.75+rnd()*0.25).toFixed(2)}"/>`}
+  let keys='';for(let i=0;i<7;i++)keys+=`<rect x="${(i*8).toFixed(1)}" y="42" width="7.4" height="14" fill="#E6DECB"/>`;for(const i of [1,2,4,5,6])keys+=`<rect x="${(i*8-2.4).toFixed(1)}" y="42" width="4.6" height="8.5" fill="#171512"/>`;
+  return `<div class="cover${lg?' lg':''}"><svg viewBox="0 0 56 56">${bars}<rect x="0" y="39.5" width="56" height="2.5" fill="var(--felt)"/>${keys}</svg>${it.type==='yt'?'<span class="yt">YT</span>':''}</div>`}
 function starsHTML(n){let s='';for(let i=0;i<3;i++)s+=i<n?'★':'<span class="off">★</span>';return `<span class="stars">${s}</span>`}
 function ago(ts){if(!ts)return 'noch nie geübt';const d=Math.floor((Date.now()-ts)/864e5);const td=new Date().setHours(0,0,0,0);if(ts>=td)return 'heute';if(ts>=td-864e5)return 'gestern';return d<7?`vor ${d} Tagen`:new Date(ts).toLocaleDateString('de-DE')}
 
@@ -666,6 +684,7 @@ const KR=()=>KEYSETS[S.layout]||KEYSETS[88];
 const NK=()=>KR()[1]-KR()[0]+1;
 const foldKey=m=>{const [lo,hi]=KR();while(m<lo)m+=12;while(m>hi)m-=12;return m};
 const handPal=h=>PAL[h==='L'?S.colL:S.colR]||PAL.blue;
+function handVars(){try{const r=document.documentElement.style;r.setProperty('--pl',handPal('L').l);r.setProperty('--pr',handPal('R').l)}catch(e){}}
 const noteCol=n=>{const p=handPal(n.hand);return isBlack(n.midi)?p.d:p.l};
 
 /* ================= stats ================= */
@@ -818,22 +837,21 @@ function songRow(it,opts={}){
   return d;
 }
 let filt='all';
-function renderHome(){
+function renderHome(){handVars();
   // greeting
   const h=new Date().getHours(),nm=(PF.name||'').trim().split(/\s+/)[0];$('#greet').textContent=(h<11?'Guten Morgen':h<18?'Hallo':'Guten Abend')+(nm?', '+nm:'')+'!';paintAv();
-  $('#greetSub').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
   const stk=streak();$('#streakChip span').textContent=stk+(stk===1?' Tag':' Tage');
   // goal
   const today=ST.days[dayKey()]||0,goal=S.goal*60,pct=Math.min(1,today/goal);
   $('#goalArc').setAttribute('stroke-dashoffset',201*(1-pct));$('#goalPct').textContent=Math.round(pct*100)+'%';
-  $('#goalTxt').textContent=`${Math.floor(today/60)} von ${S.goal} Min`+(pct>=1?' · geschafft 🎉':'');
+  $('#goalTxt').textContent=`${Math.floor(today/60)} von ${S.goal} Min`+(pct>=1?', geschafft':'');
   const wk=$('#week');wk.innerHTML='';const WD=['So','Mo','Di','Mi','Do','Fr','Sa'];let mx=goal;
   const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=ST.days[dayKey(d)]||0;days.push([d,v]);mx=Math.max(mx,v)}
   for(const [d,v] of days){const el=document.createElement('div');el.innerHTML=`<i class="${v>=goal?'met':''} ${dayKey(d)===dayKey()?'today':''}" style="height:${Math.max(4,v/mx*100)}%"></i><span>${WD[d.getDay()][0]}</span>`;wk.appendChild(el)}
   // continue card
   const cw=$('#contWrap');const last=ST.last&&itemById(ST.last.id);
   const ci=last||DEMO;const cs=ST.songs[ci.id]||{};
-  cw.innerHTML=`<div class="card cont">${coverHTML(ci,true)}<div class="grow"><div class="mu xs" style="font-weight:700;letter-spacing:.05em">${last?'WEITER ÜBEN':'LOS GEHT’S'}</div><div class="ttl" style="margin-top:2px"></div><div class="meta">${ci.type!=='yt'?starsHTML(cs.stars||0):''}<span>${last&&ST.last.am!=null?(ci.video?`${fmt(ST.last.am)}–${fmt(ST.last.bm)}`:`Takt ${ST.last.am+1}–${ST.last.bm}`):ago(cs.last)}</span></div></div><button class="btn pri" id="contBtn" style="width:48px;height:48px;padding:0;border-radius:16px"><svg class="i" style="fill:#0B0D12;stroke:none"><use href="#i-play"/></svg></button></div>`;
+  cw.innerHTML=`<div class="card cont">${coverHTML(ci,true)}<div class="grow"><div class="ttl"></div><div class="meta">${ci.type!=='yt'?starsHTML(cs.stars||0):''}<span>${last&&ST.last.am!=null?(ci.video?`${fmt(ST.last.am)}–${fmt(ST.last.bm)}`:`Takt ${ST.last.am+1}–${ST.last.bm}`):ago(cs.last)}</span></div></div><button class="btn pri" id="contBtn" style="width:48px;height:48px;padding:0;border-radius:16px"><svg class="i" style="fill:var(--ink);stroke:none"><use href="#i-play"/></svg></button></div>`;
   cw.querySelector('.ttl').textContent=ci.title;
   cw.querySelector('.card').onclick=()=>openItem(ci,!!last);
   // calibration card
@@ -861,8 +879,8 @@ function renderStats(){
   const songsPlayed=Object.values(ST.songs).filter(s=>s.time>60).length;
   const secs=Object.values(ST.songs).reduce((a,s)=>a+Object.values(s.sections||{}).filter(x=>x.stars>=3).length,0);
   const accs=Object.values(ST.songs).map(s=>s.best).filter(x=>x>0);
-  const k=[[streak()+' 🔥','Tage Serie',`Rekord: ${ST.bestStreak}`],[fmtMin(week),'Diese Woche',''],[fmtMin(total),'Gesamt',`${songsPlayed} Songs geübt`],[accs.length?Math.round(accs.reduce((a,b)=>a+b,0)/accs.length*100)+' %':'–','Ø Bestgenauigkeit',`${secs} Abschnitte mit 3 ★`]];
-  $('#kpis').innerHTML=k.map(([v,l,s])=>`<div class="card kpi"><div class="big">${v}</div><div class="mu">${l}</div>${s?`<div class="mu xs" style="margin-top:4px;color:var(--mu2)">${s}</div>`:''}</div>`).join('');
+  const k=[[String(streak()),streak()===1?'Tag in Folge':'Tage in Folge',`Rekord: ${ST.bestStreak}`],[fmtMin(week),'Diese Woche',''],[fmtMin(total),'Gesamt',`${songsPlayed} Songs geübt`],[accs.length?Math.round(accs.reduce((a,b)=>a+b,0)/accs.length*100)+' %':'–','Ø Bestgenauigkeit',`${secs} Abschnitte mit 3 ★`]];
+  $('#kpis').innerHTML=k.map(([v,l,s])=>`<div class="kpi"><div class="big">${v}</div><div class="mu">${l}</div>${s?`<div class="mu xs" style="margin-top:4px;color:var(--mu2)">${s}</div>`:''}</div>`).join('');
   const b=$('#bars14'),bl=$('#blab14');b.innerHTML='';bl.innerHTML='';const goal=S.goal*60;let mx=goal,sum=0;const ds=[];
   for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=ST.days[dayKey(d)]||0;ds.push([d,v]);mx=Math.max(mx,v);sum+=v}
   for(const [d,v] of ds){b.insertAdjacentHTML('beforeend',`<div class="${v>=goal?'met':''}" style="height:${Math.max(3,v/mx*100)}%" title="${Math.round(v/60)} Min"></div>`);bl.insertAdjacentHTML('beforeend',`<span>${d.getDate()}.</span>`)}
@@ -1240,7 +1258,7 @@ function layoutKeys(){
 function draw(waiting,now=performance.now()){
   if(!song||!W)return;
   const aw0=waiting||(listening()?groups[gi]:null);const T=(aw0&&S.wait&&t>aw0.start&&!aw0.notes.every(n=>n.hit))?aw0.start:t;
-  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#07090D';ctx.fillRect(0,0,W,H);layoutKeys();
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#100E0B';ctx.fillRect(0,0,W,H);layoutKeys();
   const look=S.look,pps=hitY/look; // window in song-seconds → at 0.5× the notes fall half as fast
   // lanes
   for(let m=keyLo;m<=keyHi;m++){const k=KX[m];if(k.b){ctx.fillStyle='#0A0D13';ctx.fillRect(k.x,0,k.w,hitY)}if(m%12===0){ctx.fillStyle='rgba(255,255,255,.045)';ctx.fillRect(k.x,0,1,hitY)}}
@@ -1257,7 +1275,7 @@ function draw(waiting,now=performance.now()){
     const k=KX[n.midi];if(!k||k.b!==(pass2===1))continue;
     const act=isActive(n);if(!act&&S.other==='hide')continue;
     const yb=hitY-(n.start-T)*pps,yt=yb-n.dur*pps,pad=k.b?1:Math.max(1.5,whiteW*0.09),x=k.x+pad,w=k.w-pad*2,h=Math.max(5,yb-yt),r=Math.min(7,w/2.6);
-    const col=act?noteCol(n):(k.b?'#262B36':'#353B48');
+    const col=act?noteCol(n):(k.b?'#2B2721':'#3A352D');
     const sounding=n.start<=T&&n.start+n.dur>T;
     ctx.globalAlpha=n.hit?0.35:(act?1:0.85);
     if(sounding&&act&&!n.hit){ctx.shadowColor=col;ctx.shadowBlur=18}
@@ -1270,14 +1288,15 @@ function draw(waiting,now=performance.now()){
   }
   ctx.restore();
   // hit line glow
-  const gl=ctx.createLinearGradient(0,hitY-24,0,hitY);gl.addColorStop(0,'rgba(124,156,255,0)');gl.addColorStop(1,waiting?'rgba(255,255,255,.18)':'rgba(124,156,255,.14)');
-  ctx.fillStyle=gl;ctx.fillRect(0,hitY-24,W,24);ctx.fillStyle=waiting?'#fff':'rgba(160,180,255,.8)';ctx.fillRect(0,hitY-1.5,W,1.5);
+  // the red felt strip lying on the keys (like in a real piano) – brighter while the app waits for you
+  if(waiting){const gl=ctx.createLinearGradient(0,hitY-22,0,hitY);gl.addColorStop(0,'rgba(236,228,210,0)');gl.addColorStop(1,'rgba(236,228,210,.14)');ctx.fillStyle=gl;ctx.fillRect(0,hitY-22,W,22)}
+  ctx.fillStyle=waiting?'#B33A35':'#8F2A2A';ctx.fillRect(0,hitY-4,W,4);ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,hitY,W,1);
   // keyboard
   const sounding=new Map();
-  for(const n of song.notes){if(n.start>T)break;if(n.start+n.dur>T){const act=isActive(n);if(act||S.other!=='hide')sounding.set(n.midi,act?noteCol(n):'#4A5160')}}
+  for(const n of song.notes){if(n.start>T)break;if(n.start+n.dur>T){const act=isActive(n);if(act||S.other!=='hide')sounding.set(n.midi,act?noteCol(n):'#5A5246')}}
   const want=new Map();if(awaiting&&T>=awaiting.start-0.4)for(const n of awaiting.notes)if(!n.hit)want.set(n.midi,noteCol(n));
   const pulse=0.5+0.5*Math.sin(now/650);
-  const wg=ctx.createLinearGradient(0,hitY,0,hitY+kbH);wg.addColorStop(0,'#E9EBEF');wg.addColorStop(.85,'#FFFFFF');wg.addColorStop(1,'#CDD1D8');
+  const wg=ctx.createLinearGradient(0,hitY,0,hitY+kbH);wg.addColorStop(0,'#E4DCC8');wg.addColorStop(.85,'#F3ECDC');wg.addColorStop(1,'#CFC5AF');
   const bg=ctx.createLinearGradient(0,hitY,0,hitY+kbH*0.62);bg.addColorStop(0,'#14171D');bg.addColorStop(1,'#2A2F39');
   for(const passB of [false,true])for(let m=keyLo;m<=keyHi;m++){
     const k=KX[m];if(k.b!==passB)continue;const h=k.b?kbH*0.62:kbH;
@@ -1300,7 +1319,7 @@ function draw(waiting,now=performance.now()){
   if(waiting&&waiting.wait>0.25){const miss=waiting.notes.filter(n=>!n.hit);if(miss.length){const y=Math.max(70,hitY*0.42);
     ctx.font='800 13px Inter,system-ui';ctx.textAlign='center';ctx.fillStyle='rgba(236,238,243,.6)';ctx.fillText('SPIEL',W/2,y-34);
     let tw=0;const parts=miss.map(n=>NAMES[n.midi%12]);ctx.font='800 34px Inter,system-ui';tw=ctx.measureText(parts.join('  ')).width;
-    ctx.fillStyle='rgba(18,21,28,.8)';rrect(ctx,W/2-tw/2-18,y-28,tw+36,46,14);ctx.fill();
+    ctx.fillStyle='rgba(32,29,25,.86)';rrect(ctx,W/2-tw/2-18,y-28,tw+36,46,14);ctx.fill();
     let x=W/2-tw/2;for(let i=0;i<miss.length;i++){const n=miss[i],nm=parts[i];ctx.fillStyle=noteCol(n);ctx.textAlign='left';ctx.fillText(nm,x,y+6);x+=ctx.measureText(nm+'  ').width}
     ctx.textAlign='left'}}
   // feedback text
@@ -1459,12 +1478,12 @@ $('#yOff').onclick=()=>{ytLoop=null;ytInfo()};
 
 /* ================= onboarding (first start) ================= */
 function artSvg(kind){
-  const keys=(x0,y0,w,h,n,hl)=>{let s='';for(let i=0;i<n;i++)s+=`<rect x="${x0+i*w}" y="${y0}" width="${w-1.5}" height="${h}" rx="2" fill="${hl&&hl.includes(i)?hl.c:'#E9EBEF'}"/>`;
-    [0,1,3,4,5].forEach(o=>{for(let k=0;k*7+o<n-1;k++){const i=k*7+o;s+=`<rect x="${x0+(i+1)*w-w*0.3}" y="${y0}" width="${w*0.6}" height="${h*0.6}" rx="1.5" fill="#1a1d24"/>`}});return s};
-  if(kind==='fall')return `<svg viewBox="0 0 220 130" width="220" height="130"><rect x="38" y="10" width="14" height="40" rx="4" fill="#63E6A0"/><rect x="140" y="30" width="14" height="28" rx="4" fill="#74AAFF"/><rect x="164" y="0" width="14" height="22" rx="4" fill="#74AAFF"/><rect x="62" y="56" width="14" height="30" rx="4" fill="#63E6A0" opacity=".9"/><rect x="0" y="88" width="220" height="2" fill="#7C9CFF" opacity=".7"/>${keys(4,92,16,36,13)}</svg>`;
-  if(kind==='tools')return `<svg viewBox="0 0 220 130" width="220" height="130" fill="none" stroke="#7C9CFF" stroke-width="5" stroke-linecap="round"><circle cx="50" cy="62" r="30" stroke="#20252F"/><path d="M50 62 L66 46"/><text x="50" y="112" fill="#8A92A3" stroke="none" font-size="13" font-family="Inter,system-ui" text-anchor="middle" font-weight="600">Tempo</text><rect x="92" y="38" width="16" height="44" rx="4" fill="#63E6A0" stroke="none"/><rect x="114" y="38" width="16" height="44" rx="4" fill="#74AAFF" stroke="none"/><text x="111" y="112" fill="#8A92A3" stroke="none" font-size="13" font-family="Inter,system-ui" text-anchor="middle" font-weight="600">Hände</text><path d="M160 50h36a8 8 0 0 1 0 16h-36a8 8 0 0 1 0-16" stroke="#FFC94D"/><path d="m186 40 10 10-10 10" stroke="#FFC94D"/><text x="180" y="112" fill="#8A92A3" stroke="none" font-size="13" font-family="Inter,system-ui" text-anchor="middle" font-weight="600">Wiederholen</text></svg>`;
-  if(kind==='ear')return `<svg viewBox="0 0 220 130" width="220" height="130" fill="none" stroke-linecap="round"><rect x="96" y="20" width="28" height="54" rx="14" stroke="#ECEEF3" stroke-width="5"/><path d="M82 58a28 28 0 0 0 56 0M110 86v14" stroke="#ECEEF3" stroke-width="5"/><path d="M60 40a50 50 0 0 0 0 40M160 40a50 50 0 0 1 0 40" stroke="#7C9CFF" stroke-width="4"/><path d="M44 30a70 70 0 0 0 0 60M176 30a70 70 0 0 1 0 60" stroke="#7C9CFF" stroke-width="4" opacity=".5"/><circle cx="110" cy="118" r="7" fill="#5EE89A"/></svg>`;
-  return `<svg viewBox="0 0 220 130" width="220" height="130">${keys(4,46,16,62,13,Object.assign([0],{c:'#FFC94D'}))}<path d="M12 36V14M12 14l-7 8M12 14l7 8" stroke="#FFC94D" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M40 26h150" stroke="#8A92A3" stroke-width="3" stroke-dasharray="4 7" stroke-linecap="round"/><path d="m184 19 8 7-8 7" stroke="#8A92A3" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+  const keys=(x0,y0,w,h,n,hl)=>{let s='';for(let i=0;i<n;i++)s+=`<rect x="${x0+i*w}" y="${y0}" width="${w-1.5}" height="${h}" rx="2" fill="${hl&&hl.includes(i)?hl.c:'#ECE4D2'}"/>`;
+    [0,1,3,4,5].forEach(o=>{for(let k=0;k*7+o<n-1;k++){const i=k*7+o;s+=`<rect x="${x0+(i+1)*w-w*0.3}" y="${y0}" width="${w*0.6}" height="${h*0.6}" rx="1.5" fill="#1F1C18"/>`}});return s};
+  if(kind==='fall')return `<svg viewBox="0 0 220 130" width="220" height="130"><rect x="38" y="10" width="14" height="40" rx="4" fill="#63E6A0"/><rect x="140" y="30" width="14" height="28" rx="4" fill="#74AAFF"/><rect x="164" y="0" width="14" height="22" rx="4" fill="#74AAFF"/><rect x="62" y="56" width="14" height="30" rx="4" fill="#63E6A0" opacity=".9"/><rect x="0" y="88" width="220" height="2" fill="#9B2E2E" opacity=".7"/>${keys(4,92,16,36,13)}</svg>`;
+  if(kind==='tools')return `<svg viewBox="0 0 220 130" width="220" height="130" fill="none" stroke="#C29A5B" stroke-width="5" stroke-linecap="round"><circle cx="50" cy="62" r="30" stroke="#312C25"/><path d="M50 62 L66 46"/><text x="50" y="112" fill="#A39A88" stroke="none" font-size="13" font-family="Inter,system-ui" text-anchor="middle" font-weight="600">Tempo</text><rect x="92" y="38" width="16" height="44" rx="4" fill="#63E6A0" stroke="none"/><rect x="114" y="38" width="16" height="44" rx="4" fill="#74AAFF" stroke="none"/><text x="111" y="112" fill="#A39A88" stroke="none" font-size="13" font-family="Inter,system-ui" text-anchor="middle" font-weight="600">Hände</text><path d="M160 50h36a8 8 0 0 1 0 16h-36a8 8 0 0 1 0-16" stroke="#D2AE6C"/><path d="m186 40 10 10-10 10" stroke="#D2AE6C"/><text x="180" y="112" fill="#A39A88" stroke="none" font-size="13" font-family="Inter,system-ui" text-anchor="middle" font-weight="600">Wiederholen</text></svg>`;
+  if(kind==='ear')return `<svg viewBox="0 0 220 130" width="220" height="130" fill="none" stroke-linecap="round"><rect x="96" y="20" width="28" height="54" rx="14" stroke="#ECE4D2" stroke-width="5"/><path d="M82 58a28 28 0 0 0 56 0M110 86v14" stroke="#ECE4D2" stroke-width="5"/><path d="M60 40a50 50 0 0 0 0 40M160 40a50 50 0 0 1 0 40" stroke="#C29A5B" stroke-width="4"/><path d="M44 30a70 70 0 0 0 0 60M176 30a70 70 0 0 1 0 60" stroke="#C29A5B" stroke-width="4" opacity=".5"/><circle cx="110" cy="118" r="7" fill="#7FB685"/></svg>`;
+  return `<svg viewBox="0 0 220 130" width="220" height="130">${keys(4,46,16,62,13,Object.assign([0],{c:'#D2AE6C'}))}<path d="M12 36V14M12 14l-7 8M12 14l7 8" stroke="#D2AE6C" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M40 26h150" stroke="#A39A88" stroke-width="3" stroke-dasharray="4 7" stroke-linecap="round"/><path d="m184 19 8 7-8 7" stroke="#A39A88" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
 }
 const ONB=[
   {art:'fall',h:'Willkommen!',p:'Leg dein Handy aufs Klavier. Die Noten fallen von oben auf die Tasten – spiel sie, wenn sie unten ankommen.'},
@@ -1563,7 +1582,7 @@ $('#cBack').onclick=()=>{CQ.running=false;CQ.state='idle';tplCache.clear();back(
 function showSum(){
   CQ.state='idle';$('#calRun').classList.add('hidden');$('#calSum').classList.remove('hidden');$('#calCv').classList.add('hidden');
   const N=NK(),c=calCount(),miss=missingKeys();$('#calCount').textContent=c+' / '+N;
-  $('#sumTitle').textContent=c===N?`Alle ${N} Tasten gespeichert 🎉`:`${c} von ${N} Tasten gespeichert`;
+  $('#sumTitle').textContent=c===N?`Alle ${N} Tasten gespeichert`:`${c} von ${N} Tasten gespeichert`;
   $('#sumTxt').textContent=c===N?'Die Erkennung ist jetzt auf dein Klavier abgestimmt. Tippe auf eine Taste, um sie neu einzuspielen.':'Grün = gespeichert, rot = fehlt. Tippe auf eine Taste, um sie einzuspielen.';
   $('#sumMissing').innerHTML=miss.length&&miss.length<=24?miss.map(m=>`<button class="chip miss" data-k="${m}">${noteHTML(m)}</button>`).join(''):'';
   $('#sumRedo').classList.toggle('hidden',!miss.length);$('#sumRedo').textContent=`Fehlende nachspielen (${miss.length})`;
@@ -1597,7 +1616,7 @@ function drawZoom(){const p=prepCv($('#calZoom'));if(!p)return;const m=curKey();
   const ax=k.x+k.w/2;c.fillStyle='#7C9CFF';c.beginPath();c.moveTo(ax-9,3);c.lineTo(ax+9,3);c.lineTo(ax,16);c.closePath();c.fill()}
 function drawOverview(){const p=prepCv($('#calCv'));if(!p)return;const m=curKey();const [lo,hi]=zoomRange(m);
   const pos=drawKeys(p.c,KR()[0],KR()[1],p.w,p.h,(k,b)=>k===m?'#7C9CFF':CAL[k]?(b?'#1E7A4A':'#9BE3BA'):(b?'#1a1d24':'#5A6070'));
-  const x0=pos[lo].x,x1=pos[hi].x+pos[hi].w;p.c.strokeStyle='rgba(124,156,255,.9)';p.c.lineWidth=2;rrect(p.c,x0,1,x1-x0,p.h-2,4);p.c.stroke()}
+  const x0=pos[lo].x,x1=pos[hi].x+pos[hi].w;p.c.strokeStyle='rgba(194,154,91,.9)';p.c.lineWidth=2;rrect(p.c,x0,1,x1-x0,p.h-2,4);p.c.stroke()}
 let sumPos=null;
 function drawSum(){const p=prepCv($('#sumCv'));if(!p)return;sumPos=drawKeys(p.c,KR()[0],KR()[1],p.w,p.h,(k,b)=>CAL[k]?(b?'#1E9E5A':'#63E6A0'):(b?'#8f2d2d':'#FF8A8A'),true)}
 $('#sumCv').addEventListener('click',e=>{if(!sumPos)return;const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
@@ -1640,7 +1659,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 1.9 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.0 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1677,12 +1696,14 @@ $('#yCap').onclick=async()=>{const r=$('#ytBox').getBoundingClientRect();toast('
 /* ================= profile ================= */
 let PF=Object.assign({name:'',email:'',col:'blue',since:Date.now()},load('kt_profile')||{});if(!load('kt_profile'))save('kt_profile',PF);
 const savePF=()=>save('kt_profile',PF);
+$('#pfSave').onclick=()=>{const m=$('#pfMail').value.trim();if(m&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){toast('Diese E-Mail-Adresse sieht nicht richtig aus');return}
+  PF.name=$('#pfName').value.trim();PF.email=m;savePF();toast('Profil gespeichert');back()};
 const initials=()=>{const p=(PF.name||'').trim().split(/\s+/).filter(Boolean);return p.length?(p[0][0]+(p[1]?p[1][0]:'')).toUpperCase():'?'};
 function paintAv(){for(const id of ['#homeAv','#setAv','#pfAv']){const el=$(id);if(!el)continue;el.textContent=initials();el.style.background=(PAL[PF.col]||PAL.blue).l}const sn=$('#setName');if(sn)sn.textContent=PF.name||'Profil'}
 function renderProfile(){$('#pfName').value=PF.name;$('#pfMail').value=PF.email;$('#pfSince').textContent='Dabei seit '+new Date(PF.since).toLocaleDateString('de-DE',{month:'long',year:'numeric'});
   const el=$('#pfCol');el.innerHTML='';for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(PF.col===k?' on':'');b.style.borderRadius='50%';b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.l}"></i>`;b.onclick=()=>{PF.col=k;savePF();renderProfile()};el.appendChild(b)}
   const total=Object.values(ST.days).reduce((a,b)=>a+b,0),songs=Object.values(ST.songs).filter(x=>x.time>60).length;
-  $('#pfStats').innerHTML=[[streak()+' 🔥','Tage Serie'],[fmtMin(total),'Gesamt geübt'],[String(songs),'Songs geübt'],[calCount()+' / '+NK(),'Tasten kalibriert']].map(([v,l])=>`<div class="card kpi"><div class="big" style="font-size:20px">${v}</div><div class="mu">${l}</div></div>`).join('');paintAv()}
+  $('#pfStats').innerHTML=[[String(streak()),streak()===1?'Tag in Folge':'Tage in Folge'],[fmtMin(total),'Gesamt geübt'],[String(songs),'Songs geübt'],[calCount()+' / '+NK(),'Tasten kalibriert']].map(([v,l])=>`<div class="kpi"><div class="big" style="font-size:22px">${v}</div><div class="mu">${l}</div></div>`).join('');paintAv()}
 $('#pfName').oninput=e=>{PF.name=e.target.value;savePF();paintAv()};
 $('#pfMail').oninput=e=>{PF.email=e.target.value.trim();savePF()};
 $('#pfMail').onblur=e=>{const v=e.target.value.trim();if(v&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v))toast('Diese E-Mail-Adresse sieht nicht richtig aus')};
@@ -2161,5 +2182,6 @@ applyDesk();renderHome();syncUI();requestAnimationFrame(tick);
 $('#onbAgain').onclick=openOnb;
 if(!load('kt_onb'))openOnb();
 </script>
+<script>setTimeout(()=>{const s=document.getElementById('splash');if(s){s.classList.add('out');setTimeout(()=>s.remove(),400)}},950)</script>
 </body>
 </html>

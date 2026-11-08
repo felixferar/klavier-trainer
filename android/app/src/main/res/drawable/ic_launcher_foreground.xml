@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Stilisierte Klaviertasten (108x108 Raster, Inhalt im sicheren Bereich 18..90) -->
+<!-- Logo: ein Messing-Balken fällt auf die rote Filzleiste über drei Elfenbein-Tasten (108x108 Raster, sicherer Bereich 18..90) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FFFFFF" android:pathData="M30,34h11v40h-11z M42.5,34h11v40h-11z M55,34h11v40h-11z M67.5,34h11v40h-11z"/>
-    <path android:fillColor="#0F1115" android:pathData="M37,34h7v24h-7z M62,34h7v24h-7z"/>
-    <path android:fillColor="#FF9F43" android:pathData="M49.5,18h6v13h-6z"/>
+    <!-- fallender Balken (Messing) -->
+    <path android:fillColor="#C29A5B" android:pathData="M52,24h8a2,2 0 0 1 2,2v18a2,2 0 0 1 -2,2h-8a2,2 0 0 1 -2,-2v-18a2,2 0 0 1 2,-2z"/>
+    <!-- Filzleiste -->
+    <path android:fillColor="#9B2E2E" android:pathData="M33,51h42v4h-42z"/>
+    <!-- weiße Tasten (Elfenbein) -->
+    <path android:fillColor="#ECE4D2" android:pathData="M33,55h13v24a1.5,1.5 0 0 1 -1.5,1.5h-10a1.5,1.5 0 0 1 -1.5,-1.5z M47.5,55h13v24a1.5,1.5 0 0 1 -1.5,1.5h-10a1.5,1.5 0 0 1 -1.5,-1.5z M62,55h13v24a1.5,1.5 0 0 1 -1.5,1.5h-10a1.5,1.5 0 0 1 -1.5,-1.5z"/>
+    <!-- schwarze Tasten -->
+    <path android:fillColor="#171512" android:pathData="M42.5,55h8.5v14h-8.5z M57,55h8.5v14h-8.5z"/>
 </vector>
