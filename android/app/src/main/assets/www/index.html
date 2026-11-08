@@ -400,7 +400,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.6</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -463,10 +463,10 @@ body.short #onbDots{margin:8px 0}
     <div class="sh"><b>Abschnitt üben</b><button class="ib" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="sb scroll">
       <div class="card" style="display:flex;align-items:center;gap:10px;padding:12px">
-        <div class="grow"><div class="mu xs" style="font-weight:600">VON TAKT</div><div class="stp" style="margin-top:6px"><button data-st="from" data-d="-1">−</button><span id="stFrom">1</span><button data-st="from" data-d="1">+</button></div></div>
-        <div class="grow"><div class="mu xs" style="font-weight:600">BIS TAKT</div><div class="stp" style="margin-top:6px"><button data-st="to" data-d="-1">−</button><span id="stTo">2</span><button data-st="to" data-d="1">+</button></div></div>
+        <div class="grow"><div class="mu xs" style="font-weight:600" id="stFromL">VON TAKT</div><div class="stp" style="margin-top:6px"><button data-st="from" data-d="-1">−</button><span id="stFrom">1</span><button data-st="from" data-d="1">+</button></div></div>
+        <div class="grow"><div class="mu xs" style="font-weight:600" id="stToL">BIS TAKT</div><div class="stp" style="margin-top:6px"><button data-st="to" data-d="-1">−</button><span id="stTo">2</span><button data-st="to" data-d="1">+</button></div></div>
       </div>
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><span class="mu sm" style="align-self:center">Ab hier:</span><button class="btn sm" data-len="1">1 Takt</button><button class="btn sm" data-len="2">2 Takte</button><button class="btn sm" data-len="4">4 Takte</button><button class="btn sm" data-len="8">8 Takte</button></div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><span class="mu sm" style="align-self:center">Ab hier:</span><span id="secLens" style="display:contents"></span></div>
       <div class="list" style="margin-top:12px">
         <div class="li"><div class="grow"><b>Wiederholungen</b><small>0 = endlos</small></div><div class="stp"><button data-st="reps" data-d="-1">−</button><span id="stReps">3</span><button data-st="reps" data-d="1">+</button></div></div>
         <div class="li"><div class="grow"><b>Danach nächster Abschnitt</b><small>Automatisch weiter mit gleicher Länge</small></div><input type="checkbox" class="sw" id="autoNext"></div>
@@ -607,6 +607,11 @@ body.short #onbDots{margin:8px 0}
       <div class="mu xs" style="margin-top:8px">Tipp: Kopiere den Link ab der Stelle, an der das Intro vorbei ist (YouTube → Teilen → „Beginnen bei …“). Davor wird alles übersprungen.</div>
       <button class="hidden" id="ytJustAdd"></button>
     </div>
+    <button class="card" id="vidAdd" style="width:100%;display:flex;gap:14px;align-items:center;text-align:left;color:var(--tx);margin-top:10px">
+      <div class="cover" style="background:linear-gradient(135deg,#f08c00,#d9480f)"><svg class="i" style="width:26px;height:26px"><use href="#i-file"/></svg></div>
+      <div class="grow"><div class="ttl">Video-Datei → Song</div><div class="meta">Klavier-Video mit fallenden Noten vom Handy hochladen – am genauesten (jedes Bild wird gelesen)</div></div>
+    </button>
+    <input type="file" id="vidFile" accept="video/*" class="hidden">
     <div class="mu sm" style="margin:14px 4px 0">MIDI-Dateien gibt es für fast jeden Song, z. B. auf <a href="https://musescore.com" target="_blank" style="color:var(--ac)">musescore.com</a>. Viele YouTube-Klavier-Videos verlinken die MIDI in der Beschreibung.</div>
   </div>
 </div>
@@ -824,7 +829,7 @@ function renderHome(){
   // continue card
   const cw=$('#contWrap');const last=ST.last&&itemById(ST.last.id);
   const ci=last||DEMO;const cs=ST.songs[ci.id]||{};
-  cw.innerHTML=`<div class="card cont">${coverHTML(ci,true)}<div class="grow"><div class="mu xs" style="font-weight:700;letter-spacing:.05em">${last?'WEITER ÜBEN':'LOS GEHT’S'}</div><div class="ttl" style="margin-top:2px"></div><div class="meta">${ci.type!=='yt'?starsHTML(cs.stars||0):''}<span>${last&&ST.last.am!=null?`Takt ${ST.last.am+1}–${ST.last.bm}`:ago(cs.last)}</span></div></div><button class="btn pri" id="contBtn" style="width:48px;height:48px;padding:0;border-radius:16px"><svg class="i" style="fill:#0B0D12;stroke:none"><use href="#i-play"/></svg></button></div>`;
+  cw.innerHTML=`<div class="card cont">${coverHTML(ci,true)}<div class="grow"><div class="mu xs" style="font-weight:700;letter-spacing:.05em">${last?'WEITER ÜBEN':'LOS GEHT’S'}</div><div class="ttl" style="margin-top:2px"></div><div class="meta">${ci.type!=='yt'?starsHTML(cs.stars||0):''}<span>${last&&ST.last.am!=null?(ci.video?`${fmt(ST.last.am)}–${fmt(ST.last.bm)}`:`Takt ${ST.last.am+1}–${ST.last.bm}`):ago(cs.last)}</span></div></div><button class="btn pri" id="contBtn" style="width:48px;height:48px;padding:0;border-radius:16px"><svg class="i" style="fill:#0B0D12;stroke:none"><use href="#i-play"/></svg></button></div>`;
   cw.querySelector('.ttl').textContent=ci.title;
   cw.querySelector('.card').onclick=()=>openItem(ci,!!last);
   // calibration card
@@ -868,8 +873,17 @@ function renderStats(){
 }
 function openItem(it,resume){
   if(it.type==='yt')return openYT(it,true); // videos are only converted into songs
-  try{const s=it.type==='demo'?demoSong():songFromMidi(bufFromB64(it.data),it.title);openSong(s,it.id,resume)}catch(e){toast('Fehler: '+e.message)}
+  try{const s=it.type==='demo'?demoSong():songForItem(it);openSong(s,it.id,resume)}catch(e){toast('Fehler: '+e.message)}
 }
+// songs made from a video: sections by time (whole seconds), octave learned while practising, hands exactly as coloured in the video
+function songForItem(it,buf){
+  const s=songFromMidi(buf||bufFromB64(it.data),it.title);
+  if(it.video){const n=Math.ceil(s.duration)+1;s.measures=[];for(let i=0;i<=n;i++)s.measures.push(i);s.timeSec=true;
+    s.octUnsure=!!it.octUnsure&&!it.octLearned;s.oneColor=!!it.oneColor;
+    if(it.octShift)for(const x of s.notes)x.midi=clamp(x.midi+it.octShift,21,108)}
+  return s}
+const secLbl=i=>song&&song.timeSec?fmt(song.measures[i]||0):String(i+1);
+const secEnd=i=>song&&song.timeSec?fmt(song.measures[i]||0):String(i);
 for(const b of $$('[data-add]'))b.onclick=()=>openSheet('#addSheet');
 $('#midiAdd').onclick=()=>$('#midiFile').click();
 $('#midiFile').onchange=async e=>{
@@ -883,6 +897,8 @@ function ytIdStart(u){return ytStartFromUrl(u)}
 function ytId(u){u=u.trim();const m=u.match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([A-Za-z0-9_-]{11})/);if(m)return m[1];if(/^[A-Za-z0-9_-]{11}$/.test(u))return u;return null}
 function addYT(convert){const u=$('#ytUrl').value,id=ytId(u);if(!id){toast('Das ist kein YouTube-Link');return}
   const it={id:'y'+Date.now(),type:'yt',title:'YouTube-Video',videoId:id,start:ytIdStart(u)};LIB.unshift(it);saveLib();$('#ytUrl').value='';closeSheets();openYT(it,convert)}
+$('#vidAdd').onclick=()=>$('#vidFile').click();
+$('#vidFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.type&&!/^video\//.test(f.type)){toast('Das ist keine Video-Datei');return}closeSheets();fileConvert(f)};
 $('#ytAdd').onclick=()=>addYT(true);$('#ytJustAdd').onclick=()=>addYT(false);
 
 /* ================= microphone & listening ================= */
@@ -1041,8 +1057,24 @@ function detectFast(g,now){
   const roll=fastAt(160,now);
   for(const n of g.notes){if(n.hit)continue;const m=n.midi;
     const ok=(g.fbase&&presence(m,Pn,g.fbase,avg).ok)||(roll&&presence(m,Pn,roll.P,avg).ok);
-    if(ok){g.fcnt[m]=(g.fcnt[m]||0)+1;if(g.fcnt[m]>=3)markHit(m)}else g.fcnt[m]=0}
+    if(ok){g.fcnt[m]=(g.fcnt[m]||0)+1;if(g.fcnt[m]>=3)markHit(m)}else g.fcnt[m]=0
+    if(song.octUnsure)octTry(g,n,Pn,avg)}
 }
+// song from a video without octave numbers: the app notices in which octave you actually play and moves the whole song there (once)
+const OCT={d:0,n:0,gi:-1};
+function octTry(g,n,Pn,avg){const m=n.midi;g.ocnt=g.ocnt||{};
+  for(const d of [-24,-12,12,24]){const mm=m+d;if(mm<21||mm>108)continue;
+    const up=d>0;if(up&&n.hit)continue; // a higher octave also sounds inside the right note – only counts when the right note is missing
+    const ok=(g.fbase&&presence(mm,Pn,g.fbase,avg).ok);
+    const k=m+':'+d;if(ok){g.ocnt[k]=(g.ocnt[k]||0)+1;if(g.ocnt[k]===3&&!g.ovote){g.ovote=d;octVote(d)}}else g.ocnt[k]=0}}
+function octVote(d){if(OCT.gi===gi)return;if(d===OCT.d&&gi===OCT.gi+1)OCT.n++;else{OCT.d=d;OCT.n=1}OCT.gi=gi; // three groups in a row
+  if(OCT.n>=3)octApply(d)}
+function octApply(d){if(!song||!song.octUnsure)return;song.octUnsure=false;OCT.n=0;OCT.d=0;OCT.gi=-1;
+  for(const x of song.notes){x.midi0=clamp((x.midi0!=null?x.midi0:x.midi)+d,21,108);x.midi=foldKey(x.midi0);x.hit=false}
+  const it=itemById(songId);if(it){it.octShift=(it.octShift||0)+d;it.octLearned=true;saveLib()}
+  calcRange();buildGroups();for(const g of groups)if(g.start<t-0.05)for(const x of g.notes)x.hit=true;resetPointersKeep();
+  toast(`Oktave erkannt – der Song liegt jetzt ${Math.abs(d)/12===1?'eine Oktave':'zwei Oktaven'} ${d>0?'höher':'tiefer'}, so wie du spielst.`,4000)}
+function resetPointersKeep(){gi=lowerBound(groups,t-0.001,g=>g.start);for(const g of groups){g.base=null;g.fbase=null}}
 function detectStep(g,R,now){
   detectFast(g,now);
   if(R.onset)det.win={t0:R.onset.t,before:R.onset.before,fb:R.onset.fb,pk:0,cnt:{}};
@@ -1096,6 +1128,7 @@ function openSong(s,id,resume){
   const sm=songStat(id).mode;if(sm){S.wait=sm==='learn';resetPointers(t);newPass();syncUI()}
   else{for(const b of $$('#modeModal [data-pick]'))b.classList.toggle('on',(b.dataset.pick==='learn')===S.wait);$('#pDim').classList.add('on');$('#modeModal').classList.add('on')}
   $('#hint').textContent='Tippe auf die Noten zum Starten';
+  if(s.oneColor)setTimeout(()=>toast('Im Video sind beide Hände gleich gefärbt – deshalb sind alle Noten einer Hand (rechts) zugeordnet, genau wie im Video.',5000),600);
 }
 function applySwap(){for(const n of song.notes){n.hand=S.swap?(n.hand0==='R'?'L':'R'):n.hand0;if(n.midi0==null)n.midi0=n.midi;n.midi=foldKey(n.midi0)}}
 function calcRange(){
@@ -1174,7 +1207,7 @@ function tick(now){
       if(S.speedUp&&S.speed<1){S.speed=Math.min(1,Math.round((S.speed+0.05)*100)/100);saveS()}
       const msg=r?` · ${Math.round(r.acc*100)} % ${'★'.repeat(r.stars)}`:'';
       if(S.reps>0&&loop.count>=S.reps){
-        if(S.autoNext&&loop.bm<song.measures.length-1){const len=loop.bm-loop.am;setLoop(loop.bm,loop.bm+len);toast(`Weiter: Takt ${loop.am+1}–${loop.bm}`+msg)}
+        if(S.autoNext&&loop.bm<song.measures.length-1){const len=loop.bm-loop.am;setLoop(loop.bm,loop.bm+len);toast(`Weiter: ${secName(loop)}`+msg)}
         else{const done=loop;setPlaying(false);showRes(r,'section',done);loop=null;if(ST.last){ST.last.am=null}}
       }else{t=loop.a-1.2*S.speed;resetPointers(loop.a);toast(`Durchgang ${loop.count+1}${S.reps?'/'+S.reps:''}`+msg,1800)}
       syncUI();
@@ -1209,7 +1242,7 @@ function draw(waiting,now=performance.now()){
   for(let m=keyLo;m<=keyHi;m++){const k=KX[m];if(k.b){ctx.fillStyle='#0A0D13';ctx.fillRect(k.x,0,k.w,hitY)}if(m%12===0){ctx.fillStyle='rgba(255,255,255,.045)';ctx.fillRect(k.x,0,1,hitY)}}
   // measures
   ctx.font='600 10px Inter,system-ui';ctx.textBaseline='bottom';
-  for(let i=0;i<song.measures.length;i++){const mt=song.measures[i];if(mt<T-0.01||mt>T+look)continue;const y=hitY-(mt-T)*pps;ctx.fillStyle='rgba(255,255,255,.06)';ctx.fillRect(0,y,W,1);ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillText(String(i+1),5,y-2)}
+  for(let i=0;i<song.measures.length;i++){const mt=song.measures[i];if(mt<T-0.01||mt>T+look||(song.timeSec&&i%5))continue;const y=hitY-(mt-T)*pps;ctx.fillStyle='rgba(255,255,255,.06)';ctx.fillRect(0,y,W,1);ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillText(song.timeSec?fmt(mt):String(i+1),5,y-2)}
   if(loop){ctx.fillStyle='rgba(255,201,77,.05)';const ya=hitY-(loop.a-T)*pps,yb=hitY-(loop.b-T)*pps;ctx.fillRect(0,Math.max(0,yb),W,Math.min(hitY,ya)-Math.max(0,yb));
     for(const [v,lb] of [[loop.a,'A'],[loop.b,'B']]){if(v<T||v>T+look)continue;const y=hitY-(v-T)*pps;ctx.fillStyle='#FFC94D';ctx.fillRect(0,y-1,W,2);ctx.fillText(lb,W-14,y-3)}}
   // notes
@@ -1270,8 +1303,8 @@ function draw(waiting,now=performance.now()){
   for(const f of fx){const age=(now-f.t0)/700;if(age>1)continue;ctx.globalAlpha=1-age;ctx.fillStyle=f.r==='p'?'#fff':f.r==='g'?'#A9BCFF':'#FF8A8A';ctx.font=`800 ${15+(1-age)*3}px Inter,system-ui`;ctx.textAlign='center';ctx.fillText(f.txt,W/2,hitY-34-age*24);ctx.textAlign='left';ctx.globalAlpha=1}
   // progress, meta, count
   $('#progFill').style.width=clamp(T/song.duration*100,0,100)+'%';
-  let meta=`Takt ${measureAt(Math.max(0,T))+1} / ${song.measures.length-1}`;
-  if(loop)meta+=` · Abschnitt ${loop.am+1}–${loop.bm}`+(S.reps>0?` · ${Math.min(loop.count+1,S.reps)}/${S.reps}`:'');
+  let meta=song.timeSec?`${fmt(Math.max(0,T))} / ${fmt(song.duration)}`:`Takt ${measureAt(Math.max(0,T))+1} / ${song.measures.length-1}`;
+  if(loop)meta+=` · ${secName(loop)}`+(S.reps>0?` · ${Math.min(loop.count+1,S.reps)}/${S.reps}`:'');
   {const a=passAcc(pass);if(!S.wait&&listening()&&a!==null)meta+=` · ${Math.round(a*100)} %`}
   if(waiting)meta+=' · warte auf '+waiting.notes.filter(n=>!n.hit).map(n=>noteTxt(n.midi)).join(' ');
   $('#pMeta').textContent=meta;
@@ -1309,10 +1342,12 @@ $('#pDim').onclick=()=>{if($('#modeModal').classList.contains('on'))return;close
 $('#pSound').onclick=()=>{S.sound=!S.sound;audio();if(S.sound)loadSamples();syncUI();pokeUI();toast(S.sound?'Klavierklang an':'Klavierklang aus',1200)};
 // section sheet
 let secFrom=0,secTo=2;
-function secUI(){$('#stFrom').textContent=secFrom+1;$('#stTo').textContent=secTo;const st=songId&&ST.songs[songId];const sec=st&&st.sections[(secFrom+1)+'-'+secTo];
+const secName=lp=>song&&song.timeSec?`Abschnitt ${fmt(song.measures[lp.am])}–${fmt(song.measures[lp.bm])}`:`Abschnitt Takt ${lp.am+1}–${lp.bm}`;
+function secUI(){const ts=song&&song.timeSec;$('#stFrom').textContent=secLbl(secFrom);$('#stTo').textContent=secEnd(secTo);$('#stFromL').textContent=ts?'VON (ZEIT)':'VON TAKT';$('#stToL').textContent=ts?'BIS (ZEIT)':'BIS TAKT';
+  $('#secLens').innerHTML=(ts?[[5,'5 s'],[10,'10 s'],[20,'20 s'],[30,'30 s']]:[[1,'1 Takt'],[2,'2 Takte'],[4,'4 Takte'],[8,'8 Takte']]).map(([v,l])=>`<button class="btn sm" data-len="${v}">${l}</button>`).join('');const st=songId&&ST.songs[songId];const sec=st&&st.sections[(secFrom+1)+'-'+secTo];
   $('#secBest').innerHTML=sec?`Bestes Ergebnis für diesen Abschnitt: ${starsHTML(sec.stars)} ${Math.round(sec.best*100)} %`:'Noch kein Ergebnis für diesen Abschnitt.';
   $('#secOff').classList.toggle('hidden',!loop)}
-$('#pLoop').onclick=()=>{if(loop){secFrom=loop.am;secTo=loop.bm}else{secFrom=measureAt(Math.max(0,t));secTo=Math.min(secFrom+2,song.measures.length-1)}secUI();openSheet('#secSheet','#pDim');pokeUI()};
+$('#pLoop').onclick=()=>{if(loop){secFrom=loop.am;secTo=loop.bm}else{secFrom=measureAt(Math.max(0,t));secTo=Math.min(secFrom+(song.timeSec?10:2),song.measures.length-1)}secUI();openSheet('#secSheet','#pDim');pokeUI()};
 $('#secSheet').addEventListener('click',e=>{const b=e.target.closest('[data-st]');const M=song?song.measures.length-1:1;
   if(b){const d=+b.dataset.d;if(b.dataset.st==='from'){secFrom=clamp(secFrom+d,0,M-1);if(secTo<=secFrom)secTo=secFrom+1}else if(b.dataset.st==='to'){secTo=clamp(secTo+d,1,M);if(secFrom>=secTo)secFrom=secTo-1}else{S.reps=clamp(S.reps+d,0,99);syncUI()}secUI();return}
   const l=e.target.closest('[data-len]');if(l){secFrom=measureAt(Math.max(0,t));secTo=Math.min(M,secFrom+(+l.dataset.len));secUI()}});
@@ -1332,7 +1367,7 @@ $('#lookR').oninput=e=>{S.look=+e.target.value;syncUI()};
 // result modal
 function showRes(r,kind,lp){
   $('#pDim').classList.add('on');$('#resModal').classList.add('on');$('#player').classList.remove('idle');
-  $('#resKind').textContent=kind==='song'?'Song beendet':`Abschnitt Takt ${lp.am+1}–${lp.bm} geschafft`;
+  $('#resKind').textContent=kind==='song'?'Song beendet':`${secName(lp)} geschafft`;
   $('#resTime').textContent=`Heute geübt: ${Math.max(1,Math.round((ST.days[dayKey()]||0)/60))} Min · Serie: ${streak()} Tage`;
   if(r){$('#resStars').innerHTML=[0,1,2].map(i=>i<r.stars?'★':'<span class="off">★</span>').join('');$('#resAcc').textContent=Math.round(r.acc*100)+' %';
     $('#rP').textContent=r.p;$('#rG').textContent=r.g;$('#rM').textContent=r.m;$('#res3').classList.remove('hidden');
@@ -1362,7 +1397,7 @@ window.addEventListener('keydown',e=>{
 /* ================= YouTube ================= */
 let ytp=null,ytItem=null,ytLoop=null,ytTimer=null,ytRate=1,ytReps=0,ytPlaying=false,ytLast=0;
 let ytAuto=false;
-function openYT(it,auto){ytAuto=!!auto;
+function openYT(it,auto){fileAbort();ytAuto=!!auto;
   ytItem=it;navStack.push('yt');show('yt');$('#yTitle').textContent=it.title;$('#ytMsg').textContent='YouTube wird geladen …';ytLoop=null;ytInfo();
   ST.last={id:it.id,am:null,bm:null};songStat(it.id).sessions++;stDirty=true;
   const fail='YouTube lässt sich hier nicht laden. In der Vorschau ist das blockiert – in der Android-App funktioniert es.';
@@ -1391,7 +1426,7 @@ function ytPoll(){
 }
 const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function ytInfo(){$('#ySpeed').textContent=Math.round(ytRate*100)+'%';$('#yRep').textContent=ytReps||'∞';$('#yInfo').textContent=ytLoop?`${fmt(ytLoop.a)} – ${ytLoop.b!=null?fmt(ytLoop.b):'…'}`:'';$('#yA').classList.toggle('pri',!!ytLoop);$('#yB').classList.toggle('pri',!!(ytLoop&&ytLoop.b!=null))}
-$('#yBack').onclick=()=>{convUI(false);ytAuto=false;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}$('#scanOv').classList.add('hidden');$('#scanBar').classList.add('hidden');clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
+$('#yBack').onclick=()=>{convUI(false);ytAuto=false;fileAbort();if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}$('#scanOv').classList.add('hidden');$('#scanBar').classList.add('hidden');clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
 $('#yPlay').onclick=()=>{if(!ytp||!ytp.getPlayerState)return;ytp.getPlayerState()===1?ytp.pauseVideo():ytp.playVideo()};
 $('#yBackS').onclick=()=>{if(ytp&&ytp.getCurrentTime)ytp.seekTo(Math.max(0,ytp.getCurrentTime()-5),true)};
 const ySetRate=r=>{ytRate=clamp(Math.round(r*100)/100,0.25,2);if(ytp&&ytp.setPlaybackRate){ytp.setPlaybackRate(ytRate);setTimeout(()=>{try{ytRate=ytp.getPlaybackRate();ytInfo()}catch(e){}},400)}ytInfo()};
@@ -1593,7 +1628,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 1.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 1.6 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1713,7 +1748,7 @@ function detectKeys(img,yAf){
   let lo=null,hi=null;for(let m=0;m<=127;m++){const x=xOf(m);if(x>=xL+w*0.2&&x<=xR-w*0.2){if(lo===null)lo=m;hi=m}}
   const whitesVisible=(xR-xL)/w;let shift=0;
   if(whitesVisible>48)shift=21-lo;else{const mid=(lo+hi)/2;shift=Math.round((62-mid)/12)*12}
-  return {x0,w,shift,W,lo,hi,xOf};
+  return {x0,w,shift,W,lo,hi,xOf,octEst:whitesVisible<=48};
 }
 function keyLayout(det,octave){ // → [{m,x (0..1),black}]
   const keys=[];const sh=det.shift+12*octave;
@@ -1729,6 +1764,10 @@ function scanFrame(msg){
   // video time for this frame (smoothed): native time → video time
   SCAN.vtMap.push([msg.t,vt]);if(SCAN.vtMap.length>40)SCAN.vtMap.shift();
   let f=vt;if(SCAN.vtMap.length>5){const a=SCAN.vtMap;let mt=0,mv=0;for(const [x,y] of a){mt+=x;mv+=y}mt/=a.length;mv/=a.length;f=mv+(msg.t-mt)/1000*(ytRate||1)}
+  scanCore(px,w,n,f);
+}
+// one video frame: px(row,x) → [r,g,b] for row 0 = black keys, 1 = white keys, 2 = just above the keyboard (falling bars); f = video time in s
+function scanCore(px,w,n,f){
   if(f<SCAN.start-0.05)return;
   const tt=f-SCAN.start;SCAN.frames++;
   const first=!SCAN.rest;if(first){SCAN.rest=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[]}))}
@@ -1746,6 +1785,9 @@ function scanFrame(msg){
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
   SCAN.lastVt=tt;
+  // the keyboard must have looked normal for a moment first (a channel intro before it is not the end of the song)
+  if(nPressed<=SCAN.keys.length*0.12&&nLit<=Math.max(10,SCAN.keys.length*0.3)){SCAN.okF=(SCAN.okF||0)+1;if(SCAN.okF===1)SCAN.okS=tt;if(SCAN.okF===8&&SCAN.okT==null)SCAN.okT=SCAN.okS+0.07}else if(SCAN.okT==null)SCAN.okF=0;
+  if(SCAN.okT==null)return;
   // more than ~40 % of all keys look different at the same time → the keyboard is gone (end screen / outro)
   // the keyboard is no longer visible (end screen / outro): many keys look neither normal nor lit, for ~0.4 s
   // …or far more keys "lit" at once than two hands can press, for ~1 s
@@ -1755,7 +1797,7 @@ function scanFrame(msg){
 function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
 function finishScan(){
   for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)SCAN.events.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue)})}
-  let ev=SCAN.events.filter(e=>e.end-e.start>=0.04).sort((a,b)=>a.start-b.start);
+  let ev=SCAN.events.filter(e=>e.end-e.start>=0.04&&(SCAN.okT==null||e.end>=SCAN.okT+0.05)).map(e=>SCAN.okT!=null&&e.start<SCAN.okT?{...e,start:SCAN.okT-0.07}:e).sort((a,b)=>a.start-b.start);
   if(SCAN.cut!=null)ev=ev.filter(e=>e.start<SCAN.cut).map(e=>({...e,end:Math.min(e.end,SCAN.cut)}));
   // outro: drop everything after a long pause at the very end (≥ 4 s and less than 10 % of the notes)
   for(let i=ev.length-1;i>0;i--){const gap=ev[i].start-Math.max(...ev.slice(0,i).map(e=>e.end));if(gap>=4&&ev.length-i<=Math.max(3,ev.length*0.1)){ev=ev.slice(0,i);break}}
@@ -1772,9 +1814,12 @@ function finishScan(){
   const avg=g=>{const a=ev.filter(e=>grp(e)===g);return a.length?a.reduce((s,e)=>s+e.m,0)/a.length:60};
   const twoHands=hs.length>=4&&hueDist(c1,c2)>35&&ev.filter(e=>grp(e)===1).length>0&&ev.filter(e=>grp(e)===2).length>0;
   const leftG=avg(1)<avg(2)?1:2;
+  SCAN.oneColor=!twoHands;
+  // notes without a clear colour: the hand whose notes are nearest in pitch at that time
+  const handOf=e=>{if(!twoHands)return 'R';const g=grp(e);if(g!=null)return g===leftG?'L':'R';let best=null,bd=1e9;for(const o of ev){const og=grp(o);if(og==null)continue;const d=Math.abs(o.m-e.m)+Math.abs(o.start-e.start)*4;if(d<bd){bd=d;best=og}}return best==null?'R':(best===leftG?'L':'R')};
   // intro: the first note starts after 1 s
-  const off=ev.length?Math.max(0,Math.min(...ev.map(e=>e.start))-1):0;
-  return ev.map(e=>({m:e.m,start:e.start-off,dur:Math.max(0.05,e.end-e.start),hand:twoHands&&grp(e)!=null?(grp(e)===leftG?'L':'R'):(e.m<60?'L':'R')}));
+  const off=ev.length?Math.max(0,Math.min(...ev.map(e=>e.start))-1):0;SCAN.firstNote=SCAN.start+off+1;
+  return ev.map(e=>({m:e.m,start:e.start-off,dur:Math.max(0.05,e.end-e.start),hand:handOf(e)}));
 }
 const hueDist=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d};
 // --- MIDI writer (2 tracks: right / left hand)
@@ -1826,7 +1871,7 @@ async function scanRun(){
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   for(const k of keys){const y=Math.round((k.black?scanRows.yA:scanRows.yB)*(H-1)),x=Math.round(k.x*(W-1));let r=0,g=0,b=0,c=0;for(let dx=-2;dx<=2;dx++){const i=(y*W+Math.min(W-1,Math.max(0,x+dx)))*4;r+=d[i];g+=d[i+1];b+=d[i+2];c++}k.rest=[r/c,g/c,b/c]}
-  Object.assign(SCAN,{on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null});
+  Object.assign(SCAN,{fromFile:false,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
   SCAN.start=+$('#scStart').dataset.v||0;
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{ytp.setPlaybackRate(1);ytRate=1;if(ytAuto)ytp.mute()}catch(e){}
@@ -1839,9 +1884,9 @@ async function scanRun(){
     try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}},300);
 }
 function scanStop(){
-  if(!SCAN.on)return;SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop');try{ytp.pauseVideo()}catch(e){}
+  if(!SCAN.on)return;SCAN.on=false;clearInterval(SCAN.timer);if(!SCAN.fromFile)nat('scanStop');try{ytp.pauseVideo()}catch(e){}try{FV.el&&FV.el.pause()}catch(e){}
   $('#scanBar').classList.add('hidden');const notes=finishScan();
-  if(notes.length<4){if(ytAuto){ytAuto=false;convUI(false);showConvError('Im Video wurden kaum Noten erkannt. Prüfe, ob der Link auf ein Klavier-Video mit fallenden Noten zeigt und der Zeitstempel nicht hinter dem Song liegt.');return}toast('Es wurden kaum Noten erkannt.',4500);return}
+  if(notes.length<4){if(ytAuto){ytAuto=false;convUI(false);showConvError(SCAN.fromFile?'Im Video wurden kaum Noten erkannt. Ist es ein Klavier-Video mit fallenden Noten und einer Tastatur unten?':'Im Video wurden kaum Noten erkannt. Prüfe, ob der Link auf ein Klavier-Video mit fallenden Noten zeigt und der Zeitstempel nicht hinter dem Song liegt.');return}toast('Es wurden kaum Noten erkannt.',4500);return}
   const L=notes.filter(n=>n.hand==='L').length;
   $('#scDoneTxt').textContent=`${notes.length} Noten erkannt (${notes.length-L} rechts, ${L} links) · ${fmt(Math.max(...notes.map(n=>n.start+n.dur)))} Min`;
   $('#scName').value=(ytItem&&ytItem.title&&ytItem.title!=='YouTube-Video'?ytItem.title:'Song aus Video').slice(0,60);
@@ -1849,11 +1894,14 @@ function scanStop(){
 }
 function scanSave(auto){
   const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
-  const buf=writeMidi(notes);let s;try{s=songFromMidi(buf,title)}catch(e){toast('Fehler: '+e.message);return}
-  const it={id:'m'+Date.now(),type:'midi',title,artist:'Aus YouTube-Video',data:b64FromBuf(buf),fromYT:ytOld?ytOld.videoId:null};
-  if(ytOld)LIB=LIB.filter(x=>x.id!==ytOld.id); // the video entry is replaced by the finished song
+  const buf=writeMidi(notes);
+  const it={id:'m'+Date.now(),type:'midi',title,artist:SCAN.fromFile?'Aus Video-Datei':'Aus YouTube-Video',data:b64FromBuf(buf),fromYT:ytOld&&!SCAN.fromFile?ytOld.videoId:null,
+    video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m]},
+    octUnsure:!!(scanDet&&scanDet.octEst),oneColor:!!SCAN.oneColor};
+  let s;try{s=songForItem(it,buf)}catch(e){toast('Fehler: '+e.message);return}
+  if(ytOld&&!SCAN.fromFile)LIB=LIB.filter(x=>x.id!==ytOld.id); // the video entry is replaced by the finished song
   LIB.unshift(it);saveLib();if(auto)toast(`Song „${title}“ erstellt – ${notes.length} Noten`,3500);
-  $('#scanDone').classList.remove('on');$('#gDim').classList.remove('on');SCAN.result=null;
+  $('#scanDone').classList.remove('on');$('#gDim').classList.remove('on');SCAN.result=null;if(SCAN.fromFile){fileAbort();keepAwake(false)}
   if(ytp){try{ytp.destroy()}catch(e){}ytp=null}clearInterval(ytTimer);navStack.pop();openSong(s,it.id);
 }
 
@@ -1890,7 +1938,7 @@ async function autoConvert(it){
     convProgress(null,at>st?`Suche die Tastatur … (${fmt(at)})`:'Suche die Tastatur …');
     try{ytp.seekTo(at,true);ytp.playVideo()}catch(e){}
     if(!await waitMainVideo(60000))return;
-    await sleep(2200); // YouTube shows title/overlays for a moment after starting
+    await sleep(4500); // YouTube shows title/overlays for a few seconds after starting/seeking
     const frames=[];for(let i=0;i<5;i++){const f=await grabVideo();if(f)frames.push(f);await sleep(220)}
     if(!frames.length)continue;
     if(imgMean(frames[0])<12){black++;if(black>=2)break;continue}
@@ -1901,6 +1949,55 @@ async function autoConvert(it){
   ytAuto=false;convUI(false);try{ytp.pauseVideo();ytp.unMute()}catch(e){}
   showConvError(black>=2?'Dein Handy lässt die App das Video nicht „sehen“ (das Bild bleibt schwarz). Schreib mir das bitte – dann baue ich eine andere Aufnahme-Methode ein.'
     :'In diesem Video wurde keine Klaviertastatur gefunden. Die Umwandlung funktioniert mit Videos, in denen unten eine Klaviertastatur zu sehen ist und die Noten von oben darauf fallen.');
+}
+
+/* ================= Video-Datei → Song (alles auf dem Handy, jedes Bild) ================= */
+const FV={el:null,url:null,cv:null,run:0};
+function fileAbort(){FV.run++;if(FV.el){try{FV.el.pause()}catch(e){}FV.el.remove();FV.el=null}if(FV.url){URL.revokeObjectURL(FV.url);FV.url=null}if(SCAN.fromFile&&SCAN.on){SCAN.on=false;clearInterval(SCAN.timer)}}
+function vidSeek(v,t){return new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;v.removeEventListener('seeked',fin);setTimeout(res,30)};v.addEventListener('seeked',fin);v.currentTime=Math.max(0,Math.min(t,v.duration-0.05));setTimeout(fin,4000)})}
+function vidImage(v,maxW){const k=Math.min(1,(maxW||960)/v.videoWidth),c=FV.cv||(FV.cv=document.createElement('canvas'));c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
+  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,c.width,c.height);return x.getImageData(0,0,c.width,c.height)}
+async function fileConvert(file){
+  fileAbort();const run=++FV.run,alive=()=>run===FV.run;
+  const title=file.name.replace(/\.[a-z0-9]{2,4}$/i,'').replace(/[_-]+/g,' ').trim().slice(0,60)||'Song aus Video';
+  ytItem={title};ytAuto=true;scanDet=null;
+  navStack.push('yt');show('yt');$('#yTitle').textContent=title;$('#ytMsg').textContent='';
+  if(ytp){try{ytp.destroy()}catch(e){}ytp=null}const fr=$('#ytFrame');if(fr)fr.remove();
+  const v=document.createElement('video');v.muted=true;v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';
+  v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000';FV.el=v;FV.url=URL.createObjectURL(file);v.src=FV.url;$('#ytBox').prepend(v);
+  convUI(true);convProgress(0,'Video wird geöffnet …','Song wird erstellt …');
+  const fail=msg=>{if(!alive())return;ytAuto=false;convUI(false);fileAbort();showConvError(msg)};
+  const ok=await new Promise(res=>{v.onloadeddata=()=>res(true);v.onerror=()=>res(false);setTimeout(()=>res(v.readyState>=2),15000)});
+  if(!alive())return;if(!ok||!v.videoWidth)return fail('Dieses Video kann dein Handy nicht öffnen. Versuch es als MP4-Datei.');
+  const dur=v.duration;
+  // 1) the first moment the keyboard is visible (channel intro is skipped) – median of 5 frames, no ads or overlays in a file
+  const steps=[];for(const x of [0,1,2,3,4,6,8,10,13,16,20,25,30,40,50,60,75,90,120])if(x<dur-3)steps.push(x);
+  let found=null,prev=0;
+  for(const at of steps){if(!alive())return;convProgress(Math.min(9,Math.round(at/2)),`Suche die Tastatur … (${fmt(at)})`);
+    const frames=[];for(let i=0;i<5;i++){await vidSeek(v,at+i*0.25);if(!alive())return;frames.push(vidImage(v))}
+    let best=null;for(const im of [medianImage(frames),...frames]){const r=tryKeyboard(im);if(r&&(!best||r.n>best.n))best=r}
+    if(best){found=best;break}prev=at}
+  if(!found)return fail('Im Video wurde keine Klavier-Tastatur gefunden. Die App braucht ein Video mit fallenden Noten und einer Tastatur unten im Bild.');
+  scanImg=found.img;scanRows=found.rows;scanDet=found.det;scanOct=0;
+  const keys=keyLayout(scanDet,0);const W=scanImg.width,H=scanImg.height,d=scanImg.data;
+  for(const k of keys){const y=Math.round((k.black?scanRows.yA:scanRows.yB)*(H-1)),x=Math.round(k.x*(W-1));let r=0,g=0,b=0,c=0;for(let dx=-2;dx<=2;dx++){const i=(y*W+Math.min(W-1,Math.max(0,x+dx)))*4;r+=d[i];g+=d[i+1];b+=d[i+2];c++}k.rest=[r/c,g/c,b/c]}
+  // 2) play the file and read 3 pixel rows of every frame
+  Object.assign(SCAN,{fromFile:true,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:prev});
+  const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=3;const rx=rc.getContext('2d',{willReadFrequently:true});
+  const ys=[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08)].map(f=>Math.round(f*(vh-1)));
+  let lastT=-1;
+  const frame=t=>{if(!SCAN.on||!alive()||t===lastT)return;lastT=t;
+    for(let r=0;r<3;r++)rx.drawImage(v,0,ys[r],vw,1,0,r,ow,1);
+    const D=rx.getImageData(0,0,ow,3).data;scanCore((r,x)=>{const i=(r*ow+x)*4;return [D[i],D[i+1],D[i+2]]},ow,3,t)};
+  await vidSeek(v,prev);if(!alive())return;
+  const useRVFC='requestVideoFrameCallback' in v;
+  if(useRVFC){const cb=(now,md)=>{frame(md.mediaTime);if(SCAN.on&&alive())v.requestVideoFrameCallback(cb)};v.requestVideoFrameCallback(cb)}
+  else{const loop=()=>{if(!SCAN.on||!alive())return;frame(v.currentTime);requestAnimationFrame(loop)};requestAnimationFrame(loop)}
+  v.playbackRate=1;v.onended=()=>{if(SCAN.on&&alive())scanStop()};
+  try{await v.play()}catch(e){return fail('Das Video lässt sich nicht abspielen: '+e.message)}
+  keepAwake(true);
+  SCAN.timer=setInterval(()=>{if(!alive()){clearInterval(SCAN.timer);return}const p=dur>prev?Math.min(99,10+Math.round((v.currentTime-prev)/(dur-prev)*89)):null;
+    convProgress(p,`${fmt(Math.max(0,v.currentTime))} / ${fmt(dur)} · ${SCAN.okT==null?0:SCAN.events.filter(e=>e.start>=SCAN.okT).length} Noten`);if(v.paused&&!v.ended&&SCAN.on)v.play().catch(()=>{})},300);
 }
 function showConvError(msg){$('#convErrTxt').textContent=msg;$('#convErr').classList.add('on');$('#gDim').classList.add('on')}
 function scanAutoGo(from){ // called after a successful keyboard detection in auto mode
