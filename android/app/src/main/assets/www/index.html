@@ -195,11 +195,11 @@ body.wide .sheet .grab{display:none}
 #calib .cb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:6px 16px 12px;text-align:center;min-height:0}
 #calRing{position:relative;width:180px;height:180px;display:grid;place-items:center;flex:none}
 #calRing svg{position:absolute;inset:0;transform:rotate(-90deg)}
-#calRing .pulse{position:absolute;inset:16px;border-radius:50%;background:rgba(124,156,255,.14);transform:scale(calc(.55 + var(--lv,0)*.45));transition:transform .08s,background .2s}
+#calRing .pulse{position:absolute;inset:16px;border-radius:50%;background:rgba(124,156,255,.10);transition:background .4s}
 #calRing.ok .pulse{background:rgba(94,232,154,.28);transform:scale(1)}
 #calRing.ok #calArc{stroke:#5EE89A}
-#calRing.bad{animation:shake .4s}
-#calRing.bad .pulse{background:rgba(255,107,107,.22)}
+#calRing.bad{}
+#calRing.bad .pulse{background:rgba(255,107,107,.14)}
 @keyframes shake{20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
 #calRing .in{position:relative;display:flex;flex-direction:column;align-items:center}
 #calNote{font-size:52px;font-weight:800;letter-spacing:-.03em;line-height:1}
@@ -340,6 +340,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Erkennung über</b></div><select id="inputSel2"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
       <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
       <div class="li"><div class="grow"><b>Kalibrierung</b><small id="calStat2">–</small></div><button class="btn sm" data-go="calib">Öffnen</button></div>
+      <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
       <div class="li"><div class="grow"><b>Einführung ansehen</b><small>Die kurze Erklärung vom ersten Start</small></div><button class="btn sm" id="onbAgain">Zeigen</button></div>
       <div class="li"><div class="grow"><b>Mikrofon testen</b><small id="micInfo2">Zeigt den Ton, den die App gerade hört</small></div><button class="btn sm" id="micTest2">Test</button></div>
     </div>
@@ -354,7 +355,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Backup laden</b><small id="impInfo">Ersetzt alle Daten auf diesem Gerät</small></div><button class="btn sm" id="impBtn">Laden</button><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
       <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 0.6</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 0.7</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -468,9 +469,11 @@ body.short #onbDots{margin:8px 0}
       <div id="calRing"><div class="pulse"></div><svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="80" stroke="#20252F" stroke-width="7" fill="none"/><circle id="calArc" cx="90" cy="90" r="80" stroke="#7C9CFF" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="502.7" stroke-dashoffset="502.7"/></svg>
         <div class="in"><div id="calNote">A0</div></div></div>
       <div id="calHintTxt">Die Taste ganz links</div>
+      <div class="meter" style="width:120px"><i id="calLvl"></i></div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;min-width:260px;max-width:560px;width:100%">
       <div id="calMsg" class="calmsg">Spiel diese Taste einmal kräftig an</div>
+      <div id="calDbg" class="mu xs hidden" style="max-width:520px;font-variant-numeric:tabular-nums"></div>
       <canvas id="calZoom"></canvas>
       <div class="calbtns"><button class="btn sm" id="cPrev">Zurück</button><button class="btn sm pri hidden" id="cForce">Trotzdem speichern</button><button class="btn sm" id="cSkip">Überspringen</button></div>
     </div>
@@ -784,21 +787,25 @@ async function startMic(){
 function micBands(){const f=mic.fbuf;mic.an.getFloatFrequencyData(f);const out=new Float32Array(NB);
   for(let b=0;b<NB;b++){let mx=-Infinity;for(let k=mic.lo[b];k<=mic.hi[b];k++)if(f[k]>mx)mx=f[k];out[b]=isFinite(mx)?Math.pow(10,mx/20):0}return out}
 // Listener: level, onset (new key struck, via spectral flux) and the semitone spectrum
-const LS={hist:[],lastOn:0,fluxAvg:1,noise:0.002,started:0};
+const LS={hist:[],lastOn:0,fluxAvg:1,noise:0.002,started:0,fbRing:[],fbT:0,rmsHist:[],nf:0};
+function fineBefore(ms,now){let r=null;for(const e of LS.fbRing)if(e.t<=now-ms)r=e;return r?r.f.slice():null}
 function listen(now){
   const m=mic,t=m.tbuf;m.anS.getFloatTimeDomainData(t);let s=0;for(let i=0;i<t.length;i++)s+=t[i]*t[i];const rms=Math.sqrt(s/t.length);
   m.anS.getFloatFrequencyData(m.sF);let fl=0;
   if(m.sPrev){for(let k=2;k<=m.fluxN;k++){const d=Math.max(m.sF[k],-110)-Math.max(m.sPrev[k],-110);if(d>0)fl+=Math.min(d,30)}fl/=(m.fluxN-1)}
   else m.sPrev=new Float32Array(m.sF.length);
   m.sPrev.set(m.sF);
-  const X=micBands();LS.hist.push({t:now,X});while(LS.hist.length>2&&now-LS.hist[0].t>900)LS.hist.shift();
-  if(rms<LS.noise*1.4)LS.noise=LS.noise*0.97+rms*0.03;else LS.noise=Math.min(LS.noise*1.002,0.05);
+  const X=micBands();
+  if(!LS.fbT||now-LS.fbT>=40){LS.fbT=now;const c=LS.fbRing.length>=7?LS.fbRing.shift().f:new Float32Array(mic.fbuf.length);c.set(mic.fbuf);LS.fbRing.push({t:now,f:c})}
+  LS.hist.push({t:now,X});while(LS.hist.length>2&&now-LS.hist[0].t>900)LS.hist.shift();
+  // background level = quietest moment of the last ~10 s (does not creep up while playing)
+  if(++LS.nf%6===0||LS.rmsHist.length<20){LS.rmsHist.push(rms);if(LS.rmsHist.length>100)LS.rmsHist.shift();let mn=1;for(const v of LS.rmsHist)if(v<mn)mn=v;LS.noise=Math.max(0.0003,mn)}
   // second detector: new partials appearing in the semitone spectrum (catches soft/low notes over a ringing note)
   let bandOn=false;{let ref=null;for(const h of LS.hist)if(h.t<=now-120)ref=h;
     if(ref){let mx=0;for(let i=0;i<NB;i++)if(X[i]>mx)mx=X[i];const fl2=mx*0.03;let cnt=0;for(let i=0;i<NB;i++)if(X[i]>fl2&&X[i]>ref.X[i]*2.2)cnt++;bandOn=cnt>=3}}
   let onset=null;const thr=Math.max(2.2,LS.fluxAvg*2.4),ok=now-LS.started>600&&rms>Math.max(LS.noise*1.8,0.0006);
-  if(ok&&fl>thr&&now-LS.lastOn>110){LS.lastOn=now;let before=LS.hist[0].X;for(const h of LS.hist)if(h.t<=now-45)before=h.X;onset={t:now,before}}
-  else if(ok&&bandOn&&now-LS.lastOn>300){LS.lastOn=now;let before=LS.hist[0].X;for(const h of LS.hist)if(h.t<=now-220)before=h.X;onset={t:now-100,before}}
+  if(ok&&fl>thr&&now-LS.lastOn>110){LS.lastOn=now;let before=LS.hist[0].X;for(const h of LS.hist)if(h.t<=now-45)before=h.X;onset={t:now,before,fb:fineBefore(45,now)}}
+  else if(ok&&bandOn&&now-LS.lastOn>300){LS.lastOn=now;let before=LS.hist[0].X;for(const h of LS.hist)if(h.t<=now-220)before=h.X;onset={t:now-100,before,fb:fineBefore(220,now)}}
   LS.fluxAvg=LS.fluxAvg*0.96+Math.min(fl,thr)*0.04;
   return {rms,fl,X,onset};
 }
@@ -855,18 +862,49 @@ function sharpPartials(m){
     if(pk-arr[arr.length>>1]>12)n++}
   return {n,tested,ok:n>=Math.min(2,tested)};
 }
+// power that is NEW since the key was struck (fine FFT bins, up to ~5 kHz)
+function fineDiff(fb){const f=mic.fbuf,bw=mic.sr/mic.an.fftSize,n=Math.min(f.length,Math.round(5000/bw)),P=new Float32Array(n);
+  for(let k=1;k<n;k++){const a=Math.pow(10,f[k]/10),b=fb?Math.pow(10,fb[k]/10):0;P[k]=Math.max(0,a-b*1.15)}return P}
+// how clearly do the partials of key m stand out? (dB above their surroundings). mode 0: all partials, 1: odd ≥3, 2: odd incl. 1
+function combScore(P,m,mode){
+  const bw=mic.sr/mic.an.fftSize,f0=mtof(m);let avg=0,c0=0;for(let k=Math.round(60/bw);k<P.length;k+=3){avg+=P[k];c0++}avg=avg/Math.max(1,c0);const eps=avg*1e-3+1e-20;
+  let sum=0,cnt=0;const tmp=[];
+  for(let h=1;h<=20;h++){if(mode===1&&(h%2===0||h<3))continue;if(mode===2&&h%2===0)continue;
+    const fh=f0*h;if(fh<60)continue;if(fh>4500)break;const c=fh/bw;
+    const lo=Math.floor(c*0.9885),hi=Math.ceil(c*1.0263);if(hi>=P.length-2)break;let pk=0;for(let k=lo;k<=hi;k++)if(P[k]>pk)pk=P[k];
+    tmp.length=0;const a1=Math.round(c*0.9220),a2=Math.round(c*0.9659),b1=Math.round(c*1.0353),b2=Math.round(c*1.0845);
+    for(let k=a1;k<=a2;k++)tmp.push(P[k]);for(let k=b1;k<=Math.min(b2,P.length-1);k++)tmp.push(P[k]);if(!tmp.length)continue;tmp.sort((x,y)=>x-y);
+    const v=10*Math.log10((pk+eps)/(tmp[tmp.length>>1]+eps));sum+=clamp(v,0,30);cnt++;if(cnt>=10)break}
+  return cnt>=3?sum/cnt:0;
+}
+function combJudge(m,P){
+  const cs=c=>(c>=21&&c<=108)?combScore(P,c,0):0;
+  const own=cs(m),nbs=[m-2,m-1,m+1,m+2].map(c=>[c,cs(c)]),nb=Math.max(...nbs.map(x=>x[1]));
+  const odd=combScore(P,m,1),sub=m-12>=21?combScore(P,m-12,2):0,up=cs(m+12);
+  const ok=own>=7&&own>=nb+2.5&&odd>=5&&sub<Math.max(5,own*0.6);
+  let heard=null;
+  if(!ok){const top=nbs.filter(x=>x[1]>=7&&x[1]>=own+2.5).sort((a,b)=>b[1]-a[1])[0];
+    if(top)heard=top[0];else if(odd<3&&up>=7)heard=m+12;else if(sub>=6&&sub>=own*0.8)heard=m-12}
+  return {ok,heard,own:+own.toFixed(1),nb:+nb.toFixed(1),odd:+odd.toFixed(1),sub:+sub.toFixed(1)};
+}
 function bestGuess(D){let best=-1,bs=0;for(let m=KR()[0];m<=KR()[1];m++){const T=tpl(m);const v=proj(T,D);if(v>bs){bs=v;best=m}}
   if(best<0)return -1;const e=evidence(best,D,new Set(),tpl);return e.tonal>1.8&&e.oct?best:-1}
 // detection while playing: evaluates the spectrum shortly after each new key strike
 const det={win:null};
 function detectStep(g,R,now){
-  if(R.onset)det.win={t0:R.onset.t,before:R.onset.before};
+  if(R.onset)det.win={t0:R.onset.t,before:R.onset.before,fb:R.onset.fb,pk:0};
+  if(det.win&&now<det.win.t0+150)det.win.pk=Math.max(det.win.pk,R.rms);
   const w=det.win;if(!w||now<w.t0+140||now>w.t0+600)return;
   const D=diffBands(R.X,w.before),exp=new Set(g.notes.map(n=>n.midi));
   const k=10-S.sens,needR=1.0+k*0.04,needT=1.4+k*0.14;
   let any=false;
   w.cnt=w.cnt||{};
-  for(const n of g.notes){if(n.hit)continue;const e=evidence(n.midi,D,exp,tpl);if(e.ratio>needR&&e.tonal>needT&&e.oct&&sharpPartials(n.midi).ok){w.cnt[n.midi]=(w.cnt[n.midi]||0)+1;if(w.cnt[n.midi]>=2){markHit(n.midi);any=true}}}
+  let P=null;
+  for(const n of g.notes){if(n.hit)continue;const m=n.midi,e=evidence(m,D,exp,tpl);
+    let pass=e.ratio>needR&&e.tonal>needT&&e.oct&&sharpPartials(m).ok;
+    if(!pass){P=P||fineDiff(w.fb);const own=combScore(P,m,0);let nb=0;for(const c of [m-2,m-1,m+1,m+2])if(c>=21&&c<=108&&!exp.has(c))nb=Math.max(nb,combScore(P,c,0));
+      pass=own>=9+k*0.3&&own>=nb+2.5&&combScore(P,m,1)>=6&&now>w.t0+260&&R.rms>=0.2*w.pk}
+    if(pass){w.cnt[m]=(w.cnt[m]||0)+1;if(w.cnt[m]>=2){markHit(m);any=true}}}
   if(any)w.good=true;
   // nothing right after a strike → show which wrong key was heard
   if(!w.good&&!w.wrongShown&&now>w.t0+380){w.wrongShown=true;const g2=bestGuess(D);if(g2>=0&&!exp.has(g2)){wrongFlash.set(g2,now);fx.push({txt:'Falsch – nochmal',r:'m',t0:now});if(fx.length>4)fx.shift()}}
@@ -1026,7 +1064,7 @@ function draw(waiting,now=performance.now()){
     if(act&&h>8){ctx.fillStyle='rgba(255,255,255,.22)';rrect(ctx,x+2,yt+2,w-4,Math.min(3,h/4),2);ctx.fill()}
     if(k.b){ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;rrect(ctx,x,yt,w,h,r);ctx.stroke()}
     if(awaiting&&awaiting.notes.includes(n)&&!n.hit&&t>=awaiting.start-0.4){ctx.globalAlpha=1;ctx.strokeStyle='#fff';ctx.lineWidth=2;rrect(ctx,x,yt,w,h,r);ctx.stroke()}
-    if(S.names&&w>=12&&h>16&&act){ctx.globalAlpha=n.hit?0.4:1;ctx.fillStyle=isBlack(n.midi)?'rgba(255,255,255,.9)':'rgba(7,9,13,.75)';ctx.font=`700 ${Math.min(12,w*0.48)}px Inter,system-ui`;ctx.textAlign='center';ctx.fillText(NAMES[n.midi%12],x+w/2,yb-3);ctx.textAlign='left'}
+    if(S.names&&w>=11&&h>15&&act){ctx.globalAlpha=n.hit?0.4:1;ctx.fillStyle=isBlack(n.midi)?'#fff':'rgba(7,9,13,.85)';const fs=Math.min(15,Math.max(10,w*0.55));ctx.font=`800 ${fs}px Inter,system-ui`;ctx.textAlign='center';ctx.fillText(w>=26?noteName(n.midi):NAMES[n.midi%12],x+w/2,yb-4);ctx.textAlign='left'}
     ctx.globalAlpha=1;
   }
   ctx.restore();
@@ -1037,7 +1075,7 @@ function draw(waiting,now=performance.now()){
   const sounding=new Map();
   for(const n of song.notes){if(n.start>t)break;if(n.start+n.dur>t){const act=isActive(n);if(act||S.other!=='hide')sounding.set(n.midi,act?noteCol(n):'#4A5160')}}
   const want=new Map();if(awaiting&&t>=awaiting.start-0.4)for(const n of awaiting.notes)if(!n.hit)want.set(n.midi,noteCol(n));
-  const pulse=0.5+0.5*Math.sin(now/140);
+  const pulse=0.5+0.5*Math.sin(now/650);
   const wg=ctx.createLinearGradient(0,hitY,0,hitY+kbH);wg.addColorStop(0,'#E9EBEF');wg.addColorStop(.85,'#FFFFFF');wg.addColorStop(1,'#CDD1D8');
   const bg=ctx.createLinearGradient(0,hitY,0,hitY+kbH*0.62);bg.addColorStop(0,'#14171D');bg.addColorStop(1,'#2A2F39');
   for(const passB of [false,true])for(let m=keyLo;m<=keyHi;m++){
@@ -1047,11 +1085,12 @@ function draw(waiting,now=performance.now()){
     if(want.has(m)){ctx.globalAlpha=1;col=want.get(m);ctx.globalAlpha=1}
     const pf=pressFlash.get(m);const flash=pf&&now-pf<260;const wf=wrongFlash.get(m);const wrong=wf&&now-wf<700;
     ctx.fillStyle=col;rrect(ctx,k.x+(k.b?0:0.6),hitY,k.w-(k.b?0:1.2),h,k.b?3:4);
-    if(want.has(m)){ctx.globalAlpha=0.5+0.5*pulse}
+    if(want.has(m)){ctx.globalAlpha=0.85+0.15*pulse}
     ctx.fill();ctx.globalAlpha=1;
     if(flash){ctx.fillStyle='rgba(255,255,255,.75)';ctx.fill()}
     if(wrong){ctx.fillStyle='rgba(255,90,90,.85)';ctx.fill()}
-    if(!k.b&&m%12===0&&whiteW>15){ctx.fillStyle='rgba(0,0,0,.35)';ctx.font='600 9px Inter,system-ui';ctx.textAlign='center';ctx.fillText(noteName(m),k.x+k.w/2,hitY+h-5);ctx.textAlign='left'}
+    if(!k.b&&whiteW>=13){const isC=m%12===0,on=want.has(m)||sounding.has(m);ctx.fillStyle=on?'rgba(11,13,18,.85)':isC?'rgba(0,0,0,.7)':'rgba(0,0,0,.42)';ctx.font=`${isC||on?800:600} ${Math.min(13,whiteW*0.42)}px Inter,system-ui`;ctx.textAlign='center';ctx.fillText(isC||want.has(m)?noteName(m):NAMES[m%12],k.x+k.w/2,hitY+h-6);ctx.textAlign='left'}
+    if(want.has(m)){ctx.strokeStyle='#fff';ctx.lineWidth=2.5;rrect(ctx,k.x+1.5,hitY+1.5,k.w-3,h-3,k.b?3:4);ctx.stroke()}
   }
   ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,hitY,W,3);
   if(want.size){for(const [m,col] of want){const k=KX[m];if(!k)continue;const cx=k.x+k.w/2,tw=Math.max(34,k.w+10),ty=hitY-30;
@@ -1244,13 +1283,14 @@ function calTick(now){
   if(!CQ.running||$('#calib').classList.contains('hidden')){CQ.running=false;return}
   requestAnimationFrame(calTick);
   if(!mic||CQ.state==='err')return;
-  const R=listen(now);$('#calRing').style.setProperty('--lv',levelOf(R.rms).toFixed(3));if(CQ.state!=='ok'&&!$('#calRun').classList.contains('hidden'))drawZoom(now);
+  const R=listen(now);$('#calLvl').style.width=(levelOf(R.rms)*100).toFixed(0)+'%';
   if(CQ.state==='warm'){if(now-CQ.t0>900){CQ.state='listen';setCalMsg(`Spiel ${noteName(curKey())} einmal kräftig an`,'')}return}
   if(CQ.state==='ok'){if(now>CQ.okUntil)calAdvance();return}
-  if(CQ.state==='listen'){if(R.onset){CQ.state='capture';CQ.on=R.onset;CQ.acc=new Float32Array(NB);CQ.n=0;CQ.acc2=null;CQ.n2=0;setCalMsg('Höre zu …','')}return}
+  if(CQ.state==='listen'){if(R.onset){CQ.state='capture';CQ.on=R.onset;CQ.acc=new Float32Array(NB);CQ.n=0;CQ.acc2=null;CQ.n2=0;CQ.pk=0;CQ.Pmid=null}return}
   if(CQ.state==='capture'){
     const dt=now-CQ.on.t;
     if(R.onset&&dt<200){CQ.on=R.onset;CQ.acc.fill(0);CQ.n=0;CQ.acc2=null;CQ.n2=0;return}
+    CQ.pk=Math.max(CQ.pk||0,dt<200?R.rms:0);if(dt>=410&&!CQ.Pmid)CQ.Pmid=fineDiff(CQ.on.fb);
     if(dt>=260){const D=diffBands(R.X,CQ.on.before);const half=dt<410?CQ.acc:(CQ.acc2||(CQ.acc2=new Float32Array(NB)));
       for(let i=0;i<NB;i++)half[i]+=D[i]*D[i];if(dt<410)CQ.n++;else CQ.n2=(CQ.n2||0)+1;CQ.xs=R.X}
     if(dt>=560){
@@ -1260,21 +1300,26 @@ function calTick(now){
       let sd=0,sx=0;for(let i=0;i<NB;i++){sd+=D[i];sx+=CQ.xs[i]}
       if(sd<0.12*sx){CQ.state='listen';setCalMsg(`Spiel ${noteName(m)} einmal kräftig an`,'');return} // nothing new was played
       CQ.lastD=D;
-      const v=judgeCal(m,A,B);CQ.dbg=v;
+      const sustain=R.rms>=0.12*(CQ.pk||1)&&R.rms>LS.noise*3;
+      const v=judgeCal(m,A,B,fineDiff(CQ.on.fb),CQ.Pmid,sustain);CQ.Pmid=null;CQ.pk=0;CQ.dbg=v;showDbg(m,v);
       if(v.ok){saveKey(m,D);CQ.state='ok';CQ.okUntil=now+650;ringState('ok');setCalMsg(`✓ ${noteName(m)} erkannt und gespeichert`,'ok');try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}calUI()}
       else{CQ.att++;CQ.state='listen';ringState('bad');
         setCalMsg(v.heard!=null?`Gehört: ${noteName(v.heard)} – gesucht ist ${noteName(m)}`:`Kein klarer Klavierton – spiel ${noteName(m)} nochmal`,'bad');
-        $('#cForce').classList.toggle('hidden',CQ.att<3)}
+        $('#cForce').classList.toggle('hidden',CQ.att<(m<40?2:3));if(m<40&&CQ.att===2)toast('Tiefe Töne hört ein Handy schlecht. Leg es näher an die tiefen Saiten oder speichere trotzdem.',4500)}
     }
   }
 }
-function judgeCal(m,A,B){
-  const a=estimatePitch(A),b=estimatePitch(B),sp=sharpPartials(m);
+function judgeCal(m,A,B,P,Pmid,sustain){
+  const a=estimatePitch(A),b=estimatePitch(B),sp=sharpPartials(m),cj=combJudge(m,P);
+  if(cj.ok&&!(sustain&&cj.own>=9&&cj.odd>=6&&Pmid&&combScore(Pmid,m,0)>=7))cj.ok=false;
   const conf=e=>e&&e.margin>=1.08&&e.tonal>=1.6;
-  const ok=conf(b)&&b.m===m&&sp.ok&&(m<45||!conf(a)||a.m===m); // in the bass the early window is still blurry
-  let heard=null;if(!ok&&conf(a)&&conf(b)&&a.m===b.m&&a.m!==m&&sharpPartials(a.m).ok)heard=a.m;
-  return {ok,heard,a:a&&[a.m,+a.margin.toFixed(2),+a.tonal.toFixed(2)],b:b&&[b.m,+b.margin.toFixed(2),+b.tonal.toFixed(2)],sp:[sp.n,sp.tested]};
+  const okT=conf(b)&&b.m===m&&sp.ok&&(m<45||!conf(a)||a.m===m)&&sustain; // in the bass the early window is still blurry
+  const ok=okT||cj.ok;
+  let heard=null;if(!ok){if(cj.heard!=null)heard=cj.heard;else if(conf(a)&&conf(b)&&a.m===b.m&&a.m!==m&&sharpPartials(a.m).ok)heard=a.m}
+  return {ok,heard,cj,sus:sustain,a:a&&[a.m,+a.margin.toFixed(2),+a.tonal.toFixed(2)],b:b&&[b.m,+b.margin.toFixed(2),+b.tonal.toFixed(2)],sp:[sp.n,sp.tested]};
 }
+function showDbg(m,v){const el=$('#calDbg');if(!S.debug){el.classList.add('hidden');return}el.classList.remove('hidden');
+  el.textContent=`${noteName(m)}: ${v.ok?'OK':'nein'}${v.sus?'':' · klingt nicht aus'} · Muster ${v.cj.own} dB (Nachbar ${v.cj.nb}, ungerade ${v.cj.odd}, Oktave tiefer ${v.cj.sub}) · Tonhöhe ${v.b?noteName(v.b[0])+' '+v.b[1]+'/'+v.b[2]:'–'} · scharf ${v.sp[0]}/${v.sp[1]}`}
 function saveKey(m,D){CAL[m]=Array.from(D,v=>+v.toPrecision(4));tplCache.delete(m);save('kt_cal',CAL)}
 function calAdvance(){CQ.i++;CQ.att=0;ringState('');if(CQ.i>=CQ.list.length){showSum();return}CQ.state='listen';setCalMsg(`Spiel ${noteName(curKey())} einmal kräftig an`,'');calUI()}
 $('#cSkip').onclick=()=>{if(CQ.state==='err')return;CQ.state='listen';calAdvance()};
@@ -1307,14 +1352,16 @@ function drawKeys(c,lo,hi,w,h,colorFn,labels){const {pos,ww}=kbLayout(lo,hi,w);
   return pos}
 const zoomRange=m=>{const [KL,KH]=KR();let lo=m,hi=m,wc=0;while(wc<7&&lo>KL){lo--;if(!isBlack(lo))wc++}wc=0;while(wc<7&&hi<KH){hi++;if(!isBlack(hi))wc++}
   while(isBlack(lo)&&lo>KL)lo--;while(isBlack(hi)&&hi<KH)hi++;return [lo,hi]};
-function drawZoom(now=performance.now()){const p=prepCv($('#calZoom'));if(!p)return;const m=curKey();const [lo,hi]=zoomRange(m);
-  const top=22,c=p.c,h=p.h-top;c.save();c.translate(0,top);
-  const pos=drawKeys(c,lo,hi,p.w,h,(k,b)=>k===m?'#7C9CFF':CAL[k]?(b?'#1d5e3c':'#7FB99A'):(b?'#15171c':'#5A6070'),false);
-  const k=pos[m],kh=k.b?h*0.6:h,pulse=0.5+0.5*Math.sin(now/180);
-  c.strokeStyle=`rgba(255,255,255,${0.55+0.45*pulse})`;c.lineWidth=3;rrect(c,k.x+1.5,1.5,k.w-3,kh-3,4);c.stroke();
-  c.fillStyle='#fff';c.font=`800 ${Math.min(15,k.w*0.42)}px Inter,system-ui`;c.textAlign='center';c.fillText(NAMES[m%12],k.x+k.w/2,kh-10);c.textAlign='left';
+function drawZoom(){const p=prepCv($('#calZoom'));if(!p)return;const m=curKey();const [lo,hi]=zoomRange(m);
+  const top=20,c=p.c,h=p.h-top;c.save();c.translate(0,top);
+  const pos=drawKeys(c,lo,hi,p.w,h,(k,b)=>k===m?'#7C9CFF':CAL[k]?(b?'#1d5e3c':'#A9D9BE'):(b?'#15171c':'#DADDE3'),false);
+  // letters on every white key
+  for(let k=lo;k<=hi;k++){const q=pos[k];if(q.b||k===m)continue;c.fillStyle=k%12===0?'rgba(0,0,0,.75)':'rgba(0,0,0,.45)';c.font=`${k%12===0?800:600} ${Math.min(13,q.w*0.4)}px Inter,system-ui`;c.textAlign='center';c.fillText(k%12===0?noteName(k):NAMES[k%12],q.x+q.w/2,h-8)}
+  const k=pos[m],kh=k.b?h*0.6:h;
+  c.strokeStyle='#fff';c.lineWidth=3;rrect(c,k.x+1.5,1.5,k.w-3,kh-3,4);c.stroke();
+  c.fillStyle='#fff';c.font=`800 ${Math.min(16,k.w*0.42)}px Inter,system-ui`;c.textAlign='center';c.fillText(noteName(m),k.x+k.w/2,kh-10);c.textAlign='left';
   c.restore();
-  const ax=k.x+k.w/2,ay=2+pulse*4;c.fillStyle='#7C9CFF';c.beginPath();c.moveTo(ax-9,ay);c.lineTo(ax+9,ay);c.lineTo(ax,ay+13);c.closePath();c.fill()}
+  const ax=k.x+k.w/2;c.fillStyle='#7C9CFF';c.beginPath();c.moveTo(ax-9,3);c.lineTo(ax+9,3);c.lineTo(ax,16);c.closePath();c.fill()}
 function drawOverview(){const p=prepCv($('#calCv'));if(!p)return;const m=curKey();const [lo,hi]=zoomRange(m);
   const pos=drawKeys(p.c,KR()[0],KR()[1],p.w,p.h,(k,b)=>k===m?'#7C9CFF':CAL[k]?(b?'#1E7A4A':'#9BE3BA'):(b?'#1a1d24':'#5A6070'));
   const x0=pos[lo].x,x1=pos[hi].x+pos[hi].w;p.c.strokeStyle='rgba(124,156,255,.9)';p.c.lineWidth=2;rrect(p.c,x0,1,x1-x0,p.h-2,4);p.c.stroke()}
@@ -1329,11 +1376,12 @@ function renderSettings(){
   for(const side of ['L','R']){const el=$('#col'+side);el.innerHTML='';
     for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(S['col'+side]===k?' on':'');b.title=p.n;b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.d}"></i>`;
       b.onclick=()=>{S['col'+side]=k;saveS();renderSettings()};el.appendChild(b)}}
-  $('#goalSel').value=S.goal;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#full2').checked=S.full;
+  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#full2').checked=S.full;
   $('#calStat2').textContent=calCount()>=NK()?`Alle ${NK()} Tasten kalibriert ✓`:`${calCount()} von ${NK()} Tasten kalibriert`;
   for(const b of $$('#laySet button'))b.classList.toggle('on',+b.dataset.l===S.layout);
 }
 for(const b of $$('#laySet button'))b.onclick=()=>{S.layout=+b.dataset.l;saveS();renderSettings();toast(`Tastatur: ${S.layout} Tasten (${KR()[2]})`)};
+$('#dbgChk').onchange=e=>{S.debug=e.target.checked;saveS()};
 $('#goalSel').onchange=e=>{S.goal=+e.target.value;saveS()};
 $('#inputSel2').onchange=e=>{S.input=e.target.value;micFailed=false;saveS()};
 $('#sens2').oninput=e=>{S.sens=+e.target.value;saveS()};
@@ -1359,7 +1407,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 0.6 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 0.7 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
