@@ -25,6 +25,8 @@ black_shade = R.uniform(0.55, 1.0)          # lit black keys darker
 bg = R.choice(['solid', 'grad', 'noise'])
 bgc = tuple(R.randint(5, 40) for _ in range(3))
 labels = R.random() < 0.5
+label_dark = R.random() < 0.5
+pills = R.random() < 0.25          # short notes drawn as narrow rounded pills
 glow = R.random() < 0.5
 sparkle = R.random() < 0.4
 bar_border = R.random() < 0.4
@@ -32,7 +34,7 @@ lit_part = R.choice([1.0, 1.0, 0.6])         # some videos only light the lower 
 hitline = R.random() < 0.6
 intro = R.choice([0, 2, 3, 4]); outro = R.choice([0, 2, 3])
 keys_x_jitter = R.uniform(0, 0.03)           # slightly irregular drawing
-style = dict(seed=seed, fps=FPS, lo=lo, hi=hi, lowres=lowres, crf=crf, kbH=kbH, pps=round(pps), one_color=one_color, labels=labels, glow=glow,
+style = dict(label_dark=label_dark, pills=pills, seed=seed, fps=FPS, lo=lo, hi=hi, lowres=lowres, crf=crf, kbH=kbH, pps=round(pps), one_color=one_color, labels=labels, glow=glow,
              sparkle=sparkle, bar_border=bar_border, lit_part=lit_part, intro=intro, outro=outro, bg=bg)
 
 whites = [m for m in range(lo, hi + 1) if m % 12 in WPC]; ww = W / len(whites)
@@ -107,10 +109,11 @@ for f in range(int(total * FPS)):
             c = RC if n['h'] == 'R' else LC; x, w, b = pos[n['m']]
             y1 = kbY - (n['s'] - t) * pps; y0 = y1 - n['d'] * pps
             if y1 > 0 and y0 < kbY:
-                p0 = (int(x + 2), int(max(0, y0))); p1 = (int(x + w - 2), int(min(kbY - 1, y1)))
+                inset = w * 0.22 if (pills and n['d'] <= 0.35) else 2
+                p0 = (int(x + inset), int(max(0, y0))); p1 = (int(x + w - inset), int(min(kbY - 1, y1)))
                 cv2.rectangle(img, p0, p1, shade(c, b), -1)
                 if bar_border: cv2.rectangle(img, p0, p1, tuple(int(v * 0.6) for v in c), 2)
-                if labels and p1[1] - p0[1] > 22: cv2.putText(img, NAMES[n['m'] % 12], (int(x + w / 2 - 7), p1[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                if labels and p1[1] - p0[1] > 22: cv2.putText(img, NAMES[n['m'] % 12], (int(x + w / 2 - 7), p1[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5 if w < 40 else 0.9, (30, 30, 30) if label_dark else (255, 255, 255), 2)
             if n['s'] <= t < n['s'] + n['d']: on[n['m']] = shade(c, b)
         if hitline: cv2.line(img, (0, kbY - 2), (W, kbY - 2), hue_rgb(seed * 0.31, 0.6, 0.9), 3)
         kb = np.zeros((kbH, W, 3), np.uint8)
@@ -127,11 +130,12 @@ for f in range(int(total * FPS)):
                 if not b: cv2.line(kb, (int(x), 0), (int(x), kbH), (110, 110, 110), 1)
         img[kbY:kbY + kbH] = kb[:min(kbH, H - kbY)]
         if glow and on:
-            gl = np.zeros_like(img, np.float32)
+            y0g = max(0, int(kbY - ww * 4)); y1g = min(H, int(kbY + ww * 4))
+            gl = np.zeros((y1g - y0g, W, 3), np.float32)
             for mm, c in on.items():
-                x, w, b = pos[mm]; cv2.circle(gl, (int(x + w / 2), kbY), int(ww * 1.2), c, -1)
+                x, w, b = pos[mm]; cv2.circle(gl, (int(x + w / 2), kbY - y0g), int(ww * 1.2), c, -1)
             gl = cv2.GaussianBlur(gl, (0, 0), ww * 0.8)
-            img = np.clip(img.astype(np.float32) + gl * 0.55, 0, 255).astype(np.uint8)
+            img[y0g:y1g] = np.clip(img[y0g:y1g].astype(np.float32) + gl * 0.55, 0, 255).astype(np.uint8)
         if sparkle:
             rs = np.random.RandomState(f)
             for mm in on:

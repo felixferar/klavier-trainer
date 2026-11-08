@@ -404,7 +404,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.8</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.9</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1640,7 +1640,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 1.8 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 1.9 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1760,7 +1760,8 @@ function detectKeys(img,yAf){
   let lo=null,hi=null;for(let m=0;m<=127;m++){const x=xOf(m);if(x>=xL+w*0.2&&x<=xR-w*0.2){if(lo===null)lo=m;hi=m}}
   const whitesVisible=(xR-xL)/w;let shift=0;
   if(whitesVisible>48)shift=21-lo;else{const mid=(lo+hi)/2;shift=Math.round((62-mid)/12)*12}
-  return {x0,w,shift,W,lo,hi,xOf,octEst:whitesVisible<=48};
+  let rs=0;for(const [X,Y] of pts)rs+=(x0+w*X-Y)**2;const res=Math.sqrt(rs/pts.length)/w; // how well the black keys fit the pattern (fraction of a key width)
+  return {x0,w,shift,W,lo,hi,xOf,octEst:whitesVisible<=48,res,nb:pts.length};
 }
 function keyLayout(det,octave){ // → [{m,x (0..1),black}]
   const keys=[];const sh=det.shift+12*octave;
@@ -1790,7 +1791,7 @@ function scanCore(px,w,n,f){
       for(let r=3;r<n;r++){const o=laneBars(px,w,r,r-3),mk=o.mask,kp=SCAN.keyPx.x,st=SCAN.lrow[r]||(SCAN.lrow[r]={prev:new Uint8Array(K),tr:new Int32Array(K).fill(-99)});
         for(let k=0;k<K;k++){if(o[k])cnt[k]++;
           // a real gap between two bars shows the dark background (not letters) – and it moves down through the rows one after another
-          if(o[k]&&st.prev[k]===2)st.tr[k]=SCAN.fi;st.prev[k]=o[k]?1:(mk[Math.round(kp[k])]===0?2:0)}trs.push(st.tr)}
+          if(o[k]&&st.prev[k]===2)st.tr[k]=SCAN.fi;st.prev[k]=o[k]?1:(o.bgK[k]?2:0)}trs.push(st.tr)}
       SCAN.gapMin=SCAN.gapMin||new Int32Array(K);for(let k=0;k<K;k++){let c=0,ok=true,last=-1e9,mn=1e9;for(const tr of trs){if(SCAN.fi-tr[k]<=4){c++;if(tr[k]<last)ok=false;last=tr[k];mn=Math.min(mn,tr[k])}}if(c>=3&&ok){gap[k]=c;SCAN.gapMin[k]=mn}}
       const need=Math.max(1,n-3-1);laneOcc=Array.from(cnt,c=>c>=need);SCAN.laneGap=gap}else laneOcc=laneBars(px,w,2,0)}
   let nPressed=0,nLit=0;
@@ -1829,12 +1830,15 @@ function laneBars(px,w,row,li,noBg){
   for(let x=0;x<w;x++){const p=px(row,x),[,sa,va]=rgb2hsv(p[0],p[1],p[2]),i=x*3,dd=Math.hypot(p[0]-bg[i],p[1]-bg[i+1],p[2]-bg[i+2]);
     if(noBg){if(sa>0.3&&va>0.3)mask[x]=1;else if(va>0.6&&sa<=0.3)mask[x]=2;continue}
     if(sa>0.3&&va>0.3&&dd>45)mask[x]=1;else if(va>0.6&&sa<=0.3&&dd>45)mask[x]=2;if(mask[x])continue;if(dd<30){bg[i]+=(p[0]-bg[i])*0.05;bg[i+1]+=(p[1]-bg[i+1])*0.05;bg[i+2]+=(p[2]-bg[i+2])*0.05}}
-  if(!SCAN.keyPx||SCAN.keyPx.w!==w){SCAN.keyPx={w,x:keys.map(k=>k.x*(w-1))}}const kx=SCAN.keyPx.x;
+  if(!SCAN.keyPx||SCAN.keyPx.w!==w){const xs=keys.map(k=>k.x*(w-1)),bnd=[];keys.forEach((k,i)=>{if(!k.black){bnd.push(xs[i]-ww/2,xs[i]+ww/2)}});SCAN.keyPx={w,x:xs,bnd}}const kx=SCAN.keyPx.x;
   const gapMax=Math.max(2,Math.round(ww*0.4));
   let x=0;while(x<w){if(mask[x]!==1){x++;continue}let e=x+1,last=x;
     while(e<w){if(mask[e]===1){last=e;e++;continue}
       if(mask[e]===2){let f=e;while(f<w&&mask[f]===2)f++;if(f<w&&mask[f]===1&&f-e<=gapMax){e=f;continue}break} // letters inside a bar
-      if(e+1<w&&mask[e+1]===1){e++;continue}break}                                                               // 1-px blur hole
+      if(e+1<w&&mask[e+1]===1){e++;continue}
+      {let f=e;while(f<w&&mask[f]===0)f++;const hc=(e+f-1)/2;              // dark letters inside a bar: a short dark hole in the middle of a key (not at a key boundary)
+        if(f<w&&mask[f]===1&&f-e<=ww*0.35&&!SCAN.keyPx.bnd.some(bx=>Math.abs(bx-hc)<ww*0.14)){const p1=px(row,e-1),p2=px(row,f);if(hueDist(rgb2hsv(p1[0],p1[1],p1[2])[0],rgb2hsv(p2[0],p2[1],p2[2])[0])<25){e=f;continue}}}
+      break}
     e=last+1;const a=x,b=last,cen=(a+b)/2,wid=b-a+1;x=e;if(wid<ww*0.25)continue;
     // which keys does this run cover? white key: its middle ±0.22 key widths; black key: ±0.2 (and not just the gap between two covered white keys)
     const inR=(c,h)=>c-h>=a-0.5&&c+h<=b+0.5,cov=[];
@@ -1842,7 +1846,11 @@ function laneBars(px,w,row,li,noBg){
     for(let k=0;k<keys.length;k++){if(!keys[k].black||kx[k]<a-ww*0.15||kx[k]>b+ww*0.15)continue;
       const cen=(a+b)/2;if(!(inR(kx[k],ww*0.1)||(wid<=ww*0.9&&Math.abs(cen-kx[k])<=ww*0.22)))continue; // narrow bar roughly centred on the black key
       const l=k-1,r=k+1;if(cov.includes(l)&&cov.includes(r))continue;occ[k]=true}}
-  occ.mask=mask;return occ}
+  // white key: also occupied if most of its middle has bar colour (letters can split the bar into pieces)
+  for(let k=0;k<keys.length;k++){if(keys[k].black||occ[k])continue;const a0=Math.max(0,Math.round(kx[k]-ww*0.3)),a1=Math.min(w-1,Math.round(kx[k]+ww*0.3));let c=0;for(let x=a0;x<=a1;x++)if(mask[x])c++;if(c>=(a1-a0+1)*0.5)occ[k]=true}
+  // background across the whole key (needed for a real gap between two bars)
+  const bgK=new Uint8Array(keys.length);for(let k=0;k<keys.length;k++){const hw=ww*(keys[k].black?0.18:0.3),a0=Math.max(0,Math.round(kx[k]-hw)),a1=Math.min(w-1,Math.round(kx[k]+hw));let c=0;for(let x=a0;x<=a1;x++)if(!mask[x])c++;bgK[k]=c>=(a1-a0+1)*0.75?1:0}
+  occ.mask=mask;occ.bgK=bgK;return occ}
 // notes that were struck before the reading started (YouTube: while the app was still looking for the keyboard):
 // in the still images the bars are visible above the keys. bar bottom height ÷ fall speed = how long until / since it reached the keys.
 function earlyFromBars(ev){
@@ -1900,7 +1908,7 @@ function finishScan(){
   // length from the bar: the bar is exactly as long as the note; the key itself can look lit a bit longer (glow of a neighbour)
   if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
     for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];let bi=-1,bd=0.12;for(let i=0;i<ln.ons.length;i++){const x=Math.abs(ln.ons[i]+d-e.start);if(x<bd){bd=x;bi=i}}
-      if(bi>=0&&ln.offs[bi]!=null){const len=ln.offs[bi]-ln.ons[bi];if(len>0.05&&len<e.end-e.start-0.06)e.end=e.start+len}}}
+      if(bi>=0&&ln.offs[bi]!=null){const len=ln.offs[bi]-ln.ons[bi],kd=e.end-e.start;if(len>0.05&&len<kd-0.06&&len>=kd*0.5)e.end=e.start+len}}} // never cut a note to a fraction (letters can hide a bar for a moment)
   ev=earlyFromBars(ev);
   // notes struck together (chord): their onsets differ only by a frame or two (glow fading in) → same start
   {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.085)e.start=g0;else g0=e.start}}
@@ -2029,6 +2037,8 @@ function cropBars(img){ // black bars above/below the video (phone upright, vide
   let y0=0,y1=H-1;while(y0<H-1&&!used(y0))y0++;while(y1>y0&&!used(y1))y1--;
   if(y1-y0<H*0.15||(y0<3&&y1>H-4))return {img,y0:0,h:H};
   const out=new ImageData(W,y1-y0+1);out.data.set(data.subarray(y0*W*4,(y1+1)*W*4));return {img:out,y0,h:y1-y0+1}}
+// best of several candidate images: a real keyboard has at most 88 keys; then the one whose black keys fit the pattern best
+function pickKb(list){let best=null;for(const r of list){if(!r||r.n>87)continue;const sc=r.det.res-Math.min(r.det.nb,40)*0.002;if(!best||sc<best.sc)best={...r,sc}}return best}
 function tryKeyboard(img){const c=cropBars(img),H=img.height;let rows=findKeyboardRows(c.img);if(!rows)return null;
   const map=f=>(c.y0+f*(c.h-1))/(H-1);rows={yC:map(rows.yC),yA:map(rows.yA),yB:map(rows.yB),yT:map(rows.yT)};
   const det=detectKeys(img,rows.yA);if(!det)return null;return {rows,det,img,n:det.hi-det.lo}}
@@ -2056,7 +2066,7 @@ async function autoConvert(it){
     if(ps!==1){await sleep(300);continue} // ad, buffering or paused: wait
     let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;if(f)f.t=gt;
     if(f){if(imgMean(f)<12){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
-    let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];for(const im of cand){const r=tryKeyboard(im);if(r&&(!best||r.n>best.n))best=r}}
+    let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];best=pickKb(cand.map(tryKeyboard))}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
       $('#scanOv').classList.add('hidden');convProgress(null,'Noten werden gelesen …');scanRun(true);return}
     await sleep(150);
@@ -2071,8 +2081,10 @@ document.addEventListener('visibilitychange',()=>{if(!ytAuto)return;const vis=do
   try{if(FV.el){vis?FV.el.play().catch(()=>{}):FV.el.pause()}else if(ytp){vis?ytp.playVideo():ytp.pauseVideo()}}catch(e){}});
 /* ================= Video-Datei → Song (alles auf dem Handy, jedes Bild) ================= */
 const FV={el:null,url:null,cv:null,run:0};
-function fileAbort(){FV.run++;if(FV.sv){try{FV.sv.removeAttribute('src');FV.sv.load()}catch(e){}FV.sv=null}if(FV.el){try{FV.el.pause()}catch(e){}FV.el.remove();FV.el=null}if(FV.url){URL.revokeObjectURL(FV.url);FV.url=null}if(SCAN.fromFile&&SCAN.on){SCAN.on=false;clearInterval(SCAN.timer)}}
-function vidSeek(v,t){return new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;v.removeEventListener('seeked',fin);setTimeout(res,30)};v.addEventListener('seeked',fin);v.currentTime=Math.max(0,Math.min(t,v.duration-0.05));setTimeout(fin,4000)})}
+function fileAbort(){FV.run++;if(FV.sv){try{FV.sv.removeAttribute('src');FV.sv.load();FV.sv.remove()}catch(e){}FV.sv=null}if(FV.el){try{FV.el.pause()}catch(e){}FV.el.remove();FV.el=null}if(FV.url){URL.revokeObjectURL(FV.url);FV.url=null}if(SCAN.fromFile&&SCAN.on){SCAN.on=false;clearInterval(SCAN.timer)}}
+function vidSeek(v,t){return new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;v.removeEventListener('seeked',sk);setTimeout(res,30)};
+  const sk=()=>{if('requestVideoFrameCallback' in v){let ok=false;v.requestVideoFrameCallback(()=>{ok=true;fin()});setTimeout(()=>{if(!ok)fin()},250)}else fin()};
+  v.addEventListener('seeked',sk);v.currentTime=Math.max(0,Math.min(t,v.duration-0.05));setTimeout(fin,4000)})}
 function vidImage(v,maxW){const k=Math.min(1,(maxW||960)/v.videoWidth),c=FV.cv||(FV.cv=document.createElement('canvas'));c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
   const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,c.width,c.height);return x.getImageData(0,0,c.width,c.height)}
 async function fileConvert(file){
@@ -2089,19 +2101,20 @@ async function fileConvert(file){
   if(!alive())return;if(!ok||!v.videoWidth)return fail('Dieses Video kann dein Handy nicht öffnen. Versuch es als MP4-Datei.');
   const dur=v.duration;
   // 1) find the keyboard with a second, invisible copy of the video (the visible one is not moved) – median of 5 frames, no ads or overlays in a file
-  const sv=document.createElement('video');sv.muted=true;sv.preload='auto';sv.src=FV.url;FV.sv=sv;
+  const sv=document.createElement('video');sv.muted=true;sv.preload='auto';sv.playsInline=true;sv.src=FV.url;FV.sv=sv;
+  sv.style.cssText='position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:-1';document.body.appendChild(sv); // attached to the page: a detached video can deliver an old picture after jumping
   if(!await new Promise(res=>{sv.onloadeddata=()=>res(true);sv.onerror=()=>res(false);setTimeout(()=>res(sv.readyState>=2),15000)}))return fail('Dieses Video kann dein Handy nicht öffnen. Versuch es als MP4-Datei.');
   const steps=[];for(const x of [0,1,2,3,4,6,8,10,13,16,20,25,30,40,50,60,75,90,120])if(x<dur-3)steps.push(x);
   let found=null,prev=0;
   for(const at of steps){if(!alive())return;convProgress(0,'Suche die Tastatur …');
     const frames=[];for(let i=0;i<5;i++){await vidSeek(sv,at+i*0.25);if(!alive())return;frames.push(vidImage(sv))}
-    let best=null;for(const im of [medianImage(frames),...frames]){const r=tryKeyboard(im);if(r&&(!best||r.n>best.n))best=r}
+    const best=pickKb([medianImage(frames),...frames].map(tryKeyboard));
     if(best){found=best;scanFrames=frames;break}prev=at}
   if(!found)return fail('Im Video wurde keine Klavier-Tastatur gefunden. Die App braucht ein Video mit fallenden Noten und einer Tastatur unten im Bild.');
   scanImg=found.img;scanRows=found.rows;scanDet=found.det;scanOct=0;
   const keys=keyLayout(scanDet,0);const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   restColors(keys,scanFrames&&scanFrames.length?scanFrames:[scanImg],scanRows);
-  sv.removeAttribute('src');sv.load();FV.sv=null;
+  sv.removeAttribute('src');sv.load();sv.remove();FV.sv=null;
   // 2) play the file once from the very beginning to the end and read 3 pixel rows of every frame (the intro is recognised and ignored)
   Object.assign(SCAN,{gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
   const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=7;const rx=rc.getContext('2d',{willReadFrequently:true});
