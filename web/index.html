@@ -18,7 +18,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:15px/1.4 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
 body.desk{background:radial-gradient(circle at 50% 30%,#161a24,#050608 70%);display:flex;align-items:center;justify-content:center}
-#app{position:relative;width:100%;height:100%;overflow:hidden;background:var(--bg)}
+#app{position:relative;width:100%;height:100%;overflow:hidden;overflow:clip;background:var(--bg)}
 body.desk.frame #app{border:11px solid #050507;border-radius:38px;box-shadow:0 0 0 1.5px #2a2d35,0 30px 80px rgba(0,0,0,.8)}
 body.desk.frame.land #app{width:844px;height:390px}
 body.desk.frame.port #app{width:390px;height:844px}
@@ -314,14 +314,14 @@ body.short #onbDots{margin:8px 0}
     </section>
 
     <section id="vSongs" class="hidden">
-      <div class="hdr"><h1>Songs</h1><button class="btn sm pri" data-add><svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Hinzufügen</button><button class="ib" data-go="settings"><svg class="i"><use href="#i-gear"/></svg></button></div>
+      <div class="hdr"><h1>Songs</h1><button class="btn sm pri" data-add><svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Hinzufügen</button></div>
       <div class="search"><svg class="i" style="color:var(--mu2)"><use href="#i-search"/></svg><input id="q" placeholder="Song suchen"></div>
-      <div class="seg" id="filt" style="margin-bottom:10px"><button data-f="all" class="on">Alle</button><button data-f="midi">MIDI</button><button data-f="yt">YouTube</button></div>
+      <div class="seg hidden" id="filt" style="margin-bottom:10px"><button data-f="all" class="on">Alle</button><button data-f="midi">MIDI</button><button data-f="yt">YouTube</button></div>
       <div id="songList"></div>
     </section>
 
     <section id="vStats" class="hidden">
-      <div class="hdr"><h1>Fortschritt</h1><button class="ib" data-go="settings"><svg class="i"><use href="#i-gear"/></svg></button></div>
+      <div class="hdr"><h1>Fortschritt</h1></div>
       <div class="grid2" id="kpis"></div>
       <div class="card" style="margin-top:12px">
         <div style="display:flex;align-items:center"><b class="grow">Übungszeit · 14 Tage</b><span class="mu xs" id="avgTxt"></span></div>
@@ -355,6 +355,7 @@ body.short #onbDots{margin:8px 0}
     <div class="grid2" id="pfStats"></div>
     <div class="lbl">Daten</div>
     <div class="list">
+      <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
       <div class="li"><div class="grow"><b>Alle Daten löschen</b><small>Songs, Fortschritt, Kalibrierung, Profil und Einstellungen – die App startet wie neu installiert</small></div><button class="btn sm danger" id="wipeBtn">Löschen</button></div>
     </div>
   </div>
@@ -379,25 +380,27 @@ body.short #onbDots{margin:8px 0}
     </div>
     <div class="lbl">Tonerkennung</div>
     <div class="list">
-      <div class="li"><div class="grow"><b>Erkennung über</b></div><select id="inputSel2"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
+      <div class="li hidden"><div class="grow"><b>Erkennung über</b></div><select id="inputSel2"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
       <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
       <div class="li"><div class="grow"><b>Kalibrierung</b><small id="calStat2">–</small></div><button class="btn sm" data-go="calib">Öffnen</button></div>
-      <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
       <div class="li"><div class="grow"><b>Einführung ansehen</b><small>Die kurze Erklärung vom ersten Start</small></div><button class="btn sm" id="onbAgain">Zeigen</button></div>
       <div class="li"><div class="grow"><b>Mikrofon testen</b><small id="micInfo2">Zeigt den Ton, den die App gerade hört</small></div><button class="btn sm" id="micTest2">Test</button></div>
     </div>
     <div class="lbl">Anzeige</div>
     <div class="list">
       <div class="li"><div class="grow"><b>Notennamen auf den Balken</b><small>Deutsch: B = Ton zwischen A und H</small></div><input type="checkbox" class="sw" id="names2"></div>
-      <div class="li"><div class="grow"><b>Immer alle 88 Tasten</b></div><input type="checkbox" class="sw" id="full2"></div>
+      <div class="li"><div class="grow"><b>Ganze Tastatur zeigen</b><small>Sonst nur der Bereich, den der Song braucht</small></div><input type="checkbox" class="sw" id="full2"></div>
     </div>
     <div class="lbl">Daten</div>
     <div class="list">
       <div class="li"><div class="grow"><b>Backup speichern</b><small>Songs, Statistik, Kalibrierung und Einstellungen als Datei</small></div><button class="btn sm" id="expBtn">Speichern</button></div>
       <div class="li"><div class="grow"><b>Backup laden</b><small id="impInfo">Ersetzt alle Daten auf diesem Gerät</small></div><button class="btn sm" id="impBtn">Laden</button><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
-      <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.1</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="lbl">Fehlersuche</div>
+    <div class="list">
+      <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
+    </div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.2</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -434,26 +437,24 @@ body.short #onbDots{margin:8px 0}
     <div class="sb scroll">
       <div class="lbl" style="margin-top:4px">Tempo · <span id="spVal">1×</span></div>
       <input type="range" id="spRange" min="10" max="100" step="5">
-      <div class="lbl">Hände</div>
-      <div class="seg" id="handSeg" style="display:flex"><button data-h="L" style="flex:1">Links</button><button data-h="B" style="flex:1">Beide</button><button data-h="R" style="flex:1">Rechts</button></div>
-      <div class="list" style="margin-top:10px">
+      <div class="list" style="margin-top:12px">
         <div class="li"><div class="grow"><b>Andere Hand</b></div><select id="otherSel"><option value="show">grau zeigen</option><option value="hide">ausblenden</option><option value="play">App spielt sie</option></select></div>
-        <div class="li"><div class="grow"><b>Meine Noten hörbar</b><small>App spielt deine Noten mit</small></div><input type="checkbox" class="sw" id="soundMine"></div>
+        <div class="li"><div class="grow"><b>Fallhöhe der Noten</b><small>Wie weit du die Noten vorher siehst</small><input type="range" id="lookR" min="1" max="6" step="0.5"></div></div>
+      </div>
+      <div class="lbl">Erweitert</div>
+      <div class="list">
         <div class="li"><div class="grow"><b>Hände tauschen</b><small>Falls links/rechts falsch erkannt</small></div><input type="checkbox" class="sw" id="swapH"></div>
       </div>
-      <div class="lbl">Tonerkennung</div>
-      <div class="list">
-        <div class="li"><div class="grow"><b>Lern-Modus</b><small>Der Song wartet, bis du richtig spielst</small></div><input type="checkbox" class="sw" id="waitChk"></div>
-        <div class="li"><div class="grow"><b>Treffer zählen</b><small>Genauigkeit & Sterne (Mikrofon)</small></div><input type="checkbox" class="sw" id="scoreChk"></div>
-        <div class="li"><div class="grow"><b>Erkennung über</b></div><select id="inputSel"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
-        <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sensR" min="1" max="10" step="1"><div class="meter" style="width:100%;margin-top:4px"><i id="lvl"></i></div><small id="micInfo">Mikrofon aus</small></div></div>
-      </div>
-      <div class="lbl">Anzeige</div>
-      <div class="list">
-        <div class="li"><div class="grow"><b>Vorschau</b><small>Wie weit du die Noten vorher siehst</small><input type="range" id="lookR" min="1" max="6" step="0.5"></div></div>
-        <div class="li"><div class="grow"><b>Notennamen</b></div><input type="checkbox" class="sw" id="namesChk"></div>
-        <div class="li"><div class="grow"><b>Alle 88 Tasten</b></div><input type="checkbox" class="sw" id="fullChk"></div>
-      </div>
+      <div class="mu xs" style="margin:12px 4px">Weitere Einstellungen (Empfindlichkeit, Notennamen, Tastatur) findest du in den allgemeinen Einstellungen.</div>
+      <div class="hidden"><div class="seg" id="handSeg" style="display:flex"><button data-h="L" style="flex:1">Links</button><button data-h="B" style="flex:1">Beide</button><button data-h="R" style="flex:1">Rechts</button></div>
+<div class="li"><div class="grow"><b>Meine Noten hörbar</b><small>App spielt deine Noten mit</small></div><input type="checkbox" class="sw" id="soundMine"></div>
+<div class="li"><div class="grow"><b>Lern-Modus</b><small>Der Song wartet, bis du richtig spielst</small></div><input type="checkbox" class="sw" id="waitChk"></div>
+<div class="li"><div class="grow"><b>Treffer zählen</b><small>Genauigkeit & Sterne (Mikrofon)</small></div><input type="checkbox" class="sw" id="scoreChk"></div>
+<div class="li"><div class="grow"><b>Erkennung über</b></div><select id="inputSel"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
+<div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sensR" min="1" max="10" step="1"><div class="meter" style="width:100%;margin-top:4px"><i id="lvl"></i></div><small id="micInfo">Mikrofon aus</small></div></div>
+<div class="li"><div class="grow"><b>Notennamen</b></div><input type="checkbox" class="sw" id="namesChk"></div>
+<div class="li"><div class="grow"><b>Alle 88 Tasten</b></div><input type="checkbox" class="sw" id="fullChk"></div>
+</div>
     </div>
   </div>
   <!-- section sheet -->
@@ -525,7 +526,7 @@ body.short #onbDots{margin:8px 0}
       </div>
     </div>
   </div>
-  <div class="ybar">
+  <div class="ybar hidden">
     <button class="ib play" id="yPlay" style="background:#fff;color:#0B0D12"><svg class="i" style="fill:#0B0D12;stroke:none" id="yPlayI"><use href="#i-play"/></svg></button>
     <button class="ib" id="yBackS" title="5 s zurück"><svg class="i"><use href="#i-rew"/></svg></button>
     <button class="ib" id="ySlower"><svg class="i"><use href="#i-minus"/></svg></button><span id="ySpeed" style="min-width:44px;text-align:center;font-weight:700;font-size:13px">100%</span><button class="ib" id="yFaster"><svg class="i"><use href="#i-plus"/></svg></button>
@@ -578,6 +579,15 @@ body.short #onbDots{margin:8px 0}
   <div style="display:flex;gap:8px"><button class="btn" id="scDiscard" style="flex:1">Verwerfen</button><button class="btn pri" id="scSave" style="flex:1.4">Speichern & üben</button></div></div>
 <!-- ===================== ADD SHEET (global) ===================== -->
 <div class="dim" id="gDim"></div>
+<div class="sheet" id="songMenu">
+  <div class="grab"></div>
+  <div class="sh"><b>Song bearbeiten</b><button class="ib" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="sb">
+    <div class="mu xs" style="font-weight:700;margin:4px 2px">NAME</div>
+    <input class="field" id="smName" maxlength="60">
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn danger" id="smDel" style="flex:1">Löschen</button><button class="btn pri" id="smSave" style="flex:1.4">Speichern</button></div>
+  </div>
+</div>
 <div class="sheet" id="addSheet">
   <div class="grab"></div>
   <div class="sh"><b>Song hinzufügen</b><button class="ib" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -594,7 +604,7 @@ body.short #onbDots{margin:8px 0}
       </div>
       <div class="search" style="margin:12px 0 0"><input id="ytUrl" placeholder="YouTube-Link einfügen"><button class="btn sm pri" id="ytAdd">Umwandeln</button></div>
       <div class="mu xs" style="margin-top:8px">Tipp: Kopiere den Link ab der Stelle, an der das Intro vorbei ist (YouTube → Teilen → „Beginnen bei …“). Davor wird alles übersprungen.</div>
-      <button class="btn sm ghost" id="ytJustAdd" style="margin-top:6px;padding-left:0;color:var(--mu)">Nur als Video ansehen</button>
+      <button class="hidden" id="ytJustAdd"></button>
     </div>
     <div class="mu sm" style="margin:14px 4px 0">MIDI-Dateien gibt es für fast jeden Song, z. B. auf <a href="https://musescore.com" target="_blank" style="color:var(--ac)">musescore.com</a>. Viele YouTube-Klavier-Videos verlinken die MIDI in der Beschreibung.</div>
   </div>
@@ -639,7 +649,7 @@ function ago(ts){if(!ts)return 'noch nie geübt';const d=Math.floor((Date.now()-
 const PAL={green:{n:'Grün',l:'#63E6A0',d:'#1E9E5A'},blue:{n:'Blau',l:'#74AAFF',d:'#2F64DA'},violet:{n:'Violett',l:'#BBA0FF',d:'#7048E8'},orange:{n:'Orange',l:'#FFB467',d:'#D9731F'},pink:{n:'Rosa',l:'#FF92C9',d:'#D33C8B'},cyan:{n:'Türkis',l:'#63E3E9',d:'#14999F'},yellow:{n:'Gelb',l:'#FFE070',d:'#C29E00'}};
 const KEYSETS={88:[21,108,'A0 – C8'],76:[28,103,'E1 – G7'],73:[28,100,'E1 – E7'],61:[36,96,'C2 – C7'],49:[36,84,'C2 – C6'],37:[48,84,'C3 – C6']};
 const S=Object.assign({layout:88,sound:true,speed:1,hand:'B',other:'show',soundMine:false,swap:false,wait:false,score:true,input:'mic',sens:6,names:true,full:false,look:2.5,reps:3,autoNext:false,speedUp:false,colL:'green',colR:'blue',goal:15},load('kt_settings')||{});
-if(S.speed>1)S.speed=1;
+if(S.speed>1)S.speed=1;S.input='mic';S.score=false;S.soundMine=false;
 const saveS=()=>save('kt_settings',S);
 const fmtSpeed=v=>(Math.round(v*100)/100).toLocaleString('de-DE')+'×';
 const KR=()=>KEYSETS[S.layout]||KEYSETS[88];
@@ -673,7 +683,7 @@ $('#dLand').onclick=()=>{deskMode='land';applyDesk()};$('#dPort').onclick=()=>{d
 
 /* ================= navigation ================= */
 let navStack=['home'];
-function show(id){$$('.toast').forEach(t=>t.remove());document.body.classList.toggle('inplayer',id==='player');for(const s of $$('.screen'))s.classList.add('hidden');$('#'+id).classList.remove('hidden');onResize()}
+function show(id){$('#app').scrollTop=0;$$('.toast').forEach(t=>t.remove());document.body.classList.toggle('inplayer',id==='player');for(const s of $$('.screen'))s.classList.add('hidden');$('#'+id).classList.remove('hidden');onResize()}
 function go(id){if(id==='calib')return openCal();navStack.push(id);show(id);if(id==='settings')renderSettings();if(id==='profile')renderProfile()}
 function back(){navStack.pop();const id=navStack[navStack.length-1]||'home';show(id);if(id==='home')renderHome()}
 document.addEventListener('click',e=>{
@@ -687,7 +697,7 @@ function setTab(t){tab=t;for(const b of $$('.tabbar button'))b.classList.toggle(
   $('#vStart').classList.toggle('hidden',t!=='start');$('#vSongs').classList.toggle('hidden',t!=='songs');$('#vStats').classList.toggle('hidden',t!=='stats');
   $('#homeScroll').scrollTop=0;renderHome()}
 function openSheet(id,dim){closeSheets();$(dim||'#gDim').classList.add('on');$(id).classList.add('on')}
-function closeSheets(){$$('.sheet.on,.dim.on').forEach(e=>e.classList.remove('on'))}
+function closeSheets(){$$('.sheet.on,.dim.on').forEach(e=>e.classList.remove('on'));$('#app').scrollTop=0;$('#app').scrollLeft=0}
 $('#gDim').onclick=closeSheets;
 
 /* ================= audio out ================= */
@@ -792,9 +802,9 @@ const saveLib=()=>{if(!save('kt_lib',LIB))toast('Speicher voll – Song nicht ge
 function songRow(it,opts={}){
   const s=ST.songs[it.id]||{};const sub=it.type==='yt'?'YouTube':(it.artist||'MIDI');
   const d=document.createElement('div');d.className='song';
-  d.innerHTML=`${coverHTML(it)}<div class="grow"><div class="ttl"></div><div class="meta"><span>${esc(sub)}</span>${it.type!=='yt'?starsHTML(s.stars||0):''}<span>${s.time?fmtMin(s.time):''}</span></div></div>${opts.del&&it.type!=='demo'?'<button class="ib del" title="Löschen"><svg class="i" style="color:var(--mu2)"><use href="#i-trash"/></svg></button>':''}`;
+  d.innerHTML=`${coverHTML(it)}<div class="grow"><div class="ttl"></div><div class="meta"><span>${esc(sub)}</span>${it.type!=='yt'?starsHTML(s.stars||0):''}<span>${s.time?fmtMin(s.time):''}</span></div></div>${opts.del&&it.type!=='demo'?'<button class="ib menu" title="Umbenennen oder löschen" style="font-size:20px;color:var(--mu)">⋯</button>':''}`;
   d.querySelector('.ttl').textContent=it.title;
-  d.onclick=e=>{const del=e.target.closest('.del');if(del){if(del.dataset.c){LIB=LIB.filter(x=>x.id!==it.id);saveLib();renderHome()}else{del.dataset.c=1;del.innerHTML='<span style="color:var(--bad);font-size:12px;font-weight:700">Löschen?</span>';setTimeout(()=>{if(del.isConnected){delete del.dataset.c;del.innerHTML='<svg class="i" style="color:var(--mu2)"><use href="#i-trash"/></svg>'}},2500)}return}openItem(it)};
+  d.onclick=e=>{if(e.target.closest('.menu')){openSongMenu(it);return}openItem(it)};
   return d;
 }
 let filt='all';
@@ -830,6 +840,10 @@ function renderHome(){
   if(tab==='stats')renderStats();
 }
 $('#q').oninput=renderHome;
+let smItem=null;
+function openSongMenu(it){smItem=it;$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
+$('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome()};
+$('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();renderHome();toast('Song gelöscht')};
 for(const b of $$('#filt button'))b.onclick=()=>{filt=b.dataset.f;$$('#filt button').forEach(x=>x.classList.toggle('on',x===b));renderHome()};
 function renderStats(){
   const total=Object.values(ST.days).reduce((a,b)=>a+b,0);
@@ -852,7 +866,7 @@ function renderStats(){
     d.querySelector('.ttl').textContent=it.title;d.onclick=()=>openItem(it);ss.appendChild(d)}
 }
 function openItem(it,resume){
-  if(it.type==='yt')return openYT(it);
+  if(it.type==='yt')return openYT(it,true); // videos are only converted into songs
   try{const s=it.type==='demo'?demoSong():songFromMidi(bufFromB64(it.data),it.title);openSong(s,it.id,resume)}catch(e){toast('Fehler: '+e.message)}
 }
 for(const b of $$('[data-add]'))b.onclick=()=>openSheet('#addSheet');
@@ -1078,7 +1092,8 @@ function openSong(s,id,resume){
   if(resume&&ST.last&&ST.last.id===id&&ST.last.am!=null&&ST.last.bm<=s.measures.length-1)setLoop(ST.last.am,ST.last.bm,true);
   ST.last={id,am:null,bm:null};stDirty=true;
   navStack.push('player');show('player');syncUI();pokeUI();try{audio();loadSamples()}catch(e){}
-  for(const b of $$('#modeModal [data-pick]'))b.classList.toggle('on',(b.dataset.pick==='learn')===S.wait);$('#pDim').classList.add('on');$('#modeModal').classList.add('on');
+  const sm=songStat(id).mode;if(sm){S.wait=sm==='learn';resetPointers(t);newPass();syncUI()}
+  else{for(const b of $$('#modeModal [data-pick]'))b.classList.toggle('on',(b.dataset.pick==='learn')===S.wait);$('#pDim').classList.add('on');$('#modeModal').classList.add('on')}
   $('#hint').textContent='Tippe auf die Noten zum Starten';
 }
 function applySwap(){for(const n of song.notes){n.hand=S.swap?(n.hand0==='R'?'L':'R'):n.hand0;if(n.midi0==null)n.midi0=n.midi;n.midi=foldKey(n.midi0)}}
@@ -1286,8 +1301,8 @@ const setHand=h=>{S.hand=h;buildGroups();newPass();syncUI();pokeUI()};
 $('#pHand').onclick=()=>setHand({B:'R',R:'L',L:'B'}[S.hand]);
 for(const b of $$('#handSeg button'))b.onclick=()=>setHand(b.dataset.h);
 for(const b of $$('#modeSeg button'))b.onclick=()=>setMode(b.dataset.m==='learn');
-for(const b of $$('#modeModal [data-pick]'))b.onclick=()=>{$('#modeModal').classList.remove('on');$('#pDim').classList.remove('on');const l=b.dataset.pick==='learn';if(S.wait!==l)setMode(l);else{syncUI();if(l)ensureInput()}};
-function setMode(learn){if(S.wait===learn)return;S.wait=learn;resetPointers(t);newPass();syncUI();pokeUI();if(learn)ensureInput()}
+for(const b of $$('#modeModal [data-pick]'))b.onclick=()=>{$('#modeModal').classList.remove('on');$('#pDim').classList.remove('on');const l=b.dataset.pick==='learn';if(songId){songStat(songId).mode=l?'learn':'play';stDirty=true}if(S.wait!==l)setMode(l);else{syncUI();if(l)ensureInput()}};
+function setMode(learn){if(songId){songStat(songId).mode=learn?'learn':'play';stDirty=true}if(S.wait===learn)return;S.wait=learn;resetPointers(t);newPass();syncUI();pokeUI();if(learn)ensureInput()}
 $('#pSet').onclick=()=>{openSheet('#setSheet','#pDim');pokeUI()};
 $('#pDim').onclick=()=>{if($('#modeModal').classList.contains('on'))return;closeSheets()};
 $('#pSound').onclick=()=>{S.sound=!S.sound;audio();if(S.sound)loadSamples();syncUI();pokeUI();toast(S.sound?'Klavierklang an':'Klavierklang aus',1200)};
@@ -1577,7 +1592,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 1.1 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 1.2 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
