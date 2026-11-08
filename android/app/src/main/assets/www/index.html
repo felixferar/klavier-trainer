@@ -160,6 +160,10 @@ body.wide .sheet .grab{display:none}
 .res3 b{display:block;font-size:18px}
 .res3 span{font-size:11px;color:var(--mu);font-weight:600}
 /* toast */
+.dotrec{width:10px;height:10px;border-radius:50%;background:#FF5D5D;animation:rec 1.2s infinite}@keyframes rec{50%{opacity:.3}}
+#scanOv{position:absolute;inset:0;z-index:20;background:rgba(7,9,13,.92);display:flex;align-items:center;justify-content:center;padding:12px}
+.scanbox{width:min(640px,100%);max-height:100%;overflow:auto;background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:14px}
+#scCv{width:100%;border-radius:10px;background:#000;touch-action:none;cursor:ns-resize;display:block}
 .toast{pointer-events:none;position:absolute;left:50%;top:64px;transform:translateX(-50%);background:rgba(28,32,42,.96);border:1px solid var(--bd2);padding:10px 16px;border-radius:14px;z-index:60;max-width:88%;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:tin .25s}
 body.inplayer .toast{top:34%;font-size:14px}
 @keyframes tin{from{opacity:0;transform:translate(-50%,-8px)}}
@@ -494,12 +498,32 @@ body.short #onbDots{margin:8px 0}
 <div id="yt" class="screen hidden">
   <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div></div>
   <div id="ytBox"><div id="ytFrame"></div><div id="ytMsg"></div></div>
+  <div id="scanBar" class="hidden" style="flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s1);border-top:1px solid var(--bd)">
+    <span class="dotrec"></span><span id="scanTxt" class="sm" style="flex:1;font-weight:600">Erkenne Noten …</span><button class="btn sm pri" id="scanStopBtn">Fertig</button></div>
+  <div id="scanOv" class="hidden">
+    <div class="scanbox">
+      <div style="display:flex;align-items:center"><b style="flex:1;font-size:16px">Noten aus dem Video erkennen</b><button class="ib" id="scClose"><svg class="i"><use href="#i-x"/></svg></button></div>
+      <div id="scStep1">
+        <div class="mu sm" style="margin:4px 0 8px">Halte das Video an einer Stelle an, an der die Tastatur gut zu sehen ist und gerade keine Taste leuchtet.</div>
+        <canvas id="scCv"></canvas>
+        <div class="sm" id="scMsg" style="margin:8px 0">…</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="mu sm">Oktave</span><div class="stp"><button id="scOctM">−</button><span id="scOct">0</span><button id="scOctP">+</button></div>
+          <button class="btn sm" id="scRetake">Neues Standbild</button><span style="flex:1"></span><button class="btn sm pri" id="scNext">Weiter</button></div>
+      </div>
+      <div id="scStep2" class="hidden">
+        <div class="mu sm" style="margin:6px 0 10px">Das Video läuft jetzt in normaler Geschwindigkeit ab dem Startpunkt durch. Lass das Handy in Ruhe, bis das Video vorbei ist – oder tippe auf „Fertig“.</div>
+        <div class="list"><div class="li"><div class="grow"><b>Start bei</b><small>Alles davor (z. B. Kanal-Intro) wird übersprungen</small></div><span id="scStart" class="chip" data-v="0">0:00</span></div>
+          <div class="li"><div class="grow"><b>Startpunkt</b></div><button class="btn sm" id="scUseNow">Aktuelle Stelle</button><button class="btn sm" id="scUseLink">Aus dem Link</button></div></div>
+        <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="scBack" style="flex:1">Zurück</button><button class="btn pri" id="scGo" style="flex:1.5">Scan starten</button></div>
+      </div>
+    </div>
+  </div>
   <div class="ybar">
     <button class="ib play" id="yPlay" style="background:#fff;color:#0B0D12"><svg class="i" style="fill:#0B0D12;stroke:none" id="yPlayI"><use href="#i-play"/></svg></button>
     <button class="ib" id="yBackS" title="5 s zurück"><svg class="i"><use href="#i-rew"/></svg></button>
     <button class="ib" id="ySlower"><svg class="i"><use href="#i-minus"/></svg></button><span id="ySpeed" style="min-width:44px;text-align:center;font-weight:700;font-size:13px">100%</span><button class="ib" id="yFaster"><svg class="i"><use href="#i-plus"/></svg></button>
     <span class="sep" style="width:1px;height:24px;background:var(--bd2);margin:0 4px"></span>
-    <button class="btn sm" id="yA">A</button><button class="btn sm" id="yB">B</button><button class="btn sm ghost" id="yOff">Loop aus</button><button class="btn sm ghost hidden" id="yCap" title="Test: kann die App das Video abfotografieren?">Bild-Test</button>
+    <button class="btn sm" id="yA">A</button><button class="btn sm" id="yB">B</button><button class="btn sm ghost" id="yOff">Loop aus</button><button class="btn sm pri" id="yScan">🎹 Noten erkennen</button><button class="btn sm ghost hidden" id="yCap" title="Test: kann die App das Video abfotografieren?">Bild-Test</button>
     <span class="mu sm" style="margin-left:6px">Wdh.</span><div class="stp"><button id="yRepM">−</button><span id="yRep">0</span><button id="yRepP">+</button></div>
     <label class="mu sm" style="display:flex;align-items:center;gap:6px;margin-left:6px;white-space:nowrap"><input type="checkbox" class="sw" id="yNext">dann weiter</label>
     <span id="yInfo" class="mu sm" style="white-space:nowrap;margin-left:6px"></span>
@@ -542,6 +566,9 @@ body.short #onbDots{margin:8px 0}
   <div class="calbtns" style="width:min(420px,100%)"><button class="btn ghost" id="onbSkip" style="flex:1">Überspringen</button><button class="btn pri" id="onbNext" style="flex:1.4">Weiter</button></div>
 </div>
 
+<div class="modal" id="scanDone"><div style="font-size:30px">🎹</div><div style="font-size:18px;font-weight:800;margin:4px 0">Song erstellt</div>
+  <div class="mu sm" id="scDoneTxt"></div><input class="field" id="scName" placeholder="Name des Songs" style="margin:14px 0">
+  <div style="display:flex;gap:8px"><button class="btn" id="scDiscard" style="flex:1">Verwerfen</button><button class="btn pri" id="scSave" style="flex:1.4">Speichern & üben</button></div></div>
 <!-- ===================== ADD SHEET (global) ===================== -->
 <div class="dim" id="gDim"></div>
 <div class="sheet" id="addSheet">
@@ -828,9 +855,10 @@ $('#midiFile').onchange=async e=>{
     LIB.unshift(it);saveLib();closeSheets();openSong(s,it.id);
   }catch(err){toast('Konnte Datei nicht lesen: '+err.message,4000)}
 };
+function ytIdStart(u){return ytStartFromUrl(u)}
 function ytId(u){u=u.trim();const m=u.match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([A-Za-z0-9_-]{11})/);if(m)return m[1];if(/^[A-Za-z0-9_-]{11}$/.test(u))return u;return null}
 $('#ytAdd').onclick=()=>{const id=ytId($('#ytUrl').value);if(!id){toast('Das ist kein YouTube-Link');return}
-  const it={id:'y'+Date.now(),type:'yt',title:'YouTube-Video',videoId:id};LIB.unshift(it);saveLib();$('#ytUrl').value='';closeSheets();openYT(it)};
+  const it={id:'y'+Date.now(),type:'yt',title:'YouTube-Video',videoId:id,start:ytIdStart($('#ytUrl').value)};LIB.unshift(it);saveLib();$('#ytUrl').value='';closeSheets();openYT(it)};
 
 /* ================= microphone & listening ================= */
 const BLO=21,BHI=120,NB=BHI-BLO+1;
@@ -1224,7 +1252,7 @@ $('#pHand').onclick=()=>setHand({B:'R',R:'L',L:'B'}[S.hand]);
 for(const b of $$('#handSeg button'))b.onclick=()=>setHand(b.dataset.h);
 for(const b of $$('#modeSeg button'))b.onclick=()=>setMode(b.dataset.m==='learn');
 for(const b of $$('#modeModal [data-pick]'))b.onclick=()=>{$('#modeModal').classList.remove('on');$('#pDim').classList.remove('on');const l=b.dataset.pick==='learn';if(S.wait!==l)setMode(l);else{syncUI();if(l)ensureInput()}};
-function setMode(learn){if(S.wait===learn)return;S.wait=learn;resetPointers(t);newPass();syncUI();pokeUI();if(learn){ensureInput();toast('Üben',900)}else toast('Abspielen',900)}
+function setMode(learn){if(S.wait===learn)return;S.wait=learn;resetPointers(t);newPass();syncUI();pokeUI();if(learn)ensureInput()}
 $('#pSet').onclick=()=>{openSheet('#setSheet','#pDim');pokeUI()};
 $('#pDim').onclick=()=>{if($('#modeModal').classList.contains('on'))return;closeSheets()};
 $('#pSound').onclick=()=>{S.sound=!S.sound;audio();if(S.sound)loadSamples();syncUI();pokeUI();toast(S.sound?'Klavierklang an':'Klavierklang aus',1200)};
@@ -1271,13 +1299,13 @@ cv.addEventListener('pointerdown',e=>{
   const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
   if(y<hitY){if($('#player').classList.contains('idle')&&!playing){pokeUI();return}setPlaying(!playing);return}
   let hit=null;for(const pb of [true,false])for(let m=keyLo;m<=keyHi;m++){const k=KX[m];if(!k||k.b!==pb||hit!==null)continue;const h=k.b?kbH*0.62:kbH;if(x>=k.x&&x<k.x+k.w&&y<=hitY+h)hit=m}
-  if(hit!==null)userPress(hit,true);
+  if(hit!==null)userPress(hit,false);
 });
 const KMAP={a:60,w:61,s:62,e:63,d:64,f:65,t:66,g:67,z:68,y:68,h:69,u:70,j:71,k:72,o:73,l:74};
 window.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||$('#player').classList.contains('hidden'))return;
   if(e.code==='Space'){e.preventDefault();setPlaying(!playing);return}
-  const m=KMAP[e.key.toLowerCase()];if(m&&!e.repeat)userPress(m,true);
+  const m=KMAP[e.key.toLowerCase()];if(m&&!e.repeat)userPress(m,false);
 });
 
 /* ================= YouTube ================= */
@@ -1289,7 +1317,7 @@ function openYT(it){
   const make=()=>{
     if(ytp){try{ytp.destroy()}catch(e){}ytp=null}
     if(!$('#ytFrame')){const f=document.createElement('div');f.id='ytFrame';$('#ytBox').prepend(f)}
-    ytp=new YT.Player('ytFrame',{videoId:it.videoId,playerVars:{playsinline:1,rel:0,modestbranding:1},events:{
+    ytp=new YT.Player('ytFrame',{videoId:it.videoId,playerVars:{playsinline:1,rel:0,modestbranding:1,start:Math.floor(it.start||0)},events:{
       onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;saveLib()}}catch(e){}},
       onStateChange:e=>{ytPlaying=e.data===1;ytLast=performance.now();$('#yPlayI').innerHTML=`<use href="#i-${ytPlaying?'pause':'play'}"/>`;keepAwake(ytPlaying)},
       onError:()=>{$('#ytMsg').textContent='Dieses Video lässt sich nicht einbetten.'}}});
@@ -1311,7 +1339,7 @@ function ytPoll(){
 }
 const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function ytInfo(){$('#ySpeed').textContent=Math.round(ytRate*100)+'%';$('#yRep').textContent=ytReps||'∞';$('#yInfo').textContent=ytLoop?`${fmt(ytLoop.a)} – ${ytLoop.b!=null?fmt(ytLoop.b):'…'}`:'';$('#yA').classList.toggle('pri',!!ytLoop);$('#yB').classList.toggle('pri',!!(ytLoop&&ytLoop.b!=null))}
-$('#yBack').onclick=()=>{clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
+$('#yBack').onclick=()=>{if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}$('#scanOv').classList.add('hidden');$('#scanBar').classList.add('hidden');clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
 $('#yPlay').onclick=()=>{if(!ytp||!ytp.getPlayerState)return;ytp.getPlayerState()===1?ytp.pauseVideo():ytp.playVideo()};
 $('#yBackS').onclick=()=>{if(ytp&&ytp.getCurrentTime)ytp.seekTo(Math.max(0,ytp.getCurrentTime()-5),true)};
 const ySetRate=r=>{ytRate=clamp(Math.round(r*100)/100,0.25,2);if(ytp&&ytp.setPlaybackRate){ytp.setPlaybackRate(ytRate);setTimeout(()=>{try{ytRate=ytp.getPlaybackRate();ytInfo()}catch(e){}},400)}ytInfo()};
@@ -1319,6 +1347,15 @@ $('#ySlower').onclick=()=>ySetRate(ytRate-0.05);$('#yFaster').onclick=()=>ySetRa
 $('#yRepM').onclick=()=>{ytReps=Math.max(0,ytReps-1);ytInfo()};$('#yRepP').onclick=()=>{ytReps=Math.min(99,ytReps+1);ytInfo()};
 $('#yA').onclick=()=>{if(!ytp||!ytp.getCurrentTime)return;ytLoop={a:ytp.getCurrentTime(),b:null,count:0};ytInfo();toast('A gesetzt – am Ende des Abschnitts B drücken')};
 $('#yB').onclick=()=>{if(!ytp||!ytLoop)return toast('Erst A setzen');const b=ytp.getCurrentTime();if(b<=ytLoop.a+0.3)return toast('B muss nach A liegen');ytLoop.b=b;ytLoop.count=0;ytp.seekTo(ytLoop.a,true);ytInfo()};
+$('#yScan').onclick=scanSetup;$('#scClose').onclick=()=>{$('#scanOv').classList.add('hidden')};$('#scRetake').onclick=scanSetup;
+$('#scOctM').onclick=()=>{scanOct=Math.max(-3,scanOct-1);$('#scOct').textContent=scanOct;drawScanPreview()};$('#scOctP').onclick=()=>{scanOct=Math.min(3,scanOct+1);$('#scOct').textContent=scanOct;drawScanPreview()};
+$('#scCv').addEventListener('pointerdown',e=>{scanDrag(e);const mv=ev=>scanDrag(ev),up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};addEventListener('pointermove',mv);addEventListener('pointerup',up)});
+const setScStart=v=>{$('#scStart').dataset.v=v;$('#scStart').textContent=fmt(v)};
+$('#scNext').onclick=()=>{$('#scStep1').classList.add('hidden');$('#scStep2').classList.remove('hidden');setScStart(ytItem&&ytItem.start?ytItem.start:(ytp&&ytp.getCurrentTime?ytp.getCurrentTime():0))};
+$('#scUseNow').onclick=()=>{try{setScStart(ytp.getCurrentTime())}catch(e){}};$('#scUseLink').onclick=()=>setScStart(ytItem&&ytItem.start||0);
+$('#scBack').onclick=()=>{$('#scStep2').classList.add('hidden');$('#scStep1').classList.remove('hidden')};
+$('#scGo').onclick=scanRun;$('#scanStopBtn').onclick=scanStop;$('#scSave').onclick=scanSave;
+$('#scDiscard').onclick=()=>{$('#scanDone').classList.remove('on');$('#gDim').classList.remove('on');SCAN.result=null};
 $('#yOff').onclick=()=>{ytLoop=null;ytInfo()};
 
 /* ================= onboarding (first start) ================= */
@@ -1497,7 +1534,7 @@ $('#reloadBtn').onclick=()=>location.reload();
 /* ================= Native bridge (App ≥ 0.5) ================= */
 const NAT={ok:typeof KTNative!=='undefined',info:null,wait:{}};
 function nat(cmd,extra,resp){return new Promise(res=>{if(!NAT.ok)return res(null);NAT.wait[resp||cmd]=res;KTNative.postMessage(JSON.stringify(Object.assign({cmd},extra||{})))})}
-if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
+if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(m.cmd==='rows'){scanFrame(m);return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
@@ -1552,6 +1589,195 @@ $('#wipeBtn').onclick=()=>{const b=$('#wipeBtn');if(!b.dataset.c){b.dataset.c=1;
   try{window.removeEventListener('pagehide',flushOnHide)}catch(e){}stDirty=false;try{localStorage.clear()}catch(e){}try{sessionStorage.clear()}catch(e){}
   try{if(window.indexedDB&&indexedDB.databases)indexedDB.databases().then(ds=>ds.forEach(d=>indexedDB.deleteDatabase(d.name)))}catch(e){}
   setTimeout(()=>location.reload(),150)};
+
+/* ================= Video → Noten (Synthesia-Videos) ================= */
+// 1) Standbild: Tastatur im Video finden  2) Video läuft, App liest 2 Pixelzeilen ~25×/s  3) leuchtende Tasten → Noten → MIDI-Song
+function ytStartFromUrl(u){const m=String(u).match(/[?&#](?:t|start)=([0-9hms.]+)/);if(!m)return 0;const v=m[1];if(/^[\d.]+$/.test(v))return +v;
+  let s=0;const h=v.match(/(\d+)h/),mi=v.match(/(\d+)m/),se=v.match(/(\d+)s/);if(h)s+=3600*h[1];if(mi)s+=60*mi[1];if(se)s+=+se[1];return s}
+const lum=(r,g,b)=>0.299*r+0.587*g+0.114*b;
+function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;if(d){if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360}return [h,mx?d/mx:0,mx]}
+// --- find the keyboard rows in a still image (ImageData of the video area)
+function findKeyboardRows(img){
+  const {width:W,height:H,data}=img,L=y=>{const a=new Float32Array(W);for(let x=0;x<W;x++){const i=(y*W+x)*4;a[x]=lum(data[i],data[i+1],data[i+2])}return a};
+  let best=null;
+  for(let y=Math.floor(H*0.35);y<H-2;y+=1){const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);if(mx<120)continue;const thr=mx*0.55;
+    let segs=0,inDark=false,start=0,wsum=0,bright=0;const wl=[];for(let x=0;x<W;x++){const d=a[x]<thr;if(d&&!inDark){inDark=true;start=x}else if(!d&&inDark){inDark=false;const w=x-start;if(w>=2&&w<W/20)wl.push(w)}if(!d)bright++}
+    if(wl.length){wl.sort((p,q)=>p-q);const wide=wl[Math.floor(wl.length*0.9)];segs=wl.filter(w=>w>=Math.max(2,wide*0.45)).length}
+    const score=segs*(bright/W>0.45?1:0);if(segs>=10&&(!best||score>best.score))best={y,score,segs}}
+  if(!best)return null;
+  // row B: a bit below the black keys, where (almost) everything is white
+  let yB=null;for(let y=best.y+2;y<H;y++){const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);let br=0;for(const v of a)if(v>mx*0.6)br++;if(br/W>0.85){yB=y;let y2=y;while(y2+1<H){const b=L(y2+1);let c=0;for(const v of b)if(v>mx*0.6)c++;if(c/W>0.85)y2++;else break}yB=Math.round((y+y2)/2);break}}
+  // row A: middle of the black keys
+  let yA0=best.y,yA1=best.y;const segsAt=y=>{const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);let s=0,d0=false;for(let x=0;x<W;x++){const d=a[x]<mx*0.55;if(d&&!d0)s++;d0=d}return s};
+  while(yA0>0&&segsAt(yA0-1)>=best.segs*0.8)yA0--;while(yA1<H-1&&segsAt(yA1+1)>=best.segs*0.8)yA1++;
+  const yA=Math.round(yA0+(yA1-yA0)*0.55);
+  let yT=yA0;{const a=L(yA0);let mx=0;for(const v of a)mx=Math.max(mx,v);for(let y=yA0-1;y>0;y--){const b=L(y);let br=0;for(const v of b)if(v>mx*0.6)br++;if(br/W>0.5)yT=y;else break}}
+  const yC=Math.max(0,yT-Math.max(3,Math.round(H*0.02)));
+  return {yC:yC/(H-1),yA:yA/(H-1),yB:(yB==null?Math.min(H-1,yA1+Math.round((yA1-yA0)*0.5)):yB)/(H-1)};
+}
+const WHITE_PC=[0,2,4,5,7,9,11],isWhitePC=pc=>WHITE_PC.includes(pc);
+const whiteIndex=m=>{const o=Math.floor(m/12),pc=m%12;let w=o*7;for(const p of WHITE_PC)if(p<pc)w++;return w}; // number of white keys below m
+// --- from the black-key row: positions of all keys (fraction 0..1 of the width)
+function detectKeys(img,yAf){
+  const {width:W,height:H,data}=img,y=Math.round(yAf*(H-1));const a=new Float32Array(W);let mx=0;
+  for(let x=0;x<W;x++){const i=(y*W+x)*4;a[x]=lum(data[i],data[i+1],data[i+2]);mx=Math.max(mx,a[x])}
+  const thr=mx*0.55,segs=[];let inD=false,st=0;
+  for(let x=0;x<=W;x++){const d=x<W&&a[x]<thr;if(d&&!inD){inD=true;st=x}else if(!d&&inD){inD=false;const w=x-st;if(w>=2&&w<W/20&&st>0&&x<W)segs.push([(st+x-1)/2,w])}}
+  if(segs.length<5)return null;const ws=segs.map(q=>q[1]).sort((p,q)=>p-q),wide=ws[Math.floor(ws.length*0.9)];
+  const blacks=segs.filter(q=>q[1]>=Math.max(2,wide*0.45)).map(q=>q[0]); // thin lines between white keys are not black keys
+  if(blacks.length<5)return null;
+  const gaps=[];for(let i=1;i<blacks.length;i++)gaps.push(blacks[i]-blacks[i-1]);
+  const sorted=gaps.slice().sort((p,q)=>p-q),wEst=sorted[Math.floor(sorted.length*0.3)];
+  // classify gaps: ~1 white key (inside a group) or ~2 white keys (between groups)
+  const big=gaps.map(g=>g>wEst*1.5);
+  // groups of consecutive black keys
+  const groups=[];let cur=[0];for(let i=0;i<gaps.length;i++){if(big[i]){groups.push(cur);cur=[i+1]}else cur.push(i+1)}groups.push(cur);
+  // anchor: first group of 2 black keys = C#,D# (or a group of 3 = F#,G#,A#)
+  let anchor=null;const inner=groups.length>2?groups.slice(1,-1):groups;for(const g of inner){if(g.length===2){anchor={idx:g[0],m:25};break}if(g.length===3){anchor={idx:g[0],m:30};break}} // provisional octave, corrected below
+  if(!anchor)return null;
+  // every black key sits on a boundary between two white keys: boundary index relative to the anchor
+  const wiToMidi=[];for(let m=0;m<128;m++)if(isWhitePC(m%12))wiToMidi[whiteIndex(m)]=m;
+  const ba=whiteIndex(anchor.m),xa=blacks[anchor.idx],pts=[];
+  for(let i=0;i<blacks.length;i++){const b=ba+Math.round((blacks[i]-xa)/wEst);const below=wiToMidi[b-1];if(below==null)continue;const m=below+1;if(isWhitePC(m%12))continue;pts.push([whiteIndex(m),blacks[i]])}
+  if(pts.length<5)return null;
+  let sx=0,sy=0,sxx=0,sxy=0;const n=pts.length;
+  for(const [X,Y] of pts){sx+=X;sy+=Y;sxx+=X*X;sxy+=X*Y}
+  const w=(n*sxy-sx*sy)/(n*sxx-sx*sx),x0=(sy-w*sx)/n;
+  if(!(w>2))return null;
+  // shift octave so that the visible range looks like a real piano
+  const xOf=m=>isWhitePC(m%12)?x0+w*(whiteIndex(m)+0.5):x0+w*whiteIndex(m);
+  let lo=null,hi=null;for(let m=0;m<=127;m++){const x=xOf(m);if(x>=w*0.3&&x<=W-w*0.3){if(lo===null)lo=m;hi=m}}
+  const whitesVisible=W/w;let shift=0;
+  if(whitesVisible>48){shift=21-lo;}else{const mid=(lo+hi)/2;shift=Math.round((62-mid)/12)*12}
+  return {x0,w,shift,W,lo,hi,xOf};
+}
+function keyLayout(det,octave){ // → [{m,x (0..1),black}]
+  const keys=[];const sh=det.shift+12*octave;
+  for(let m=det.lo;m<=det.hi;m++){const mm=m+sh;if(mm<21||mm>108)continue;keys.push({m:mm,x:det.xOf(m)/det.W,black:!isWhitePC(m%12)})}
+  return keys;
+}
+// --- the scan itself
+const SCAN={on:false,keys:null,rest:null,state:null,events:[],t0:0,start:0,frames:0,lastVt:0,vtMap:[]};
+function scanFrame(msg){
+  if(!SCAN.on||!SCAN.keys)return;
+  const raw=atob(msg.d),w=msg.w,n=msg.n;const px=(r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]};
+  let vt=0;try{vt=ytp.getCurrentTime()}catch(e){}
+  // video time for this frame (smoothed): native time → video time
+  SCAN.vtMap.push([msg.t,vt]);if(SCAN.vtMap.length>40)SCAN.vtMap.shift();
+  let f=vt;if(SCAN.vtMap.length>5){const a=SCAN.vtMap;let mt=0,mv=0;for(const [x,y] of a){mt+=x;mv+=y}mt/=a.length;mv/=a.length;f=mv+(msg.t-mt)/1000*(ytRate||1)}
+  if(f<SCAN.start-0.05)return;
+  const tt=f-SCAN.start;SCAN.frames++;
+  const first=!SCAN.rest;if(first){SCAN.rest=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[]}))}
+  for(let k=0;k<SCAN.keys.length;k++){const key=SCAN.keys[k],row=key.black?0:1,cx=Math.round(key.x*(w-1));
+    let r=0,g=0,b=0,c=0;for(let dx=-1;dx<=1;dx++){const x=Math.min(w-1,Math.max(0,cx+dx));const p=px(row,x);r+=p[0];g+=p[1];b+=p[2];c++}r/=c;g/=c;b/=c;
+    if(first){SCAN.rest[k]=key.rest||[r,g,b];SCAN.state[k]={on:false,cnt:0,off:0,start:0,hue:[]}}
+    const re=SCAN.rest[k],dist=Math.hypot(r-re[0],g-re[1],b-re[2]),[h,sat,val]=rgb2hsv(r,g,b);
+    const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));
+    if(n>=3){const lp=px(2,cx),[,ls,lv]=rgb2hsv(lp[0],lp[1],lp[2]),ln=SCAN.lane[k],occ=ls>0.3&&lv>0.3;
+      if(occ){ln.cnt++;if(!ln.on&&ln.cnt>=1){ln.on=true;ln.ons.push(tt)}}else{ln.cnt=0;ln.on=false}}
+    const st=SCAN.state[k];
+    if(pressed){st.off=0;st.cnt++;if(!st.on&&st.cnt===1)st.start=tt;if(!st.on&&st.cnt>=2){st.on=true;st.hue=[]}if(st.on&&sat>0.25)st.hue.push(h)}
+    else{st.cnt=0;if(st.on){st.off++;if(st.off===1)st.end=tt;if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue)})}}
+      else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
+  }
+  SCAN.lastVt=tt;
+}
+function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
+function finishScan(){
+  for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)SCAN.events.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue)})}
+  let ev=SCAN.events.filter(e=>e.end-e.start>=0.04).sort((a,b)=>a.start-b.start);
+  // split repeated notes: a new falling bar reached the keys while the key still looked pressed
+  if(SCAN.lane){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i]));const ds=[];
+    for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons;let best=null;for(const o of ons)if(o<=e.start+0.05&&o>=e.start-2.5)best=o;if(best!==null)ds.push(e.start-best)}
+    ds.sort((a,b)=>a-b);const d=ds.length>=3?ds[ds.length>>1]:null;
+    if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+d).filter(x=>x>e.start+0.08&&x<e.end-0.05);
+      let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
+  // hands by colour: two hue clusters, the lower-pitched one = left hand
+  const hs=ev.filter(e=>e.hue!=null);let c1=0,c2=180;
+  if(hs.length>=4){for(let it=0;it<12;it++){const A=[],B=[];for(const e of hs){(hueDist(e.hue,c1)<=hueDist(e.hue,c2)?A:B).push(e.hue)}if(A.length)c1=circMean(A);if(B.length)c2=circMean(B)}}
+  const grp=e=>e.hue==null?null:(hueDist(e.hue,c1)<=hueDist(e.hue,c2)?1:2);
+  const avg=g=>{const a=ev.filter(e=>grp(e)===g);return a.length?a.reduce((s,e)=>s+e.m,0)/a.length:60};
+  const twoHands=hs.length>=4&&hueDist(c1,c2)>35&&ev.filter(e=>grp(e)===1).length>0&&ev.filter(e=>grp(e)===2).length>0;
+  const leftG=avg(1)<avg(2)?1:2;
+  return ev.map(e=>({m:e.m,start:e.start,dur:Math.max(0.05,e.end-e.start),hand:twoHands&&grp(e)!=null?(grp(e)===leftG?'L':'R'):(e.m<60?'L':'R')}));
+}
+const hueDist=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d};
+// --- MIDI writer (2 tracks: right / left hand)
+function writeMidi(notes){
+  const ppq=480,tps=ppq*2; // 120 bpm → 960 ticks per second
+  const vlq=n=>{const b=[n&0x7f];n>>=7;while(n){b.unshift((n&0x7f)|0x80);n>>=7}return b};
+  const str=s=>[...s].map(c=>c.charCodeAt(0)&255);
+  const u32=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255],u16=n=>[(n>>8)&255,n&255];
+  const track=(name,ev)=>{const out=[0,0xFF,0x03,...vlq(name.length),...str(name)];let last=0;
+    ev.sort((a,b)=>a.t-b.t||a.on-b.on);for(const e of ev){out.push(...vlq(e.t-last));last=e.t;out.push(e.on?0x90:0x80,e.m,e.on?90:0)}
+    out.push(0,0xFF,0x2F,0);return [...str('MTrk'),...u32(out.length),...out]};
+  const tempo=[...str('MTrk'),...u32(11),0,0xFF,0x51,3,0x07,0xA1,0x20,0,0xFF,0x2F,0];
+  const evs=h=>notes.filter(n=>n.hand===h).flatMap(n=>{const s=Math.round(n.start*tps),e=Math.max(s+10,Math.round((n.start+n.dur)*tps));return [{t:s,on:1,m:n.m},{t:e,on:0,m:n.m}]});
+  const bytes=[...str('MThd'),...u32(6),...u16(1),...u16(3),...u16(ppq),...tempo,...track('Right',evs('R')),...track('Left',evs('L'))];
+  return new Uint8Array(bytes).buffer;
+}
+// --- UI
+let scanDet=null,scanImg=null,scanRows={yA:0.8,yB:0.92},scanOct=0,scanBox=null;
+async function scanSetup(){
+  if(!NAT.ok){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren)',4500);return}
+  if(!ytp||!ytp.getCurrentTime){toast('Video lädt noch …');return}
+  try{ytp.pauseVideo()}catch(e){}
+  scanOct=0;const ov=$('#scanOv');ov.classList.remove('hidden');$('#scStep1').classList.remove('hidden');$('#scStep2').classList.add('hidden');$('#scMsg').textContent='Mache ein Standbild …';
+  await new Promise(r=>setTimeout(r,350));
+  const box=$('#ytBox').getBoundingClientRect();scanBox={x:box.left,y:box.top,w:box.width,h:box.height};
+  ov.style.visibility='hidden';const m=await nat('capture');ov.style.visibility='';
+  if(!m||!m.ok){$('#scMsg').textContent='Standbild ging nicht'+(m&&m.error?': '+m.error:'');return}
+  const img=new Image();img.onload=()=>{const k=img.width/innerWidth,c=document.createElement('canvas');c.width=Math.max(1,Math.round(box.width*k));c.height=Math.max(1,Math.round(box.height*k));
+    const x=c.getContext('2d');x.drawImage(img,-box.left*k,-box.top*k);scanImg=x.getImageData(0,0,c.width,c.height);
+    let s=0;for(let i=0;i<scanImg.data.length;i+=64)s+=scanImg.data[i]+scanImg.data[i+1]+scanImg.data[i+2];
+    if(s/(scanImg.data.length/64)<15){$('#scMsg').textContent='Das Video ist auf dem Standbild schwarz – Android lässt die App das Video nicht „sehen“. Sag mir Bescheid, dann baue ich die Bildschirmaufnahme ein.';drawScanPreview();return}
+    const rows=findKeyboardRows(scanImg);if(rows)scanRows=rows;scanDetect();};img.src=m.img;
+}
+function scanDetect(){
+  scanDet=scanImg?detectKeys(scanImg,scanRows.yA):null;
+  $('#scMsg').innerHTML=scanDet?'Tastatur gefunden. Stimmen die <b>C</b>-Markierungen? Sonst die Linien verschieben oder die Oktave ändern.':'Keine Tastatur gefunden. Schieb die <b>obere Linie</b> durch die schwarzen Tasten und die <b>untere</b> durch die weißen.';
+  $('#scNext').disabled=!scanDet;drawScanPreview();
+}
+function drawScanPreview(){
+  const cv=$('#scCv');if(!scanImg)return;const W=scanImg.width,H=scanImg.height;cv.width=W;cv.height=H;const c=cv.getContext('2d');c.putImageData(scanImg,0,0);
+  const lw=Math.max(2,W/300);
+  for(const [f,col] of [[scanRows.yA,'#FFC94D'],[scanRows.yB,'#7C9CFF'],[scanRows.yC,'rgba(255,255,255,.5)']]){if(f==null)continue;c.fillStyle=col;c.fillRect(0,f*(H-1)-lw/2,W,lw)}
+  if(scanDet){for(const k of keyLayout(scanDet,scanOct)){const x=k.x*W;if(k.m%12===0){c.fillStyle='#FF5D5D';c.fillRect(x-lw/2,scanRows.yB*(H-1)-H*0.06,lw,H*0.12);c.font=`800 ${Math.max(11,W/45)}px Inter,system-ui`;c.textAlign='center';c.fillStyle='#FF5D5D';c.fillText('C'+(Math.floor(k.m/12)-1),x,scanRows.yA*(H-1)-H*0.03)}}}
+}
+function scanDrag(e){const cv=$('#scCv'),r=cv.getBoundingClientRect(),f=clamp((e.clientY-r.top)/r.height,0,1);
+  const which=Math.abs(f-scanRows.yA)<Math.abs(f-scanRows.yB)?'yA':'yB';scanRows[which]=f;if(which==='yA')scanRows.yC=Math.max(0,f-0.06);scanDetect()}
+async function scanRun(){
+  const keys=keyLayout(scanDet,scanOct);if(!keys.length){toast('Keine Tasten');return}
+  // resting colour of each key from the still image
+  const W=scanImg.width,H=scanImg.height,d=scanImg.data;
+  for(const k of keys){const y=Math.round((k.black?scanRows.yA:scanRows.yB)*(H-1)),x=Math.round(k.x*(W-1));let r=0,g=0,b=0,c=0;for(let dx=-2;dx<=2;dx++){const i=(y*W+Math.min(W-1,Math.max(0,x+dx)))*4;r+=d[i];g+=d[i+1];b+=d[i+2];c++}k.rest=[r/c,g/c,b/c]}
+  Object.assign(SCAN,{on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0});
+  SCAN.start=+$('#scStart').dataset.v||0;
+  $('#scanOv').classList.add('hidden');$('#scanBar').classList.remove('hidden');
+  try{ytp.setPlaybackRate(1);ytRate=1}catch(e){}
+  ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo();
+  const box=$('#ytBox').getBoundingClientRect();
+  const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08)],ow:480,interval:40},'scanStarted');
+  if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
+  SCAN.timer=setInterval(()=>{$('#scanTxt').textContent=`Erkenne Noten … ${fmt(Math.max(0,SCAN.lastVt))} · ${SCAN.events.length} Noten`;
+    try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}},300);
+}
+function scanStop(){
+  if(!SCAN.on)return;SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop');try{ytp.pauseVideo()}catch(e){}
+  $('#scanBar').classList.add('hidden');const notes=finishScan();
+  if(notes.length<4){toast('Es wurden kaum Noten erkannt. Prüfe die Linien und versuch es nochmal.',4500);return}
+  const L=notes.filter(n=>n.hand==='L').length;
+  $('#scDoneTxt').textContent=`${notes.length} Noten erkannt (${notes.length-L} rechts, ${L} links) · ${fmt(Math.max(...notes.map(n=>n.start+n.dur)))} Min`;
+  $('#scName').value=(ytItem&&ytItem.title&&ytItem.title!=='YouTube-Video'?ytItem.title:'Song aus Video').slice(0,60);
+  SCAN.result=notes;$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
+}
+function scanSave(){
+  const notes=SCAN.result;if(!notes)return;const title=$('#scName').value.trim()||'Song aus Video';
+  const buf=writeMidi(notes);let s;try{s=songFromMidi(buf,title)}catch(e){toast('Fehler: '+e.message);return}
+  const it={id:'m'+Date.now(),type:'midi',title,artist:'Aus YouTube-Video',data:b64FromBuf(buf)};LIB.unshift(it);saveLib();
+  $('#scanDone').classList.remove('on');$('#gDim').classList.remove('on');SCAN.result=null;
+  if(ytp){try{ytp.destroy()}catch(e){}ytp=null}clearInterval(ytTimer);navStack.pop();openSong(s,it.id);
+}
 
 /* ================= Android back button ================= */
 window.appBack=function(){

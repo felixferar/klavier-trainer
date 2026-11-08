@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Base64;
 import android.view.PixelCopy;
 import android.view.View;
@@ -36,6 +37,7 @@ import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
@@ -359,6 +361,12 @@ public class MainActivity extends Activity {
                 case "capture":
                     capture();
                     break;
+                case "scanStart":
+                    startScan(m);
+                    break;
+                case "scanStop":
+                    scanning = false;
+                    break;
             }
         } catch (Exception e) {
             sendError("unknown", e);
@@ -409,6 +417,85 @@ public class MainActivity extends Activity {
                 }
             }).start();
         }, new Handler(Looper.getMainLooper()));
+    }
+
+    // ---------------------------------------------------------------- Video → Noten: Bildzeilen-Scanner
+    // Fotografiert ~25× pro Sekunde den Videobereich (verkleinert) und schickt nur einzelne Pixelzeilen
+    // (durch die schwarzen und die weißen Tasten der Video-Tastatur) an die Web-App.
+    private volatile boolean scanning = false;
+    private boolean scanBusy = false;
+    private Bitmap scanBmp;
+    private Rect scanRect;
+    private int[] scanRows;
+    private int scanInterval = 40;
+    private final Handler scanHandler = new Handler(Looper.getMainLooper());
+
+    private void startScan(JSONObject m) throws Exception {
+        float d = getResources().getDisplayMetrics().density;
+        int[] loc = new int[2];
+        web.getLocationInWindow(loc);
+        int x = loc[0] + Math.round((float) m.getDouble("x") * d), y = loc[1] + Math.round((float) m.getDouble("y") * d);
+        int w = Math.max(1, Math.round((float) m.getDouble("w") * d)), h = Math.max(1, Math.round((float) m.getDouble("h") * d));
+        scanRect = new Rect(x, y, x + w, y + h);
+        int ow = Math.max(64, Math.min(640, m.optInt("ow", 480)));
+        int oh = Math.max(8, Math.round(ow * (float) h / w));
+        scanBmp = Bitmap.createBitmap(ow, oh, Bitmap.Config.ARGB_8888);
+        JSONArray rows = m.getJSONArray("rows");
+        scanRows = new int[rows.length()];
+        for (int i = 0; i < rows.length(); i++)
+            scanRows[i] = Math.max(0, Math.min(oh - 1, (int) Math.round(rows.getDouble(i) * (oh - 1))));
+        scanInterval = Math.max(20, m.optInt("interval", 40));
+        scanBusy = false;
+        if (!scanning) { scanning = true; scanHandler.post(scanTick); }
+        JSONObject o = new JSONObject();
+        o.put("cmd", "scanStarted");
+        o.put("ok", true);
+        o.put("w", ow);
+        send(o);
+    }
+
+    private final Runnable scanTick = new Runnable() {
+        @Override
+        public void run() {
+            if (!scanning) return;
+            if (!scanBusy && scanBmp != null) {
+                scanBusy = true;
+                final long t = SystemClock.uptimeMillis();
+                try {
+                    PixelCopy.request(getWindow(), scanRect, scanBmp, res -> {
+                        scanBusy = false;
+                        if (res == PixelCopy.SUCCESS && scanning) sendRows(t);
+                    }, scanHandler);
+                } catch (Exception e) {
+                    scanBusy = false;
+                }
+            }
+            scanHandler.postDelayed(this, scanInterval);
+        }
+    };
+
+    private void sendRows(long t) {
+        try {
+            int ow = scanBmp.getWidth();
+            int[] px = new int[ow];
+            byte[] out = new byte[ow * 3 * scanRows.length];
+            int k = 0;
+            for (int r : scanRows) {
+                scanBmp.getPixels(px, 0, ow, 0, r, ow, 1);
+                for (int p : px) {
+                    out[k++] = (byte) ((p >> 16) & 255);
+                    out[k++] = (byte) ((p >> 8) & 255);
+                    out[k++] = (byte) (p & 255);
+                }
+            }
+            JSONObject j = new JSONObject();
+            j.put("cmd", "rows");
+            j.put("t", t);
+            j.put("w", ow);
+            j.put("n", scanRows.length);
+            j.put("d", Base64.encodeToString(out, Base64.NO_WRAP));
+            send(j);
+        } catch (Exception ignored) {}
     }
 
     // ---------------------------------------------------------------- System
@@ -494,7 +581,7 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onPause() { super.onPause(); web.onPause(); }
+    protected void onPause() { super.onPause(); scanning = false; web.onPause(); }
 
     @Override
     protected void onResume() { super.onResume(); web.onResume(); hideSystemBars(); }
