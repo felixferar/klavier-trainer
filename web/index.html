@@ -801,6 +801,7 @@ function diffBands(X,before){const D=new Float32Array(NB);for(let i=0;i<NB;i++){
 const levelOf=rms=>clamp((20*Math.log10(rms+1e-9)+62)/44,0,1);
 
 // key templates: synthetic default, replaced by the calibrated sound of the user's piano
+if(load('kt_cal_v')!==2){save('kt_cal',{});save('kt_cal_v',2)} // old calibrations used a different method
 let CAL=load('kt_cal')||{};const tplCache=new Map(),synthCache=new Map();
 function normTpl(t){let s=0;for(const v of t)s+=v*v;s=Math.sqrt(s)||1;const o=new Float32Array(t.length);let sum=0;for(let i=0;i<t.length;i++){o[i]=t[i]/s;sum+=o[i]}o.sum=sum;return o}
 function synthTpl(m){if(synthCache.has(m))return synthCache.get(m);const t=new Float32Array(NB);
