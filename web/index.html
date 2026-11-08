@@ -160,6 +160,7 @@ body.wide .sheet .grab{display:none}
 .res3 b{display:block;font-size:18px}
 .res3 span{font-size:11px;color:var(--mu);font-weight:600}
 /* toast */
+.conv .ybar,.conv .topbar .ib,.conv #scanBar{display:none!important}
 .dotrec{width:10px;height:10px;border-radius:50%;background:#FF5D5D;animation:rec 1.2s infinite}@keyframes rec{50%{opacity:.3}}
 #scanOv{position:absolute;inset:0;z-index:20;background:rgba(7,9,13,.92);display:flex;align-items:center;justify-content:center;padding:12px}
 .scanbox{width:min(640px,100%);max-height:100%;overflow:auto;background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:14px}
@@ -396,7 +397,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Backup laden</b><small id="impInfo">Ersetzt alle Daten auf diesem Gerät</small></div><button class="btn sm" id="impBtn">Laden</button><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
       <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.0</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.1</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -497,7 +498,13 @@ body.short #onbDots{margin:8px 0}
 <!-- ===================== YOUTUBE ===================== -->
 <div id="yt" class="screen hidden">
   <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div></div>
-  <div id="ytBox"><div id="ytFrame"></div><div id="ytMsg"></div></div>
+  <div id="ytBox"><div id="ytFrame"></div><div id="ytMsg"></div><div id="ytBlock" class="hidden" style="position:absolute;inset:0;z-index:5;background:transparent"></div></div>
+  <div id="convPanel" class="hidden" style="flex:none;padding:16px 18px 20px;background:var(--s1);border-top:1px solid var(--bd);text-align:center">
+    <div style="font-weight:800;font-size:17px" id="convTitle">Song wird erstellt …</div>
+    <div class="mu sm" id="convSub" style="margin:4px 0 12px">Bitte warten, bis 100 % erreicht sind. Leg das Handy so lange einfach hin.</div>
+    <div style="height:10px;background:var(--s3);border-radius:6px;overflow:hidden"><i id="convBar" style="display:block;height:100%;width:0;background:var(--ac);transition:width .3s"></i></div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px" class="mu xs"><span id="convInfo">–</span><b id="convPct" style="color:var(--tx);font-size:14px">0 %</b></div>
+  </div>
   <div id="scanBar" class="hidden" style="flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s1);border-top:1px solid var(--bd)">
     <span class="dotrec"></span><span id="scanTxt" class="sm" style="flex:1;font-weight:600">Erkenne Noten …</span><button class="btn sm pri" id="scanStopBtn">Fertig</button></div>
   <div id="scanOv" class="hidden">
@@ -874,17 +881,33 @@ async function startMic(){
   const src=ac.createMediaStreamSource(stream);
   const an=ac.createAnalyser();an.fftSize=32768;an.smoothingTimeConstant=0;src.connect(an);
   const anS=ac.createAnalyser();anS.fftSize=2048;anS.smoothingTimeConstant=0;src.connect(anS);
+  const anM=ac.createAnalyser();anM.fftSize=8192;anM.smoothingTimeConstant=0;src.connect(anM);
   const sink=ac.createGain();sink.gain.value=0;anS.connect(sink);sink.connect(ac.destination);
   const sr=ac.sampleRate,bw=sr/an.fftSize,lo=new Int32Array(NB),hi=new Int32Array(NB);
   for(let b=0;b<NB;b++){const f=mtof(BLO+b);lo[b]=Math.max(1,Math.round(f*0.97153/bw));hi[b]=Math.min(an.frequencyBinCount-1,Math.max(lo[b],Math.round(f*1.0293/bw)))}
-  mic={stream,an,anS,fbuf:new Float32Array(an.frequencyBinCount),sF:new Float32Array(anS.frequencyBinCount),sPrev:null,tbuf:new Float32Array(anS.fftSize),sr,lo,hi,
+  mic={stream,an,anS,anM,fM:new Float32Array(anM.frequencyBinCount),fbuf:new Float32Array(an.frequencyBinCount),sF:new Float32Array(anS.frequencyBinCount),sPrev:null,tbuf:new Float32Array(anS.fftSize),sr,lo,hi,
        fluxN:Math.min(anS.frequencyBinCount-1,Math.round(6500/(sr/anS.fftSize)))};
   micFailed=false;LS.hist=[];LS.started=performance.now();return mic;
 }
 function micBands(){const f=mic.fbuf;mic.an.getFloatFrequencyData(f);const out=new Float32Array(NB);
   for(let b=0;b<NB;b++){let mx=-Infinity;for(let k=mic.lo[b];k<=mic.hi[b];k++)if(f[k]>mx)mx=f[k];out[b]=isFinite(mx)?Math.pow(10,mx/20):0}return out}
 // Listener: level, onset (new key struck, via spectral flux) and the semitone spectrum
-const LS={hist:[],lastOn:0,fluxAvg:1,noise:0.002,started:0,fbRing:[],fbT:0,rmsHist:[],nf:0};
+// fast spectrum (linear power up to 6 kHz) + short history
+function fastFrame(now){const m=mic;m.anM.getFloatFrequencyData(m.fM);const bw=m.sr/8192,n=Math.min(m.fM.length,Math.round(6000/bw));
+  const P=LS.fpRing.length>=36?LS.fpRing.shift().P:new Float32Array(n);let s=0;for(let k=0;k<n;k++){P[k]=Math.pow(10,m.fM[k]/10);s+=P[k]}LS.fpRing.push({t:now,P,avg:s/n});LS.fp=LS.fpRing[LS.fpRing.length-1]}
+function fastAt(ms,now){let r=null;for(const e of LS.fpRing)if(e.t<=now-ms)r=e;return r}
+// is key m NEW in the sound (compared with an earlier moment)? checks the expected partials vs. their neighbours
+function presence(m,Pn,Pb,avg){const bw=mic.sr/8192,f0=mtof(m);let cnt=0,av=0,odd=false,str=0;
+  const pk=(P,f)=>{const lo=Math.max(1,Math.floor(f*0.985/bw)),hi=Math.min(P.length-1,Math.ceil(f*1.02/bw));let v=0;for(let k=lo;k<=hi;k++)if(P[k]>v)v=P[k];return v};
+  const med=(P,f)=>{const a=[];for(const c of [0.93,0.95,1.05,1.07]){const k=Math.round(f*c/bw);if(k>0&&k<P.length)a.push(P[k])}a.sort((x,y)=>x-y);return (a[1]+a[2])/2||1e-13};
+  for(let h=1;h<=8;h++){const f=f0*h;if(f<75)continue;if(f*1.08>=bw*Pn.length)break;av++;
+    const a=pk(Pn,f),r=a/(pk(Pb,f)+1e-13);
+    const nb=Math.max(pk(Pn,f*0.9439)/(pk(Pb,f*0.9439)+1e-13),pk(Pn,f*1.0595)/(pk(Pb,f*1.0595)+1e-13));
+    const sharp=a>=(f<300?3:5)*med(Pn,f); // a real partial is a sharp peak, speech/noise is smeared
+    if(r>=2.2&&r>=(m<40||f<250?1.1:1.5)*nb&&a>avg*4&&sharp){cnt++;str+=a;if(h%2===1)odd=true}if(av>=6)break}
+  const need=av>=4?3:Math.min(2,av);
+  return {cnt,av,str,ok:av>0&&cnt>=need&&odd}}
+const LS={fpRing:[],fp:null,hist:[],lastOn:0,fluxAvg:1,noise:0.002,started:0,fbRing:[],fbT:0,rmsHist:[],nf:0};
 function fineBefore(ms,now){let r=null;for(const e of LS.fbRing)if(e.t<=now-ms)r=e;return r?r.f.slice():null}
 function listen(now){
   const m=mic,t=m.tbuf;m.anS.getFloatTimeDomainData(t);let s=0;for(let i=0;i<t.length;i++)s+=t[i]*t[i];const rms=Math.sqrt(s/t.length);
@@ -892,14 +915,14 @@ function listen(now){
   if(m.sPrev){for(let k=2;k<=m.fluxN;k++){const d=Math.max(m.sF[k],-110)-Math.max(m.sPrev[k],-110);if(d>0)fl+=Math.min(d,30)}fl/=(m.fluxN-1)}
   else m.sPrev=new Float32Array(m.sF.length);
   m.sPrev.set(m.sF);
-  const X=micBands();
+  const X=micBands();fastFrame(now);
   if(!LS.fbT||now-LS.fbT>=40){LS.fbT=now;const c=LS.fbRing.length>=7?LS.fbRing.shift().f:new Float32Array(mic.fbuf.length);c.set(mic.fbuf);LS.fbRing.push({t:now,f:c})}
   LS.hist.push({t:now,X});while(LS.hist.length>2&&now-LS.hist[0].t>900)LS.hist.shift();
   // background level = quietest moment of the last ~10 s (does not creep up while playing)
   if(++LS.nf%6===0||LS.rmsHist.length<20){LS.rmsHist.push(rms);if(LS.rmsHist.length>100)LS.rmsHist.shift();let mn=1;for(const v of LS.rmsHist)if(v<mn)mn=v;LS.noise=Math.max(0.0003,mn)}
   // second detector: new partials appearing in the semitone spectrum (catches soft/low notes over a ringing note)
   let bandOn=false;{let ref=null;for(const h of LS.hist)if(h.t<=now-120)ref=h;
-    if(ref){let mx=0;for(let i=0;i<NB;i++)if(X[i]>mx)mx=X[i];const fl2=mx*0.03;let cnt=0;for(let i=0;i<NB;i++)if(X[i]>fl2&&X[i]>ref.X[i]*2.2)cnt++;bandOn=cnt>=2}}
+    if(ref){let mx=0;for(let i=0;i<NB;i++)if(X[i]>mx)mx=X[i];const fl2=mx*0.03;let cnt=0;for(let i=0;i<NB;i++)if(X[i]>fl2&&X[i]>ref.X[i]*1.8)cnt++;bandOn=cnt>=2}}
   let onset=null;const thr=Math.max(2.2,LS.fluxAvg*2.4),ok=now-LS.started>600&&rms>Math.max(LS.noise*1.3,0.0004);
   if(ok&&fl>thr&&now-LS.lastOn>110){LS.lastOn=now;let before=LS.hist[0].X;for(const h of LS.hist)if(h.t<=now-45)before=h.X;onset={t:now,before,fb:fineBefore(45,now)}}
   else if(ok&&bandOn&&now-LS.lastOn>300){LS.lastOn=now;let before=LS.hist[0].X;for(const h of LS.hist)if(h.t<=now-220)before=h.X;onset={t:now-100,before,fb:fineBefore(220,now)}}
@@ -997,7 +1020,16 @@ function bestGuess(D){let best=-1,bs=0;for(let m=KR()[0];m<=KR()[1];m++){const T
   if(best<0)return -1;const e=evidence(best,D,new Set(),tpl);return e.tonal>1.8&&e.oct?best:-1}
 // detection while playing: (1) right after each key strike, (2) continuously against the sound when the notes arrived
 const det={win:null};
+function detectFast(g,now){
+  if(!LS.fp)return;const Pn=LS.fp.P,avg=LS.fp.avg;
+  if(!g.fbase){const b=fastAt(500,now);g.fbase=b?b.P.slice():null;g.fcnt={}}
+  const roll=fastAt(160,now);
+  for(const n of g.notes){if(n.hit)continue;const m=n.midi;
+    const ok=(g.fbase&&presence(m,Pn,g.fbase,avg).ok)||(roll&&presence(m,Pn,roll.P,avg).ok);
+    if(ok){g.fcnt[m]=(g.fcnt[m]||0)+1;if(g.fcnt[m]>=3)markHit(m)}else g.fcnt[m]=0}
+}
 function detectStep(g,R,now){
+  detectFast(g,now);
   if(R.onset)det.win={t0:R.onset.t,before:R.onset.before,fb:R.onset.fb,pk:0,cnt:{}};
   if(det.win&&now<det.win.t0+150)det.win.pk=Math.max(det.win.pk,R.rms);
   if(!g.base){let b=LS.hist[0];for(const h of LS.hist)if(h.t<=now-700)b=h;g.base=b.X.slice();const fb=fineBefore(700,now);g.fb=fb||mic.fbuf.slice();g.cnt={};g.t0=now} // baseline from before you could have struck the note (held notes count)
@@ -1059,7 +1091,7 @@ function calcRange(){
   keyLo=Math.max(KL,lo);keyHi=Math.min(KH,hi);
 }
 function buildGroups(){groups=[];for(const n of song.notes.filter(isActive)){const g=groups[groups.length-1];if(g&&n.start-g.start<0.06)g.notes.push(n);else groups.push({start:n.start,notes:[n],wait:0})}resetPointers(t)}
-function resetPointers(from){for(const n of song.notes)n.hit=false;for(const g of groups){g.wait=0;g.base=null}gi=lowerBound(groups,from-0.001,g=>g.start);soundIdx=lowerBound(song.notes,from-0.001,n=>n.start);det.win=null}
+function resetPointers(from){for(const n of song.notes)n.hit=false;for(const g of groups){g.wait=0;g.base=null;g.fbase=null}gi=lowerBound(groups,from-0.001,g=>g.start);soundIdx=lowerBound(song.notes,from-0.001,n=>n.start);det.win=null}
 function newPass(){pass={p:0,g:0,m:0}}
 function markHit(m){const g=groups[gi];if(!g)return;for(const n of g.notes)if(n.midi===m&&!n.hit){n.hit=true;pressFlash.set(m,performance.now())}}
 function userPress(m,sound){if(sound)playTone(m,0.6);const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);if(song&&listening()&&groups[gi]&&t>=groups[gi].start-0.4*Math.max(S.speed,.3))markHit(m)}
@@ -1343,7 +1375,7 @@ function ytPoll(){
 }
 const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function ytInfo(){$('#ySpeed').textContent=Math.round(ytRate*100)+'%';$('#yRep').textContent=ytReps||'∞';$('#yInfo').textContent=ytLoop?`${fmt(ytLoop.a)} – ${ytLoop.b!=null?fmt(ytLoop.b):'…'}`:'';$('#yA').classList.toggle('pri',!!ytLoop);$('#yB').classList.toggle('pri',!!(ytLoop&&ytLoop.b!=null))}
-$('#yBack').onclick=()=>{if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}$('#scanOv').classList.add('hidden');$('#scanBar').classList.add('hidden');clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
+$('#yBack').onclick=()=>{convUI(false);ytAuto=false;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}$('#scanOv').classList.add('hidden');$('#scanBar').classList.add('hidden');clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
 $('#yPlay').onclick=()=>{if(!ytp||!ytp.getPlayerState)return;ytp.getPlayerState()===1?ytp.pauseVideo():ytp.playVideo()};
 $('#yBackS').onclick=()=>{if(ytp&&ytp.getCurrentTime)ytp.seekTo(Math.max(0,ytp.getCurrentTime()-5),true)};
 const ySetRate=r=>{ytRate=clamp(Math.round(r*100)/100,0.25,2);if(ytp&&ytp.setPlaybackRate){ytp.setPlaybackRate(ytRate);setTimeout(()=>{try{ytRate=ytp.getPlaybackRate();ytInfo()}catch(e){}},400)}ytInfo()};
@@ -1421,14 +1453,17 @@ function calTick(now){
   const R=listen(now);$('#calLvl').style.width=(levelOf(R.rms)*100).toFixed(0)+'%';
   if(CQ.state==='warm'){if(now-CQ.t0>900){CQ.state='listen';setCalMsg('Spiel die blaue Taste einmal kräftig an','')}return}
   if(CQ.state==='ok'){if(now>CQ.okUntil)calAdvance();return}
-  if(CQ.state==='listen'){if(R.onset){CQ.state='capture';CQ.on=R.onset;CQ.acc=new Float32Array(NB);CQ.n=0;CQ.acc2=null;CQ.n2=0;CQ.pk=0;CQ.Pmid=null}return}
+  if(CQ.state==='listen'){if(R.onset){CQ.state='capture';CQ.on=R.onset;CQ.acc=new Float32Array(NB);CQ.n=0;CQ.acc2=null;CQ.n2=0;CQ.pk=0;CQ.Pmid=null;CQ.fb0=null;CQ.fast=0;CQ.fstr=0}return}
   if(CQ.state==='capture'){
     const dt=now-CQ.on.t;
     if(R.onset&&dt<200){CQ.on=R.onset;CQ.acc.fill(0);CQ.n=0;CQ.acc2=null;CQ.n2=0;return}
-    CQ.pk=Math.max(CQ.pk||0,dt<200?R.rms:0);if(dt>=410&&!CQ.Pmid)CQ.Pmid=fineDiff(CQ.on.fb);
-    if(dt>=260){const D=diffBands(R.X,CQ.on.before);const half=dt<410?CQ.acc:(CQ.acc2||(CQ.acc2=new Float32Array(NB)));
-      for(let i=0;i<NB;i++)half[i]+=D[i]*D[i];if(dt<410)CQ.n++;else CQ.n2=(CQ.n2||0)+1;CQ.xs=R.X}
-    if(dt>=560){
+    CQ.pk=Math.max(CQ.pk||0,dt<200?R.rms:0);if(dt>=300&&!CQ.Pmid)CQ.Pmid=fineDiff(CQ.on.fb);
+    if(dt>=130&&dt<300&&LS.fp){const m0=curKey(),fb=CQ.fb0||(CQ.fb0=(fastAt(dt+60,now)||{}).P);
+      if(fb){const pr=presence(m0,LS.fp.P,fb,LS.fp.avg),wrongNb=[m0-1,m0+1,m0-2,m0+2].some(c=>c>=21&&c<=108&&presence(c,LS.fp.P,fb,LS.fp.avg).cnt>pr.cnt);
+        if(pr.ok&&(pr.cnt>=3||(m0>96&&pr.cnt>=pr.av))&&!wrongNb&&R.rms>LS.noise*2&&(!CQ.fstr||pr.str<=CQ.fstr*1.1)){CQ.fstr=pr.str;CQ.fast=(CQ.fast||0)+1;if(CQ.fast>=3){const D=diffBands(R.X,CQ.on.before);CQ.lastD=D;saveKey(m0,D);CQ.state='ok';CQ.okUntil=now+350;ringState('ok');setCalMsg(`✓ ${noteTxt(m0)} erkannt und gespeichert`,'ok');CQ.fast=0;CQ.fb0=null;showDbg(m0,{ok:true,cj:{own:'-',nb:'-',odd:'-',sub:'-'},b:null,sp:[pr.cnt,pr.av],sus:true});calUI();return}}else{CQ.fast=0;CQ.fstr=0}}}
+    if(dt>=180){const D=diffBands(R.X,CQ.on.before);const half=dt<300?CQ.acc:(CQ.acc2||(CQ.acc2=new Float32Array(NB)));
+      for(let i=0;i<NB;i++)half[i]+=D[i]*D[i];if(dt<300)CQ.n++;else CQ.n2=(CQ.n2||0)+1;CQ.xs=R.X}
+    if(dt>=420){CQ.fb0=null;CQ.fast=0;
       const m=curKey(),A=new Float32Array(NB),B=new Float32Array(NB),D=new Float32Array(NB);
       for(let i=0;i<NB;i++){A[i]=Math.sqrt(CQ.acc[i]/Math.max(1,CQ.n));B[i]=Math.sqrt((CQ.acc2?CQ.acc2[i]:0)/Math.max(1,CQ.n2||0));D[i]=Math.sqrt((A[i]*A[i]+B[i]*B[i])/2)}
       CQ.acc2=null;CQ.n2=0;
@@ -1437,7 +1472,7 @@ function calTick(now){
       CQ.lastD=D;
       const sustain=m>=72?(R.rms>=0.05*(CQ.pk||1)&&R.rms>LS.noise*1.5):(R.rms>=0.1*(CQ.pk||1)&&R.rms>LS.noise*2);
       const v=judgeCal(m,A,B,fineDiff(CQ.on.fb),CQ.Pmid,sustain);CQ.Pmid=null;CQ.pk=0;CQ.dbg=v;showDbg(m,v);
-      if(v.ok){saveKey(m,D);CQ.state='ok';CQ.okUntil=now+650;ringState('ok');setCalMsg(`✓ ${noteTxt(m)} erkannt und gespeichert`,'ok');try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}calUI()}
+      if(v.ok){saveKey(m,D);CQ.state='ok';CQ.okUntil=now+350;ringState('ok');setCalMsg(`✓ ${noteTxt(m)} erkannt und gespeichert`,'ok');try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}calUI()}
       else{CQ.att++;CQ.state='listen';ringState('bad');
         setCalMsg(v.heard!=null?`Gehört: ${NAMES[v.heard%12]}${v.heard>m+6?' (zu hoch)':v.heard<m-6?' (zu tief)':''} – gesucht ist ${NAMES[m%12]}`:`Kein klarer Klavierton – spiel die blaue Taste nochmal`,'bad');
         $('#cForce').classList.toggle('hidden',CQ.att<(m<40?2:3));if(m<40&&CQ.att===2)toast('Tiefe Töne hört ein Handy schlecht. Leg es näher an die tiefen Saiten oder speichere trotzdem.',4500)}
@@ -1542,7 +1577,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 1.0 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 1.1 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1672,11 +1707,12 @@ function scanFrame(msg){
   if(f<SCAN.start-0.05)return;
   const tt=f-SCAN.start;SCAN.frames++;
   const first=!SCAN.rest;if(first){SCAN.rest=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[]}))}
+  let nPressed=0;
   for(let k=0;k<SCAN.keys.length;k++){const key=SCAN.keys[k],row=key.black?0:1,cx=Math.round(key.x*(w-1));
     let r=0,g=0,b=0,c=0;for(let dx=-1;dx<=1;dx++){const x=Math.min(w-1,Math.max(0,cx+dx));const p=px(row,x);r+=p[0];g+=p[1];b+=p[2];c++}r/=c;g/=c;b/=c;
     if(first){SCAN.rest[k]=key.rest||[r,g,b];SCAN.state[k]={on:false,cnt:0,off:0,start:0,hue:[]}}
     const re=SCAN.rest[k],dist=Math.hypot(r-re[0],g-re[1],b-re[2]),[h,sat,val]=rgb2hsv(r,g,b);
-    const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));
+    const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));if(dist>45)nPressed++;
     if(n>=3){const lp=px(2,cx),[,ls,lv]=rgb2hsv(lp[0],lp[1],lp[2]),ln=SCAN.lane[k],occ=ls>0.3&&lv>0.3;
       if(occ){ln.cnt++;if(!ln.on&&ln.cnt>=1){ln.on=true;ln.ons.push(tt)}}else{ln.cnt=0;ln.on=false}}
     const st=SCAN.state[k];
@@ -1685,11 +1721,16 @@ function scanFrame(msg){
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
   SCAN.lastVt=tt;
+  // more than ~40 % of all keys look different at the same time → the keyboard is gone (end screen / outro)
+  if(nPressed>SCAN.keys.length*0.25){if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene>=3&&SCAN.on&&SCAN.cut==null){SCAN.cut=SCAN.sceneT-0.3;setTimeout(()=>{if(SCAN.on)scanStop()},0)}}else SCAN.scene=0;
 }
 function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
 function finishScan(){
   for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)SCAN.events.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue)})}
   let ev=SCAN.events.filter(e=>e.end-e.start>=0.04).sort((a,b)=>a.start-b.start);
+  if(SCAN.cut!=null)ev=ev.filter(e=>e.start<SCAN.cut).map(e=>({...e,end:Math.min(e.end,SCAN.cut)}));
+  // outro: drop everything after a long pause at the very end (≥ 4 s and less than 10 % of the notes)
+  for(let i=ev.length-1;i>0;i--){const gap=ev[i].start-Math.max(...ev.slice(0,i).map(e=>e.end));if(gap>=4&&ev.length-i<=Math.max(3,ev.length*0.1)){ev=ev.slice(0,i);break}}
   // split repeated notes: a new falling bar reached the keys while the key still looked pressed
   if(SCAN.lane){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i]));const ds=[];
     for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons;let best=null;for(const o of ons)if(o<=e.start+0.05&&o>=e.start-2.5)best=o;if(best!==null)ds.push(e.start-best)}
@@ -1703,7 +1744,9 @@ function finishScan(){
   const avg=g=>{const a=ev.filter(e=>grp(e)===g);return a.length?a.reduce((s,e)=>s+e.m,0)/a.length:60};
   const twoHands=hs.length>=4&&hueDist(c1,c2)>35&&ev.filter(e=>grp(e)===1).length>0&&ev.filter(e=>grp(e)===2).length>0;
   const leftG=avg(1)<avg(2)?1:2;
-  return ev.map(e=>({m:e.m,start:e.start,dur:Math.max(0.05,e.end-e.start),hand:twoHands&&grp(e)!=null?(grp(e)===leftG?'L':'R'):(e.m<60?'L':'R')}));
+  // intro: the first note starts after 1 s
+  const off=ev.length?Math.max(0,Math.min(...ev.map(e=>e.start))-1):0;
+  return ev.map(e=>({m:e.m,start:e.start-off,dur:Math.max(0.05,e.end-e.start),hand:twoHands&&grp(e)!=null?(grp(e)===leftG?'L':'R'):(e.m<60?'L':'R')}));
 }
 const hueDist=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d};
 // --- MIDI writer (2 tracks: right / left hand)
@@ -1729,13 +1772,13 @@ async function scanSetup(auto){
   scanOct=0;const ov=$('#scanOv');ov.classList.remove('hidden');$('#scStep1').classList.remove('hidden');$('#scStep2').classList.add('hidden');$('#scMsg').textContent='Mache ein Standbild …';
   await new Promise(r=>setTimeout(r,350));
   const box=$('#ytBox').getBoundingClientRect();scanBox={x:box.left,y:box.top,w:box.width,h:box.height};
-  ov.style.visibility='hidden';const m=await nat('capture');ov.style.visibility='';
+  ov.style.visibility='hidden';const m=await nat('capture');ov.style.visibility=auto?'hidden':'';
   if(!m||!m.ok){$('#scMsg').textContent='Standbild ging nicht'+(m&&m.error?': '+m.error:'');return}
   const img=new Image();img.onload=()=>{const k=img.width/innerWidth,c=document.createElement('canvas');c.width=Math.max(1,Math.round(box.width*k));c.height=Math.max(1,Math.round(box.height*k));
     const x=c.getContext('2d');x.drawImage(img,-box.left*k,-box.top*k);scanImg=x.getImageData(0,0,c.width,c.height);
     let s=0;for(let i=0;i<scanImg.data.length;i+=64)s+=scanImg.data[i]+scanImg.data[i+1]+scanImg.data[i+2];
     if(s/(scanImg.data.length/64)<15){$('#scMsg').textContent='Das Video ist auf dem Standbild schwarz – Android lässt die App das Video nicht „sehen“. Sag mir Bescheid, dann baue ich die Bildschirmaufnahme ein.';drawScanPreview();return}
-    const rows=findKeyboardRows(scanImg);if(rows)scanRows=rows;scanDetect();if(auto&&ytAuto&&scanDet)setTimeout(scanAutoGo,700);else if(auto)ytAuto=false};img.src=m.img;
+    const rows=findKeyboardRows(scanImg);if(rows)scanRows=rows;scanDetect();if(auto&&ytAuto&&scanDet)setTimeout(scanAutoGo,500);else if(auto){ytAuto=false;convUI(false);$('#scanOv').style.visibility='';toast('Die Tastatur wurde nicht automatisch gefunden – bitte die Linien einstellen.',4500)}};img.src=m.img;
 }
 function scanDetect(){
   scanDet=scanImg?detectKeys(scanImg,scanRows.yA):null;
@@ -1755,26 +1798,26 @@ async function scanRun(){
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   for(const k of keys){const y=Math.round((k.black?scanRows.yA:scanRows.yB)*(H-1)),x=Math.round(k.x*(W-1));let r=0,g=0,b=0,c=0;for(let dx=-2;dx<=2;dx++){const i=(y*W+Math.min(W-1,Math.max(0,x+dx)))*4;r+=d[i];g+=d[i+1];b+=d[i+2];c++}k.rest=[r/c,g/c,b/c]}
-  Object.assign(SCAN,{on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0});
+  Object.assign(SCAN,{on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null});
   SCAN.start=+$('#scStart').dataset.v||0;
-  $('#scanOv').classList.add('hidden');$('#scanBar').classList.remove('hidden');
+  $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{ytp.setPlaybackRate(1);ytRate=1}catch(e){}
   ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo();
   const box=$('#ytBox').getBoundingClientRect();
   const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08)],ow:480,interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
   let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}
-  SCAN.timer=setInterval(()=>{const p=dur>0?Math.min(100,Math.round(SCAN.lastVt/dur*100)):null;$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`;
+  SCAN.timer=setInterval(()=>{const p=dur>0?Math.min(100,Math.round(SCAN.lastVt/dur*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`;
     try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}},300);
 }
 function scanStop(){
   if(!SCAN.on)return;SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop');try{ytp.pauseVideo()}catch(e){}
   $('#scanBar').classList.add('hidden');const notes=finishScan();
-  if(notes.length<4){toast('Es wurden kaum Noten erkannt. Prüfe die Linien und versuch es nochmal.',4500);return}
+  if(notes.length<4){if(ytAuto){ytAuto=false;convUI(false)}toast('Es wurden kaum Noten erkannt. Prüfe die Linien und versuch es nochmal.',4500);return}
   const L=notes.filter(n=>n.hand==='L').length;
   $('#scDoneTxt').textContent=`${notes.length} Noten erkannt (${notes.length-L} rechts, ${L} links) · ${fmt(Math.max(...notes.map(n=>n.start+n.dur)))} Min`;
   $('#scName').value=(ytItem&&ytItem.title&&ytItem.title!=='YouTube-Video'?ytItem.title:'Song aus Video').slice(0,60);
-  SCAN.result=notes;if(ytAuto){ytAuto=false;scanSave(true);return}$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
+  SCAN.result=notes;if(ytAuto){ytAuto=false;convProgress(100,'Fertig');setTimeout(()=>{convUI(false);scanSave(true)},500);return}$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
 }
 function scanSave(auto){
   const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
@@ -1787,18 +1830,19 @@ function scanSave(auto){
 }
 
 /* ================= YouTube-Link → Song (automatisch) ================= */
+function convUI(on){$('#yt').classList.toggle('conv',on);$('#convPanel').classList.toggle('hidden',!on);$('#ytBlock').classList.toggle('hidden',!on)}
+function convProgress(p,info,title){if(p!=null){$('#convBar').style.width=p+'%';$('#convPct').textContent=p+' %'}if(info)$('#convInfo').textContent=info;if(title)$('#convTitle').textContent=title}
 async function autoConvert(it){
   if(!NAT.ok){ytAuto=false;toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
-  const st=it.start||0;$('#scanBar').classList.remove('hidden');$('#scanTxt').textContent='Bereite vor …';
+  const st=it.start||0;convUI(true);convProgress(0,'Tastatur im Video suchen …','Song wird erstellt …');
   try{ytp.mute();ytp.seekTo(st+0.5,true);ytp.playVideo()}catch(e){}
   await new Promise(r=>setTimeout(r,1800));
   try{ytp.pauseVideo();ytp.unMute()}catch(e){}
   await new Promise(r=>setTimeout(r,250));
-  $('#scanBar').classList.add('hidden');
   await scanSetup(true);
 }
 function scanAutoGo(){ // called after a successful keyboard detection in auto mode
-  setScStart(ytItem&&ytItem.start||0);$('#scanOv').classList.add('hidden');toast('Tastatur erkannt – Noten werden erkannt',2000);scanRun()}
+  setScStart(ytItem&&ytItem.start||0);$('#scanOv').classList.add('hidden');convProgress(0,'Noten werden gelesen …');scanRun()}
 
 /* ================= Android back button ================= */
 window.appBack=function(){
