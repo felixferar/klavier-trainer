@@ -404,7 +404,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.7</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.8</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1640,7 +1640,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 1.7 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 1.8 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1783,7 +1783,16 @@ function scanCore(px,w,n,f){
   if(f<SCAN.start-0.05)return;
   if(SCAN.lastF!=null&&f-SCAN.lastF>0.5&&SCAN.okT!=null)SCAN.hole=true;if(SCAN.lastF==null||f>SCAN.lastF)SCAN.lastF=f;
   const tt=f-SCAN.start;SCAN.frames++;
-  const first=!SCAN.rest;if(first){SCAN.rest=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[]}))}
+  const first=!SCAN.rest;if(first){SCAN.rest=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[],offs:[]}))}
+  let laneOcc=null;if(n>=3){if(n>=4){ // several rows a few pixels apart: a tiny gap between two bars of a repeated note is always inside one of them
+      const K=SCAN.keys.length,cnt=new Uint8Array(K),gap=new Uint8Array(K);SCAN.lrow=SCAN.lrow||[];SCAN.fi=(SCAN.fi||0)+1;
+      const trs=[];
+      for(let r=3;r<n;r++){const o=laneBars(px,w,r,r-3),mk=o.mask,kp=SCAN.keyPx.x,st=SCAN.lrow[r]||(SCAN.lrow[r]={prev:new Uint8Array(K),tr:new Int32Array(K).fill(-99)});
+        for(let k=0;k<K;k++){if(o[k])cnt[k]++;
+          // a real gap between two bars shows the dark background (not letters) – and it moves down through the rows one after another
+          if(o[k]&&st.prev[k]===2)st.tr[k]=SCAN.fi;st.prev[k]=o[k]?1:(mk[Math.round(kp[k])]===0?2:0)}trs.push(st.tr)}
+      SCAN.gapMin=SCAN.gapMin||new Int32Array(K);for(let k=0;k<K;k++){let c=0,ok=true,last=-1e9,mn=1e9;for(const tr of trs){if(SCAN.fi-tr[k]<=4){c++;if(tr[k]<last)ok=false;last=tr[k];mn=Math.min(mn,tr[k])}}if(c>=3&&ok){gap[k]=c;SCAN.gapMin[k]=mn}}
+      const need=Math.max(1,n-3-1);laneOcc=Array.from(cnt,c=>c>=need);SCAN.laneGap=gap}else laneOcc=laneBars(px,w,2,0)}
   let nPressed=0,nLit=0;
   for(let k=0;k<SCAN.keys.length;k++){const key=SCAN.keys[k],row=key.black?0:1,cx=Math.round(key.x*(w-1));
     const hk=Math.max(1,Math.round((SCAN.kw||0.02)*(w-1)*(key.black?0.15:0.22))),sm=[];for(let j=-2;j<=2;j++){const p=px(row,Math.min(w-1,Math.max(0,cx+Math.round(j*hk/2))));sm.push([lum(p[0],p[1],p[2]),p])}
@@ -1791,9 +1800,11 @@ function scanCore(px,w,n,f){
     if(first){SCAN.rest[k]=key.rest||[r,g,b];SCAN.state[k]={on:false,cnt:0,off:0,start:0,hue:[]}}
     const re=SCAN.rest[k],dist=Math.hypot(r-re[0],g-re[1],b-re[2]),[h,sat,val]=rgb2hsv(r,g,b);
     const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));if(dist>45&&!(sat>0.25&&val>0.3))nPressed++; /* neither the normal key nor a coloured (lit) key */ if(pressed)nLit++;
-    if(n>=3){const ln=SCAN.lane[k],hw=Math.max(1,Math.round((SCAN.kw||0.02)*(w-1)*(key.black?0.22:0.3)));let oc=0;
-      for(let j=-2;j<=2;j++){const lp=px(2,Math.min(w-1,Math.max(0,cx+Math.round(j*hw/2)))),[,ls,lv]=rgb2hsv(lp[0],lp[1],lp[2]);if(ls>0.3&&lv>0.3)oc++}const occ=oc>=3;
-      if(occ){ln.cnt++;if(!ln.on&&ln.cnt>=1){ln.on=true;ln.ons.push(tt)}}else{ln.cnt=0;ln.on=false}}
+    if(laneOcc&&SCAN.okT==null&&!SCAN.okF){const ln=SCAN.lane[k];ln.seen=false;ln.on=false;ln.pre=null} // keyboard not (yet) visible: what is in this row now is not a bar
+    else if(laneOcc){const ln=SCAN.lane[k],occ=laneOcc[k];
+      if(occ){ln.cnt++;if(!ln.on){ln.on=true;ln.onFi=SCAN.fi;if(ln.seen){ln.ons.push(tt);ln.offs.push(null)}else ln.pre={off:null}}
+        else if(SCAN.laneGap&&SCAN.laneGap[k]>=3&&(ln.ons.length||ln.pre)&&SCAN.gapMin[k]>ln.onFi&&(!ln.ons.length||tt-ln.ons[ln.ons.length-1]>0.12)&&!(ln.gapT>tt-0.12)){ln.gapT=tt;ln.onFi=SCAN.fi;
+          if(ln.ons.length)ln.offs[ln.offs.length-1]=tt;else if(ln.pre)ln.pre.off=tt;ln.seen=true;ln.ons.push(tt);ln.offs.push(null)}}else{ln.cnt=0;if(ln.on){if(ln.seen)ln.offs[ln.offs.length-1]=tt;else if(ln.pre)ln.pre.off=tt}ln.on=false;ln.seen=true}}
     const st=SCAN.state[k];
     if(pressed){st.off=0;st.cnt++;if(!st.on&&st.cnt===1)st.start=tt;if(!st.on&&st.cnt>=2){st.on=true;st.hue=[]}if(st.on&&sat>0.25)st.hue.push(h)}
     else{st.cnt=0;if(st.on){st.off++;if(st.off===1)st.end=tt;if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue)})}}
@@ -1809,6 +1820,53 @@ function scanCore(px,w,n,f){
   const odd=nPressed>SCAN.keys.length*0.35?10:(nLit>Math.max(14,SCAN.keys.length*0.4)?25:0);
   if(odd){if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene>=odd&&SCAN.on&&SCAN.cut==null){SCAN.cut=SCAN.sceneT-0.3;setTimeout(()=>{if(SCAN.on)scanStop()},0)}}else SCAN.scene=0;
 }
+// falling bars in one pixel row: find each coloured bar (a run of pixels) and give it to exactly one key – by its centre and width.
+// (sampling at a fixed spot fails for black keys: the bars of the two white neighbours reach almost up to it, especially in blurry videos)
+function laneBars(px,w,row,li,noBg){
+  const ww=Math.max(2,(SCAN.kw||0.02)*(w-1)),keys=SCAN.keys,occ=new Array(keys.length).fill(false);
+  if(noBg){const B=new Float32Array(w*3);SCAN._zbg=B}else{SCAN.laneBg=SCAN.laneBg||[];}if(!noBg&&!SCAN.laneBg[li]||SCAN.laneBg[li].length!==w*3){const B=SCAN.laneBg[li]=new Float32Array(w*3);for(let x=0;x<w;x++){const p=px(row,x);B[x*3]=p[0];B[x*3+1]=p[1];B[x*3+2]=p[2]}}
+  const bg=noBg?SCAN._zbg:SCAN.laneBg[li],mask=new Uint8Array(w); // 1 = bar colour, 2 = bright and grey (letters on a bar), 0 = background
+  for(let x=0;x<w;x++){const p=px(row,x),[,sa,va]=rgb2hsv(p[0],p[1],p[2]),i=x*3,dd=Math.hypot(p[0]-bg[i],p[1]-bg[i+1],p[2]-bg[i+2]);
+    if(noBg){if(sa>0.3&&va>0.3)mask[x]=1;else if(va>0.6&&sa<=0.3)mask[x]=2;continue}
+    if(sa>0.3&&va>0.3&&dd>45)mask[x]=1;else if(va>0.6&&sa<=0.3&&dd>45)mask[x]=2;if(mask[x])continue;if(dd<30){bg[i]+=(p[0]-bg[i])*0.05;bg[i+1]+=(p[1]-bg[i+1])*0.05;bg[i+2]+=(p[2]-bg[i+2])*0.05}}
+  if(!SCAN.keyPx||SCAN.keyPx.w!==w){SCAN.keyPx={w,x:keys.map(k=>k.x*(w-1))}}const kx=SCAN.keyPx.x;
+  const gapMax=Math.max(2,Math.round(ww*0.4));
+  let x=0;while(x<w){if(mask[x]!==1){x++;continue}let e=x+1,last=x;
+    while(e<w){if(mask[e]===1){last=e;e++;continue}
+      if(mask[e]===2){let f=e;while(f<w&&mask[f]===2)f++;if(f<w&&mask[f]===1&&f-e<=gapMax){e=f;continue}break} // letters inside a bar
+      if(e+1<w&&mask[e+1]===1){e++;continue}break}                                                               // 1-px blur hole
+    e=last+1;const a=x,b=last,cen=(a+b)/2,wid=b-a+1;x=e;if(wid<ww*0.25)continue;
+    // which keys does this run cover? white key: its middle ±0.22 key widths; black key: ±0.2 (and not just the gap between two covered white keys)
+    const inR=(c,h)=>c-h>=a-0.5&&c+h<=b+0.5,cov=[];
+    for(let k=0;k<keys.length;k++){if(kx[k]<a-ww||kx[k]>b+ww)continue;if(!keys[k].black&&inR(kx[k],ww*0.22)){occ[k]=true;cov.push(k)}}
+    for(let k=0;k<keys.length;k++){if(!keys[k].black||kx[k]<a-ww*0.15||kx[k]>b+ww*0.15)continue;
+      const cen=(a+b)/2;if(!(inR(kx[k],ww*0.1)||(wid<=ww*0.9&&Math.abs(cen-kx[k])<=ww*0.22)))continue; // narrow bar roughly centred on the black key
+      const l=k-1,r=k+1;if(cov.includes(l)&&cov.includes(r))continue;occ[k]=true}}
+  occ.mask=mask;return occ}
+// notes that were struck before the reading started (YouTube: while the app was still looking for the keyboard):
+// in the still images the bars are visible above the keys. bar bottom height ÷ fall speed = how long until / since it reached the keys.
+function earlyFromBars(ev){
+  const kbSeen=f=>{const W=f.width,H=f.height;let ok=0;for(const k of SCAN.keys){const y=Math.round((k.black?scanRows.yA:scanRows.yB)*(H-1)),x=Math.round(k.x*(W-1)),i=(y*W+x)*4,re=k.rest||[0,0,0];
+      if(Math.hypot(f.data[i]-re[0],f.data[i+1]-re[1],f.data[i+2]-re[2])<50)ok++}return ok>=SCAN.keys.length*0.7}; // most keys look exactly like the resting keyboard
+  const fr=(SCAN.fromFile?[]:(scanFrames||[])).filter(f=>f&&f.t!=null&&kbSeen(f)),d=SCAN.barDelay;if(!fr.length||d==null||!(d>0.02)||!scanRows||!scanDet)return ev;
+  const img0=fr[0],H=img0.height,W=img0.width,yT=(scanRows.yT!=null?scanRows.yT:scanRows.yA-0.05)*(H-1),lane=laneHigh(scanRows,scanDet,img0),yL=(lane[0]+lane[lane.length-1])/2*(H-1);
+  const pps=(yT-yL)/d;if(!(pps>10))return ev;
+  const readFrom=SCAN.start+(SCAN.okT!=null?SCAN.okT:0),found=[];
+  const K=SCAN.keys.length;
+  for(const im of fr){const D=im.data,y0=Math.round(yT)-3,occ=[];
+    for(let y=y0;y>=1;y--){const o=laneBars((r,x)=>{const i=(y*W+x)*4;return [D[i],D[i+1],D[i+2]]},W,0,0,true);occ[y]=o}
+    for(let k=0;k<K;k++){const cx=Math.round(SCAN.keys[k].x*(W-1));let y=y0;
+      while(y>=1){if(!occ[y][k]){y--;continue}const yb=y,hs=[];while(y>=1&&occ[y][k]){const i=(y*W+cx)*4;hs.push(rgb2hsv(D[i],D[i+1],D[i+2])[0]);y--}const ya=y+1;
+        if(yb-ya>=3&&yb<y0-1){const on=im.t+(yT-yb)/pps,off=im.t+(yT-ya)/pps;found.push({m:SCAN.keys[k].m,start:on-SCAN.start,end:off-SCAN.start,hue:circMean(hs)})}}}} // a bar already touching the keys does not tell when it arrived
+  // the same bar in several images → one note (average); only notes that began before the reading started
+  found.sort((a,b)=>a.m-b.m||a.start-b.start);const notes=[];
+  for(const f of found){const g=notes.find(n=>n.m===f.m&&Math.abs(n.start-f.start)<0.15);if(g){g.n++;g.ss+=f.start;g.ee+=f.end;g.start=g.ss/g.n;g.end=g.ee/g.n}else notes.push({...f,n:1,ss:f.start,ee:f.end})}
+  const early=notes.filter(n=>n.start+SCAN.start<readFrom-0.04);if(!early.length)return ev;
+  const out=ev.slice();
+  for(const n of early){const same=out.find(e=>e.m===n.m&&e.start<=readFrom-SCAN.start+0.1&&e.end>=n.start-0.1&&e.start>=n.start-0.15); // the key was still lit when reading began → correct its start
+    if(same){same.start=n.start;if(n.hue!=null&&same.hue==null)same.hue=n.hue}
+    else if(n.end>n.start+0.04)out.push({m:n.m,start:n.start,end:Math.min(n.end,readFrom-SCAN.start),hue:n.hue,early:true})}
+  return out.sort((a,b)=>a.start-b.start)}
 function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
 function finishScan(){
   for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)SCAN.events.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue)})}
@@ -1818,8 +1876,11 @@ function finishScan(){
   for(let i=ev.length-1;i>0;i--){const gap=ev[i].start-Math.max(...ev.slice(0,i).map(e=>e.end));if(gap>=4&&ev.length-i<=Math.max(3,ev.length*0.1)){ev=ev.slice(0,i);break}}
   // split repeated notes: a new falling bar reached the keys while the key still looked pressed
   if(SCAN.lane){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i]));const ds=[];
-    for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons;let best=null;for(const o of ons)if(o<=e.start+0.05&&o>=e.start-2.5)best=o;if(best!==null)ds.push(e.start-best)}
-    ds.sort((a,b)=>a-b);const d=ds.length>=3?ds[ds.length>>1]:null;
+    // delay from "bar in the reading row" to "key lights up": the most frequent difference (bars can take several seconds from that row to the keys)
+    const hist=new Map();for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons;for(const o of ons){const x=e.start-o;if(x>=-0.05&&x<=6){const b=Math.round(x/0.04);hist.set(b,(hist.get(b)||0)+1)}}}
+    let bb=null,bc=0;for(const [b,c] of hist){const c3=c+(hist.get(b-1)||0)*0.5+(hist.get(b+1)||0)*0.5;if(c3>bc){bc=c3;bb=b}}
+    if(bb!==null)for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons;for(const o of ons){const x=e.start-o;if(Math.abs(x-bb*0.04)<=0.06)ds.push(x)}}
+    ds.sort((a,b)=>a-b);const d=ds.length>=3?ds[ds.length>>1]:null;SCAN.barDelay=d;
     // a held note that only flickered (sparkles, labels, fading glow): same key, short gap and no new bar arrived → one long note
     {const byKey=new Map();for(const e of ev){if(!byKey.has(e.m))byKey.set(e.m,[]);byKey.get(e.m).push(e)}const out=[];
       for(const [m,list] of byKey){list.sort((a,b)=>a.start-b.start);const ons=SCAN.lane[kIdx.get(m)].ons;let cur=null;
@@ -1828,6 +1889,19 @@ function finishScan(){
       ev=out.sort((a,b)=>a.start-b.start)}
     if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+d).filter(x=>x>e.start+0.14&&x<e.end-0.05);
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
+  // ghost notes: a key next to a real note only lights up from its glow / a slightly misplaced sample point. A real note always has its own bar
+  // falling onto exactly this key – so a note without its own bar is dropped if a neighbouring key has a real note at the same moment.
+  if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
+    for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];e.bar=ln.ons.some(o=>o+d>=e.start-0.15&&o+d<=e.start+0.08)||!!(ln.pre&&(ln.pre.off==null||e.start-d<=ln.pre.off+0.1))||!!e.early}
+    const withBar=ev.filter(e=>e.bar).length;SCAN.dbg=ev.map(e=>({m:e.m,s:+e.start.toFixed(2),e:+e.end.toFixed(2),bar:e.bar,hue:e.hue==null?null:Math.round(e.hue)}));SCAN.dbgD=d;
+    const wEv=ev.filter(e=>isWhitePC(e.m%12)),wBar=wEv.filter(e=>e.bar).length;
+    if(wEv.length?wBar>=wEv.length*0.5:withBar>=ev.length*0.5){ // only if this video really has readable bars (some videos only light the keys); judged on white keys – ghost notes (mostly black keys) must not switch this off
+      ev=ev.filter(e=>e.bar||!ev.some(f=>f!==e&&f.bar&&Math.abs(f.m-e.m)<=2&&Math.abs(f.start-e.start)<0.15)&&e.end-e.start>=0.1)}}
+  // length from the bar: the bar is exactly as long as the note; the key itself can look lit a bit longer (glow of a neighbour)
+  if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
+    for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];let bi=-1,bd=0.12;for(let i=0;i<ln.ons.length;i++){const x=Math.abs(ln.ons[i]+d-e.start);if(x<bd){bd=x;bi=i}}
+      if(bi>=0&&ln.offs[bi]!=null){const len=ln.offs[bi]-ln.ons[bi];if(len>0.05&&len<e.end-e.start-0.06)e.end=e.start+len}}}
+  ev=earlyFromBars(ev);
   // notes struck together (chord): their onsets differ only by a frame or two (glow fading in) → same start
   {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.085)e.start=g0;else g0=e.start}}
   // hands by colour: two hue clusters, the lower-pitched one = left hand
@@ -1848,14 +1922,14 @@ const hueDist=(a,b)=>{const d=Math.abs(a-b)%360;return d>180?360-d:d};
 // --- MIDI writer (2 tracks: right / left hand)
 function writeMidi(notes){
   const ppq=480,tps=ppq*2; // 120 bpm → 960 ticks per second
-  const vlq=n=>{const b=[n&0x7f];n>>=7;while(n){b.unshift((n&0x7f)|0x80);n>>=7}return b};
+  const vlq=n=>{n=Math.max(0,Math.round(+n||0));const b=[n&0x7f];n>>>=7;while(n){b.unshift((n&0x7f)|0x80);n>>>=7}return b};
   const str=s=>[...s].map(c=>c.charCodeAt(0)&255);
   const u32=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255],u16=n=>[(n>>8)&255,n&255];
   const track=(name,ev)=>{const out=[0,0xFF,0x03,...vlq(name.length),...str(name)];let last=0;
     ev.sort((a,b)=>a.t-b.t||a.on-b.on);for(const e of ev){out.push(...vlq(e.t-last));last=e.t;out.push(e.on?0x90:0x80,e.m,e.on?90:0)}
     out.push(0,0xFF,0x2F,0);return [...str('MTrk'),...u32(out.length),...out]};
   const tempo=[...str('MTrk'),...u32(11),0,0xFF,0x51,3,0x07,0xA1,0x20,0,0xFF,0x2F,0];
-  const evs=h=>notes.filter(n=>n.hand===h).flatMap(n=>{const s=Math.round(n.start*tps),e=Math.max(s+10,Math.round((n.start+n.dur)*tps));return [{t:s,on:1,m:n.m},{t:e,on:0,m:n.m}]});
+  const evs=h=>notes.filter(n=>n.hand===h&&isFinite(n.start)&&isFinite(n.dur)).flatMap(n=>{const s=Math.max(0,Math.round(n.start*tps)),e=Math.max(s+10,Math.round((n.start+n.dur)*tps));return [{t:s,on:1,m:n.m},{t:e,on:0,m:n.m}]});
   const bytes=[...str('MThd'),...u32(6),...u16(1),...u16(3),...u16(ppq),...tempo,...track('Right',evs('R')),...track('Left',evs('L'))];
   return new Uint8Array(bytes).buffer;
 }
@@ -1893,14 +1967,14 @@ async function scanRun(live){
   const keys=keyLayout(scanDet,scanOct);if(!keys.length){toast('Keine Tasten');return}
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
-  restColors(keys,scanFrames&&scanFrames.length?scanFrames:[scanImg],scanRows);
-  Object.assign(SCAN,{kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
+  restColors(keys,scanFrames&&scanFrames.length?scanFrames.slice(-5):[scanImg],scanRows);
+  Object.assign(SCAN,{gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
   SCAN.start=+$('#scStart').dataset.v||0;if(live){try{SCAN.start=ytp.getCurrentTime()}catch(e){}}
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{ytp.setPlaybackRate(1);ytRate=1;if(ytAuto)ytp.mute()}catch(e){}
-  if(!live){ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo()}if(ytAuto)await waitMainVideo(180000);
+  if(!live){ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo();if(ytAuto)await waitMainVideo(180000)} // live: the video is already playing – start reading at once
   const box=$('#ytBox').getBoundingClientRect();
-  const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08)],ow:480,interval:40},'scanStarted');
+  const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:480,interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
   let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}const p0=SCAN.p0!=null?SCAN.p0:SCAN.start,full=dur+SCAN.start-p0;
   SCAN.timer=setInterval(()=>{const p=full>0?Math.min(100,Math.round((SCAN.lastVt+SCAN.start-p0)/full*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`;
@@ -1942,6 +2016,8 @@ function medianImage(imgs){ // per pixel the median of several frames → briefl
   for(let i=0;i<o.length;i+=4){for(let f=0;f<n;f++){const d=imgs[f].data;L[f]=[d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11,f]}L.sort((p,q)=>p[0]-q[0]);const d=imgs[L[n>>1][1]].data;o[i]=d[i];o[i+1]=d[i+1];o[i+2]=d[i+2];o[i+3]=255}
   return out}
 let scanFrames=null;
+// a row well above the keyboard where only the falling bars are (the glow around pressed keys does not reach that far)
+function laneHigh(rows,det,img){const yT=rows.yT!=null?rows.yT:rows.yA-0.05,y=Math.max(0.02,yT-Math.max(0.09,2.6*det.w/img.height)),st=2.5/img.height;return [y,y+st,y+2*st,y+3*st]}
 // resting colour of every key: from the frame where that key looks least lit (low saturation; white keys bright, black keys dark)
 function restColors(keys,imgs,rows){for(const k of keys){let best=null,bs=1e9;
   for(const im of imgs){const W=im.width,H=im.height,d=im.data,y=Math.round((k.black?rows.yA:rows.yB)*(H-1)),x=Math.round(k.x*(W-1));let r=0,g=0,b=0,c=0;
@@ -1978,9 +2054,9 @@ async function autoConvert(it){
     convProgress(dur>st?Math.max(0,Math.min(99,Math.round((ct-st)/(dur-st)*100))):null,'Suche die Tastatur …');
     let ps=-1;try{ps=ytp.getPlayerState()}catch(e){}
     if(ps!==1){await sleep(300);continue} // ad, buffering or paused: wait
-    const f=await grabVideo();if(!ytAuto)return;
-    if(f){if(imgMean(f)<12){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>5)frames.shift()}}
-    let best=null;if(frames.length){const cand=frames.length>=3?[medianImage(frames),frames[frames.length-1]]:[frames[frames.length-1]];for(const im of cand){const r=tryKeyboard(im);if(r&&(!best||r.n>best.n))best=r}}
+    let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;if(f)f.t=gt;
+    if(f){if(imgMean(f)<12){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
+    let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];for(const im of cand){const r=tryKeyboard(im);if(r&&(!best||r.n>best.n))best=r}}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
       $('#scanOv').classList.add('hidden');convProgress(null,'Noten werden gelesen …');scanRun(true);return}
     await sleep(150);
@@ -2027,13 +2103,16 @@ async function fileConvert(file){
   restColors(keys,scanFrames&&scanFrames.length?scanFrames:[scanImg],scanRows);
   sv.removeAttribute('src');sv.load();FV.sv=null;
   // 2) play the file once from the very beginning to the end and read 3 pixel rows of every frame (the intro is recognised and ignored)
-  Object.assign(SCAN,{kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
-  const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=3;const rx=rc.getContext('2d',{willReadFrequently:true});
-  const ys=[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08)].map(f=>Math.round(f*(vh-1)));
-  let lastT=-1;
-  const frame=t=>{if(!SCAN.on||!alive()||t===lastT)return;lastT=t;
-    for(let r=0;r<3;r++)rx.drawImage(v,0,ys[r],vw,1,0,r,ow,1);
-    const D=rx.getImageData(0,0,ow,3).data;scanCore((r,x)=>{const i=(r*ow+x)*4;return [D[i],D[i+1],D[i+2]]},ow,3,t)};
+  Object.assign(SCAN,{gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
+  const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=7;const rx=rc.getContext('2d',{willReadFrequently:true});
+  const ys=[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)].map(f=>Math.round(f*(vh-1)));
+  let lastT=-1,minDt=1,drops=[];
+  const frame=t=>{if(!SCAN.on||!alive()||t===lastT)return;
+    // the phone could not keep up (frames were skipped) → play slower; the video never jumps
+    if(lastT>=0&&t>lastT){const dt=t-lastT;if(dt>0.005)minDt=Math.min(minDt,dt);if(dt>minDt*1.6&&minDt<0.2){drops.push(t);drops=drops.filter(x=>x>t-2);if(drops.length>=2&&v.playbackRate>0.3){v.playbackRate=Math.max(0.25,Math.round(v.playbackRate*0.7*100)/100);drops=[]}}}
+    lastT=t;
+    for(let r=0;r<ys.length;r++)rx.drawImage(v,0,ys[r],vw,1,0,r,ow,1);
+    const D=rx.getImageData(0,0,ow,ys.length).data;scanCore((r,x)=>{const i=(r*ow+x)*4;return [D[i],D[i+1],D[i+2]]},ow,ys.length,t)};
   const useRVFC='requestVideoFrameCallback' in v;
   if(useRVFC){const cb=(now,md)=>{frame(md.mediaTime);if(SCAN.on&&alive())v.requestVideoFrameCallback(cb)};v.requestVideoFrameCallback(cb)}
   else{const loop=()=>{if(!SCAN.on||!alive())return;frame(v.currentTime);requestAnimationFrame(loop)};requestAnimationFrame(loop)}
