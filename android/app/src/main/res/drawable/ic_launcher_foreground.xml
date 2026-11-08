@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Stilisierte Klaviertasten (108x108 Raster, Inhalt im sicheren Bereich 18..90) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M30,34h11v40h-11z M42.5,34h11v40h-11z M55,34h11v40h-11z M67.5,34h11v40h-11z"/>
+    <path android:fillColor="#0F1115" android:pathData="M37,34h7v24h-7z M62,34h7v24h-7z"/>
+    <path android:fillColor="#FF9F43" android:pathData="M49.5,18h6v13h-6z"/>
+</vector>
