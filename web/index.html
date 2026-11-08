@@ -400,7 +400,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.3</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.4</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1593,7 +1593,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 1.3 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 1.4 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1654,21 +1654,32 @@ function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.mi
 // --- find the keyboard rows in a still image (ImageData of the video area)
 function findKeyboardRows(img){
   const {width:W,height:H,data}=img,L=y=>{const a=new Float32Array(W);for(let x=0;x<W;x++){const i=(y*W+x)*4;a[x]=lum(data[i],data[i+1],data[i+2])}return a};
-  let best=null;
-  for(let y=Math.floor(H*0.35);y<H-2;y+=1){const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);if(mx<120)continue;const thr=mx*0.55;
-    let segs=0,inDark=false,start=0,wsum=0,bright=0;const wl=[];for(let x=0;x<W;x++){const d=a[x]<thr;if(d&&!inDark){inDark=true;start=x}else if(!d&&inDark){inDark=false;const w=x-start;if(w>=2&&w<W/20)wl.push(w)}if(!d)bright++}
-    if(wl.length){wl.sort((p,q)=>p-q);const wide=wl[Math.floor(wl.length*0.9)];segs=wl.filter(w=>w>=Math.max(2,wide*0.45)).length}
-    const score=segs*(bright/W>0.45?1:0);if(segs>=10&&(!best||score>best.score))best={y,score,segs}}
+  const segsOf=(a,thr)=>{const out=[];let inD=false,st=0;for(let x=0;x<=W;x++){const d=x<W&&a[x]<thr;if(d&&!inD){inD=true;st=x}else if(!d&&inD){inD=false;const w=x-st;if(w>=2&&w<W/12)out.push([st,x])}}return out};
+  const cands=[];
+  for(let y=Math.floor(H*0.3);y<H-2;y++){const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);if(mx<120)continue;const thr=mx*0.55;
+    let sg=segsOf(a,thr);if(sg.length<8)continue;const ws=sg.map(q=>q[1]-q[0]).sort((p,q)=>p-q),wide=ws[Math.floor(ws.length*0.9)];sg=sg.filter(q=>q[1]-q[0]>=Math.max(2,wide*0.45));
+    let bright=0;for(const v of a)if(v>=thr)bright++;
+    const span=sg.length?sg[sg.length-1][1]-sg[0][0]:0; // a real keyboard fills most of the width (not a small thumbnail)
+    if(sg.length>=8&&bright/W>0.4&&span>=W*0.55){
+      // black keys: groups of 2 and 3 (irregular gaps) and fairly wide – not the thin, evenly spaced gaps between white keys
+      const c=sg.map(q=>(q[0]+q[1])/2),gp=[];for(let i=1;i<c.length;i++)gp.push(c[i]-c[i-1]);const gs=gp.slice().sort((p,q)=>p-q),u=gs[Math.floor(gs.length*0.25)];
+      const wMed=sg.map(q=>q[1]-q[0]).sort((p,q)=>p-q)[sg.length>>1],bigF=gp.filter(g=>g>u*1.45).length/gp.length;
+      if(wMed>=u*0.3&&wMed>=W/160&&bigF>=0.15&&bigF<=0.6)cands.push({y,score:sg.length,segs:sg.length,x0:sg[0][0],x1:sg[sg.length-1][1]})}}
+  const segsAt=y=>{const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);return segsOf(a,mx*0.55).length};
+  cands.sort((p,q)=>q.score-p.score);let best=null,yA0=0,yA1=0;
+  for(const c of cands.slice(0,40)){
+    let a0=c.y,a1=c.y;while(a0>0&&segsAt(a0-1)>=c.segs*0.8)a0--;while(a1<H-1&&segsAt(a1+1)>=c.segs*0.8)a1++;
+    if(a1-a0<H*0.06)continue;                                   // black keys are tall – a line of text is not
+    const yw=Math.min(H-1,Math.round(a1+Math.max(3,(H-1-a1)*0.3))),aw=L(yw);let mxw=0;for(const v of aw)mxw=Math.max(mxw,v);
+    let br=0,n=0;for(let x=Math.max(0,c.x0);x<=Math.min(W-1,c.x1);x++){n++;if(aw[x]>Math.max(150,mxw*0.6))br++}
+    if(n&&br/n<0.8)continue;                                     // below the black keys there must be white keys
+    best=c;yA0=a0;yA1=a1;break}
   if(!best)return null;
-  // row B: a bit below the black keys, where (almost) everything is white
-  let yB=null;for(let y=best.y+2;y<H;y++){const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);let br=0;for(const v of a)if(v>mx*0.6)br++;if(br/W>0.85){yB=y;let y2=y;while(y2+1<H){const b=L(y2+1);let c=0;for(const v of b)if(v>mx*0.6)c++;if(c/W>0.85)y2++;else break}yB=Math.round((y+y2)/2);break}}
-  // row A: middle of the black keys
-  let yA0=best.y,yA1=best.y;const segsAt=y=>{const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);let s=0,d0=false;for(let x=0;x<W;x++){const d=a[x]<mx*0.55;if(d&&!d0)s++;d0=d}return s};
-  while(yA0>0&&segsAt(yA0-1)>=best.segs*0.8)yA0--;while(yA1<H-1&&segsAt(yA1+1)>=best.segs*0.8)yA1++;
-  const yA=Math.round(yA0+(yA1-yA0)*0.55);
+  const yA=Math.round(yA0+(yA1-yA0)*0.5);                       // middle of the black keys
+  const yB=Math.min(H-1,Math.round(yA1+Math.max(3,(H-1-yA1)*0.3))); // white keys, below the black ones, above labels
   let yT=yA0;{const a=L(yA0);let mx=0;for(const v of a)mx=Math.max(mx,v);for(let y=yA0-1;y>0;y--){const b=L(y);let br=0;for(const v of b)if(v>mx*0.6)br++;if(br/W>0.5)yT=y;else break}}
-  const yC=Math.max(0,yT-Math.max(3,Math.round(H*0.02)));
-  return {yC:yC/(H-1),yA:yA/(H-1),yB:(yB==null?Math.min(H-1,yA1+Math.round((yA1-yA0)*0.5)):yB)/(H-1)};
+  const yC=Math.max(0,yT-Math.max(4,Math.round(H*0.035)));        // just above the keyboard, above the "hit" glow
+  return {yC:yC/(H-1),yA:yA/(H-1),yB:yB/(H-1),yT:yT/(H-1)};
 }
 const WHITE_PC=[0,2,4,5,7,9,11],isWhitePC=pc=>WHITE_PC.includes(pc);
 const whiteIndex=m=>{const o=Math.floor(m/12),pc=m%12;let w=o*7;for(const p of WHITE_PC)if(p<pc)w++;return w}; // number of white keys below m
@@ -1677,35 +1688,30 @@ function detectKeys(img,yAf){
   const {width:W,height:H,data}=img,y=Math.round(yAf*(H-1));const a=new Float32Array(W);let mx=0;
   for(let x=0;x<W;x++){const i=(y*W+x)*4;a[x]=lum(data[i],data[i+1],data[i+2]);mx=Math.max(mx,a[x])}
   const thr=mx*0.55,segs=[];let inD=false,st=0;
-  for(let x=0;x<=W;x++){const d=x<W&&a[x]<thr;if(d&&!inD){inD=true;st=x}else if(!d&&inD){inD=false;const w=x-st;if(w>=2&&w<W/20&&st>0&&x<W)segs.push([(st+x-1)/2,w])}}
+  for(let x=0;x<=W;x++){const d=x<W&&a[x]<thr;if(d&&!inD){inD=true;st=x}else if(!d&&inD){inD=false;const w=x-st;if(w>=2&&w<W/12&&st>0&&x<W)segs.push([(st+x-1)/2,w])}}
   if(segs.length<5)return null;const ws=segs.map(q=>q[1]).sort((p,q)=>p-q),wide=ws[Math.floor(ws.length*0.9)];
   const blacks=segs.filter(q=>q[1]>=Math.max(2,wide*0.45)).map(q=>q[0]); // thin lines between white keys are not black keys
   if(blacks.length<5)return null;
+  // gaps between neighbouring black keys in white-key units (1 inside a group, 2 between groups, more if a black key is lit/missing)
   const gaps=[];for(let i=1;i<blacks.length;i++)gaps.push(blacks[i]-blacks[i-1]);
-  const sorted=gaps.slice().sort((p,q)=>p-q),wEst=sorted[Math.floor(sorted.length*0.3)];
-  // classify gaps: ~1 white key (inside a group) or ~2 white keys (between groups)
-  const big=gaps.map(g=>g>wEst*1.5);
-  // groups of consecutive black keys
-  const groups=[];let cur=[0];for(let i=0;i<gaps.length;i++){if(big[i]){groups.push(cur);cur=[i+1]}else cur.push(i+1)}groups.push(cur);
-  // anchor: first group of 2 black keys = C#,D# (or a group of 3 = F#,G#,A#)
-  let anchor=null;const inner=groups.length>2?groups.slice(1,-1):groups;for(const g of inner){if(g.length===2){anchor={idx:g[0],m:25};break}if(g.length===3){anchor={idx:g[0],m:30};break}} // provisional octave, corrected below
-  if(!anchor)return null;
-  // every black key sits on a boundary between two white keys: boundary index relative to the anchor
-  const wiToMidi=[];for(let m=0;m<128;m++)if(isWhitePC(m%12))wiToMidi[whiteIndex(m)]=m;
-  const ba=whiteIndex(anchor.m),xa=blacks[anchor.idx],pts=[];
-  for(let i=0;i<blacks.length;i++){const b=ba+Math.round((blacks[i]-xa)/wEst);const below=wiToMidi[b-1];if(below==null)continue;const m=below+1;if(isWhitePC(m%12))continue;pts.push([whiteIndex(m),blacks[i]])}
-  if(pts.length<5)return null;
-  let sx=0,sy=0,sxx=0,sxy=0;const n=pts.length;
-  for(const [X,Y] of pts){sx+=X;sy+=Y;sxx+=X*X;sxy+=X*Y}
-  const w=(n*sxy-sx*sy)/(n*sxx-sx*sx),x0=(sy-w*sx)/n;
-  if(!(w>2))return null;
-  // shift octave so that the visible range looks like a real piano
+  let unit=gaps.slice().sort((p,q)=>p-q)[Math.floor(gaps.length*0.25)],x0=0,w=0,pts=[];
+  const VALID=[0,1,3,4,5]; // a black key sits right of C, D, F, G, A (white index mod 7)
+  for(let iter=0;iter<3;iter++){
+    const bnd=[0];for(let i=0;i<gaps.length;i++)bnd.push(bnd[i]+Math.max(1,Math.round(gaps[i]/unit)));
+    let bestOff=0,bestV=-1;for(let off=0;off<7;off++){let v=0;for(const b of bnd)if(VALID.includes((((b+off-1)%7)+7)%7))v++;if(v>bestV){bestV=v;bestOff=off}}
+    if(bestV<blacks.length*0.75)return null;
+    pts=[];for(let i=0;i<blacks.length;i++){const b=bnd[i]+bestOff+14;if(VALID.includes((((b-1)%7)+7)%7))pts.push([b,blacks[i]])}
+    if(pts.length<5)return null;
+    const fit=P=>{let sx=0,sy=0,sxx=0,sxy=0;const n=P.length;for(const [X,Y] of P){sx+=X;sy+=Y;sxx+=X*X;sxy+=X*Y}const ww=(n*sxy-sx*sy)/(n*sxx-sx*sx);return [ww,(sy-ww*sx)/n]};
+    [w,x0]=fit(pts);if(!(w>2))return null;
+    const good=pts.filter(([X,Y])=>Math.abs(x0+w*X-Y)<w*0.35);if(good.length>=5&&good.length<pts.length){[w,x0]=fit(good);pts=good}
+    unit=w; // next round: classify the gaps with the fitted key width
+  }
   const xOf=m=>isWhitePC(m%12)?x0+w*(whiteIndex(m)+0.5):x0+w*whiteIndex(m);
-  // horizontal extent of the keyboard itself (black bars / background left and right are not keys)
   let xL=0,xR=W-1;while(xL<W-1&&a[xL]<thr)xL++;while(xR>0&&a[xR]<thr)xR--;
   let lo=null,hi=null;for(let m=0;m<=127;m++){const x=xOf(m);if(x>=xL+w*0.2&&x<=xR-w*0.2){if(lo===null)lo=m;hi=m}}
   const whitesVisible=(xR-xL)/w;let shift=0;
-  if(whitesVisible>48){shift=21-lo;}else{const mid=(lo+hi)/2;shift=Math.round((62-mid)/12)*12}
+  if(whitesVisible>48)shift=21-lo;else{const mid=(lo+hi)/2;shift=Math.round((62-mid)/12)*12}
   return {x0,w,shift,W,lo,hi,xOf};
 }
 function keyLayout(det,octave){ // → [{m,x (0..1),black}]
@@ -1718,19 +1724,19 @@ const SCAN={on:false,keys:null,rest:null,state:null,events:[],t0:0,start:0,frame
 function scanFrame(msg){
   if(!SCAN.on||!SCAN.keys)return;
   const raw=atob(msg.d),w=msg.w,n=msg.n;const px=(r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]};
-  let vt=0;try{vt=ytp.getCurrentTime()}catch(e){}
+  let vt=0;try{if(ytp.getPlayerState&&ytp.getPlayerState()!==1&&!SCAN.test)return;vt=ytp.getCurrentTime()}catch(e){}
   // video time for this frame (smoothed): native time → video time
   SCAN.vtMap.push([msg.t,vt]);if(SCAN.vtMap.length>40)SCAN.vtMap.shift();
   let f=vt;if(SCAN.vtMap.length>5){const a=SCAN.vtMap;let mt=0,mv=0;for(const [x,y] of a){mt+=x;mv+=y}mt/=a.length;mv/=a.length;f=mv+(msg.t-mt)/1000*(ytRate||1)}
   if(f<SCAN.start-0.05)return;
   const tt=f-SCAN.start;SCAN.frames++;
   const first=!SCAN.rest;if(first){SCAN.rest=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[]}))}
-  let nPressed=0;
+  let nPressed=0,nLit=0;
   for(let k=0;k<SCAN.keys.length;k++){const key=SCAN.keys[k],row=key.black?0:1,cx=Math.round(key.x*(w-1));
     let r=0,g=0,b=0,c=0;for(let dx=-1;dx<=1;dx++){const x=Math.min(w-1,Math.max(0,cx+dx));const p=px(row,x);r+=p[0];g+=p[1];b+=p[2];c++}r/=c;g/=c;b/=c;
     if(first){SCAN.rest[k]=key.rest||[r,g,b];SCAN.state[k]={on:false,cnt:0,off:0,start:0,hue:[]}}
     const re=SCAN.rest[k],dist=Math.hypot(r-re[0],g-re[1],b-re[2]),[h,sat,val]=rgb2hsv(r,g,b);
-    const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));if(dist>45)nPressed++;
+    const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));if(dist>45&&!(sat>0.25&&val>0.3))nPressed++; /* neither the normal key nor a coloured (lit) key */ if(pressed)nLit++;
     if(n>=3){const lp=px(2,cx),[,ls,lv]=rgb2hsv(lp[0],lp[1],lp[2]),ln=SCAN.lane[k],occ=ls>0.3&&lv>0.3;
       if(occ){ln.cnt++;if(!ln.on&&ln.cnt>=1){ln.on=true;ln.ons.push(tt)}}else{ln.cnt=0;ln.on=false}}
     const st=SCAN.state[k];
@@ -1740,7 +1746,10 @@ function scanFrame(msg){
   }
   SCAN.lastVt=tt;
   // more than ~40 % of all keys look different at the same time → the keyboard is gone (end screen / outro)
-  if(nPressed>SCAN.keys.length*0.25){if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene>=3&&SCAN.on&&SCAN.cut==null){SCAN.cut=SCAN.sceneT-0.3;setTimeout(()=>{if(SCAN.on)scanStop()},0)}}else SCAN.scene=0;
+  // the keyboard is no longer visible (end screen / outro): many keys look neither normal nor lit, for ~0.4 s
+  // …or far more keys "lit" at once than two hands can press, for ~1 s
+  const odd=nPressed>SCAN.keys.length*0.35?10:(nLit>Math.max(14,SCAN.keys.length*0.4)?25:0);
+  if(odd){if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene>=odd&&SCAN.on&&SCAN.cut==null){SCAN.cut=SCAN.sceneT-0.3;setTimeout(()=>{if(SCAN.on)scanStop()},0)}}else SCAN.scene=0;
 }
 function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
 function finishScan(){
@@ -1753,7 +1762,7 @@ function finishScan(){
   if(SCAN.lane){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i]));const ds=[];
     for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons;let best=null;for(const o of ons)if(o<=e.start+0.05&&o>=e.start-2.5)best=o;if(best!==null)ds.push(e.start-best)}
     ds.sort((a,b)=>a-b);const d=ds.length>=3?ds[ds.length>>1]:null;
-    if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+d).filter(x=>x>e.start+0.08&&x<e.end-0.05);
+    if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+d).filter(x=>x>e.start+0.14&&x<e.end-0.05);
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
   // hands by colour: two hue clusters, the lower-pitched one = left hand
   const hs=ev.filter(e=>e.hue!=null);let c1=0,c2=180;
@@ -1820,7 +1829,7 @@ async function scanRun(){
   SCAN.start=+$('#scStart').dataset.v||0;
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{ytp.setPlaybackRate(1);ytRate=1;if(ytAuto)ytp.mute()}catch(e){}
-  ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo();
+  ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo();if(ytAuto)await waitMainVideo(180000);
   const box=$('#ytBox').getBoundingClientRect();
   const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08)],ow:480,interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
@@ -1861,29 +1870,40 @@ function medianImage(imgs){ // per pixel the median of several frames → briefl
   return out}
 function tryKeyboard(img){const rows=findKeyboardRows(img);if(!rows)return null;const det=detectKeys(img,rows.yA);if(!det)return null;return {rows,det,img,n:det.hi-det.lo}}
 function imgMean(img){let s=0,c=0;for(let i=0;i<img.data.length;i+=64){s+=img.data[i]+img.data[i+1]+img.data[i+2];c++}return s/c/3}
+async function waitMainVideo(maxMs){ // YouTube ads: player state is not "playing" (1) while an ad runs
+  const t0=performance.now();let ok=0,last=-1;
+  while(performance.now()-t0<maxMs){if(!ytAuto)return false;let st=-1,ct=0;try{st=ytp.getPlayerState();ct=ytp.getCurrentTime()}catch(e){}
+    if(st===1&&ct>last+0.05){ok++;if(ok>=3)return true}else{ok=0;if(st!==1){try{ytp.playVideo()}catch(e){}}}
+    convProgress(null,st===1?'Video startet …':'Werbung läuft – bitte warten …');last=ct;await sleep(500)}
+  return false}
 async function autoConvert(it){
   if(!NAT.ok){ytAuto=false;toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
-  const st=it.start||0;convUI(true);convProgress(0,'Tastatur im Video suchen …','Song wird erstellt …');
-  try{ytp.mute();ytp.seekTo(st+0.3,true);ytp.playVideo()}catch(e){}
-  await sleep(1600);
-  let black=0;
-  for(const extra of [0,4,9,15,25]){
+  const st=it.start||0;convUI(true);convProgress(0,'Video wird geladen …','Song wird erstellt …');
+  try{ytp.mute();ytp.playVideo()}catch(e){}
+  if(!await waitMainVideo(180000)){if(ytAuto){ytAuto=false;convUI(false);showConvError('Das Video startet nicht. Prüfe deine Internetverbindung und versuch es nochmal.')}return}
+  let black=0,dur=0;try{dur=ytp.getDuration()}catch(e){}
+  // look for the first moment the keyboard is visible (skips the channel intro automatically)
+  const steps=[0,3,6,10,15,20,30,45,60,90].map(x=>st+x).filter(x=>!dur||x<dur-5);
+  for(const at of steps){
     if(!ytAuto)return;
-    if(extra){convProgress(null,'Suche weiter im Video …');try{ytp.seekTo(st+extra,true);ytp.playVideo()}catch(e){}await sleep(1300)}
+    convProgress(null,at>st?`Suche die Tastatur … (${fmt(at)})`:'Suche die Tastatur …');
+    try{ytp.seekTo(at,true);ytp.playVideo()}catch(e){}
+    if(!await waitMainVideo(60000))return;
+    await sleep(2200); // YouTube shows title/overlays for a moment after starting
     const frames=[];for(let i=0;i<5;i++){const f=await grabVideo();if(f)frames.push(f);await sleep(220)}
     if(!frames.length)continue;
     if(imgMean(frames[0])<12){black++;if(black>=2)break;continue}
     let best=null;for(const im of [medianImage(frames),...frames]){const r=tryKeyboard(im);if(r&&(!best||r.n>best.n))best=r}
-    if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;try{ytp.pauseVideo()}catch(e){}scanAutoGo();return}
+    if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;try{ytp.pauseVideo()}catch(e){}
+      const firstSeen=Math.max(st,at-(at>st?3:0));scanAutoGo(firstSeen);return}
   }
   ytAuto=false;convUI(false);try{ytp.pauseVideo();ytp.unMute()}catch(e){}
   showConvError(black>=2?'Dein Handy lässt die App das Video nicht „sehen“ (das Bild bleibt schwarz). Schreib mir das bitte – dann baue ich eine andere Aufnahme-Methode ein.'
     :'In diesem Video wurde keine Klaviertastatur gefunden. Die Umwandlung funktioniert mit Videos, in denen unten eine Klaviertastatur zu sehen ist und die Noten von oben darauf fallen.');
 }
-$('#convErrOk').onclick=()=>{$('#convErr').classList.remove('on');$('#gDim').classList.remove('on');if(navStack[navStack.length-1]==='yt')$('#yBack').click()};
 function showConvError(msg){$('#convErrTxt').textContent=msg;$('#convErr').classList.add('on');$('#gDim').classList.add('on')}
-function scanAutoGo(){ // called after a successful keyboard detection in auto mode
-  setScStart(ytItem&&ytItem.start||0);$('#scanOv').classList.add('hidden');$('#scanOv').style.visibility='';convProgress(0,'Noten werden gelesen …');scanRun()}
+function scanAutoGo(from){ // called after a successful keyboard detection in auto mode
+  setScStart(from!=null?from:(ytItem&&ytItem.start||0));$('#scanOv').classList.add('hidden');$('#scanOv').style.visibility='';convProgress(0,'Noten werden gelesen …');scanRun()}
 
 /* ================= Android back button ================= */
 window.appBack=function(){
