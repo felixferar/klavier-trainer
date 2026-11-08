@@ -4,11 +4,18 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Base64;
+import android.view.PixelCopy;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -24,30 +31,67 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
+import androidx.webkit.JavaScriptReplyProxy;
 import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+
+import org.json.JSONObject;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Die App ist eine native Android-Hülle um die Web-Oberfläche in assets/www/index.html.
- * Die Seite wird über https://appassets.androidplatform.net geladen, damit Mikrofon
- * (getUserMedia) und YouTube-Einbettung funktionieren.
+ * Native Android-Hülle um die Web-Oberfläche.
+ *
+ * Die Oberfläche läuft IMMER unter https://appassets.androidplatform.net/www/ – egal ob sie
+ * frisch von GitHub Pages kommt, aus dem Zwischenspeicher oder aus der eingebauten Kopie.
+ * Dadurch gibt es nur einen localStorage (vorher: online und offline getrennt → Datenverlust).
+ *
+ * Reihenfolge beim Laden: GitHub Pages (kurzer Timeout) → zuletzt geladene Version → eingebaute Version.
  */
 public class MainActivity extends Activity {
-    private static final String LOCAL_URL = "https://appassets.androidplatform.net/assets/www/index.html";
-    /** Online-Version (GitHub Pages). Änderungen dort sind beim nächsten App-Start da – ohne Neuinstallation. */
+    private static final String APP_HOST = "appassets.androidplatform.net";
+    private static final String APP_ORIGIN = "https://" + APP_HOST;
+    private static final String APP_URL = APP_ORIGIN + "/www/index.html";
+    private static final String MIGRATE_URL = APP_ORIGIN + "/migrate.html";
+    /** Online-Version (GitHub Pages), beim Bauen gesetzt. Leer = nur eingebaute Version. */
     private static final String WEB_URL = BuildConfig.WEB_URL;
-    private boolean usingFallback = false;
-    private static final int REQ_MIC = 1;
-    private static final int REQ_FILE = 2;
+
+    private static final int REQ_MIC = 1, REQ_FILE = 2, REQ_SAVE = 3;
+    private static final int CONNECT_TIMEOUT_MS = 3000, READ_TIMEOUT_MS = 5000;
 
     private WebView web;
     private PermissionRequest pendingPermission;
     private ValueCallback<Uri[]> fileCallback;
+    private JavaScriptReplyProxy reply;
+    private String pendingSave;
+    private SharedPreferences prefs;
+
+    /** Woher die aktuell angezeigte Oberfläche stammt: online | cache | offline */
+    private volatile String source = "offline";
+
+    // Einmalige Übernahme der Daten aus dem alten Speicher (github.io-Origin)
+    private enum Mig { NONE, LOAD_OLD, LOAD_NEW }
+    private Mig mig = Mig.NONE;
+    private String migDump;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Bildschirm beim Üben nicht ausgehen lassen
+        prefs = getSharedPreferences("kt", MODE_PRIVATE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         FrameLayout root = new FrameLayout(this);
@@ -57,7 +101,6 @@ public class MainActivity extends Activity {
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
         setContentView(root);
 
-        // Kamera-Notch / Systemleisten: Inhalt nicht darunter zeichnen
         root.setOnApplyWindowInsetsListener((v, insets) -> {
             if (Build.VERSION.SDK_INT >= 30) {
                 android.graphics.Insets i = insets.getInsets(WindowInsets.Type.displayCutout() | WindowInsets.Type.systemBars());
@@ -74,8 +117,6 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setAllowFileAccess(false);
         s.setUserAgentString(s.getUserAgentString() + " KlavierTrainerApp/" + BuildConfig.VERSION_NAME);
-        // immer die neueste Online-Version holen; ohne Internet greift die eingebaute Version
-        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -84,15 +125,26 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return loader.shouldInterceptRequest(request.getUrl());
+                Uri u = request.getUrl();
+                if (APP_HOST.equals(u.getHost()) && u.getPath() != null) {
+                    String p = u.getPath();
+                    if (p.equals("/migrate.html")) return text("text/html", "<!doctype html><meta charset=utf-8><title>.</title>");
+                    if (p.startsWith("/www/")) return serveWeb(p.substring(5));
+                }
+                return loader.shouldInterceptRequest(u);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                onMigrationPage(url);
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                // Keine Verbindung zur Online-Version → eingebaute Version laden
-                if (request.isForMainFrame() && !usingFallback && !WEB_URL.isEmpty()) {
-                    usingFallback = true;
-                    view.loadUrl(LOCAL_URL);
+                // Alte Seite für die Datenübernahme nicht erreichbar (offline) → beim nächsten Start erneut
+                if (request.isForMainFrame() && mig == Mig.LOAD_OLD) {
+                    mig = Mig.NONE;
+                    view.loadUrl(APP_URL);
                 }
             }
 
@@ -100,7 +152,6 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri u = request.getUrl();
                 if (isOwnHost(u)) return false;
-                // externe Links (z. B. musescore.com) im normalen Browser öffnen
                 try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception ignored) {}
                 return true;
             }
@@ -113,7 +164,7 @@ public class MainActivity extends Activity {
                     boolean wantsAudio = false;
                     for (String r : request.getResources())
                         if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) wantsAudio = true;
-                    if (!wantsAudio || !isOwnHost(request.getOrigin())) { request.deny(); return; }
+                    if (!wantsAudio || !APP_HOST.equals(request.getOrigin().getHost())) { request.deny(); return; }
                     if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                         request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
                     } else {
@@ -131,7 +182,7 @@ public class MainActivity extends Activity {
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("*/*");
                 try {
-                    startActivityForResult(Intent.createChooser(i, "MIDI-Datei wählen"), REQ_FILE);
+                    startActivityForResult(Intent.createChooser(i, "Datei wählen"), REQ_FILE);
                 } catch (Exception e) {
                     fileCallback = null;
                     return false;
@@ -140,14 +191,233 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (savedInstanceState != null) web.restoreState(savedInstanceState);
-        else web.loadUrl(WEB_URL.isEmpty() ? LOCAL_URL : WEB_URL);
+        // Brücke Web ↔ App: nur für die eigene Seite im Hauptframe (nicht für das YouTube-iframe)
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(web, "KTNative", Collections.singleton(APP_ORIGIN),
+                    (view, message, origin, isMainFrame, proxy) -> {
+                        if (!isMainFrame || message.getData() == null) return;
+                        reply = proxy;
+                        handleMessage(message.getData());
+                    });
+        }
+
+        boolean migrated = prefs.getBoolean("migrated_v1", false);
+        if (!migrated && !WEB_URL.isEmpty()) {
+            mig = Mig.LOAD_OLD;
+            web.loadUrl(WEB_URL);
+        } else if (savedInstanceState != null) {
+            web.restoreState(savedInstanceState);
+        } else {
+            web.loadUrl(APP_URL);
+        }
     }
+
+    // ---------------------------------------------------------------- Laden der Oberfläche
+
+    private WebResourceResponse serveWeb(String rel) {
+        if (rel.isEmpty()) rel = "index.html";
+        if (rel.contains("..")) return null;
+        File cached = new File(new File(getFilesDir(), "www"), rel);
+        boolean isIndex = rel.equals("index.html");
+
+        if (!WEB_URL.isEmpty()) {
+            HttpURLConnection c = null;
+            try {
+                c = (HttpURLConnection) new URL(WEB_URL + rel + "?t=" + System.currentTimeMillis()).openConnection();
+                c.setConnectTimeout(CONNECT_TIMEOUT_MS);
+                c.setReadTimeout(READ_TIMEOUT_MS);
+                c.setUseCaches(false);
+                c.setRequestProperty("Cache-Control", "no-cache");
+                if (c.getResponseCode() == 200) {
+                    byte[] body = readAll(c.getInputStream());
+                    if (body.length > 0) {
+                        String mime = mimeOf(c.getContentType(), rel);
+                        if (isIndex) {
+                            source = "online";
+                            writeAtomic(cached, body); // für offline: zuletzt geladene Version
+                        }
+                        return response(mime, body);
+                    }
+                }
+            } catch (Exception ignored) {
+                // offline / Timeout → Fallback
+            } finally {
+                if (c != null) c.disconnect();
+            }
+        }
+        try {
+            if (cached.isFile()) {
+                if (isIndex) source = "cache";
+                return response(mimeOf(null, rel), readAll(new FileInputStream(cached)));
+            }
+        } catch (Exception ignored) {}
+        try {
+            byte[] body = readAll(getAssets().open("www/" + rel));
+            if (isIndex) source = "offline";
+            return response(mimeOf(null, rel), body);
+        } catch (Exception e) {
+            WebResourceResponse r = text("text/plain", "Nicht gefunden");
+            r.setStatusCodeAndReasonPhrase(404, "Not Found");
+            return r;
+        }
+    }
+
+    private static WebResourceResponse response(String mime, byte[] body) {
+        Map<String, String> h = new HashMap<>();
+        h.put("Cache-Control", "no-store");
+        return new WebResourceResponse(mime, "utf-8", 200, "OK", h, new ByteArrayInputStream(body));
+    }
+
+    private static WebResourceResponse text(String mime, String s) {
+        return response(mime, s.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String mimeOf(String contentType, String rel) {
+        if (contentType != null && !contentType.isEmpty()) return contentType.split(";")[0].trim();
+        if (rel.endsWith(".html")) return "text/html";
+        if (rel.endsWith(".js")) return "application/javascript";
+        if (rel.endsWith(".css")) return "text/css";
+        if (rel.endsWith(".json")) return "application/json";
+        if (rel.endsWith(".svg")) return "image/svg+xml";
+        if (rel.endsWith(".png")) return "image/png";
+        return "application/octet-stream";
+    }
+
+    private static byte[] readAll(InputStream in) throws Exception {
+        try (InputStream i = in) {
+            ByteArrayOutputStream o = new ByteArrayOutputStream();
+            byte[] b = new byte[16384];
+            int n;
+            while ((n = i.read(b)) > 0) o.write(b, 0, n);
+            return o.toByteArray();
+        }
+    }
+
+    private static void writeAtomic(File f, byte[] data) {
+        try {
+            File dir = f.getParentFile();
+            if (dir != null && !dir.isDirectory() && !dir.mkdirs()) return;
+            File tmp = new File(f.getPath() + ".tmp");
+            try (FileOutputStream o = new FileOutputStream(tmp)) { o.write(data); }
+            if (!tmp.renameTo(f)) tmp.delete();
+        } catch (Exception ignored) {}
+    }
+
+    // ---------------------------------------------------------------- Datenübernahme (einmalig)
+
+    private void onMigrationPage(String url) {
+        if (url == null) return;
+        Uri u = Uri.parse(url);
+        if (mig == Mig.LOAD_OLD && !WEB_URL.isEmpty() && Uri.parse(WEB_URL).getHost().equals(u.getHost())) {
+            web.evaluateJavascript(
+                    "(function(){var o={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);" +
+                            "if(k.indexOf('kt_')===0)o[k]=localStorage.getItem(k)}return JSON.stringify(o)})()",
+                    v -> {
+                        migDump = v; // ist bereits ein JS-String-Literal
+                        mig = Mig.LOAD_NEW;
+                        web.loadUrl(MIGRATE_URL);
+                    });
+        } else if (mig == Mig.LOAD_NEW && url.startsWith(MIGRATE_URL)) {
+            String dump = (migDump == null || migDump.equals("null")) ? "'{}'" : migDump;
+            web.evaluateJavascript(
+                    "(function(d){d=JSON.parse(d);if(localStorage.getItem('kt_migrated'))return 'skip';" +
+                            "for(var k in d)localStorage.setItem(k,d[k]);localStorage.setItem('kt_migrated','1');return 'ok'})(" + dump + ")",
+                    r -> {
+                        if (r != null && (r.contains("ok") || r.contains("skip")))
+                            prefs.edit().putBoolean("migrated_v1", true).apply();
+                        mig = Mig.NONE;
+                        migDump = null;
+                        web.loadUrl(APP_URL);
+                    });
+        }
+    }
+
+    // ---------------------------------------------------------------- Brücke
+
+    private void handleMessage(String data) {
+        try {
+            JSONObject m = new JSONObject(data);
+            switch (m.optString("cmd")) {
+                case "info": {
+                    JSONObject o = new JSONObject();
+                    o.put("cmd", "info");
+                    o.put("source", source);
+                    o.put("version", BuildConfig.VERSION_NAME);
+                    o.put("build", BuildConfig.VERSION_CODE);
+                    send(o);
+                    break;
+                }
+                case "save": {
+                    pendingSave = m.optString("data", "");
+                    Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("application/json");
+                    i.putExtra(Intent.EXTRA_TITLE, m.optString("name", "klavier-trainer-backup.json"));
+                    startActivityForResult(i, REQ_SAVE);
+                    break;
+                }
+                case "capture":
+                    capture();
+                    break;
+            }
+        } catch (Exception e) {
+            sendError("unknown", e);
+        }
+    }
+
+    private void send(JSONObject o) {
+        final String s = o.toString();
+        runOnUiThread(() -> { if (reply != null) reply.postMessage(s); });
+    }
+
+    private void sendError(String cmd, Exception e) {
+        try {
+            JSONObject o = new JSONObject();
+            o.put("cmd", cmd);
+            o.put("ok", false);
+            o.put("error", String.valueOf(e != null ? e.getMessage() : "Fehler"));
+            send(o);
+        } catch (Exception ignored) {}
+    }
+
+    /** Test: Kann die App ihr eigenes Fenster inkl. YouTube-Video abfotografieren? (Grundlage für „Video → Noten“) */
+    private void capture() {
+        int w = web.getWidth(), h = web.getHeight();
+        if (w <= 0 || h <= 0) { sendError("capture", null); return; }
+        final Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        int[] loc = new int[2];
+        web.getLocationInWindow(loc);
+        Rect r = new Rect(loc[0], loc[1], loc[0] + w, loc[1] + h);
+        PixelCopy.request(getWindow(), r, bmp, result -> {
+            if (result != PixelCopy.SUCCESS) {
+                sendError("capture", new Exception("PixelCopy-Fehler " + result));
+                return;
+            }
+            new Thread(() -> {
+                try {
+                    float scale = Math.min(1f, 1280f / Math.max(w, h));
+                    Bitmap out = scale < 1f ? Bitmap.createScaledBitmap(bmp, Math.round(w * scale), Math.round(h * scale), true) : bmp;
+                    ByteArrayOutputStream o = new ByteArrayOutputStream();
+                    out.compress(Bitmap.CompressFormat.JPEG, 80, o);
+                    JSONObject j = new JSONObject();
+                    j.put("cmd", "capture");
+                    j.put("ok", true);
+                    j.put("img", "data:image/jpeg;base64," + Base64.encodeToString(o.toByteArray(), Base64.NO_WRAP));
+                    send(j);
+                } catch (Exception e) {
+                    sendError("capture", e);
+                }
+            }).start();
+        }, new Handler(Looper.getMainLooper()));
+    }
+
+    // ---------------------------------------------------------------- System
 
     private boolean isOwnHost(Uri u) {
         if (u == null || u.getHost() == null) return false;
-        if ("appassets.androidplatform.net".equals(u.getHost())) return true;
-        return !WEB_URL.isEmpty() && u.getHost().equals(Uri.parse(WEB_URL).getHost());
+        if (APP_HOST.equals(u.getHost())) return true;
+        // github.io nur während der einmaligen Datenübernahme
+        return mig != Mig.NONE && !WEB_URL.isEmpty() && u.getHost().equals(Uri.parse(WEB_URL).getHost());
     }
 
     private void hideSystemBars() {
@@ -190,10 +460,25 @@ public class MainActivity extends Activity {
             fileCallback = null;
             return;
         }
+        if (requestCode == REQ_SAVE) {
+            boolean ok = false;
+            if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingSave != null) {
+                try (OutputStream o = getContentResolver().openOutputStream(data.getData(), "wt")) {
+                    if (o != null) { o.write(pendingSave.getBytes(StandardCharsets.UTF_8)); ok = true; }
+                } catch (Exception ignored) {}
+            }
+            pendingSave = null;
+            try {
+                JSONObject j = new JSONObject();
+                j.put("cmd", "saved");
+                j.put("ok", ok);
+                send(j);
+            } catch (Exception ignored) {}
+            return;
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /** Zurück-Taste: erst die App-Ansicht schließen (Einstellungen, Song …), dann die App. */
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {

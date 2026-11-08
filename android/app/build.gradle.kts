@@ -3,6 +3,8 @@ plugins { id("com.android.application") }
 // Adresse, von der die App ihre Oberfläche lädt (wird beim Bauen auf GitHub gesetzt).
 // Leer = nur die eingebaute Version aus assets/www verwenden.
 val webUrl: String = (project.findProperty("webUrl") as String?) ?: ""
+// Fortlaufende Build-Nummer vom GitHub-Workflow, damit Android Updates sauber erkennt.
+val buildNo: Int = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 5
 
 android {
     namespace = "de.klaviertrainer.app"
@@ -11,8 +13,8 @@ android {
         applicationId = "de.klaviertrainer.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = buildNo
+        versionName = "0.5"
         buildConfigField("String", "WEB_URL", "\"$webUrl\"")
     }
     signingConfigs {

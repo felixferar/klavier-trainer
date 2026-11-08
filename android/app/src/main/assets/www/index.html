@@ -349,9 +349,12 @@ body.short #onbDots{margin:8px 0}
     </div>
     <div class="lbl">Daten</div>
     <div class="list">
+      <div class="li"><div class="grow"><b>Backup speichern</b><small>Songs, Statistik, Kalibrierung und Einstellungen als Datei</small></div><button class="btn sm" id="expBtn">Speichern</button></div>
+      <div class="li"><div class="grow"><b>Backup laden</b><small id="impInfo">Ersetzt alle Daten auf diesem Gerät</small></div><button class="btn sm" id="impBtn">Laden</button><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
       <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 0.4</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 0.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+      <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
 
@@ -448,7 +451,7 @@ body.short #onbDots{margin:8px 0}
     <button class="ib" id="yBackS" title="5 s zurück"><svg class="i"><use href="#i-rew"/></svg></button>
     <button class="ib" id="ySlower"><svg class="i"><use href="#i-minus"/></svg></button><span id="ySpeed" style="min-width:44px;text-align:center;font-weight:700;font-size:13px">100%</span><button class="ib" id="yFaster"><svg class="i"><use href="#i-plus"/></svg></button>
     <span class="sep" style="width:1px;height:24px;background:var(--bd2);margin:0 4px"></span>
-    <button class="btn sm" id="yA">A</button><button class="btn sm" id="yB">B</button><button class="btn sm ghost" id="yOff">Loop aus</button>
+    <button class="btn sm" id="yA">A</button><button class="btn sm" id="yB">B</button><button class="btn sm ghost" id="yOff">Loop aus</button><button class="btn sm ghost hidden" id="yCap" title="Test: kann die App das Video abfotografieren?">Bild-Test</button>
     <span class="mu sm" style="margin-left:6px">Wdh.</span><div class="stp"><button id="yRepM">−</button><span id="yRep">0</span><button id="yRepP">+</button></div>
     <label class="mu sm" style="display:flex;align-items:center;gap:6px;margin-left:6px;white-space:nowrap"><input type="checkbox" class="sw" id="yNext">dann weiter</label>
     <span id="yInfo" class="mu sm" style="white-space:nowrap;margin-left:6px"></span>
@@ -557,7 +560,8 @@ const songStat=id=>ST.songs[id]||(ST.songs[id]={time:0,last:0,sessions:0,best:0,
 function addTime(id,sec){const k=dayKey();ST.days[k]=(ST.days[k]||0)+sec;if(id){const s=songStat(id);s.time+=sec;s.last=Date.now()}const st=streak();if(st>ST.bestStreak)ST.bestStreak=st;stDirty=true}
 function streak(){const d=new Date();let c=0;if(!((ST.days[dayKey(d)]||0)>=60))d.setDate(d.getDate()-1);while((ST.days[dayKey(d)]||0)>=60){c++;d.setDate(d.getDate()-1)}return c}
 setInterval(()=>{if(stDirty){save('kt_stats',ST);stDirty=false}},4000);
-window.addEventListener('pagehide',()=>{if(stDirty)save('kt_stats',ST)});
+function flushOnHide(){if(stDirty)save('kt_stats',ST)}
+window.addEventListener('pagehide',flushOnHide);
 
 /* ================= desktop phone preview ================= */
 const isDesk=matchMedia('(pointer:fine)').matches&&window.innerWidth>=900;
@@ -1302,10 +1306,51 @@ $('#resetStats').onclick=()=>{const b=$('#resetStats');if(!b.dataset.c){b.datase
   ST={days:{},songs:{},bestStreak:0,last:null};save('kt_stats',ST);delete b.dataset.c;b.textContent='Löschen';toast('Statistik gelöscht')};
 
 $('#reloadBtn').onclick=()=>location.reload();
-$('#verTxt').textContent='Version 0.4 · '+(location.host.endsWith('github.io')?'online (Updates automatisch)':location.host.startsWith('appassets')?'offline-Version':'Vorschau');
+
+/* ================= Native bridge (App ≥ 0.5) ================= */
+const NAT={ok:typeof KTNative!=='undefined',info:null,wait:{}};
+function nat(cmd,extra,resp){return new Promise(res=>{if(!NAT.ok)return res(null);NAT.wait[resp||cmd]=res;KTNative.postMessage(JSON.stringify(Object.assign({cmd},extra||{})))})}
+if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
+  nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
+const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
+function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
+  $('#verTxt').textContent='Version 0.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#oldApp').classList.toggle('hidden',!OLD_APP)}
+updVer();
+if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
+
+/* ================= Backup ================= */
+const SCHEMA=1;if(load('kt_schema')==null)save('kt_schema',SCHEMA);
+function exportData(){if(stDirty){save('kt_stats',ST);stDirty=false}const o={app:'klavier-trainer',schema:SCHEMA,exported:new Date().toISOString(),data:{}};
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('kt_')&&k!=='kt_migrated')o.data[k]=localStorage.getItem(k)}return JSON.stringify(o)}
+$('#expBtn').onclick=async()=>{const name=`klavier-trainer-backup-${dayKey()}.json`,data=exportData();
+  if(NAT.ok){const r=await nat('save',{name,data},'saved');toast(r&&r.ok?'Backup gespeichert':'Backup nicht gespeichert');return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)};
+let impData=null;
+$('#impBtn').onclick=()=>{const b=$('#impBtn');if(impData&&b.dataset.c){
+    for(const k of Object.keys(localStorage))if(k.startsWith('kt_')&&k!=='kt_migrated')localStorage.removeItem(k);
+    for(const [k,v] of Object.entries(impData))if(k.startsWith('kt_'))localStorage.setItem(k,v);
+    stDirty=false;window.removeEventListener('pagehide',flushOnHide);location.reload();return}
+  $('#impFile').value='';$('#impFile').click()};
+$('#impFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const b=$('#impBtn');
+  try{const o=JSON.parse(await f.text());if(o.app!=='klavier-trainer'||!o.data||typeof o.data!=='object')throw 0;if((o.schema||1)>SCHEMA){toast('Backup stammt aus einer neueren Version – bitte App aktualisieren');return}
+    impData=o.data;const n=(JSON.parse(o.data.kt_lib||'[]')||[]).length;$('#impInfo').textContent=`Backup vom ${new Date(o.exported).toLocaleDateString('de-DE')} · ${n} Songs`;
+    b.dataset.c=1;b.textContent='Ersetzen?';b.classList.add('danger');setTimeout(()=>{delete b.dataset.c;impData=null;b.textContent='Laden';b.classList.remove('danger');$('#impInfo').textContent='Ersetzt alle Daten auf diesem Gerät'},6000)}
+  catch(_){toast('Keine gültige Backup-Datei')}};
+
+/* ================= Bild-Test (Grundlage für „Video → Noten“) ================= */
+$('#yCap').onclick=async()=>{const r=$('#ytBox').getBoundingClientRect();toast('Mache Bild …',1200);const m=await nat('capture');
+  if(!m||!m.ok){toast('Bild-Test fehlgeschlagen'+(m&&m.error?': '+m.error:''));return}
+  const img=new Image();img.onload=()=>{const k=img.width/innerWidth,c=document.createElement('canvas');c.width=img.width;c.height=img.height;const x=c.getContext('2d');x.drawImage(img,0,0);
+    const d=x.getImageData(Math.max(0,r.left*k)|0,Math.max(0,r.top*k)|0,Math.max(1,r.width*k)|0,Math.max(1,r.height*k)|0).data;let s=0,s2=0,n=0;
+    for(let i=0;i<d.length;i+=16){const l=0.3*d[i]+0.59*d[i+1]+0.11*d[i+2];s+=l;s2+=l*l;n++}const mean=s/n,sd=Math.sqrt(Math.max(0,s2/n-mean*mean));const ok=sd>8||mean>20;
+    const ov=document.createElement('div');ov.id='capOv';ov.style.cssText='position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px';
+    ov.innerHTML=`<img src="${img.src}" style="max-width:100%;max-height:70vh;border-radius:12px;border:1px solid var(--bd2)"><div style="font-weight:700;color:${ok?'var(--ok,#63E6A0)':'var(--bad)'}">${ok?'✓ Video ist auf dem Bild – „Video → Noten“ geht ohne Bildschirmaufnahme':'✗ Videobereich ist schwarz – wir brauchen die Bildschirmaufnahme'}</div><div class="mu sm">Helligkeit ${mean.toFixed(0)} · Kontrast ${sd.toFixed(0)} · Video vorher abspielen! · Tippen zum Schließen</div>`;
+    ov.onclick=()=>ov.remove();document.body.appendChild(ov)};img.src=m.img};
 
 /* ================= Android back button ================= */
 window.appBack=function(){
+  if($('#capOv')){$('#capOv').remove();return true}
   if($('.sheet.on')){closeSheets();return true}
   if($('#resModal').classList.contains('on')){$('#resDone').click();return true}
   const cur=navStack[navStack.length-1];
