@@ -396,7 +396,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Backup laden</b><small id="impInfo">Ersetzt alle Daten auf diesem Gerät</small></div><button class="btn sm" id="impBtn">Laden</button><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
       <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 0.9</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 1.0</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -583,9 +583,11 @@ body.short #onbDots{margin:8px 0}
     <div class="card" style="margin-top:10px">
       <div style="display:flex;gap:14px;align-items:center">
         <div class="cover" style="background:linear-gradient(135deg,#e03131,#a61e4d)"><svg class="i" style="width:26px;height:26px"><use href="#i-yt"/></svg></div>
-        <div class="grow"><div class="ttl">YouTube-Video</div><div class="meta">Tempo und Abschnitt wiederholen</div></div>
+        <div class="grow"><div class="ttl">YouTube-Video → Song</div><div class="meta">Klavier-Video mit fallenden Noten einfügen – die App macht daraus einen Song</div></div>
       </div>
-      <div class="search" style="margin:12px 0 0"><input id="ytUrl" placeholder="Link einfügen"><button class="btn sm pri" id="ytAdd">Hinzufügen</button></div>
+      <div class="search" style="margin:12px 0 0"><input id="ytUrl" placeholder="YouTube-Link einfügen"><button class="btn sm pri" id="ytAdd">Umwandeln</button></div>
+      <div class="mu xs" style="margin-top:8px">Tipp: Kopiere den Link ab der Stelle, an der das Intro vorbei ist (YouTube → Teilen → „Beginnen bei …“). Davor wird alles übersprungen.</div>
+      <button class="btn sm ghost" id="ytJustAdd" style="margin-top:6px;padding-left:0;color:var(--mu)">Nur als Video ansehen</button>
     </div>
     <div class="mu sm" style="margin:14px 4px 0">MIDI-Dateien gibt es für fast jeden Song, z. B. auf <a href="https://musescore.com" target="_blank" style="color:var(--ac)">musescore.com</a>. Viele YouTube-Klavier-Videos verlinken die MIDI in der Beschreibung.</div>
   </div>
@@ -857,8 +859,9 @@ $('#midiFile').onchange=async e=>{
 };
 function ytIdStart(u){return ytStartFromUrl(u)}
 function ytId(u){u=u.trim();const m=u.match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([A-Za-z0-9_-]{11})/);if(m)return m[1];if(/^[A-Za-z0-9_-]{11}$/.test(u))return u;return null}
-$('#ytAdd').onclick=()=>{const id=ytId($('#ytUrl').value);if(!id){toast('Das ist kein YouTube-Link');return}
-  const it={id:'y'+Date.now(),type:'yt',title:'YouTube-Video',videoId:id,start:ytIdStart($('#ytUrl').value)};LIB.unshift(it);saveLib();$('#ytUrl').value='';closeSheets();openYT(it)};
+function addYT(convert){const u=$('#ytUrl').value,id=ytId(u);if(!id){toast('Das ist kein YouTube-Link');return}
+  const it={id:'y'+Date.now(),type:'yt',title:'YouTube-Video',videoId:id,start:ytIdStart(u)};LIB.unshift(it);saveLib();$('#ytUrl').value='';closeSheets();openYT(it,convert)}
+$('#ytAdd').onclick=()=>addYT(true);$('#ytJustAdd').onclick=()=>addYT(false);
 
 /* ================= microphone & listening ================= */
 const BLO=21,BHI=120,NB=BHI-BLO+1;
@@ -1310,7 +1313,8 @@ window.addEventListener('keydown',e=>{
 
 /* ================= YouTube ================= */
 let ytp=null,ytItem=null,ytLoop=null,ytTimer=null,ytRate=1,ytReps=0,ytPlaying=false,ytLast=0;
-function openYT(it){
+let ytAuto=false;
+function openYT(it,auto){ytAuto=!!auto;
   ytItem=it;navStack.push('yt');show('yt');$('#yTitle').textContent=it.title;$('#ytMsg').textContent='YouTube wird geladen …';ytLoop=null;ytInfo();
   ST.last={id:it.id,am:null,bm:null};songStat(it.id).sessions++;stDirty=true;
   const fail='YouTube lässt sich hier nicht laden. In der Vorschau ist das blockiert – in der Android-App funktioniert es.';
@@ -1318,7 +1322,7 @@ function openYT(it){
     if(ytp){try{ytp.destroy()}catch(e){}ytp=null}
     if(!$('#ytFrame')){const f=document.createElement('div');f.id='ytFrame';$('#ytBox').prepend(f)}
     ytp=new YT.Player('ytFrame',{videoId:it.videoId,playerVars:{playsinline:1,rel:0,modestbranding:1,start:Math.floor(it.start||0)},events:{
-      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;saveLib()}}catch(e){}},
+      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;saveLib()}}catch(e){}if(ytAuto)autoConvert(it)},
       onStateChange:e=>{ytPlaying=e.data===1;ytLast=performance.now();$('#yPlayI').innerHTML=`<use href="#i-${ytPlaying?'pause':'play'}"/>`;keepAwake(ytPlaying)},
       onError:()=>{$('#ytMsg').textContent='Dieses Video lässt sich nicht einbetten.'}}});
   };
@@ -1538,7 +1542,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 0.9 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 1.0 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1718,7 +1722,7 @@ function writeMidi(notes){
 }
 // --- UI
 let scanDet=null,scanImg=null,scanRows={yA:0.8,yB:0.92},scanOct=0,scanBox=null;
-async function scanSetup(){
+async function scanSetup(auto){
   if(!NAT.ok){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren)',4500);return}
   if(!ytp||!ytp.getCurrentTime){toast('Video lädt noch …');return}
   try{ytp.pauseVideo()}catch(e){}
@@ -1731,7 +1735,7 @@ async function scanSetup(){
     const x=c.getContext('2d');x.drawImage(img,-box.left*k,-box.top*k);scanImg=x.getImageData(0,0,c.width,c.height);
     let s=0;for(let i=0;i<scanImg.data.length;i+=64)s+=scanImg.data[i]+scanImg.data[i+1]+scanImg.data[i+2];
     if(s/(scanImg.data.length/64)<15){$('#scMsg').textContent='Das Video ist auf dem Standbild schwarz – Android lässt die App das Video nicht „sehen“. Sag mir Bescheid, dann baue ich die Bildschirmaufnahme ein.';drawScanPreview();return}
-    const rows=findKeyboardRows(scanImg);if(rows)scanRows=rows;scanDetect();};img.src=m.img;
+    const rows=findKeyboardRows(scanImg);if(rows)scanRows=rows;scanDetect();if(auto&&ytAuto&&scanDet)setTimeout(scanAutoGo,700);else if(auto)ytAuto=false};img.src=m.img;
 }
 function scanDetect(){
   scanDet=scanImg?detectKeys(scanImg,scanRows.yA):null;
@@ -1759,7 +1763,8 @@ async function scanRun(){
   const box=$('#ytBox').getBoundingClientRect();
   const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08)],ow:480,interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
-  SCAN.timer=setInterval(()=>{$('#scanTxt').textContent=`Erkenne Noten … ${fmt(Math.max(0,SCAN.lastVt))} · ${SCAN.events.length} Noten`;
+  let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}
+  SCAN.timer=setInterval(()=>{const p=dur>0?Math.min(100,Math.round(SCAN.lastVt/dur*100)):null;$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`;
     try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}},300);
 }
 function scanStop(){
@@ -1769,15 +1774,31 @@ function scanStop(){
   const L=notes.filter(n=>n.hand==='L').length;
   $('#scDoneTxt').textContent=`${notes.length} Noten erkannt (${notes.length-L} rechts, ${L} links) · ${fmt(Math.max(...notes.map(n=>n.start+n.dur)))} Min`;
   $('#scName').value=(ytItem&&ytItem.title&&ytItem.title!=='YouTube-Video'?ytItem.title:'Song aus Video').slice(0,60);
-  SCAN.result=notes;$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
+  SCAN.result=notes;if(ytAuto){ytAuto=false;scanSave(true);return}$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
 }
-function scanSave(){
-  const notes=SCAN.result;if(!notes)return;const title=$('#scName').value.trim()||'Song aus Video';
+function scanSave(auto){
+  const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
   const buf=writeMidi(notes);let s;try{s=songFromMidi(buf,title)}catch(e){toast('Fehler: '+e.message);return}
-  const it={id:'m'+Date.now(),type:'midi',title,artist:'Aus YouTube-Video',data:b64FromBuf(buf)};LIB.unshift(it);saveLib();
+  const it={id:'m'+Date.now(),type:'midi',title,artist:'Aus YouTube-Video',data:b64FromBuf(buf),fromYT:ytOld?ytOld.videoId:null};
+  if(ytOld)LIB=LIB.filter(x=>x.id!==ytOld.id); // the video entry is replaced by the finished song
+  LIB.unshift(it);saveLib();if(auto)toast(`Song „${title}“ erstellt – ${notes.length} Noten`,3500);
   $('#scanDone').classList.remove('on');$('#gDim').classList.remove('on');SCAN.result=null;
   if(ytp){try{ytp.destroy()}catch(e){}ytp=null}clearInterval(ytTimer);navStack.pop();openSong(s,it.id);
 }
+
+/* ================= YouTube-Link → Song (automatisch) ================= */
+async function autoConvert(it){
+  if(!NAT.ok){ytAuto=false;toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
+  const st=it.start||0;$('#scanBar').classList.remove('hidden');$('#scanTxt').textContent='Bereite vor …';
+  try{ytp.mute();ytp.seekTo(st+0.5,true);ytp.playVideo()}catch(e){}
+  await new Promise(r=>setTimeout(r,1800));
+  try{ytp.pauseVideo();ytp.unMute()}catch(e){}
+  await new Promise(r=>setTimeout(r,250));
+  $('#scanBar').classList.add('hidden');
+  await scanSetup(true);
+}
+function scanAutoGo(){ // called after a successful keyboard detection in auto mode
+  setScStart(ytItem&&ytItem.start||0);$('#scanOv').classList.add('hidden');toast('Tastatur erkannt – Noten werden erkannt',2000);scanRun()}
 
 /* ================= Android back button ================= */
 window.appBack=function(){
