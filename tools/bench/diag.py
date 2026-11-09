@@ -64,7 +64,10 @@ def write(meta, frames, out):
     for i, s in enumerate([meta.get('still')] + list(meta.get('stills') or [])):
         if s and s.startswith('data:image'):
             open(os.path.join(out, f'still{i or ""}.jpg'), 'wb').write(base64.b64decode(s.split(',', 1)[1]))
-    m = {k: v for k, v in meta.items() if k not in ('still', 'stills')}
+    for i, st in enumerate(meta.get('searchStills') or []):
+        if st.get('img', '').startswith('data:image'):
+            open(os.path.join(out, f'search{i}_{st.get("t", 0):.2f}.jpg'), 'wb').write(base64.b64decode(st['img'].split(',', 1)[1]))
+    m = {k: v for k, v in meta.items() if k not in ('still', 'stills', 'searchStills')}
     json.dump(m, open(os.path.join(out, 'meta.json'), 'w'), indent=1)
     if frames and meta.get('keys'):
         rec = {'meta': {'keys': meta['keys'], 'kw': meta['kw'], 'w': meta['w'], 'n': meta['n'], 'start': meta.get('start', 0)},
