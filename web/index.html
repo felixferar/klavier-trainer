@@ -406,6 +406,7 @@ body.short #onbDots{margin:8px 0}
     <div class="lbl">Tonerkennung</div>
     <div class="list">
       <div class="li"><div class="grow"><b>Keyboard (Bluetooth)</b><small id="kbSetTxt">Nicht verbunden – die App hört über das Mikrofon</small></div><button class="btn sm" id="kbSetBtn">Verbinden</button></div>
+      <div class="li hidden" id="kbShiftRow"><div class="grow"><b>Keyboard-Verschiebung</b><small>Wurde automatisch erkannt und wird ausgeglichen</small></div><button class="btn sm" id="kbShiftReset">Zurücksetzen</button></div>
       <div class="li hidden"><div class="grow"><b>Erkennung über</b></div><select id="inputSel2"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
       <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
       <div class="li"><div class="grow"><b>Kalibrierung</b><small id="calStat2">–</small></div><button class="btn sm" data-go="calib">Öffnen</button></div>
@@ -426,7 +427,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.2</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.3</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1150,7 +1151,7 @@ async function startMidiIn(){
 
 /* ================= Keyboard über Bluetooth-MIDI ================= */
 // The keyboard reports every key directly (note, time, strength) – no microphone, no calibration, ~10–20 ms delay.
-const KB={sup:false,state:'off',name:'',addr:'',saved:'',found:[],msg:'',scanning:false,pedal:false,held:new Set()};
+const KB={sup:false,state:'off',name:'',addr:'',saved:'',found:[],msg:'',scanning:false,pedal:false,held:new Set(),shift:+(load('kt_kbshift')||0),cand:null,last:null};
 const kbOn=()=>KB.state==='on';
 function kbMsg(m){
   if(m.cmd==='midi'){for(const [st,a,v] of m.e)kbEvent(st,a,v);return}
@@ -1164,15 +1165,21 @@ function kbMsg(m){
   if(m.state==='btoff'&&$('#kbSheet').classList.contains('on'))nat('kbEnableBt');
   kbUI()}
 function kbEvent(st,a,v){const hi=st&0xF0;
-  if(hi===0x90&&v>0){KB.held.add(a);kbNoteOn(a)}
+  if(hi===0x90||hi===0x80){a=clamp(a+KB.shift,0,127);} // keyboard transposed / octave shifted → corrected (learned automatically)
+  if(hi===0x90&&v>0){KB.held.add(a);KB.last=a;kbNoteOn(a);kbUI()}
   else if(hi===0x80||hi===0x90){KB.held.delete(a)}
   else if(hi===0xB0&&a===64)KB.pedal=v>=64}
 function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);
-  if(!song||!listening())return;pushPress(m); // counted in the game loop – exactly one note per press
+  if(!song||!listening())return;
   // wrong key while the app waits for you: red – but not for notes of the song around here (other hand, next notes, a bit early)
-  const g=groups[gi];if(!S.wait||!g||t<g.start-0.6*Math.max(S.speed,.3))return;
-  const win=1.2*Math.max(S.speed,.3);for(const n of song.notes){if(n.start>t+win)break;if(n.start+n.dur>t-win&&(n.midi===m||n.midi0===m))return}
-  wrongFlash.set(m,now);fx.push({txt:'Falsch',r:'m',t0:now});if(fx.length>3)fx.shift()}
+  const g=groups[gi];if(!S.wait||!g||t<g.start-0.6*Math.max(S.speed,.3)){pushPress(m);return}
+  const win=1.2*Math.max(S.speed,.3);for(const n of song.notes){if(n.start>t+win)break;if(n.start+n.dur>t-win&&(n.midi===m||n.midi0===m)){KB.cand=null;pushPress(m);return}}
+  // the same distance to the wanted note three times in a row → the keyboard itself is shifted (transpose/octave): correct it once
+  const ds=new Set(g.notes.filter(n=>!n.hit).map(n=>n.midi-m).filter(d=>d!==0&&Math.abs(d)<=24));
+  if(KB.cand&&ds.has(KB.cand.d))KB.cand.n++;else{const d=[...ds].sort((x,y)=>Math.abs(x%12)-Math.abs(y%12)||Math.abs(x)-Math.abs(y))[0];KB.cand=d!=null?{d,n:1}:null} // prefer octave shifts
+  if(KB.cand&&KB.cand.n>=3){const d=KB.cand.d;KB.shift+=d;save('kt_kbshift',KB.shift);KB.cand=null;pushPress(m+d);
+    toast(`Dein Keyboard schickt die Töne ${Math.abs(d)%12===0?(Math.abs(d)/12)+' Oktave'+(Math.abs(d)>12?'n':''):Math.abs(d)+' Halbtöne'} ${d>0?'zu tief':'zu hoch'} (Transponierung) – ab jetzt automatisch korrigiert.`,5000);return}
+  pushPress(m);wrongFlash.set(m,now);fx.push({txt:'Falsch: '+noteName(m),r:'m',t0:now});if(fx.length>3)fx.shift()}
 function kbUI(){
   const sup=KB.sup,on=kbOn(),st=KB.state;
   if($('#calCard')&&(on||KB.saved))$('#calCard').classList.add('hidden'); // with a keyboard no calibration is needed
@@ -1183,8 +1190,8 @@ function kbUI(){
       KB.saved?'Keyboard einschalten – die App verbindet sich dann von selbst.':'Hast du ein Keyboard mit Bluetooth? Dann erkennt die App jede Taste sofort.';
     $('#kbCardBtn').classList.toggle('hidden',on||!sup);$('#kbCardBtn').textContent=KB.saved?'Suchen':'Verbinden'}
   // settings
-  if($('#kbSetTxt')){$('#kbSetTxt').textContent=on?`Verbunden: ${KB.name}`:!sup?'Braucht die neue App-Version':KB.saved?`${KB.name||'Keyboard'} – nicht in der Nähe oder aus`:'Nicht verbunden – die App hört über das Mikrofon';
-    $('#kbSetBtn').textContent=on?'Trennen':'Verbinden';$('#kbSetBtn').disabled=!sup}
+  if($('#kbSetTxt')){$('#kbSetTxt').textContent=on?`Verbunden: ${KB.name}`+(KB.last!=null?` · zuletzt gedrückt: ${noteName(KB.last)}`:'')+(KB.shift?` · Verschiebung ${KB.shift>0?'+':''}${KB.shift}`:''):!sup?'Braucht die neue App-Version':KB.saved?`${KB.name||'Keyboard'} – nicht in der Nähe oder aus`:'Nicht verbunden – die App hört über das Mikrofon';
+    $('#kbSetBtn').textContent=on?'Trennen':'Verbinden';$('#kbSetBtn').disabled=!sup;$('#kbShiftRow').classList.toggle('hidden',!KB.shift)}
   // sheet
   const msg={scanning:'Suche läuft …',connecting:'Verbinde …',on:`Verbunden: ${KB.name}`,lost:'Verbindung verloren – verbinde neu …',btoff:'Bluetooth ist aus. Bitte einschalten und nochmal suchen.',noperm:KB.msg,fail:KB.msg,off:KB.found.length?'Tippe auf dein Keyboard.':(KB.scanning?'Suche läuft …':'Kein Keyboard gefunden. Ist es eingeschaltet? Ist Bluetooth am Keyboard an?')}[st]||'';
   if($('#kbStatus')){$('#kbStatus').textContent=st==='off'&&KB.scanning?'Suche läuft …':msg;
@@ -1193,6 +1200,7 @@ function kbUI(){
 function kbOpen(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
   KB.found=[];KB.scanning=true;openSheet('#kbSheet');kbUI();nat('kbScan')}
 $('#kbCardBtn').onclick=kbOpen;
+$('#kbShiftReset').onclick=()=>{KB.shift=0;save('kt_kbshift',0);kbUI();toast('Verschiebung zurückgesetzt')};
 $('#kbSetBtn').onclick=()=>{if(kbOn()){nat('kbDisconnect',{forget:true});toast('Keyboard getrennt')}else kbOpen()};
 $('#kbAgain').onclick=()=>{KB.found=[];KB.scanning=true;kbUI();nat('kbScan')};
 $('#kbOff').onclick=()=>{nat('kbDisconnect',{forget:true});KB.saved='';closeSheets();toast('Keyboard getrennt')};
@@ -1729,7 +1737,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 2.2 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.3 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
