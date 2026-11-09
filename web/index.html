@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.4</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1764,7 +1764,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.4 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2212,21 +2212,31 @@ function scanSave(auto){
    Datei: "KTDIAG1\n" + base64(gzip( "KTD1" + u32 Länge + JSON-Kopf + Frames ))
    Frame: f64 t (native ms), f64 vt (YouTube-Zeit), f64 f (geglättete Zeit, NaN = verworfen), f64 Player-Zustand, dann w*n*3 Bytes RGB.
    Auswertung: tools/bench/diag.py */
-const DIAG={on:false,frames:[],bytes:0,meta:null,full:false,max:110e6};
+// Frames are gzipped in chunks while recording (rows compress to ~5 %), so memory stays small and whole songs fit (limit counts RAW bytes: 900 MB ≈ 22 min at 1280 px).
+// The file is a sequence of gzip members (header member first, then the frame chunks) – gunzip / Python gzip.decompress read that as one stream.
+const HAS_CS=typeof CompressionStream!=='undefined';
+const DIAG={on:false,frames:[],parts:[],n:0,cur:0,bytes:0,meta:null,full:false,max:HAS_CS?900e6:110e6};
+const diagGz=blob=>new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+function diagFlush(){if(!DIAG.frames.length||!HAS_CS)return;const blob=new Blob(DIAG.frames);DIAG.frames=[];DIAG.cur=0;DIAG.parts.push(diagGz(blob).then(b=>new Uint8Array(b),()=>null))}
+function diagReset(){DIAG.frames=[];DIAG.parts=[];DIAG.n=0;DIAG.cur=0;DIAG.bytes=0}
 function imgJpeg(img,q){try{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').putImageData(img,0,0);return c.toDataURL('image/jpeg',q||0.85)}catch(e){return null}}
-function diagStart(meta){DIAG.on=!!S.diagConv||!!ghTok();DIAG.frames=[];DIAG.bytes=0;DIAG.full=false;if(!DIAG.on)return;
+function diagStart(meta){DIAG.on=!!S.diagConv||!!ghTok();diagReset();DIAG.full=false;if(!DIAG.on)return;
   let q=null,vid=null;try{q=ytp.getPlaybackQuality();vid=ytp.getVideoData().video_id}catch(e){}
   DIAG.meta=Object.assign({kind:'ktdiag',v:1,app:($('#verTxt').textContent||''),native:NAT.info||null,ua:navigator.userAgent,dpr:devicePixelRatio,screen:[innerWidth,innerHeight],
     quality:q,videoId:vid,t0:performance.now(),still:scanImg?imgJpeg(scanImg,0.9):null},meta)}
 function diagFrame(raw,t,vt,st,f){if(!DIAG.on||DIAG.full)return;const b=new Uint8Array(32+raw.length),dv=new DataView(b.buffer);
   dv.setFloat64(0,t,true);dv.setFloat64(8,vt,true);dv.setFloat64(16,f,true);dv.setFloat64(24,st,true);for(let i=0;i<raw.length;i++)b[32+i]=raw.charCodeAt(i);
-  DIAG.frames.push(b);DIAG.bytes+=b.length;if(DIAG.bytes>DIAG.max)DIAG.full=true}
-async function diagSave(extra){if(!(S.diagConv||ghTok())||!NAT.ok||!DIAG.meta)return;
+  DIAG.frames.push(b);DIAG.n++;DIAG.cur+=b.length;DIAG.bytes+=b.length;if(DIAG.cur>=6e6)diagFlush();if(DIAG.bytes>DIAG.max)DIAG.full=true}
+async function diagBuild(extra){
   let q2=null;try{q2=ytp.getPlaybackQuality()}catch(e){}
-  const meta=Object.assign({},DIAG.meta,extra||{},{qualityEnd:q2,frameCount:DIAG.frames.length,truncated:DIAG.full,saved:new Date().toISOString()});
+  const meta=Object.assign({},DIAG.meta,extra||{},{qualityEnd:q2,frameCount:DIAG.n,truncated:DIAG.full,saved:new Date().toISOString()});
   const enc=new TextEncoder(),head=enc.encode(JSON.stringify(meta)),len=new Uint8Array(4);new DataView(len.buffer).setUint32(0,head.length,true);
-  const blob=new Blob([enc.encode('KTD1'),len,head,...DIAG.frames]);DIAG.frames=[];DIAG.on=false;DIAG.meta=null;
-  let buf;try{buf=await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()}catch(e){buf=await blob.arrayBuffer()}
+  const hdr=new Blob([enc.encode('KTD1'),len,head]);let buf;
+  if(HAS_CS){diagFlush();const parts=(await Promise.all(DIAG.parts)).filter(Boolean);buf=await new Blob([new Uint8Array(await diagGz(hdr)),...parts]).arrayBuffer()}
+  else{const blob=new Blob([hdr,...DIAG.frames]);buf=await blob.arrayBuffer()}
+  diagReset();DIAG.on=false;DIAG.meta=null;return {buf,meta}}
+async function diagSave(extra){if(!(S.diagConv||ghTok())||!NAT.ok||!DIAG.meta)return;
+  const {buf,meta}=await diagBuild(extra);
   const b64=b64FromBuf(buf);
   if(ghTok()){const up=await ghUpload(`diag/${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}_${meta.videoId||'video'}_${meta.reason||'x'}.ktd.gz`,b64,`Diagnose ${meta.videoId||''} (${meta.reason||''}, ${meta.notes?meta.notes.length:'?'} Noten)`);
     if(up.ok){if(S.diagConv){S.diagConv=false;saveS()}toast('Diagnose an Claude gesendet',3000);return}
@@ -2360,7 +2370,7 @@ async function autoConvert(it){
     await sleep(150);
   }
   if(!ytAuto)return;
-  if(S.diagConv||ghTok()){DIAG.meta={box:(()=>{const b=$('#ytBox').getBoundingClientRect();return {x:b.left,y:b.top,w:b.width,h:b.height}})()};DIAG.frames=[];DIAG.bytes=0;
+  if(S.diagConv||ghTok()){DIAG.meta={box:(()=>{const b=$('#ytBox').getBoundingClientRect();return {x:b.left,y:b.top,w:b.width,h:b.height}})()};diagReset();
     diagSave({reason:black>=8?'black':'nokb',stills:frames.slice(-5).map(f=>imgJpeg(f,0.85))})}
   ytAuto=false;convUI(false);try{ytp.pauseVideo();ytp.unMute()}catch(e){}
   showConvError(black>=8?'Dein Handy lässt die App das Video nicht „sehen“ (das Bild bleibt schwarz). Schreib mir das bitte – dann baue ich eine andere Aufnahme-Methode ein.'
