@@ -1,6 +1,6 @@
 # Statusbericht: YouTube-Video → Noten (Klavier Trainer)
 
-Stand: 09.11.2026, Commit `74eb135` (Web-App v3.2, Android-App 0.8) · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
+Stand: 09.11.2026 abends, Commit `bc52cb3` (Web-App v4.1, Android-App 1.0) · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
 
 Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI gedacht. Er beschreibt, was die Funktion tut, wo der Code liegt, welche Fehler gefunden und behoben wurden, was getestet ist und was offen ist.
 
@@ -17,6 +17,23 @@ Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI
 | Nächster Schritt | Nutzer wandelt golden hour mit v2.8 erneut um; bei Fehlern Diagnose-Datei auswerten (siehe Abschnitt 6). |
 
 ---
+
+## Arbeitsweise seit 09.11. nachmittags (vom Nutzer verlangt)
+Keine Code-Änderung ohne: (1) Ursachenanalyse in 2–3 Sätzen, (2) Datenbeleg aus Diagnose/Nachspielen, (3) minimalen Fix mit Seiteneffekten und Prüfweg – Fehler VOR dem Fix nachstellen, danach Rückfalltest auf allen Handy-Aufnahmen und dem Prüfstand. Ein Prüfer-Prompt für eine zweite KI liegt beim Nutzer; Vorschläge werden erst nach dessen Freigabe umgesetzt. Diagnosen kommen automatisch ins private Repo `felixferar/klavier-diagnose` (Abholen: `tools/bench/fetch_diag.sh`).
+
+## Update v3.8–4.1 / App 0.9–1.0 (09.11. nachmittags)
+| Version | Ursache (belegt) | Fix | Ergebnis |
+|---|---|---|---|
+| 3.8 | `restColors`: HSV-Sättigung nahe Schwarz instabil ((0,0,1) → S=1 → Wert 2 > Weiß) → 6/16 schwarze Tasten mit weißer Ruhefarbe → Skoove-Werbebild als Tastatur akzeptiert → 23–26 Töne vor dem 1. Akkord | Buntheit S·V statt S | golden hour 286/286, 100 % richtig |
+| – | „fehlender Schlussakkord“ war Fehlalarm der Gegenprobe (heller Abspann mit grünen Grafiken) | nur Werkzeug: `gegenprobe.py` ignoriert Bilder ohne Tastatur | – |
+| 3.9 | Schwarzbild-Prüfung (Mittel < 12) traf dunkles Intro mit Schrift (Mittel 4,5, 2 % hell) | schwarz = < 0,1 % helle Pixel (`isBlackImg`) | Wake Me Up startet |
+| 4.0 A | Schrift in kurzen Pillen ließ Lesezeilen 3 Bilder „leer“ → zweiter Balkenanfang → Ton geteilt | Balken endet nur bei sichtbarem Hintergrund (`bgK` in ≥ 2 Zeilen) | 23 Teilstücke weg |
+| 4.0 C | Ein-Bild-Ruhe-Regel scheiterte bei schwarzen Tasten (sat<0,2 bei (0,0,2) falsch) | sat·val<0,2 | Wiederholungen bleiben getrennt |
+| App 1.0 B | Keyboard aus → Android meldet Gerät ohne Info → NullPointerException | Null-Prüfung, still neu versuchen | – |
+| 4.1 D1 | Wiederholung nach 2–4 Bildern exakter Ruhe wurde als Flackern verklebt | `clean` auch für 1–4 Ruhe-Bilder | Wake Me Up 96,0 → 97,6 %, SpongeBob 100 % |
+| (D2 verworfen) | Geisterfilter löscht kurze Wiederholungen ohne Balken neben Nachbar-Anschlag | clean-Töne ausnehmen | Leuchteffekt-Videos −4 bis −8 Punkte → verworfen |
+
+Offen: 9 Wiederholungen in Wake Me Up (Geisterfilter, D2-Nachfolger: echte Handfarbe vs. Nachbar-Leuchten unterscheiden); Leuchteffekt-Geisternoten (Prüfstand 10/17/19/23: 70–83 % richtig); Diagnose-Aufzeichnung bei 1280 px nach ~2:45 voll; zwei unausgewertete Aufnahmen (GUnDodr9GLo, 163bCfINABY).
 
 ## Update v3.0–3.2 / App 0.8 (09.11. mittags)
 - **v3.0 Tastatursuche bei echten (versetzten) schwarzen Tasten**: Startwert der Tastenbreite = (kleiner + großer Abstand der schwarzen Tasten) / 3 statt 25-%-Abstand mit Rundung (Verhältnis lag bei echten Tastaturen an der Rundungsgrenze ~1,5); `findKeyboardRows` Gruppenmuster ab 1,28×. Prüfstand `gen.py` zeichnet schwarze Tasten jetzt versetzt (70 % der Videos, `BK=0` = alt). 24 realistische Videos live: 61,7 % → 95,5 % gefunden; Nachspielen 98 % / 95,6 %.
