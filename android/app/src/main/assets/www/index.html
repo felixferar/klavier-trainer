@@ -427,7 +427,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.3</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.4</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1737,7 +1737,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 2.3 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.4 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1918,7 +1918,11 @@ function scanCore(px,w,n,f){
   // the keyboard is no longer visible (end screen / outro): many keys look neither normal nor lit, for ~0.4 s
   // …or far more keys "lit" at once than two hands can press, for ~1 s
   const odd=nPressed>SCAN.keys.length*0.35?10:(nLit>Math.max(14,SCAN.keys.length*0.4)?25:0);
-  if(odd){if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene>=odd&&SCAN.on&&SCAN.cut==null){SCAN.cut=SCAN.sceneT-0.3;setTimeout(()=>{if(SCAN.on)scanStop()},0)}}else SCAN.scene=0;
+  // never stop early: remember such phases; if the keyboard comes back (overlay, transition, a lot of glow) the phase is just left out.
+  // Only a phase after which the keyboard never looks normal again is the outro – decided at the very end of the video.
+  SCAN.oddR=SCAN.oddR||[];const lastR=SCAN.oddR[SCAN.oddR.length-1];
+  if(odd){SCAN.normF=0;if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene===odd&&!(lastR&&lastR.to==null))SCAN.oddR.push({from:SCAN.sceneT-0.3,to:null})}
+  else{SCAN.scene=0;SCAN.normF=(SCAN.normF||0)+1;if(lastR&&lastR.to==null&&SCAN.normF>=8)lastR.to=tt-8/25}
 }
 // falling bars in one pixel row: find each coloured bar (a run of pixels) and give it to exactly one key – by its centre and width.
 // (sampling at a fixed spot fails for black keys: the bars of the two white neighbours reach almost up to it, especially in blurry videos)
@@ -1975,9 +1979,15 @@ function earlyFromBars(ev){
     else if(n.end>n.start+0.04)out.push({m:n.m,start:n.start,end:Math.min(n.end,readFrom-SCAN.start),hue:n.hue,early:true})}
   return out.sort((a,b)=>a.start-b.start)}
 function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
-function finishScan(){
-  for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)SCAN.events.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue)})}
-  let ev=SCAN.events.filter(e=>e.end-e.start>=0.04&&(SCAN.okT==null||e.end>=SCAN.okT+0.05)).map(e=>SCAN.okT!=null&&e.start<SCAN.okT?{...e,start:SCAN.okT-0.07}:e).sort((a,b)=>a.start-b.start);
+function finishScan(preview){
+  const open=[];for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)open.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue)})}
+  if(!preview)SCAN.events.push(...open);
+  const lanes0=SCAN.lane;if(preview&&lanes0)SCAN.lane=lanes0.map(l=>({...l,ons:l.ons.slice(),offs:l.offs.slice(),pre:l.pre?{...l.pre}:l.pre}));
+  try{return finishCore(preview?SCAN.events.concat(open):SCAN.events,preview)}finally{if(preview)SCAN.lane=lanes0}}
+function finishCore(raw,preview){
+  let ev=raw.filter(e=>e.end-e.start>=0.04&&(SCAN.okT==null||e.end>=SCAN.okT+0.05)).map(e=>SCAN.okT!=null&&e.start<SCAN.okT?{...e,start:SCAN.okT-0.07}:{...e}).sort((a,b)=>a.start-b.start); // copies: the raw data stays untouched
+  {const rs=SCAN.oddR||[],last=rs[rs.length-1];SCAN.cut=last&&last.to==null?last.from:null;
+    for(const r of rs)if(r.to!=null)ev=ev.filter(e=>!(e.start>=r.from&&e.start<=r.to))}  // phases where the keyboard was hidden for a moment: nothing read there
   if(SCAN.cut!=null)ev=ev.filter(e=>e.start<SCAN.cut).map(e=>({...e,end:Math.min(e.end,SCAN.cut)}));
   // outro: drop everything after a long pause at the very end (≥ 4 s and less than 10 % of the notes)
   for(let i=ev.length-1;i>0;i--){const gap=ev[i].start-Math.max(...ev.slice(0,i).map(e=>e.end));if(gap>=4&&ev.length-i<=Math.max(3,ev.length*0.1)){ev=ev.slice(0,i);break}}
@@ -2008,7 +2018,7 @@ function finishScan(){
   if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
     for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];let bi=-1,bd=0.12;for(let i=0;i<ln.ons.length;i++){const x=Math.abs(ln.ons[i]+d-e.start);if(x<bd){bd=x;bi=i}}
       if(bi>=0&&ln.offs[bi]!=null){const len=ln.offs[bi]-ln.ons[bi],kd=e.end-e.start;if(len>0.05&&len<kd-0.06&&len>=kd*0.5)e.end=e.start+len}}} // never cut a note to a fraction (letters can hide a bar for a moment)
-  ev=earlyFromBars(ev);
+  if(!preview)ev=earlyFromBars(ev);
   // notes struck together (chord): their onsets differ only by a frame or two (glow fading in) → same start
   {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.085)e.start=g0;else g0=e.start}}
   // hands by colour: two hue clusters, the lower-pitched one = left hand
@@ -2075,7 +2085,7 @@ async function scanRun(live){
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   restColors(keys,scanFrames&&scanFrames.length?scanFrames.slice(-5):[scanImg],scanRows);
-  Object.assign(SCAN,{gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
   SCAN.start=+$('#scStart').dataset.v||0;if(live){try{SCAN.start=ytp.getCurrentTime()}catch(e){}}
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{ytp.setPlaybackRate(1);ytRate=1;if(ytAuto)ytp.mute()}catch(e){}
@@ -2084,7 +2094,7 @@ async function scanRun(live){
   const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:480,interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
   let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}const p0=SCAN.p0!=null?SCAN.p0:SCAN.start,full=dur+SCAN.start-p0;
-  SCAN.timer=setInterval(()=>{const p=full>0?Math.min(100,Math.round((SCAN.lastVt+SCAN.start-p0)/full*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${SCAN.events.length} Noten`;
+  SCAN.timer=setInterval(()=>{const p=full>0?Math.min(100,Math.round((SCAN.lastVt+SCAN.start-p0)/full*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${liveNotes()} Noten`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${liveNotes()} Noten`;
     try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}},300);
 }
 function scanStop(){
@@ -2180,6 +2190,8 @@ document.addEventListener('visibilitychange',()=>{if(!ytAuto)return;const vis=do
   try{if(FV.el){vis?FV.el.play().catch(()=>{}):FV.el.pause()}else if(ytp){vis?ytp.playVideo():ytp.pauseVideo()}}catch(e){}});
 /* ================= Video-Datei → Song (alles auf dem Handy, jedes Bild) ================= */
 const FV={el:null,url:null,cv:null,run:0};
+// note counter during conversion: the notes after all filters (glow, sparkles, intro do not count) – refreshed every 2 s
+let liveN={t:0,n:0};function liveNotes(){const now=performance.now();if(now-liveN.t>2000&&SCAN.okT!=null){liveN.t=now;try{const sv={bd:SCAN.barDelay,oc:SCAN.oneColor,fn:SCAN.firstNote,dbg:SCAN.dbg};liveN.n=finishScan(true).length;SCAN.barDelay=sv.bd;SCAN.oneColor=sv.oc;SCAN.firstNote=sv.fn;SCAN.dbg=sv.dbg}catch(e){}}return SCAN.okT==null?0:liveN.n}
 function fileAbort(){FV.run++;if(FV.sv){try{FV.sv.removeAttribute('src');FV.sv.load();FV.sv.remove()}catch(e){}FV.sv=null}if(FV.el){try{FV.el.pause()}catch(e){}FV.el.remove();FV.el=null}if(FV.url){URL.revokeObjectURL(FV.url);FV.url=null}if(SCAN.fromFile&&SCAN.on){SCAN.on=false;clearInterval(SCAN.timer)}}
 function vidSeek(v,t){return new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;v.removeEventListener('seeked',sk);setTimeout(res,30)};
   const sk=()=>{if('requestVideoFrameCallback' in v){let ok=false;v.requestVideoFrameCallback(()=>{ok=true;fin()});setTimeout(()=>{if(!ok)fin()},250)}else fin()};
@@ -2215,7 +2227,7 @@ async function fileConvert(file){
   restColors(keys,scanFrames&&scanFrames.length?scanFrames:[scanImg],scanRows);
   sv.removeAttribute('src');sv.load();sv.remove();FV.sv=null;
   // 2) play the file once from the very beginning to the end and read 3 pixel rows of every frame (the intro is recognised and ignored)
-  Object.assign(SCAN,{gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
   const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=7;const rx=rc.getContext('2d',{willReadFrequently:true});
   const ys=[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)].map(f=>Math.round(f*(vh-1)));
   let lastT=-1,minDt=1,drops=[];
@@ -2232,7 +2244,7 @@ async function fileConvert(file){
   try{await v.play()}catch(e){return fail('Das Video lässt sich nicht abspielen: '+e.message)}
   keepAwake(true);
   SCAN.timer=setInterval(()=>{if(!alive()){clearInterval(SCAN.timer);return}const p=dur>0?Math.min(99,Math.round(v.currentTime/dur*100)):null;
-    if(document.visibilityState!=='visible')return;convProgress(p,`${fmt(Math.max(0,v.currentTime))} / ${fmt(dur)} · ${SCAN.okT==null?0:SCAN.events.filter(e=>e.start>=SCAN.okT).length} Noten`);if(v.paused&&!v.ended&&SCAN.on)v.play().catch(()=>{})},300);
+    if(document.visibilityState!=='visible')return;convProgress(p,`${fmt(Math.max(0,v.currentTime))} / ${fmt(dur)} · ${liveNotes()} Noten`);if(v.paused&&!v.ended&&SCAN.on)v.play().catch(()=>{})},300);
 }
 function showConvError(msg){$('#convErrTxt').textContent=msg;$('#convErr').classList.add('on');$('#gDim').classList.add('on')}
 function scanAutoGo(from){ // called after a successful keyboard detection in auto mode
