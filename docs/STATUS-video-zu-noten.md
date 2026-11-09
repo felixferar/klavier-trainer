@@ -1,6 +1,6 @@
 # Statusbericht: YouTube-Video → Noten (Klavier Trainer)
 
-Stand: 09.11.2026, Commit `6e167d8` (Web-App v2.8) · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
+Stand: 09.11.2026, Commit `0a312dc` (Web-App v2.9, Android-App 0.7) · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
 
 Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI gedacht. Er beschreibt, was die Funktion tut, wo der Code liegt, welche Fehler gefunden und behoben wurden, was getestet ist und was offen ist.
 
@@ -17,6 +17,15 @@ Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI
 | Nächster Schritt | Nutzer wandelt golden hour mit v2.8 erneut um; bei Fehlern Diagnose-Datei auswerten (siehe Abschnitt 6). |
 
 ---
+
+## Update v2.9 / App 0.7 (09.11., nach diesem Bericht)
+- **Querformat**: Während der YouTube-Umwandlung dreht die App quer (Brücke `orient`, nur mit App ≥ 0.7), das Video füllt den Bildschirm bis auf eine 40-px-Fortschrittsleiste darunter. Nichts liegt über dem Video, auch Hinweise nicht, weil alles darüber mitfotografiert würde. Beim Ende der Umwandlung (`convUI(false)`) wird wieder freigegeben.
+- **Breitere Zeilen**: `ow` = echte Pixelbreite des Videobereichs, nativ begrenzt auf 1280 (vorher 480, nativ max. 640). Der Scanner läuft auf einem eigenen `HandlerThread` (`kt-scan`).
+- **Markieren von Hand** (`markKeyboard`, `#markOv`): wenn nach 25 s Video keine Tastatur gefunden wurde (`autoConvert`) oder 15 s nach Lesebeginn `okT` noch fehlt (`markLate`). Das Video pausiert; Standbild (auf das Videobild zugeschnitten) mit gelber Linie (schwarze Tasten) und blauer Linie (weiße Tasten) plus rote C-Markierungen; „Weiter“ nur bei erkannter Tastatur. Danach läuft das Video an derselben Stelle weiter (nie zurück); „Abbrechen“ → nichts gespeichert.
+- **MIDI-Export**: Song-Menü → „Als MIDI-Datei speichern“ (nur `type:'midi'`), Brücke `save` mit `b64:true, mime:'audio/midi'` (App ≥ 0.7, Fähigkeit `caps` in `info`: `b64save`, `orient`, `scanWide`).
+- Diagnose-Grenze 110 MB (breitere Zeilen).
+- Tests: Rückfalltest golden hour unverändert (288/287); UI-Tests mit simulierter Brücke (Export → gültige MThd-Datei, Querformat-Layout, Markieren mit echtem Standbild → 39 Tasten); APK-Build grün. Zweites Nutzer-Video `SG_cv29mAsA` (SpongeBob, gleicher Kanal/Stil, C3–C6): Tastatursuche auf einem Standbild trifft C3/C4/C5 exakt. **Noch kein 88-Tasten-Video getestet.**
+- Am Handy noch nicht bestätigt: Querformat, Zeilenbreite 1280, Markieren, Export.
 
 ## 2. Architektur
 
