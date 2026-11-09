@@ -426,8 +426,9 @@ body.short #onbDots{margin:8px 0}
     <div class="lbl">Fehlersuche</div>
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
+      <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.4</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1705,12 +1706,13 @@ function renderSettings(){
   for(const side of ['L','R']){const el=$('#col'+side);el.innerHTML='';
     for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(S['col'+side]===k?' on':'');b.title=p.n;b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.d}"></i>`;
       b.onclick=()=>{S['col'+side]=k;saveS();renderSettings()};el.appendChild(b)}}
-  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#full2').checked=S.full;
+  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#full2').checked=S.full;
   $('#calStat2').textContent=calCount()>=NK()?`Alle ${NK()} Tasten kalibriert ✓`:`${calCount()} von ${NK()} Tasten kalibriert`;
   for(const b of $$('#laySet button'))b.classList.toggle('on',+b.dataset.l===S.layout);
 }
 for(const b of $$('#laySet button'))b.onclick=()=>{S.layout=+b.dataset.l;saveS();renderSettings();toast(`Tastatur: ${S.layout} Tasten (${KR()[2]})`)};
 $('#dbgChk').onchange=e=>{S.debug=e.target.checked;saveS()};
+$('#diagChk').onchange=e=>{S.diagConv=e.target.checked;saveS();if(S.diagConv)toast('Starte jetzt eine YouTube-Umwandlung – danach fragt die App, wo die Datei hin soll.',5000)};
 $('#goalSel').onchange=e=>{S.goal=+e.target.value;saveS()};
 $('#inputSel2').onchange=e=>{S.input=e.target.value;micFailed=false;saveS()};
 $('#sens2').oninput=e=>{S.sens=+e.target.value;saveS()};
@@ -1737,7 +1739,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 2.4 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1872,10 +1874,12 @@ const SCAN={on:false,keys:null,rest:null,state:null,events:[],t0:0,start:0,frame
 function scanFrame(msg){
   if(!SCAN.on||!SCAN.keys)return;
   const raw=atob(msg.d),w=msg.w,n=msg.n;const px=(r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]};
-  let vt=0;try{if(ytp.getPlayerState&&ytp.getPlayerState()!==1&&!SCAN.test)return;vt=ytp.getCurrentTime()}catch(e){}
+  let vt=0,st=-2;try{st=ytp.getPlayerState?ytp.getPlayerState():-2;vt=ytp.getCurrentTime()}catch(e){}
+  if(st!==1&&st!==-2&&!SCAN.test){diagFrame(raw,msg.t,vt,st,NaN);return}
   // video time for this frame (smoothed): native time → video time
   SCAN.vtMap.push([msg.t,vt]);if(SCAN.vtMap.length>40)SCAN.vtMap.shift();
   let f=vt;if(SCAN.vtMap.length>5){const a=SCAN.vtMap;let mt=0,mv=0;for(const [x,y] of a){mt+=x;mv+=y}mt/=a.length;mv/=a.length;f=mv+(msg.t-mt)/1000*(ytRate||1)}
+  diagFrame(raw,msg.t,vt,st,f);
   scanCore(px,w,n,f);
 }
 // one video frame: px(row,x) → [r,g,b] for row 0 = black keys, 1 = white keys, 2 = just above the keyboard (falling bars); f = video time in s
@@ -2093,6 +2097,8 @@ async function scanRun(live){
   const box=$('#ytBox').getBoundingClientRect();
   const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:480,interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
+  diagStart({w:r.w,n:7,box:{x:box.left,y:box.top,w:box.width,h:box.height},rowsSent:[scanRows.yA,scanRows.yB,scanRows.yC,...laneHigh(scanRows,scanDet,scanImg)],
+    scanRows,scanDet,keys:SCAN.keys,kw:SCAN.kw,start:SCAN.start,live:!!live});
   let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}const p0=SCAN.p0!=null?SCAN.p0:SCAN.start,full=dur+SCAN.start-p0;
   SCAN.timer=setInterval(()=>{const p=full>0?Math.min(100,Math.round((SCAN.lastVt+SCAN.start-p0)/full*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${liveNotes()} Noten`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${liveNotes()} Noten`;
     try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}},300);
@@ -2100,6 +2106,8 @@ async function scanRun(live){
 function scanStop(){
   if(!SCAN.on)return;SCAN.on=false;clearInterval(SCAN.timer);if(!SCAN.fromFile)nat('scanStop');try{ytp.pauseVideo()}catch(e){}try{FV.el&&FV.el.pause()}catch(e){}
   $('#scanBar').classList.add('hidden');const notes=finishScan();
+  diagSave({reason:SCAN.hole?'hole':notes.length<4?'fewnotes':'done',hole:!!SCAN.hole,barDelay:SCAN.barDelay,oneColor:!!SCAN.oneColor,firstNote:SCAN.firstNote,
+    notes:notes.map(n=>[n.m,+(+n.start).toFixed(3),+(+n.dur).toFixed(3),n.hand])});
   if(SCAN.hole&&ytAuto){ytAuto=false;convUI(false);if(SCAN.fromFile)fileAbort();showConvError('Die Umwandlung wurde unterbrochen (die App war kurz im Hintergrund oder das Video ist hängen geblieben). Es wurde nichts gespeichert – bitte nochmal starten und die App bis 100 % offen lassen.');return}
   if(notes.length<4){if(ytAuto){ytAuto=false;convUI(false);showConvError(SCAN.fromFile?'Im Video wurden kaum Noten erkannt. Ist es ein Klavier-Video mit fallenden Noten und einer Tastatur unten?':'Im Video wurden kaum Noten erkannt. Prüfe, ob der Link auf ein Klavier-Video mit fallenden Noten zeigt und der Zeitstempel nicht hinter dem Song liegt.');return}toast('Es wurden kaum Noten erkannt.',4500);return}
   const L=notes.filter(n=>n.hand==='L').length;
@@ -2119,6 +2127,28 @@ function scanSave(auto){
   $('#scanDone').classList.remove('on');$('#gDim').classList.remove('on');SCAN.result=null;if(SCAN.fromFile){fileAbort();keepAwake(false)}
   if(ytp){try{ytp.destroy()}catch(e){}ytp=null}clearInterval(ytTimer);navStack.pop();openSong(s,it.id);
 }
+
+/* ================= Diagnose-Aufnahme (Video → Noten) =================
+   Datei: "KTDIAG1\n" + base64(gzip( "KTD1" + u32 Länge + JSON-Kopf + Frames ))
+   Frame: f64 t (native ms), f64 vt (YouTube-Zeit), f64 f (geglättete Zeit, NaN = verworfen), f64 Player-Zustand, dann w*n*3 Bytes RGB.
+   Auswertung: tools/bench/diag.py */
+const DIAG={on:false,frames:[],bytes:0,meta:null,full:false,max:40e6};
+function imgJpeg(img,q){try{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').putImageData(img,0,0);return c.toDataURL('image/jpeg',q||0.85)}catch(e){return null}}
+function diagStart(meta){DIAG.on=!!S.diagConv;DIAG.frames=[];DIAG.bytes=0;DIAG.full=false;if(!DIAG.on)return;
+  let q=null,vid=null;try{q=ytp.getPlaybackQuality();vid=ytp.getVideoData().video_id}catch(e){}
+  DIAG.meta=Object.assign({kind:'ktdiag',v:1,app:($('#verTxt').textContent||''),native:NAT.info||null,ua:navigator.userAgent,dpr:devicePixelRatio,screen:[innerWidth,innerHeight],
+    quality:q,videoId:vid,t0:performance.now(),still:scanImg?imgJpeg(scanImg,0.9):null},meta)}
+function diagFrame(raw,t,vt,st,f){if(!DIAG.on||DIAG.full)return;const b=new Uint8Array(32+raw.length),dv=new DataView(b.buffer);
+  dv.setFloat64(0,t,true);dv.setFloat64(8,vt,true);dv.setFloat64(16,f,true);dv.setFloat64(24,st,true);for(let i=0;i<raw.length;i++)b[32+i]=raw.charCodeAt(i);
+  DIAG.frames.push(b);DIAG.bytes+=b.length;if(DIAG.bytes>DIAG.max)DIAG.full=true}
+async function diagSave(extra){if(!S.diagConv||!NAT.ok||!DIAG.meta)return;
+  let q2=null;try{q2=ytp.getPlaybackQuality()}catch(e){}
+  const meta=Object.assign({},DIAG.meta,extra||{},{qualityEnd:q2,frameCount:DIAG.frames.length,truncated:DIAG.full,saved:new Date().toISOString()});
+  const enc=new TextEncoder(),head=enc.encode(JSON.stringify(meta)),len=new Uint8Array(4);new DataView(len.buffer).setUint32(0,head.length,true);
+  const blob=new Blob([enc.encode('KTD1'),len,head,...DIAG.frames]);DIAG.frames=[];DIAG.on=false;DIAG.meta=null;
+  let buf;try{buf=await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()}catch(e){buf=await blob.arrayBuffer()}
+  const r=await nat('save',{name:`klavier-diagnose-${dayKey()}.txt`,data:'KTDIAG1\n'+b64FromBuf(buf)},'saved');
+  toast(r&&r.ok?'Diagnose gespeichert – schick die Datei an Claude':'Diagnose nicht gespeichert',5000)}
 
 /* ================= YouTube-Link → Song (automatisch) ================= */
 function convUI(on){$('#yt').classList.toggle('conv',on);$('#convPanel').classList.toggle('hidden',!on);$('#ytBlock').classList.toggle('hidden',!on)}
@@ -2181,6 +2211,8 @@ async function autoConvert(it){
     await sleep(150);
   }
   if(!ytAuto)return;
+  if(S.diagConv){DIAG.meta={box:(()=>{const b=$('#ytBox').getBoundingClientRect();return {x:b.left,y:b.top,w:b.width,h:b.height}})()};DIAG.frames=[];DIAG.bytes=0;
+    diagSave({reason:black>=8?'black':'nokb',stills:frames.slice(-5).map(f=>imgJpeg(f,0.85))})}
   ytAuto=false;convUI(false);try{ytp.pauseVideo();ytp.unMute()}catch(e){}
   showConvError(black>=8?'Dein Handy lässt die App das Video nicht „sehen“ (das Bild bleibt schwarz). Schreib mir das bitte – dann baue ich eine andere Aufnahme-Methode ein.'
     :'In diesem Video wurde keine Klaviertastatur gefunden. Die Umwandlung funktioniert mit Videos, in denen unten eine Klaviertastatur zu sehen ist und die Noten von oben darauf fallen. Es wurde nichts gespeichert.');
