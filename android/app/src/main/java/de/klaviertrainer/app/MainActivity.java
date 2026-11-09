@@ -120,6 +120,7 @@ public class MainActivity extends Activity {
         web = new WebView(this);
         web.setBackgroundColor(Color.parseColor("#171512"));
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        web.getViewTreeObserver().addOnGlobalLayoutListener(this::trackScanRect);
         setContentView(root);
 
         root.setOnApplyWindowInsetsListener((v, insets) -> {
@@ -506,6 +507,17 @@ public class MainActivity extends Activity {
     private int[] scanRows;
     private int scanInterval = 40;
     private Handler scanHandler;
+    // Lage des Videobereichs relativ zur WebView: dreht sich das Handy um 180°, wandert die
+    // Kamera-Aussparung auf die andere Seite und die WebView verschiebt sich → Ausschnitt nachführen
+    private volatile int scanRelX, scanRelY, scanW, scanH;
+
+    private void trackScanRect() {
+        if (!scanning || scanW <= 0) return;
+        int[] l = new int[2];
+        web.getLocationInWindow(l);
+        final Rect r = new Rect(l[0] + scanRelX, l[1] + scanRelY, l[0] + scanRelX + scanW, l[1] + scanRelY + scanH);
+        scanHandler().post(() -> { if (scanRect != null && !r.equals(scanRect)) scanRect = r; });
+    }
 
     private Handler scanHandler() {
         if (scanHandler == null) {
@@ -520,8 +532,12 @@ public class MainActivity extends Activity {
         float d = getResources().getDisplayMetrics().density;
         int[] loc = new int[2];
         web.getLocationInWindow(loc);
-        int x = loc[0] + Math.round((float) m.getDouble("x") * d), y = loc[1] + Math.round((float) m.getDouble("y") * d);
+        scanRelX = Math.round((float) m.getDouble("x") * d);
+        scanRelY = Math.round((float) m.getDouble("y") * d);
+        int x = loc[0] + scanRelX, y = loc[1] + scanRelY;
         int w = Math.max(1, Math.round((float) m.getDouble("w") * d)), h = Math.max(1, Math.round((float) m.getDouble("h") * d));
+        scanW = w;
+        scanH = h;
         final Rect rect = new Rect(x, y, x + w, y + h);
         // Zeilenbreite: so viel wie gewünscht, höchstens die echte Pixelbreite des Videobereichs und 1280
         final int ow = Math.max(64, Math.min(Math.min(1280, w), m.optInt("ow", 480)));
