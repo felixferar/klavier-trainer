@@ -1,6 +1,6 @@
 """Random Synthesia-style piano video with exact ground truth.
 usage: gen.py SEED OUTDIR  -> OUTDIR/SEED.mp4, OUTDIR/SEED.json"""
-import cv2, numpy as np, json, subprocess, sys, random, colorsys, math
+import cv2, numpy as np, json, subprocess, sys, random, colorsys, math, os
 
 seed = int(sys.argv[1]); out = sys.argv[2]
 R = random.Random(seed)
@@ -37,11 +37,17 @@ keys_x_jitter = R.uniform(0, 0.03)           # slightly irregular drawing
 style = dict(label_dark=label_dark, pills=pills, seed=seed, fps=FPS, lo=lo, hi=hi, lowres=lowres, crf=crf, kbH=kbH, pps=round(pps), one_color=one_color, labels=labels, glow=glow,
              sparkle=sparkle, bar_border=bar_border, lit_part=lit_part, intro=intro, outro=outro, bg=bg)
 
+# Echte Klaviere: schwarze Tasten sitzen NICHT mittig auf der Fuge (C#/F# links, D#/A# rechts).
+# Eigener Zufallsgenerator, damit alle anderen Stil-Werte je Seed gleich bleiben wie früher. BK=0 → mittig (alter Prüfstand).
+R2 = random.Random(seed * 7919 + 1)
+bk_real = os.environ.get('BK', '1') != '0' and R2.random() < 0.7
+BKOFF = {1: -0.12, 3: 0.12, 6: -0.15, 8: 0.0, 10: 0.15}; bk_scale = R2.uniform(0.6, 1.3)
+style['bk_real'] = bk_real
 whites = [m for m in range(lo, hi + 1) if m % 12 in WPC]; ww = W / len(whites)
 pos = {}; wi = 0
 for m in range(lo, hi + 1):
     if m % 12 in WPC: pos[m] = (wi * ww, ww, False); wi += 1
-    else: pos[m] = (wi * ww - ww * bratio_w / 2 + ww * R.uniform(-keys_x_jitter, keys_x_jitter), ww * bratio_w, True)
+    else: pos[m] = (wi * ww - ww * bratio_w / 2 + ww * R.uniform(-keys_x_jitter, keys_x_jitter) + (ww * BKOFF[m % 12] * bk_scale if bk_real else 0), ww * bratio_w, True)
 
 # ---------- song (relative to song start) ----------
 def inr(m): return max(lo, min(hi, m))

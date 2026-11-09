@@ -2,11 +2,12 @@
 import json, sys, asyncio
 sys.argv_saved=list(sys.argv)
 from playwright.async_api import async_playwright
-import collections
-src=open('/tmp/bench/run.py').read();exec('TOL'+src.split('TOL',1)[1].split('async def one')[0])
-APP='http://127.0.0.1:8765/home/claude/klavier-trainer/web/index.html'
+import collections, os
+HERE=os.path.dirname(os.path.abspath(__file__))
+src=open(os.path.join(HERE,'run.py')).read();exec('TOL'+src.split('TOL',1)[1].split('async def one')[0])
+APP='file://'+os.path.abspath(os.path.join(HERE,'..','..','web','index.html'))
 D=sys.argv[1]; seeds=sys.argv[2:]; verbose='-v' in seeds; seeds=[s for s in seeds if s!='-v']
-JS=open('/tmp/bench/replay.js').read()
+JS=open(os.path.join(HERE,'replay.js')).read()
 async def main():
     async with async_playwright() as p:
         br=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])

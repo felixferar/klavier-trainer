@@ -2,7 +2,8 @@
 usage: run.py DIR SEED... [--par N]"""
 import json, sys, asyncio, collections
 from playwright.async_api import async_playwright
-APP = 'http://127.0.0.1:8765/home/claude/klavier-trainer/web/index.html'
+import os
+APP = os.environ.get('APP') or 'http://127.0.0.1:8765/' + os.path.relpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'web', 'index.html'), '/')
 args = sys.argv[1:]; par = 4
 if '--par' in args: i = args.index('--par'); par = int(args[i + 1]); del args[i:i + 2]
 D = args[0]; seeds = args[1:]
