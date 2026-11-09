@@ -426,7 +426,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.1</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.2</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1168,13 +1168,11 @@ function kbEvent(st,a,v){const hi=st&0xF0;
   else if(hi===0x80||hi===0x90){KB.held.delete(a)}
   else if(hi===0xB0&&a===64)KB.pedal=v>=64}
 function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);
-  if($('#screen-calib')&&false)return;
-  if(!song||!listening())return;const g=groups[gi];if(!g)return;
-  const due=t>=g.start-0.4*Math.max(S.speed,.3);
-  if(due&&g.notes.some(n=>n.midi===m&&!n.hit)){markHit(m);return}
-  // wrong key while the app waits for you: show it red, keep waiting for the right one
-  if(S.wait&&due&&!g.notes.some(n=>n.midi===m)){const nx=groups[gi+1];if(nx&&nx.notes.some(n=>n.midi===m)&&nx.start-g.start<0.5)return;
-    wrongFlash.set(m,now);fx.push({txt:'Falsch',r:'m',t0:now});if(fx.length>3)fx.shift()}}
+  if(!song||!listening())return;pushPress(m); // counted in the game loop – exactly one note per press
+  // wrong key while the app waits for you: red – but not for notes of the song around here (other hand, next notes, a bit early)
+  const g=groups[gi];if(!S.wait||!g||t<g.start-0.6*Math.max(S.speed,.3))return;
+  const win=1.2*Math.max(S.speed,.3);for(const n of song.notes){if(n.start>t+win)break;if(n.start+n.dur>t-win&&(n.midi===m||n.midi0===m))return}
+  wrongFlash.set(m,now);fx.push({txt:'Falsch',r:'m',t0:now});if(fx.length>3)fx.shift()}
 function kbUI(){
   const sup=KB.sup,on=kbOn(),st=KB.state;
   if($('#calCard')&&(on||KB.saved))$('#calCard').classList.add('hidden'); // with a keyboard no calibration is needed
@@ -1231,10 +1229,11 @@ function calcRange(){
   keyLo=Math.max(KL,lo);keyHi=Math.min(KH,hi);
 }
 function buildGroups(){groups=[];for(const n of song.notes.filter(isActive)){const g=groups[groups.length-1];if(g&&n.start-g.start<0.06)g.notes.push(n);else groups.push({start:n.start,notes:[n],wait:0})}resetPointers(t)}
-function resetPointers(from){for(const n of song.notes)n.hit=false;for(const g of groups){g.wait=0;g.base=null;g.fbase=null}gi=lowerBound(groups,from-0.001,g=>g.start);soundIdx=lowerBound(song.notes,from-0.001,n=>n.start);det.win=null}
+function resetPointers(from){PRESS.length=0;for(const n of song.notes)n.hit=false;for(const g of groups){g.wait=0;g.base=null;g.fbase=null}gi=lowerBound(groups,from-0.001,g=>g.start);soundIdx=lowerBound(song.notes,from-0.001,n=>n.start);det.win=null}
 function newPass(){pass={p:0,g:0,m:0}}
 function markHit(m){const g=groups[gi];if(!g)return;for(const n of g.notes)if(n.midi===m&&!n.hit){n.hit=true;pressFlash.set(m,performance.now())}}
-function userPress(m,sound){if(sound)playTone(m,0.6);const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);if(song&&listening()&&groups[gi]&&t>=groups[gi].start-0.4*Math.max(S.speed,.3))markHit(m)}
+const PRESS=[];function pushPress(m){PRESS.push({m,t:performance.now(),used:false});if(PRESS.length>48)PRESS.shift()}
+function userPress(m,sound){if(sound)playTone(m,0.6);const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);if(song&&listening())pushPress(m)}
 function judge(r){pass[r]++;if(S.wait)return;const txt={p:'Perfekt',g:'Gut',m:'Verpasst'}[r];fx.push({txt,r,t0:performance.now()});if(fx.length>4)fx.shift();updScore()}
 function passAcc(p){const tot=p.p+p.g+p.m;return tot?(p.p+0.7*p.g)/tot:null}
 const starsFor=a=>a>=0.9?3:a>=0.75?2:a>=0.5?1:0;
@@ -1285,7 +1284,7 @@ function tick(now){
       for(let iter=0;iter<4&&gi<groups.length;iter++){
         const g=groups[gi];if(t<g.start-0.4*Math.max(S.speed,.3))break;
         if(useMic()&&R)detectStep(g,R,now);
-        else if(!useMic())for(const n of g.notes){const lp=lastPress.get(n.midi);if(lp&&now-lp<350)n.hit=true}
+        else if(!useMic())for(const n of g.notes){if(n.hit)continue;const p=PRESS.find(p=>!p.used&&(p.m===n.midi||p.m===n.midi0)&&now-p.t<700);if(p){p.used=true;n.hit=true;pressFlash.set(n.midi,now)}} // each key press counts for exactly one note (E-E needs two presses)
         if(g.notes.every(n=>n.hit)){const late=S.wait?g.wait:Math.max(0,(t-g.start)/S.speed);judge(late<=0.25?'p':late<=0.8?'g':'m');gi++;det.win=null;continue}
         if(S.wait){const nx=groups[gi+1],lim=Math.min(g.start+0.35*S.speed,nx?nx.start-0.01:1e9);if(t>=lim){t=Math.max(prevT,lim);waiting=g;g.wait+=dt}break}
         if(t>g.start+0.5*S.speed){judge('m');gi++;det.win=null;continue}
@@ -1730,7 +1729,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 2.1 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.2 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
