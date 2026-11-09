@@ -288,6 +288,7 @@ body.short #onbDots{margin:8px 0}
   <symbol id="i-loop" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
   <symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/></symbol>
   <symbol id="i-wait" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-kb" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="1.5"/><path d="M7 6v7M12 6v7M17 6v7M5 13h4M10 13h4M15 13h4"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></symbol>
   <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></symbol>
@@ -322,6 +323,11 @@ body.short #onbDots{margin:8px 0}
           </div>
         </div>
         <div id="contWrap"></div>
+      </div>
+      <div id="kbCard" class="card hidden" style="margin-top:12px;display:flex;gap:14px;align-items:center">
+        <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-kb"/></svg></div>
+        <div class="grow"><div class="ttl" id="kbCardT" style="white-space:normal">Keyboard verbinden</div><div class="meta" id="kbCardTxt">Keyboard mit Bluetooth-MIDI? Dann erkennt die App jede Taste sofort und ohne Mikrofon.</div></div>
+        <button class="btn sm pri" id="kbCardBtn">Verbinden</button>
       </div>
       <div id="calCard" class="card hidden" style="margin-top:12px;display:flex;gap:14px;align-items:center">
         <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-mic"/></svg></div>
@@ -399,6 +405,7 @@ body.short #onbDots{margin:8px 0}
     </div>
     <div class="lbl">Tonerkennung</div>
     <div class="list">
+      <div class="li"><div class="grow"><b>Keyboard (Bluetooth)</b><small id="kbSetTxt">Nicht verbunden – die App hört über das Mikrofon</small></div><button class="btn sm" id="kbSetBtn">Verbinden</button></div>
       <div class="li hidden"><div class="grow"><b>Erkennung über</b></div><select id="inputSel2"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
       <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
       <div class="li"><div class="grow"><b>Kalibrierung</b><small id="calStat2">–</small></div><button class="btn sm" data-go="calib">Öffnen</button></div>
@@ -419,7 +426,7 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.0</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.1</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -599,6 +606,16 @@ body.short #onbDots{margin:8px 0}
 <!-- ===================== ADD SHEET (global) ===================== -->
 <div class="dim" id="gDim"></div>
 <div class="modal" id="convErr"><div style="font-size:30px">🎹</div><div style="font-size:18px;font-weight:800;margin:6px 0">Umwandlung nicht möglich</div><div class="mu sm" id="convErrTxt" style="margin-bottom:16px"></div><button class="btn pri" id="convErrOk" style="width:100%">OK</button></div>
+<div class="sheet" id="kbSheet">
+  <div class="grab"></div>
+  <div class="sh"><b>Keyboard verbinden</b><button class="ib" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="sb">
+    <p class="mu sm" style="margin:0 2px 12px">Keyboard einschalten und in die Nähe legen. Wenn das Handy nach „Geräte in der Nähe“ fragt, tippe auf „Zulassen“.</p>
+    <div id="kbStatus" class="mu sm" style="margin:0 2px 10px"></div>
+    <div class="list" id="kbList"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="kbAgain" style="flex:1">Nochmal suchen</button><button class="btn danger hidden" id="kbOff" style="flex:1">Trennen</button></div>
+  </div>
+</div>
 <div class="sheet" id="songMenu">
   <div class="grab"></div>
   <div class="sh"><b>Song bearbeiten</b><button class="ib" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -855,7 +872,7 @@ function renderHome(){handVars();
   cw.querySelector('.ttl').textContent=ci.title;
   cw.querySelector('.card').onclick=()=>openItem(ci,!!last);
   // calibration card
-  const cc=calCount(),N=NK();$('#calCard').classList.toggle('hidden',cc>=N);$('#calCardTxt').textContent=cc?`${cc} von ${N} Tasten erledigt – weitermachen?`:`Einmal alle ${N} Tasten spielen, damit die Erkennung genau wird.`;
+  kbUI();const cc=calCount(),N=NK();$('#calCard').classList.toggle('hidden',cc>=N||kbOn()||!!KB.saved);$('#calCardTxt').textContent=cc?`${cc} von ${N} Tasten erledigt – weitermachen?`:`Einmal alle ${N} Tasten spielen, damit die Erkennung genau wird.`;
   // recent list
   const rl=$('#recentList');rl.innerHTML='';
   const items=allItems().slice().sort((a,b)=>((ST.songs[b.id]||{}).last||0)-((ST.songs[a.id]||{}).last||0)).slice(0,4);
@@ -1131,13 +1148,65 @@ async function startMidiIn(){
   catch(e){toast('MIDI-Zugriff verweigert');return false}
 }
 
+/* ================= Keyboard über Bluetooth-MIDI ================= */
+// The keyboard reports every key directly (note, time, strength) – no microphone, no calibration, ~10–20 ms delay.
+const KB={sup:false,state:'off',name:'',addr:'',saved:'',found:[],msg:'',scanning:false,pedal:false,held:new Set()};
+const kbOn=()=>KB.state==='on';
+function kbMsg(m){
+  if(m.cmd==='midi'){for(const [st,a,v] of m.e)kbEvent(st,a,v);return}
+  KB.sup=true;
+  if(m.cmd==='kbFound'){if(!KB.found.some(f=>f.addr===m.addr))KB.found.push(m);kbUI();return}
+  if(m.cmd==='kbScanDone'){KB.scanning=false;kbUI();return}
+  const was=KB.state;Object.assign(KB,{state:m.state,name:m.name||KB.name,addr:m.addr||KB.addr,saved:m.saved||'',msg:m.msg||''});
+  if(m.state==='scanning')KB.scanning=true;else if(m.state!=='connecting')KB.scanning=false;
+  if(m.state==='on'&&was!=='on'){toast(`Keyboard verbunden: ${KB.name}`);if(mic){try{mic.stream&&mic.stream.getTracks().forEach(t=>t.stop())}catch(e){}}if($('#kbSheet').classList.contains('on'))setTimeout(closeSheets,700);if(song)ensureInput()}
+  if(m.state==='lost'&&was==='on')toast('Verbindung zum Keyboard verloren – verbinde neu …',3500);
+  if(m.state==='btoff'&&$('#kbSheet').classList.contains('on'))nat('kbEnableBt');
+  kbUI()}
+function kbEvent(st,a,v){const hi=st&0xF0;
+  if(hi===0x90&&v>0){KB.held.add(a);kbNoteOn(a)}
+  else if(hi===0x80||hi===0x90){KB.held.delete(a)}
+  else if(hi===0xB0&&a===64)KB.pedal=v>=64}
+function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);
+  if($('#screen-calib')&&false)return;
+  if(!song||!listening())return;const g=groups[gi];if(!g)return;
+  const due=t>=g.start-0.4*Math.max(S.speed,.3);
+  if(due&&g.notes.some(n=>n.midi===m&&!n.hit)){markHit(m);return}
+  // wrong key while the app waits for you: show it red, keep waiting for the right one
+  if(S.wait&&due&&!g.notes.some(n=>n.midi===m)){const nx=groups[gi+1];if(nx&&nx.notes.some(n=>n.midi===m)&&nx.start-g.start<0.5)return;
+    wrongFlash.set(m,now);fx.push({txt:'Falsch',r:'m',t0:now});if(fx.length>3)fx.shift()}}
+function kbUI(){
+  const sup=KB.sup,on=kbOn(),st=KB.state;
+  if($('#calCard')&&(on||KB.saved))$('#calCard').classList.add('hidden'); // with a keyboard no calibration is needed
+  // home
+  const c=$('#kbCard');if(c){c.classList.toggle('hidden',!NAT.ok);
+    $('#kbCardT').textContent=on?`Keyboard verbunden`:(st==='connecting'||st==='lost')?'Keyboard wird verbunden …':'Keyboard verbinden';
+    $('#kbCardTxt').textContent=on?`${KB.name} – jede Taste kommt direkt an.`:!sup?'Für Bluetooth-Keyboards brauchst du die neue App-Version (Einstellungen → App aktualisieren).':
+      KB.saved?'Keyboard einschalten – die App verbindet sich dann von selbst.':'Hast du ein Keyboard mit Bluetooth? Dann erkennt die App jede Taste sofort.';
+    $('#kbCardBtn').classList.toggle('hidden',on||!sup);$('#kbCardBtn').textContent=KB.saved?'Suchen':'Verbinden'}
+  // settings
+  if($('#kbSetTxt')){$('#kbSetTxt').textContent=on?`Verbunden: ${KB.name}`:!sup?'Braucht die neue App-Version':KB.saved?`${KB.name||'Keyboard'} – nicht in der Nähe oder aus`:'Nicht verbunden – die App hört über das Mikrofon';
+    $('#kbSetBtn').textContent=on?'Trennen':'Verbinden';$('#kbSetBtn').disabled=!sup}
+  // sheet
+  const msg={scanning:'Suche läuft …',connecting:'Verbinde …',on:`Verbunden: ${KB.name}`,lost:'Verbindung verloren – verbinde neu …',btoff:'Bluetooth ist aus. Bitte einschalten und nochmal suchen.',noperm:KB.msg,fail:KB.msg,off:KB.found.length?'Tippe auf dein Keyboard.':(KB.scanning?'Suche läuft …':'Kein Keyboard gefunden. Ist es eingeschaltet? Ist Bluetooth am Keyboard an?')}[st]||'';
+  if($('#kbStatus')){$('#kbStatus').textContent=st==='off'&&KB.scanning?'Suche läuft …':msg;
+    $('#kbList').innerHTML=KB.found.map((f,i)=>`<button class="li" data-kb="${i}" style="width:100%;text-align:left;color:var(--tx);background:transparent;border:0;font:inherit"><svg class="i" style="color:var(--ac)"><use href="#i-kb"/></svg><div class="grow"><b>${esc(f.name)}</b><small>${f.usb?'USB':'Bluetooth'}</small></div>${on&&KB.addr===f.addr?'<span class="mu sm">verbunden</span>':''}</button>`).join('')||'';
+    $('#kbOff').classList.toggle('hidden',!on&&!KB.saved);$('#kbAgain').disabled=KB.scanning}}
+function kbOpen(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
+  KB.found=[];KB.scanning=true;openSheet('#kbSheet');kbUI();nat('kbScan')}
+$('#kbCardBtn').onclick=kbOpen;
+$('#kbSetBtn').onclick=()=>{if(kbOn()){nat('kbDisconnect',{forget:true});toast('Keyboard getrennt')}else kbOpen()};
+$('#kbAgain').onclick=()=>{KB.found=[];KB.scanning=true;kbUI();nat('kbScan')};
+$('#kbOff').onclick=()=>{nat('kbDisconnect',{forget:true});KB.saved='';closeSheets();toast('Keyboard getrennt')};
+$('#kbList').onclick=e=>{const b=e.target.closest('[data-kb]');if(!b)return;const f=KB.found[+b.dataset.kb];KB.name=f.name;nat('kbConnect',{addr:f.addr,name:f.name})};
+
 /* ================= player state ================= */
 let song=null,songId=null,t=0,playing=false,lastFrame=0,groups=[],gi=0,soundIdx=0,loop=null,keyLo=21,keyHi=108;
 let pass={p:0,g:0,m:0},fx=[],uiT=0,sessionStart=0,sessionTime=0;
 const pressFlash=new Map(),lastPress=new Map(),wrongFlash=new Map();
 const isActive=n=>S.hand==='B'||n.hand===S.hand;
-const useMic=()=>S.input==='mic'&&mic&&!micFailed;
-const listening=()=>S.wait||(S.score&&!S.sound&&useMic());
+const useMic=()=>S.input==='mic'&&mic&&!micFailed&&!kbOn();
+const listening=()=>S.wait||(S.score&&(kbOn()||(!S.sound&&useMic())));
 
 function openSong(s,id,resume){
   song=s;songId=id;applySwap();t=-1.5;loop=null;playing=false;sessionTime=0;
@@ -1193,6 +1262,7 @@ function setPlaying(p){
 }
 async function ensureInput(){
   if(!(S.wait||S.score))return;
+  if(kbOn()){$('#micInfo').textContent=`Keyboard verbunden: ${KB.name}`;return} // keyboard: every key arrives directly, no microphone needed
   if(S.input==='mic'&&!mic&&!micFailed){try{await startMic();$('#micInfo').textContent=calCount()?`Mikrofon an · ${calCount()}/88 kalibriert`:'Mikrofon an · noch nicht kalibriert'}
     catch(e){micFailed=true;$('#micInfo').textContent=e.message;if(S.wait)toast(e.message+' Tippe solange die Tasten auf dem Bildschirm.',5000)}}
   else if(S.input==='midi')startMidiIn();
@@ -1207,7 +1277,7 @@ function tick(now){
   const dt=Math.min(0.1,(now-lastFrame)/1000);lastFrame=now;frameN++;
   if(playing&&now-uiT>2600&&!$('.sheet.on'))$('#player').classList.add('idle');
   let waiting=null,R=null;
-  if(mic&&!micFailed&&listening()&&S.input==='mic'){R=listen(now);$('#lvl').style.width=(levelOf(R.rms)*100)+'%'}
+  if(mic&&!micFailed&&listening()&&S.input==='mic'&&!kbOn()){R=listen(now);$('#lvl').style.width=(levelOf(R.rms)*100)+'%'}
   if(playing){
     const prevT=t;t+=dt*S.speed;
     addTime(songId,dt);
@@ -1655,11 +1725,12 @@ $('#reloadBtn').onclick=()=>location.reload();
 /* ================= Native bridge (App ≥ 0.5) ================= */
 const NAT={ok:typeof KTNative!=='undefined',info:null,wait:{}};
 function nat(cmd,extra,resp){return new Promise(res=>{if(!NAT.ok)return res(null);NAT.wait[resp||cmd]=res;KTNative.postMessage(JSON.stringify(Object.assign({cmd},extra||{})))})}
-if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(m.cmd==='rows'){scanFrame(m);return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
+if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(m.cmd==='rows'){scanFrame(m);return}if(m.cmd==='midi'||m.cmd==='kbState'||m.cmd==='kbFound'||m.cmd==='kbScanDone'){kbMsg(m);return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
   nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
+if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 2.0 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.1 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

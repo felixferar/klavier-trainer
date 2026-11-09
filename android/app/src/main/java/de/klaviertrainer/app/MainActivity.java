@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
     /** Online-Version (GitHub Pages), beim Bauen gesetzt. Leer = nur eingebaute Version. */
     private static final String WEB_URL = BuildConfig.WEB_URL;
 
-    private static final int REQ_MIC = 1, REQ_FILE = 2, REQ_SAVE = 3;
+    private static final int REQ_MIC = 1, REQ_FILE = 2, REQ_SAVE = 3, REQ_BT = 4;
     private static final int CONNECT_TIMEOUT_MS = 3000, READ_TIMEOUT_MS = 5000;
 
     private WebView web;
@@ -80,6 +80,8 @@ public class MainActivity extends Activity {
     private JavaScriptReplyProxy reply;
     private String pendingSave;
     private SharedPreferences prefs;
+    private KeyboardLink kb;
+    private Runnable afterBtPerm;
 
     /** Woher die aktuell angezeigte Oberfläche stammt: online | cache | offline */
     private volatile String source = "offline";
@@ -94,12 +96,13 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences("kt", MODE_PRIVATE);
+        kb = new KeyboardLink(this, prefs, this::send);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.parseColor("#0F1115"));
+        root.setBackgroundColor(Color.parseColor("#171512"));
         web = new WebView(this);
-        web.setBackgroundColor(Color.parseColor("#0F1115"));
+        web.setBackgroundColor(Color.parseColor("#171512"));
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
         setContentView(root);
 
@@ -367,6 +370,29 @@ public class MainActivity extends Activity {
                 case "scanStop":
                     scanning = false;
                     break;
+                // ---- Keyboard über Bluetooth-MIDI / USB-MIDI
+                case "kbScan":
+                    withBtPerm(() -> kb.scan());
+                    break;
+                case "kbConnect": {
+                    final String addr = m.optString("addr"), name = m.optString("name", "Keyboard");
+                    withBtPerm(() -> kb.connect(addr, name));
+                    break;
+                }
+                case "kbDisconnect":
+                    kb.disconnect(m.optBoolean("forget", true));
+                    break;
+                case "kbAuto":
+                    if (hasBtPerm()) kb.autoConnect(); else kb.report();
+                    break;
+                case "kbStatus":
+                    kb.report();
+                    break;
+                case "kbEnableBt":
+                    withBtPerm(() -> {
+                        try { startActivity(new Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE)); } catch (Exception ignored) {}
+                    });
+                    break;
             }
         } catch (Exception e) {
             sendError("unknown", e);
@@ -498,6 +524,25 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) {}
     }
 
+    // ---------------------------------------------------------------- Bluetooth-Berechtigungen
+
+    private String[] btPerms() {
+        if (Build.VERSION.SDK_INT >= 31)
+            return new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
+        return new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+    }
+
+    private boolean hasBtPerm() {
+        for (String p : btPerms()) if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) return false;
+        return true;
+    }
+
+    private void withBtPerm(Runnable r) {
+        if (hasBtPerm()) { r.run(); return; }
+        afterBtPerm = r;
+        requestPermissions(btPerms(), REQ_BT);
+    }
+
     // ---------------------------------------------------------------- System
 
     private boolean isOwnHost(Uri u) {
@@ -529,6 +574,15 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (requestCode == REQ_BT) {
+            boolean ok = results.length > 0;
+            for (int r : results) if (r != PackageManager.PERMISSION_GRANTED) ok = false;
+            Runnable r = afterBtPerm;
+            afterBtPerm = null;
+            if (ok && r != null) r.run();
+            else try { send(new JSONObject().put("cmd", "kbState").put("state", "noperm").put("msg", "Ohne die Erlaubnis für „Geräte in der Nähe“ kann die App das Keyboard nicht finden.")); } catch (Exception ignored) {}
+            return;
+        }
         if (requestCode == REQ_MIC && pendingPermission != null) {
             if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED)
                 pendingPermission.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
@@ -579,6 +633,9 @@ public class MainActivity extends Activity {
         super.onSaveInstanceState(outState);
         web.saveState(outState);
     }
+
+    @Override
+    protected void onDestroy() { if (kb != null) kb.disconnect(false); super.onDestroy(); }
 
     @Override
     protected void onPause() { super.onPause(); scanning = false; web.onPause(); }
