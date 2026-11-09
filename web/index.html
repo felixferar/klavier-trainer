@@ -442,7 +442,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li hidden" id="crashRow"><div class="grow"><b>Letzter Absturz</b><small id="crashTxt" style="white-space:pre-wrap;word-break:break-word"></small></div><button class="btn sm" id="crashSave">Speichern</button></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.1</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.2</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1760,7 +1760,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 3.1 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 3.2 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1958,8 +1958,11 @@ function scanCore(px,w,n,f){
         else if(SCAN.laneGap&&SCAN.laneGap[k]>=3&&(ln.ons.length||ln.pre)&&SCAN.gapMin[k]>ln.onFi&&(!ln.ons.length||tt-ln.ons[ln.ons.length-1]>0.12)&&!(ln.gapT>tt-0.12)){ln.gapT=tt;ln.onFi=SCAN.fi;
           if(ln.ons.length)ln.offs[ln.offs.length-1]=tt;else if(ln.pre)ln.pre.off=tt;ln.seen=true;ln.ons.push(tt);ln.offs.push(null)}}else{ln.cnt=0;if(ln.on){if(ln.seen)ln.offs[ln.offs.length-1]=tt;else if(ln.pre)ln.pre.off=tt}ln.on=false;ln.seen=true}}
     const st=SCAN.state[k];
-    if(pressed){st.off=0;st.cnt++;if(!st.on&&st.cnt===1)st.start=tt;if(!st.on&&st.cnt>=2){st.on=true;st.hue=[]}if(st.on&&sat>0.25)st.hue.push(h)}
-    else{st.cnt=0;if(st.on){st.off++;if(st.off===1)st.end=tt;if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue)})}}
+    if(pressed){
+      // repeated note: between two strikes the key looks EXACTLY like at rest for a single frame (~40 ms) → a new note, not a flicker
+      if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),clean:!!st.split});st.start=tt;st.hue=[];st.split=true}
+      st.off=0;st.cnt++;if(!st.on&&st.cnt===1)st.start=tt;if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.split=false}if(st.on&&sat>0.25)st.hue.push(h)}
+    else{st.cnt=0;if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),clean:!!st.split});st.split=false}}
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
   SCAN.lastVt=tt;
@@ -2055,7 +2058,7 @@ function finishCore(raw,preview){
     {const byKey=new Map();for(const e of ev){if(!byKey.has(e.m))byKey.set(e.m,[]);byKey.get(e.m).push(e)}const out=[];
       for(const [m,list] of byKey){list.sort((a,b)=>a.start-b.start);const ons=SCAN.lane[kIdx.get(m)].ons;let cur=null;
         for(const e of list){if(cur){const gap=e.start-cur.end,newBar=d!==null&&ons.some(o=>Math.abs(o+d-e.start)<0.12);
-            if(gap<=(d!==null?0.25:0.1)&&!newBar){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
+            if(gap<=(d!==null?0.25:0.1)&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
       ev=out.sort((a,b)=>a.start-b.start)}
     if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+d).filter(x=>x>e.start+0.14&&x<e.end-0.05);
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
