@@ -176,6 +176,19 @@ body.wide .sheet .grab{display:none}
 .res3 span{font-size:11px;color:var(--mu);font-weight:600}
 /* toast */
 .conv .ybar,.conv .topbar .ib,.conv #scanBar{display:none!important}
+/* Umwandlung im Querformat: Video füllt den Bildschirm, Fortschritt in einer schmalen Leiste darunter (verdeckt nie das Video –
+   alles, was über dem Video liegt, würde mit abfotografiert) */
+#yt.convL .topbar{display:none}
+#yt.convL #ytBox{position:fixed;left:0;right:0;top:0;bottom:40px;z-index:1}
+#yt.convL #convPanel{position:fixed;left:0;right:0;bottom:0;height:40px;padding:0 14px!important;display:flex;align-items:center;gap:14px;border-top:none!important;z-index:2}
+#yt.convL #convTitle,#yt.convL #convSub{display:none}
+#yt.convL #convPanel>div:nth-child(3){flex:1;height:6px!important}
+#yt.convL #convPanel>div:nth-child(4){margin:0!important;gap:12px;flex:none}
+#markOv{position:fixed;inset:0;z-index:55;background:#07090D;display:flex;flex-direction:column;padding:10px 14px;gap:8px}
+#markOv .mh{display:flex;align-items:baseline;gap:10px}#markOv .mh b{font-size:16px}
+#markCv{flex:1;min-height:0;width:100%;object-fit:contain;touch-action:none;border-radius:10px;background:#000}
+#markOv .mf{display:flex;gap:10px;align-items:center}
+body.convL .toast{top:auto;bottom:4px;padding:6px 12px;font-size:12px;max-width:70%}
 .dotrec{width:10px;height:10px;border-radius:50%;background:#FF5D5D;animation:rec 1.2s infinite}@keyframes rec{50%{opacity:.3}}
 #scanOv{position:absolute;inset:0;z-index:20;background:rgba(7,9,13,.92);display:flex;align-items:center;justify-content:center;padding:12px}
 .scanbox{width:min(640px,100%);max-height:100%;overflow:auto;background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:14px}
@@ -428,7 +441,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.8</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.9</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -536,6 +549,11 @@ body.short #onbDots{margin:8px 0}
   </div>
   <div id="scanBar" class="hidden" style="flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s1);border-top:1px solid var(--bd)">
     <span class="dotrec"></span><span id="scanTxt" class="sm" style="flex:1;font-weight:600">Erkenne Noten …</span><button class="btn sm pri" id="scanStopBtn">Fertig</button></div>
+  <div id="markOv" class="hidden">
+    <div class="mh"><b>Tastatur markieren</b><span class="mu sm">Gelbe Linie auf die schwarzen Tasten, blaue Linie auf die weißen.</span></div>
+    <canvas id="markCv"></canvas>
+    <div class="mf"><span class="sm" id="markMsg" style="flex:1">…</span><button class="btn" id="markNo">Abbrechen</button><button class="btn pri" id="markYes">Weiter</button></div>
+  </div>
   <div id="scanOv" class="hidden">
     <div class="scanbox">
       <div style="display:flex;align-items:center"><b style="flex:1;font-size:16px">Noten aus dem Video erkennen</b><button class="ib" id="scClose"><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -625,6 +643,7 @@ body.short #onbDots{margin:8px 0}
     <div class="mu xs" style="font-weight:700;margin:4px 2px">NAME</div>
     <input class="field" id="smName" maxlength="60">
     <div style="display:flex;gap:8px;margin-top:12px"><button class="btn danger" id="smDel" style="flex:1">Löschen</button><button class="btn pri" id="smSave" style="flex:1.4">Speichern</button></div>
+    <button class="btn" id="smMidi" style="width:100%;margin-top:10px">Als MIDI-Datei speichern</button>
   </div>
 </div>
 <div class="sheet" id="addSheet">
@@ -888,7 +907,7 @@ function renderHome(){handVars();
 }
 $('#q').oninput=renderHome;
 let smItem=null;
-function openSongMenu(it){smItem=it;$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
+function openSongMenu(it){smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
 $('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome()};
 $('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();renderHome();toast('Song gelöscht')};
 for(const b of $$('#filt button'))b.onclick=()=>{filt=b.dataset.f;$$('#filt button').forEach(x=>x.classList.toggle('on',x===b));renderHome()};
@@ -1739,10 +1758,17 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 2.8 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.9 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
+
+/* ================= Song als MIDI-Datei speichern ================= */
+async function exportMidi(it){if(!it||!it.data)return;const name=(it.title||'Song').replace(/[\\/:*?"<>|]+/g,' ').trim().slice(0,60)+'.mid';
+  if(NAT.ok){if(!hasCap('b64save')){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren)',4500);return}
+    const r=await nat('save',{name,data:it.data,b64:true,mime:'audio/midi'},'saved');toast(r&&r.ok?'MIDI-Datei gespeichert':'Nicht gespeichert');return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bufFromB64(it.data)],{type:'audio/midi'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+$('#smMidi').onclick=()=>exportMidi(smItem);
 
 /* ================= Backup ================= */
 const SCHEMA=1;if(load('kt_schema')==null)save('kt_schema',SCHEMA);
@@ -2106,13 +2132,14 @@ async function scanRun(live){
   try{ytp.setPlaybackRate(1);ytRate=1;if(ytAuto)ytp.mute()}catch(e){}
   if(!live){ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo();if(ytAuto)await waitMainVideo(180000)} // live: the video is already playing – start reading at once
   const box=$('#ytBox').getBoundingClientRect();
-  const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:480,interval:40},'scanStarted');
+  const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:Math.max(480,Math.min(1280,Math.round(box.width*(devicePixelRatio||1)))),interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
   diagStart({w:r.w,n:7,box:{x:box.left,y:box.top,w:box.width,h:box.height},rowsSent:[scanRows.yA,scanRows.yB,scanRows.yC,...laneHigh(scanRows,scanDet,scanImg)],
     scanRows,scanDet,keys:SCAN.keys,kw:SCAN.kw,start:SCAN.start,live:!!live});
   let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}const p0=SCAN.p0!=null?SCAN.p0:SCAN.start,full=dur+SCAN.start-p0;
   SCAN.timer=setInterval(()=>{const p=full>0?Math.min(100,Math.round((SCAN.lastVt+SCAN.start-p0)/full*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${scanCountTxt()}`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${scanCountTxt()}`;
-    try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}},300);
+    try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}
+    if(ytAuto&&SCAN.on&&SCAN.okT==null&&SCAN.lastVt>15&&!SCAN.fromFile)markLate()},300);
 }
 function scanStop(){
   if(!SCAN.on)return;SCAN.on=false;clearInterval(SCAN.timer);if(!SCAN.fromFile)nat('scanStop');try{ytp.pauseVideo()}catch(e){}try{FV.el&&FV.el.pause()}catch(e){}
@@ -2143,7 +2170,7 @@ function scanSave(auto){
    Datei: "KTDIAG1\n" + base64(gzip( "KTD1" + u32 Länge + JSON-Kopf + Frames ))
    Frame: f64 t (native ms), f64 vt (YouTube-Zeit), f64 f (geglättete Zeit, NaN = verworfen), f64 Player-Zustand, dann w*n*3 Bytes RGB.
    Auswertung: tools/bench/diag.py */
-const DIAG={on:false,frames:[],bytes:0,meta:null,full:false,max:40e6};
+const DIAG={on:false,frames:[],bytes:0,meta:null,full:false,max:110e6};
 function imgJpeg(img,q){try{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').putImageData(img,0,0);return c.toDataURL('image/jpeg',q||0.85)}catch(e){return null}}
 function diagStart(meta){DIAG.on=!!S.diagConv;DIAG.frames=[];DIAG.bytes=0;DIAG.full=false;if(!DIAG.on)return;
   let q=null,vid=null;try{q=ytp.getPlaybackQuality();vid=ytp.getVideoData().video_id}catch(e){}
@@ -2162,8 +2189,44 @@ async function diagSave(extra){if(!S.diagConv||!NAT.ok||!DIAG.meta)return;
   if(r&&r.ok){S.diagConv=false;saveS()} // only once – the recording costs memory
   toast(r&&r.ok?'Diagnose gespeichert – schick die Datei an Claude':'Diagnose nicht gespeichert',5000)}
 
+/* ================= Tastatur von Hand markieren (wenn die automatische Erkennung nicht klappt) =================
+   Das Video ist dabei angehalten und läuft danach an derselben Stelle weiter (nie zurück). */
+const MK={img:null,rows:null,det:null,res:null};
+function markKeyboard(img){return new Promise(res=>{
+  const t=tryKeyboard(img);MK.img=img;MK.res=res;MK.crop=cropBars(img);/* nur das Videobild zeigen (ohne schwarze Ränder) → größer */MK.rows=t?{yA:t.rows.yA,yB:t.rows.yB,yT:t.rows.yT}:{yA:0.78,yB:0.9};
+  $('#markOv').classList.remove('hidden');markUpdate()})}
+function markUpdate(){const {img,rows}=MK;MK.det=detectKeys(img,rows.yA);const det=MK.det&&MK.det.hi-MK.det.lo<=87?MK.det:null;MK.det=det;
+  const cr=MK.crop,cv=$('#markCv'),W=img.width,H=cr.h,Y=f=>f*(img.height-1)-cr.y0;cv.width=W;cv.height=H;const c=cv.getContext('2d');c.putImageData(cr.img,0,0);
+  const lw=Math.max(3,W/250),fs=Math.max(14,W/40);c.font=`700 ${fs}px system-ui`;
+  for(const [f,col] of [[rows.yA,'#FFC94D'],[rows.yB,'#7C9CFF']]){const y=Y(f);c.fillStyle=col;c.fillRect(0,y-lw/2,W,lw);c.beginPath();c.arc(W-fs*1.2,y,fs*0.7,0,7);c.fill()}
+  if(det){c.textAlign='center';for(const k of keyLayout(det,0))if(k.m%12===0){const x=k.x*W;c.fillStyle='#FF5D5D';c.fillRect(x-lw/2,Y(rows.yB)-fs*0.8,lw,fs*1.6);c.fillText('C'+(Math.floor(k.m/12)-1),x,Y(rows.yA)-fs*0.6)}}
+  $('#markMsg').textContent=det?`✓ ${det.hi-det.lo+1} Tasten erkannt – stimmen die roten C-Markierungen grob?`:'Noch keine Tastatur erkannt – schieb die gelbe Linie mitten durch die schwarzen Tasten.';
+  $('#markYes').disabled=!det}
+function markDrag(e){const cv=$('#markCv'),r=cv.getBoundingClientRect(),img=MK.img;
+  // canvas is shown with object-fit:contain → the picture may not fill the element
+  const cr=MK.crop,sc=Math.min(r.width/img.width,r.height/cr.h),ph=cr.h*sc,top=r.top+(r.height-ph)/2,f=clamp((cr.y0+clamp((e.clientY-top)/ph,0,1)*(cr.h-1))/(img.height-1),0,1);
+  const k=Math.abs(f-MK.rows.yA)<Math.abs(f-MK.rows.yB)?'yA':'yB';MK.rows[k]=f;
+  if(MK.rows.yB<MK.rows.yA+0.02){if(k==='yA')MK.rows.yA=MK.rows.yB-0.02;else MK.rows.yB=MK.rows.yA+0.02}delete MK.rows.yT;markUpdate()}
+function markDone(ok){$('#markOv').classList.add('hidden');const r=MK.res;MK.res=null;if(!r)return;
+  if(ok){scanImg=MK.img;scanDet=MK.det;scanOct=0;scanRows={yA:MK.rows.yA,yB:MK.rows.yB,yC:Math.max(0,MK.rows.yA-0.06),yT:MK.rows.yT!=null?MK.rows.yT:MK.rows.yA-0.05}}
+  r(!!ok)}
+$('#markCv').addEventListener('pointerdown',e=>{markDrag(e);const mv=ev=>markDrag(ev),up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};addEventListener('pointermove',mv);addEventListener('pointerup',up)});
+$('#markYes').onclick=()=>markDone(true);$('#markNo').onclick=()=>markDone(false);
+function convCancelled(){ytAuto=false;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}try{ytp.pauseVideo();ytp.unMute()}catch(e){}convUI(false);showConvError('Die Umwandlung wurde abgebrochen. Es wurde nichts gespeichert.')}
+async function resumeVideo(){try{ytp.playVideo()}catch(e){}const t0=performance.now();while(performance.now()-t0<8000){let st=-1;try{st=ytp.getPlayerState()}catch(e){}if(st===1)return;await sleep(150)}}
+// reading runs, but after 15 s the keyboard still never looked normal → ask the user to mark it (video paused, then on from the same spot)
+async function markLate(){if(!SCAN.on||!ytAuto)return;SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop');try{ytp.pauseVideo()}catch(e){}
+  const img=await grabVideo()||scanImg;if(!ytAuto)return;const ok=await markKeyboard(img);if(!ok||!ytAuto){convCancelled();return}
+  scanFrames=[img];convProgress(null,'Noten werden gelesen …');await resumeVideo();if(ytAuto)scanRun(true)}
+
 /* ================= YouTube-Link → Song (automatisch) ================= */
-function convUI(on){$('#yt').classList.toggle('conv',on);$('#convPanel').classList.toggle('hidden',!on);$('#ytBlock').classList.toggle('hidden',!on)}
+function convUI(on){$('#yt').classList.toggle('conv',on);$('#convPanel').classList.toggle('hidden',!on);$('#ytBlock').classList.toggle('hidden',!on);if(!on)convLandscape(false)}
+const hasCap=c=>!!(NAT.info&&NAT.info.caps&&NAT.info.caps.includes(c));
+// während der Umwandlung: Handy quer, Video bildschirmfüllend → bis zu 2,5× mehr Pixel pro Taste (App ≥ 0.7)
+async function convLandscape(on){const was=$('#yt').classList.contains('convL');if(on===was||!hasCap('orient'))return false;
+  document.body.classList.toggle('convL',on);$('#yt').classList.toggle('convL',on);await nat('orient',{landscape:on});
+  if(on){const t0=performance.now();while(innerWidth<=innerHeight&&performance.now()-t0<4000)await sleep(100);await sleep(700)} // Drehen + YouTube passt die Größe an
+  return true}
 function convProgress(p,info,title){if(p!=null){$('#convBar').style.width=p+'%';$('#convPct').textContent=p+' %'}if(info)$('#convInfo').textContent=info;if(title)$('#convTitle').textContent=title}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function grabVideo(){ // still image of the video area, taken while the video is playing
@@ -2203,12 +2266,13 @@ async function waitMainVideo(maxMs){ // YouTube ads: player state is not "playin
 async function autoConvert(it){
   if(!NAT.ok){ytAuto=false;toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
   const st=it.start||0;convUI(true);convProgress(0,'Video wird geladen …','Song wird erstellt …');
+  if(await convLandscape(true)&&!ytAuto)return;
   try{ytp.mute();ytp.playVideo()}catch(e){}
   if(!await waitMainVideo(180000)){if(ytAuto){ytAuto=false;convUI(false);showConvError('Das Video startet nicht. Prüfe deine Internetverbindung und versuch es nochmal.')}return}
   let black=0,dur=0;try{dur=ytp.getDuration()}catch(e){}
   // the video runs once from start to end – no jumping. While it plays, the app looks for the keyboard (skips the channel intro);
   // as soon as it is found, reading starts at exactly that moment. Falling notes need a few seconds to reach the keys, so nothing is lost.
-  const frames=[];let ct=st;
+  const frames=[];let ct=st,ct0=null;
   while(ytAuto){
     try{ct=ytp.getCurrentTime();if(ytp.getPlayerState()===0)break}catch(e){}
     if(ct>st+150||(dur&&ct>dur-3))break;
@@ -2220,6 +2284,11 @@ async function autoConvert(it){
     let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];best=pickKb(cand.map(tryKeyboard))}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
       $('#scanOv').classList.add('hidden');convProgress(null,'Noten werden gelesen …');scanRun(true);return}
+    if(ct0==null)ct0=gt;
+    if(frames.length>=5&&gt-ct0>25){ // 25 s Video ohne erkannte Tastatur → Video anhalten, von Hand markieren lassen
+      try{ytp.pauseVideo()}catch(e){}const ok=await markKeyboard(medianImage(frames.slice(-5)));
+      if(!ok||!ytAuto){convCancelled();return}
+      SCAN.p0=st;scanFrames=frames.slice(-5);convProgress(null,'Noten werden gelesen …');await resumeVideo();if(ytAuto)scanRun(true);return}
     await sleep(150);
   }
   if(!ytAuto)return;
@@ -2297,6 +2366,7 @@ function scanAutoGo(from){ // called after a successful keyboard detection in au
 
 /* ================= Android back button ================= */
 window.appBack=function(){
+  if(!$('#markOv').classList.contains('hidden')){markDone(false);return true}
   if($('#modeModal').classList.contains('on')){$('#modeModal').classList.remove('on');$('#pDim').classList.remove('on');return true}
   if($('#capOv')){$('#capOv').remove();return true}
   if($('.sheet.on')){closeSheets();return true}

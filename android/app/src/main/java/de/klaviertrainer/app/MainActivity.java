@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -13,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Base64;
@@ -78,7 +80,7 @@ public class MainActivity extends Activity {
     private PermissionRequest pendingPermission;
     private ValueCallback<Uri[]> fileCallback;
     private JavaScriptReplyProxy reply;
-    private String pendingSave;
+    private byte[] pendingSave;
     private SharedPreferences prefs;
     private KeyboardLink kb;
     private Runnable afterBtPerm;
@@ -349,14 +351,17 @@ public class MainActivity extends Activity {
                     o.put("source", source);
                     o.put("version", BuildConfig.VERSION_NAME);
                     o.put("build", BuildConfig.VERSION_CODE);
+                    o.put("caps", new JSONArray().put("b64save").put("orient").put("scanWide"));
                     send(o);
                     break;
                 }
                 case "save": {
-                    pendingSave = m.optString("data", "");
+                    String d = m.optString("data", "");
+                    // b64:true → Binärdatei (z. B. .mid); sonst Text (UTF-8)
+                    pendingSave = m.optBoolean("b64", false) ? Base64.decode(d, Base64.DEFAULT) : d.getBytes(StandardCharsets.UTF_8);
                     Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                     i.addCategory(Intent.CATEGORY_OPENABLE);
-                    i.setType("application/json");
+                    i.setType(m.optString("mime", "application/json"));
                     i.putExtra(Intent.EXTRA_TITLE, m.optString("name", "klavier-trainer-backup.json"));
                     startActivityForResult(i, REQ_SAVE);
                     break;
@@ -364,6 +369,16 @@ public class MainActivity extends Activity {
                 case "capture":
                     capture();
                     break;
+                case "orient": {
+                    // Umwandlung: quer und fest; danach wieder frei drehbar
+                    setRequestedOrientation(m.optBoolean("landscape", false)
+                            ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                    JSONObject o = new JSONObject();
+                    o.put("cmd", "orient");
+                    o.put("ok", true);
+                    send(o);
+                    break;
+                }
                 case "scanStart":
                     startScan(m);
                     break;
@@ -448,13 +463,24 @@ public class MainActivity extends Activity {
     // ---------------------------------------------------------------- Video → Noten: Bildzeilen-Scanner
     // Fotografiert ~25× pro Sekunde den Videobereich (verkleinert) und schickt nur einzelne Pixelzeilen
     // (durch die schwarzen und die weißen Tasten der Video-Tastatur) an die Web-App.
+    // Läuft auf einem eigenen Hintergrund-Thread: Fotografieren, Pixel auslesen und Verpacken bremsen
+    // weder das Video noch die Oberfläche (vorher alles auf dem Haupt-Thread).
     private volatile boolean scanning = false;
-    private boolean scanBusy = false;
+    private boolean scanBusy = false;   // nur auf dem Scan-Thread benutzt
     private Bitmap scanBmp;
     private Rect scanRect;
     private int[] scanRows;
     private int scanInterval = 40;
-    private final Handler scanHandler = new Handler(Looper.getMainLooper());
+    private Handler scanHandler;
+
+    private Handler scanHandler() {
+        if (scanHandler == null) {
+            HandlerThread t = new HandlerThread("kt-scan");
+            t.start();
+            scanHandler = new Handler(t.getLooper());
+        }
+        return scanHandler;
+    }
 
     private void startScan(JSONObject m) throws Exception {
         float d = getResources().getDisplayMetrics().density;
@@ -462,22 +488,32 @@ public class MainActivity extends Activity {
         web.getLocationInWindow(loc);
         int x = loc[0] + Math.round((float) m.getDouble("x") * d), y = loc[1] + Math.round((float) m.getDouble("y") * d);
         int w = Math.max(1, Math.round((float) m.getDouble("w") * d)), h = Math.max(1, Math.round((float) m.getDouble("h") * d));
-        scanRect = new Rect(x, y, x + w, y + h);
-        int ow = Math.max(64, Math.min(640, m.optInt("ow", 480)));
-        int oh = Math.max(8, Math.round(ow * (float) h / w));
-        scanBmp = Bitmap.createBitmap(ow, oh, Bitmap.Config.ARGB_8888);
+        final Rect rect = new Rect(x, y, x + w, y + h);
+        // Zeilenbreite: so viel wie gewünscht, höchstens die echte Pixelbreite des Videobereichs und 1280
+        final int ow = Math.max(64, Math.min(Math.min(1280, w), m.optInt("ow", 480)));
+        final int oh = Math.max(8, Math.round(ow * (float) h / w));
         JSONArray rows = m.getJSONArray("rows");
-        scanRows = new int[rows.length()];
+        final int[] rr = new int[rows.length()];
         for (int i = 0; i < rows.length(); i++)
-            scanRows[i] = Math.max(0, Math.min(oh - 1, (int) Math.round(rows.getDouble(i) * (oh - 1))));
-        scanInterval = Math.max(20, m.optInt("interval", 40));
-        scanBusy = false;
-        if (!scanning) { scanning = true; scanHandler.post(scanTick); }
-        JSONObject o = new JSONObject();
-        o.put("cmd", "scanStarted");
-        o.put("ok", true);
-        o.put("w", ow);
-        send(o);
+            rr[i] = Math.max(0, Math.min(oh - 1, (int) Math.round(rows.getDouble(i) * (oh - 1))));
+        final int interval = Math.max(20, m.optInt("interval", 40));
+        scanHandler().post(() -> {
+            scanRect = rect;
+            scanBmp = Bitmap.createBitmap(ow, oh, Bitmap.Config.ARGB_8888);
+            scanRows = rr;
+            scanInterval = interval;
+            scanBusy = false;
+            scanning = true;
+            scanHandler.removeCallbacks(scanTick); // nie zwei Schleifen gleichzeitig (Neustart nach Markieren)
+            scanHandler.post(scanTick);
+            try {
+                JSONObject o = new JSONObject();
+                o.put("cmd", "scanStarted");
+                o.put("ok", true);
+                o.put("w", ow);
+                send(o);
+            } catch (Exception ignored) {}
+        });
     }
 
     private final Runnable scanTick = new Runnable() {
@@ -605,7 +641,7 @@ public class MainActivity extends Activity {
             boolean ok = false;
             if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingSave != null) {
                 try (OutputStream o = getContentResolver().openOutputStream(data.getData(), "wt")) {
-                    if (o != null) { o.write(pendingSave.getBytes(StandardCharsets.UTF_8)); ok = true; }
+                    if (o != null) { o.write(pendingSave); ok = true; }
                 } catch (Exception ignored) {}
             }
             pendingSave = null;

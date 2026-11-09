@@ -14,7 +14,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = buildNo
-        versionName = "0.6"
+        versionName = "0.7"
         buildConfigField("String", "WEB_URL", "\"$webUrl\"")
     }
     signingConfigs {
