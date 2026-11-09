@@ -24,6 +24,7 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.PermissionRequest;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -49,6 +50,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -98,6 +101,17 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences("kt", MODE_PRIVATE);
+        // Absturzprotokoll: wird beim nächsten Start an die Web-App gemeldet (Einstellungen → Fehlersuche)
+        final Thread.UncaughtExceptionHandler prevHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((th, ex) -> {
+            try {
+                StringWriter sw = new StringWriter();
+                ex.printStackTrace(new PrintWriter(sw));
+                String st = sw.toString();
+                prefs.edit().putString("lastCrash", new java.util.Date() + " · Thread " + th.getName() + "\n" + (st.length() > 6000 ? st.substring(0, 6000) : st)).commit();
+            } catch (Throwable ignored) {}
+            if (prevHandler != null) prevHandler.uncaughtException(th, ex);
+        });
         kb = new KeyboardLink(this, prefs, this::send);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -144,6 +158,22 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 onMigrationPage(url);
+            }
+
+            // Der Teil, der die Webseite darstellt, ist abgestürzt (z. B. Speicher beim Drehen mit großem Video).
+            // Ohne diese Methode beendet Android die ganze App. So: protokollieren und neu starten.
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                try {
+                    prefs.edit().putString("lastCrash", new java.util.Date() + " · Darstellung abgestürzt (" + (detail.didCrash() ? "Absturz" : "vom System beendet, wohl Speicher") + ")").commit();
+                } catch (Throwable ignored) {}
+                scanning = false;
+                try { ((FrameLayout) view.getParent()).removeView(view); view.destroy(); } catch (Throwable ignored) {}
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                Intent i = getIntent();
+                finish();
+                startActivity(i);
+                return true;
             }
 
             @Override
@@ -351,7 +381,8 @@ public class MainActivity extends Activity {
                     o.put("source", source);
                     o.put("version", BuildConfig.VERSION_NAME);
                     o.put("build", BuildConfig.VERSION_CODE);
-                    o.put("caps", new JSONArray().put("b64save").put("orient").put("scanWide"));
+                    o.put("caps", new JSONArray().put("b64save").put("orient").put("scanWide").put("crashlog"));
+                    o.put("crash", prefs.getString("lastCrash", ""));
                     send(o);
                     break;
                 }
@@ -368,6 +399,9 @@ public class MainActivity extends Activity {
                 }
                 case "capture":
                     capture();
+                    break;
+                case "crashClear":
+                    prefs.edit().remove("lastCrash").apply();
                     break;
                 case "orient": {
                     // Umwandlung: quer und fest; danach wieder frei drehbar

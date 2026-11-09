@@ -439,9 +439,10 @@ body.short #onbDots{margin:8px 0}
     <div class="lbl">Fehlersuche</div>
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
+      <div class="li hidden" id="crashRow"><div class="grow"><b>Letzter Absturz</b><small id="crashTxt" style="white-space:pre-wrap;word-break:break-word"></small></div><button class="btn sm" id="crashSave">Speichern</button></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.0</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.1</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1180,8 +1181,9 @@ function kbMsg(m){
   if(m.cmd==='kbScanDone'){KB.scanning=false;kbUI();return}
   const was=KB.state;Object.assign(KB,{state:m.state,name:m.name||KB.name,addr:m.addr||KB.addr,saved:m.saved||'',msg:m.msg||''});
   if(m.state==='scanning')KB.scanning=true;else if(m.state!=='connecting')KB.scanning=false;
-  if(m.state==='on'&&was!=='on'){toast(`Keyboard verbunden: ${KB.name}`);if(mic){try{mic.stream&&mic.stream.getTracks().forEach(t=>t.stop())}catch(e){}}if($('#kbSheet').classList.contains('on'))setTimeout(closeSheets,700);if(song)ensureInput()}
-  if(m.state==='lost'&&was==='on')toast('Verbindung zum Keyboard verloren – verbinde neu …',3500);
+  const inPlay=document.body.classList.contains('inplayer'); // while practising: no connection messages (status lives in the main menu)
+  if(m.state==='on'&&was!=='on'){if(!inPlay)toast(`Keyboard verbunden: ${KB.name}`);if(mic){try{mic.stream&&mic.stream.getTracks().forEach(t=>t.stop())}catch(e){}}if($('#kbSheet').classList.contains('on'))setTimeout(closeSheets,700);if(song)ensureInput()}
+  if(m.state==='lost'&&was==='on'&&!inPlay)toast('Verbindung zum Keyboard verloren – verbinde neu …',3500);
   if(m.state==='btoff'&&$('#kbSheet').classList.contains('on'))nat('kbEnableBt');
   kbUI()}
 function kbEvent(st,a,v){const hi=st&0xF0;
@@ -1289,7 +1291,7 @@ function setPlaying(p){
 }
 async function ensureInput(){
   if(!(S.wait||S.score))return;
-  if(kbOn()){$('#micInfo').textContent=`Keyboard verbunden: ${KB.name}`;return} // keyboard: every key arrives directly, no microphone needed
+  if(kbOn()){$('#micInfo').textContent='Eingabe über das Keyboard';return} // keyboard: every key arrives directly, no microphone needed
   if(S.input==='mic'&&!mic&&!micFailed){try{await startMic();$('#micInfo').textContent=calCount()?`Mikrofon an · ${calCount()}/88 kalibriert`:'Mikrofon an · noch nicht kalibriert'}
     catch(e){micFailed=true;$('#micInfo').textContent=e.message;if(S.wait)toast(e.message+' Tippe solange die Tasten auf dem Bildschirm.',5000)}}
   else if(S.input==='midi')startMidiIn();
@@ -1754,14 +1756,18 @@ $('#reloadBtn').onclick=()=>location.reload();
 const NAT={ok:typeof KTNative!=='undefined',info:null,wait:{}};
 function nat(cmd,extra,resp){return new Promise(res=>{if(!NAT.ok)return res(null);NAT.wait[resp||cmd]=res;KTNative.postMessage(JSON.stringify(Object.assign({cmd},extra||{})))})}
 if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(m.cmd==='rows'){scanFrame(m);return}if(m.cmd==='midi'||m.cmd==='kbState'||m.cmd==='kbFound'||m.cmd==='kbScanDone'){kbMsg(m);return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
-  nat('info').then(m=>{NAT.info=m;updVer()});$('#yCap').classList.remove('hidden')}
+  nat('info').then(m=>{NAT.info=m;updVer();if(m&&m.crash){save('kt_lastcrash',m.crash);nat('crashClear');setTimeout(()=>toast('Die App ist beim letzten Mal abgestürzt – das Protokoll steht unter Einstellungen → Fehlersuche.',5000),1500)}crashUI()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 3.0 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 3.1 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
+
+/* ================= Absturzprotokoll (App ≥ 0.8) ================= */
+function crashUI(){const c=load('kt_lastcrash');$('#crashRow').classList.toggle('hidden',!c);if(c)$('#crashTxt').textContent=c.split('\n').slice(0,4).join('\n')}
+$('#crashSave').onclick=async()=>{const c=load('kt_lastcrash');if(!c)return;const r=await nat('save',{name:`klavier-absturz-${dayKey()}.txt`,data:c+'\n\n'+navigator.userAgent+'\n'+$('#verTxt').textContent,mime:'text/plain'},'saved');toast(r&&r.ok?'Gespeichert – schick die Datei an Claude':'Nicht gespeichert')};
 
 /* ================= Song als MIDI-Datei speichern ================= */
 async function exportMidi(it){if(!it||!it.data)return;const name=(it.title||'Song').replace(/[\\/:*?"<>|]+/g,' ').trim().slice(0,60)+'.mid';
