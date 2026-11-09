@@ -11,10 +11,10 @@ Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI
 | Punkt | Stand |
 |---|---|
 | Funktion | YouTube-Klavier-Tutorial (Synthesia-Stil: fallende Balken, Tastatur unten) wird in der App einmal abgespielt, aus den Pixeln wird eine MIDI-Datei gebaut, die als Song zum Üben gespeichert wird. |
-| Gesamtzustand (v4.1) | Nachspielen der Handy-Aufnahmen gegen die unabhängige Gegenprobe: golden hour 100 % / 100 %, SpongeBob 100 % / 100 %, Wake Me Up 97,6 % gefunden / 99,6 % richtig. Prüfstand (24 Videos): 98,8 % / 95,4 %. |
-| Schwächen | Leuchteffekt-Videos (Geisternoten auf Nachbartasten), 9 verschluckte schnelle Wiederholungen in Wake Me Up. |
+| Gesamtzustand (v4.3) | Nachspielen der Handy-Aufnahmen gegen die Gegenprobe (gefunden / richtig): golden hour 100 / 100, SpongeBob 100 / 100, Wake Me Up 99,8 / 99,4, GUnDodr9GLo 100 / 98,8, 163bCfINABY 100 / 97,8, Peter PlutaX 100 / 92,2. Prüfstand (24 Videos): Treffer 99,2 %, Präzision 95,1 %. |
+| Schwächen | 27 geteilte Noten bei schwarzen Tasten (Peter PlutaX, `barDelay` gilt nicht für schwarze Tasten); Leuchteffekt-Videos im Prüfstand (10, 17, 19, 23). |
 | Aufnahme am Handy | Einwandfrei: ~24 Bilder/s, Querformat, 1280 px Zeilenbreite. Diagnosen laden automatisch ins private Repo. |
-| Nächster Schritt | D2-Nachfolger: erst messen, woran sich eine echte Wiederholung von einer Leucht-Geisternote unterscheidet, dann Vorschlag an den Prüfer. |
+| Nächster Schritt | Verzögerung Lesezeile → Taste getrennt für schwarze und weiße Tasten messen (siehe Update v4.2–4.3). |
 
 ---
 
