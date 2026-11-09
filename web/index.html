@@ -440,9 +440,11 @@ body.short #onbDots{margin:8px 0}
     <div class="list">
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
       <div class="li hidden" id="crashRow"><div class="grow"><b>Letzter Absturz</b><small id="crashTxt" style="white-space:pre-wrap;word-break:break-word"></small></div><button class="btn sm" id="crashSave">Speichern</button></div>
+      <div class="li"><div class="grow"><b>Diagnose automatisch an Claude</b><small id="ghInfo">Jede YouTube-Umwandlung wird aufgezeichnet und in dein privates GitHub-Archiv „klavier-diagnose“ hochgeladen. Dafür einmal den Zugangsschlüssel einfügen.</small>
+        <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.3</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.4</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1758,11 +1760,11 @@ $('#reloadBtn').onclick=()=>location.reload();
 const NAT={ok:typeof KTNative!=='undefined',info:null,wait:{}};
 function nat(cmd,extra,resp){return new Promise(res=>{if(!NAT.ok)return res(null);NAT.wait[resp||cmd]=res;KTNative.postMessage(JSON.stringify(Object.assign({cmd},extra||{})))})}
 if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(m.cmd==='rows'){scanFrame(m);return}if(m.cmd==='midi'||m.cmd==='kbState'||m.cmd==='kbFound'||m.cmd==='kbScanDone'){kbMsg(m);return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
-  nat('info').then(m=>{NAT.info=m;updVer();if(m&&m.crash){save('kt_lastcrash',m.crash);nat('crashClear');setTimeout(()=>toast('Die App ist beim letzten Mal abgestürzt – das Protokoll steht unter Einstellungen → Fehlersuche.',5000),1500)}crashUI()});$('#yCap').classList.remove('hidden')}
+  nat('info').then(m=>{NAT.info=m;updVer();if(m&&m.crash){save('kt_lastcrash',m.crash);nat('crashClear');if(ghTok())ghUpload(`diag/${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}_absturz.txt`,btoa(unescape(encodeURIComponent(m.crash+'\n\n'+navigator.userAgent))),'Absturzprotokoll');setTimeout(()=>toast('Die App ist beim letzten Mal abgestürzt – das Protokoll steht unter Einstellungen → Fehlersuche.',5000),1500)}crashUI()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 3.3 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 3.4 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1781,13 +1783,13 @@ $('#smMidi').onclick=()=>exportMidi(smItem);
 /* ================= Backup ================= */
 const SCHEMA=1;if(load('kt_schema')==null)save('kt_schema',SCHEMA);
 function exportData(){if(stDirty){save('kt_stats',ST);stDirty=false}const o={app:'klavier-trainer',schema:SCHEMA,exported:new Date().toISOString(),data:{}};
-  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('kt_')&&k!=='kt_migrated')o.data[k]=localStorage.getItem(k)}return JSON.stringify(o)}
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('kt_')&&k!=='kt_migrated'&&k!=='kt_ghtok')o.data[k]=localStorage.getItem(k)}return JSON.stringify(o)}
 $('#expBtn').onclick=async()=>{const name=`klavier-trainer-backup-${dayKey()}.json`,data=exportData();
   if(NAT.ok){const r=await nat('save',{name,data},'saved');toast(r&&r.ok?'Backup gespeichert':'Backup nicht gespeichert');return}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)};
 let impData=null;
 $('#impBtn').onclick=()=>{const b=$('#impBtn');if(impData&&b.dataset.c){
-    for(const k of Object.keys(localStorage))if(k.startsWith('kt_')&&k!=='kt_migrated')localStorage.removeItem(k);
+    for(const k of Object.keys(localStorage))if(k.startsWith('kt_')&&k!=='kt_migrated'&&k!=='kt_ghtok')localStorage.removeItem(k);
     for(const [k,v] of Object.entries(impData))if(k.startsWith('kt_'))localStorage.setItem(k,v);
     stDirty=false;window.removeEventListener('pagehide',flushOnHide);location.reload();return}
   $('#impFile').value='';$('#impFile').click()};
@@ -2195,22 +2197,44 @@ function scanSave(auto){
    Auswertung: tools/bench/diag.py */
 const DIAG={on:false,frames:[],bytes:0,meta:null,full:false,max:110e6};
 function imgJpeg(img,q){try{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').putImageData(img,0,0);return c.toDataURL('image/jpeg',q||0.85)}catch(e){return null}}
-function diagStart(meta){DIAG.on=!!S.diagConv;DIAG.frames=[];DIAG.bytes=0;DIAG.full=false;if(!DIAG.on)return;
+function diagStart(meta){DIAG.on=!!S.diagConv||!!ghTok();DIAG.frames=[];DIAG.bytes=0;DIAG.full=false;if(!DIAG.on)return;
   let q=null,vid=null;try{q=ytp.getPlaybackQuality();vid=ytp.getVideoData().video_id}catch(e){}
   DIAG.meta=Object.assign({kind:'ktdiag',v:1,app:($('#verTxt').textContent||''),native:NAT.info||null,ua:navigator.userAgent,dpr:devicePixelRatio,screen:[innerWidth,innerHeight],
     quality:q,videoId:vid,t0:performance.now(),still:scanImg?imgJpeg(scanImg,0.9):null},meta)}
 function diagFrame(raw,t,vt,st,f){if(!DIAG.on||DIAG.full)return;const b=new Uint8Array(32+raw.length),dv=new DataView(b.buffer);
   dv.setFloat64(0,t,true);dv.setFloat64(8,vt,true);dv.setFloat64(16,f,true);dv.setFloat64(24,st,true);for(let i=0;i<raw.length;i++)b[32+i]=raw.charCodeAt(i);
   DIAG.frames.push(b);DIAG.bytes+=b.length;if(DIAG.bytes>DIAG.max)DIAG.full=true}
-async function diagSave(extra){if(!S.diagConv||!NAT.ok||!DIAG.meta)return;
+async function diagSave(extra){if(!(S.diagConv||ghTok())||!NAT.ok||!DIAG.meta)return;
   let q2=null;try{q2=ytp.getPlaybackQuality()}catch(e){}
   const meta=Object.assign({},DIAG.meta,extra||{},{qualityEnd:q2,frameCount:DIAG.frames.length,truncated:DIAG.full,saved:new Date().toISOString()});
   const enc=new TextEncoder(),head=enc.encode(JSON.stringify(meta)),len=new Uint8Array(4);new DataView(len.buffer).setUint32(0,head.length,true);
   const blob=new Blob([enc.encode('KTD1'),len,head,...DIAG.frames]);DIAG.frames=[];DIAG.on=false;DIAG.meta=null;
   let buf;try{buf=await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()}catch(e){buf=await blob.arrayBuffer()}
-  const r=await nat('save',{name:`klavier-diagnose-${dayKey()}.txt`,data:'KTDIAG1\n'+b64FromBuf(buf)},'saved');
+  const b64=b64FromBuf(buf);
+  if(ghTok()){const up=await ghUpload(`diag/${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}_${meta.videoId||'video'}_${meta.reason||'x'}.ktd.gz`,b64,`Diagnose ${meta.videoId||''} (${meta.reason||''}, ${meta.notes?meta.notes.length:'?'} Noten)`);
+    if(up.ok){if(S.diagConv){S.diagConv=false;saveS()}toast('Diagnose an Claude gesendet',3000);return}
+    if(!S.diagConv){toast('Diagnose konnte nicht hochgeladen werden: '+up.err,5000);return}}
+  const r=await nat('save',{name:`klavier-diagnose-${dayKey()}.txt`,data:'KTDIAG1\n'+b64},'saved');
   if(r&&r.ok){S.diagConv=false;saveS()} // only once – the recording costs memory
   toast(r&&r.ok?'Diagnose gespeichert – schick die Datei an Claude':'Diagnose nicht gespeichert',5000)}
+/* --- automatic upload to the user's private GitHub repo "klavier-diagnose" (token only on this phone, never in backups) --- */
+const ghTok=()=>(load('kt_ghtok')||'').trim();
+async function ghApi(path,opt){const r=await fetch('https://api.github.com'+path,Object.assign({},opt,{headers:Object.assign({'Authorization':'Bearer '+ghTok(),'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},(opt&&opt.headers)||{})}));
+  let j=null;try{j=await r.json()}catch(e){}return {ok:r.ok,status:r.status,j}}
+async function ghRepo(){if(ghRepo.v)return ghRepo.v;const u=await ghApi('/user');if(!u.ok){ // fine-grained tokens without account read: try the owner of this app's repo
+    ghRepo.v='felixferar/klavier-diagnose';return ghRepo.v}ghRepo.v=u.j.login+'/klavier-diagnose';return ghRepo.v}
+async function ghUpload(path,b64,msg){try{const repo=await ghRepo();const r=await ghApi(`/repos/${repo}/contents/${path}`,{method:'PUT',body:JSON.stringify({message:msg,content:b64})});
+    return r.ok?{ok:true}:{ok:false,err:(r.status===404?'Archiv „klavier-diagnose“ nicht gefunden oder kein Zugriff':r.status===401?'Schlüssel ungültig oder abgelaufen':(r.j&&r.j.message)||('Fehler '+r.status))}}
+  catch(e){return {ok:false,err:'keine Verbindung'}}}
+function ghUI(){const t=ghTok();$('#ghTok').value=t?'••••••••••••':'';$('#ghInfo').textContent=t?'Aktiv: jede YouTube-Umwandlung wird automatisch an Claude gesendet (privates Archiv „klavier-diagnose“).':'Jede YouTube-Umwandlung wird aufgezeichnet und in dein privates GitHub-Archiv „klavier-diagnose“ hochgeladen. Dafür einmal den Zugangsschlüssel einfügen.'}
+$('#ghTok').onfocus=e=>{if(e.target.value.startsWith('•'))e.target.value=''};
+$('#ghTok').onchange=e=>{const v=e.target.value.trim();if(v.startsWith('•'))return;save('kt_ghtok',v);ghRepo.v=null;ghUI();if(v)$('#ghTest').click()};
+$('#ghTest').onclick=async()=>{if(!ghTok()){toast('Erst den Schlüssel einfügen');return}ghRepo.v=null;$('#ghInfo').textContent='Prüfe …';
+  const repo=await ghRepo(),r=await ghApi(`/repos/${repo}`);
+  if(!r.ok){$('#ghInfo').textContent=r.status===401?'Schlüssel ungültig oder abgelaufen.':`Archiv ${repo} nicht gefunden oder der Schlüssel darf nicht darauf zugreifen.`;return}
+  const up=await ghUpload(`diag/_test_${Date.now()}.txt`,btoa('Verbindungstest '+new Date().toISOString()),'Verbindungstest aus der App');
+  $('#ghInfo').textContent=up.ok?`✓ Verbunden mit ${repo}${r.j&&r.j.private?' (privat)':' – ACHTUNG: das Archiv ist öffentlich!'}. Ab jetzt geht jede Umwandlung automatisch an Claude.`:'Lesen geht, Schreiben nicht: '+up.err+' (Berechtigung „Contents: Read and write“ setzen).'};
+ghUI();
 
 /* ================= Tastatur von Hand markieren (wenn die automatische Erkennung nicht klappt) =================
    Das Video ist dabei angehalten und läuft danach an derselben Stelle weiter (nie zurück). */
@@ -2315,7 +2339,7 @@ async function autoConvert(it){
     await sleep(150);
   }
   if(!ytAuto)return;
-  if(S.diagConv){DIAG.meta={box:(()=>{const b=$('#ytBox').getBoundingClientRect();return {x:b.left,y:b.top,w:b.width,h:b.height}})()};DIAG.frames=[];DIAG.bytes=0;
+  if(S.diagConv||ghTok()){DIAG.meta={box:(()=>{const b=$('#ytBox').getBoundingClientRect();return {x:b.left,y:b.top,w:b.width,h:b.height}})()};DIAG.frames=[];DIAG.bytes=0;
     diagSave({reason:black>=8?'black':'nokb',stills:frames.slice(-5).map(f=>imgJpeg(f,0.85))})}
   ytAuto=false;convUI(false);try{ytp.pauseVideo();ytp.unMute()}catch(e){}
   showConvError(black>=8?'Dein Handy lässt die App das Video nicht „sehen“ (das Bild bleibt schwarz). Schreib mir das bitte – dann baue ich eine andere Aufnahme-Methode ein.'
