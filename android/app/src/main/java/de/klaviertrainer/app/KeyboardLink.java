@@ -179,6 +179,14 @@ class KeyboardLink {
 
     private void attach(MidiDevice dev) {
         h.removeCallbacks(connectTimeout);
+        // Android meldet ein ausgeschaltetes Bluetooth-Keyboard teils als "geöffnet", aber ohne Geräteinfo
+        // (Absturz 09.11. 15:32: NullPointerException hier). Dann: schließen und still später erneut versuchen.
+        if (dev == null || dev.getInfo() == null) {
+            try { if (dev != null) dev.close(); } catch (Exception ignored) {}
+            if (wanted && curAddr != null && !curAddr.startsWith("usb:")) h.postDelayed(retry, RETRY_MS);
+            else setState("fail", "Das Keyboard antwortet nicht.");
+            return;
+        }
         device = dev;
         int n = dev.getInfo().getOutputPortCount();
         if (n < 1) { setState("fail", "Das Gerät sendet keine Tasten."); closeDevice(); return; }
