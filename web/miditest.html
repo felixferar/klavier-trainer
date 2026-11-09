@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Klavier-Anschluss testen</title>
+<style>
+  body{margin:0;background:#171512;color:#ECE4D2;font:16px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;padding:24px 20px}
+  h1{font:600 24px Georgia,serif;margin:0 0 6px}
+  p{color:#A39A88;margin:6px 0 14px;max-width:34em}
+  button{background:#C29A5B;color:#171512;border:0;border-radius:10px;font:700 16px system-ui;padding:12px 18px}
+  #state{margin-top:18px;padding:14px 16px;border-radius:12px;background:#201D19;border:1px solid rgba(236,228,210,.12)}
+  .ok{color:#7FB685}.bad{color:#D9705F}
+  #note{font:700 56px Georgia,serif;margin:10px 0 0;min-height:68px}
+  #log{color:#A39A88;font-size:14px;margin-top:6px}
+</style>
+</head>
+<body>
+<h1>Klavier-Anschluss testen</h1>
+<p>Verbinde das Keyboard mit einem USB-C-Kabel mit dem Handy, schalte es ein und öffne diese Seite in <b>Chrome</b>. Dann auf „Test starten“ tippen und ein paar Tasten spielen.</p>
+<button id="go">Test starten</button>
+<div id="state">Noch nicht gestartet.</div>
+<div id="note"></div>
+<div id="log"></div>
+<script>
+const N=['C','Cis','D','Dis','E','F','Fis','G','Gis','A','B','H'];
+const st=document.getElementById('state'),note=document.getElementById('note'),log=document.getElementById('log');
+let count=0;
+function show(acc){const ins=[...acc.inputs.values()];
+  if(!ins.length){st.innerHTML='<span class="bad">Kein Keyboard gefunden.</span> Ist das Kabel ein Datenkabel (nicht nur zum Laden) und das Keyboard eingeschaltet? Kabel einmal ab- und wieder anstecken.';return}
+  st.innerHTML='<span class="ok">Gefunden: '+ins.map(i=>i.name||'MIDI-Gerät').join(', ')+'</span><br>Spiel jetzt ein paar Tasten.';
+  for(const i of ins)i.onmidimessage=e=>{const [s,d,v]=e.data;if((s&0xf0)===0x90&&v>0){count++;note.textContent=N[d%12]+(Math.floor(d/12)-1);
+    log.textContent=count+' Tasten empfangen · Stärke '+v;st.innerHTML='<span class="ok">Es funktioniert! Die App kann dein Keyboard direkt lesen – ohne Mikrofon.</span>'}}}
+document.getElementById('go').onclick=async()=>{
+  if(!navigator.requestMIDIAccess){st.innerHTML='<span class="bad">Dieser Browser kann kein MIDI.</span> Bitte die Seite in Chrome öffnen.';return}
+  try{const acc=await navigator.requestMIDIAccess();show(acc);acc.onstatechange=()=>show(acc)}
+  catch(e){st.innerHTML='<span class="bad">Zugriff nicht erlaubt.</span> Bitte die Nachfrage von Chrome mit „Zulassen“ beantworten.'}
+};
+</script>
+</body>
+</html>
