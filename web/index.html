@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.8</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.9</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1764,7 +1764,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 3.8 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 3.9 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2305,6 +2305,8 @@ function pickKb(list){let best=null;for(const r of list){if(!r||r.n>87)continue;
 function tryKeyboard(img){const c=cropBars(img),H=img.height;let rows=findKeyboardRows(c.img);if(!rows)return null;
   const map=f=>(c.y0+f*(c.h-1))/(H-1);rows={yC:map(rows.yC),yA:map(rows.yA),yB:map(rows.yB),yT:map(rows.yT)};
   const det=detectKeys(img,rows.yA);if(!det)return null;return {rows,det,img,n:det.hi-det.lo}}
+// "blocked" = practically no bright pixel at all (a dark intro with white text has a low mean but ~2 % bright pixels)
+function isBlackImg(img){let br=0,c=0;for(let i=0;i<img.data.length;i+=64){if(img.data[i]+img.data[i+1]+img.data[i+2]>120)br++;c++}return br<c*0.001}
 function imgMean(img){let s=0,c=0;for(let i=0;i<img.data.length;i+=64){s+=img.data[i]+img.data[i+1]+img.data[i+2];c++}return s/c/3}
 async function waitMainVideo(maxMs){ // YouTube ads: player state is not "playing" (1) while an ad runs
   const t0=performance.now();let ok=0,last=-1;
@@ -2331,7 +2333,7 @@ async function autoConvert(it){
     let ps=-1;try{ps=ytp.getPlayerState()}catch(e){}
     if(ps!==1){await sleep(300);continue} // ad, buffering or paused: wait
     let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;if(f)f.t=gt;
-    if(f){if(imgMean(f)<12){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
+    if(f){if(isBlackImg(f)){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
     let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];best=pickKb(cand.map(tryKeyboard))}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
       $('#scanOv').classList.add('hidden');convProgress(null,'Noten werden gelesen …');scanRun(true);return}
