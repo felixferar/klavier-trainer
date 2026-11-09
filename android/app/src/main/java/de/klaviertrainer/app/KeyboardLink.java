@@ -46,11 +46,11 @@ class KeyboardLink {
     private static final long SCAN_MS = 12000, RETRY_MS = 4000;
 
     private final Context ctx;
-    private final Out out;
+    private Out out;
     private final SharedPreferences prefs;
     private final Handler h = new Handler(Looper.getMainLooper());
-    private final MidiManager midi;
-    private final BluetoothAdapter bt;
+    private MidiManager midi;
+    private BluetoothAdapter bt;
 
     private BluetoothLeScanner scanner;
     private ScanCallback scanCb;
