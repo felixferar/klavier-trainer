@@ -97,7 +97,15 @@ def replay(out):
                     moved = [(k['m'], round((k['x'] - old.get(k['m'], k['x'])) * rec['meta']['w'], 1)) for k in info['keys'] if abs(k['x'] - old.get(k['m'], k['x'])) * rec['meta']['w'] > 0.5]
                     print('Tastatur neu bestimmt:', len(info['keys']), 'Tasten; verschoben (px):', moved)
                     rec['meta']['keys'] = info['keys']; rec['meta']['kw'] = info['kw']
-            got = await pg.evaluate(js, rec); await br.close(); return got
+            # in Paketen: große Aufnahmen (1280 px Zeilen) sprengen sonst die Seite
+            M = rec['meta']
+            await pg.evaluate("""(M)=>{const keys=M.keys.map(k=>({...k}));
+              Object.assign(SCAN,{oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:M.kw,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:M.start})}""", M)
+            fr = rec['frames']
+            for i in range(0, len(fr), 300):
+                await pg.evaluate("""([M,frames])=>{for(const [f,b] of frames){if(!SCAN.on)break;const raw=atob(b),w=M.w;scanCore((r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]},w,M.n,f)}}""", [M, fr[i:i + 300]])
+            got = await pg.evaluate("()=>{SCAN.on=false;return finishScan().map(n=>[n.m,n.start,n.dur,n.hand])}")
+            await br.close(); return got
     got = asyncio.run(go())
     json.dump(got, open(os.path.join(out, 'replay-notes.json'), 'w'))
     print('Nachgespielt:', len(got), 'Noten | Handy:', len(meta.get('notes') or []))

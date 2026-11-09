@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.4</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1764,7 +1764,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 3.4 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 3.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1958,9 +1958,10 @@ function scanCore(px,w,n,f){
     const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));if(dist>45&&!(sat>0.25&&val>0.3))nPressed++; /* neither the normal key nor a coloured (lit) key */ if(pressed)nLit++;
     if(laneOcc&&SCAN.okT==null&&!SCAN.okF){const ln=SCAN.lane[k];ln.seen=false;ln.on=false;ln.pre=null} // keyboard not (yet) visible: what is in this row now is not a bar
     else if(laneOcc){const ln=SCAN.lane[k],occ=laneOcc[k];
-      if(occ){ln.cnt++;if(!ln.on){ln.on=true;ln.onFi=SCAN.fi;if(ln.seen){ln.ons.push(tt);ln.offs.push(null)}else ln.pre={off:null}}
+      if(occ){ln.cnt++;ln.offF=0;if(!ln.on){ln.on=true;ln.onFi=SCAN.fi;if(ln.seen){ln.ons.push(tt);ln.offs.push(null)}else ln.pre={off:null}}
         else if(SCAN.laneGap&&SCAN.laneGap[k]>=3&&(ln.ons.length||ln.pre)&&SCAN.gapMin[k]>ln.onFi&&(!ln.ons.length||tt-ln.ons[ln.ons.length-1]>0.12)&&!(ln.gapT>tt-0.12)){ln.gapT=tt;ln.onFi=SCAN.fi;
-          if(ln.ons.length)ln.offs[ln.offs.length-1]=tt;else if(ln.pre)ln.pre.off=tt;ln.seen=true;ln.ons.push(tt);ln.offs.push(null)}}else{ln.cnt=0;if(ln.on){if(ln.seen)ln.offs[ln.offs.length-1]=tt;else if(ln.pre)ln.pre.off=tt}ln.on=false;ln.seen=true}}
+          if(ln.ons.length)ln.offs[ln.offs.length-1]=tt;else if(ln.pre)ln.pre.off=tt;ln.seen=true;ln.ons.push(tt);ln.offs.push(null)}}else{ln.cnt=0;ln.offF=(ln.offF||0)+1;if(ln.offF===1)ln.offT=tt; // a single frame without bar (letters inside a pill passing the rows) does not end the bar
+        if(!ln.on||ln.offF>=2){if(ln.on){if(ln.seen)ln.offs[ln.offs.length-1]=ln.offT;else if(ln.pre)ln.pre.off=ln.offT}ln.on=false;ln.seen=true}}}
     const st=SCAN.state[k];
     if(pressed){
       // repeated note: between two strikes the key looks EXACTLY like at rest for a single frame (~40 ms) → a new note, not a flicker
@@ -2032,7 +2033,7 @@ function earlyFromBars(ev){
   // the same bar in several images → one note (average); only notes that began before the reading started
   found.sort((a,b)=>a.m-b.m||a.start-b.start);const notes=[];
   for(const f of found){const g=notes.find(n=>n.m===f.m&&Math.abs(n.start-f.start)<0.15);if(g){g.n++;g.ss+=f.start;g.ee+=f.end;g.start=g.ss/g.n;g.end=g.ee/g.n}else notes.push({...f,n:1,ss:f.start,ee:f.end})}
-  const early=notes.filter(n=>n.start+SCAN.start<readFrom-0.04);if(!early.length)return ev;
+  const early=notes.filter(n=>n.start+SCAN.start<readFrom-0.04&&(fr.length<2||n.n>=2)); // a real bar falls and shows up in several stills at a consistent time – a static title/sparkle does notif(!early.length)return ev;
   const out=ev.slice();
   for(const n of early){const same=out.find(e=>e.m===n.m&&e.start<=readFrom-SCAN.start+0.1&&e.end>=n.start-0.1&&e.start>=n.start-0.15); // the key was still lit when reading began → correct its start
     if(same){same.start=n.start;if(n.hue!=null&&same.hue==null)same.hue=n.hue}
