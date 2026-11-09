@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.11</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.13</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -977,7 +977,7 @@ async function qStart(txt){if(Q.on)return;if(!NAT.ok){toast('Für die Umwandlung
   toast('Warteschlange wird vorbereitet …',2500);const list=[];let plBad=0;
   for(const r of raw){if(r.id)list.push(r);else{const ids=await ytPlaylistIds(r.list);if(!ids.length)plBad++;for(const id of ids.slice(0,50))list.push({id,start:0})}}
   if(!list.length){showConvError('Die Playlist konnte nicht gelesen werden. Ist sie öffentlich oder „nicht gelistet“? Sonst füge die Video-Links einzeln ein.','Warteschlange');return}
-  closeSheets();Q.on=true;Q.cancel=false;Q.n=list.length;const ok=[],bad=[],back=navStack.length;
+  save('kt_lastq',txt);closeSheets();Q.on=true;Q.cancel=false;Q.n=list.length;const ok=[],bad=[],back=navStack.length;
   for(Q.i=0;Q.i<list.length&&!Q.cancel;Q.i++){
     const it={id:'y'+Date.now()+Q.i,type:'yt',title:'YouTube-Video',videoId:list[Q.i].id,start:list[Q.i].start||0};
     const w=new Promise(r=>{Q.res=r}),to=setTimeout(()=>Q.finish(false,'dauert zu lange (über 60 Min.)'),3600e3);
@@ -987,6 +987,7 @@ async function qStart(txt){if(Q.on)return;if(!NAT.ok){toast('Für die Umwandlung
     await sleep(800)}
   Q.on=false;const left=list.length-ok.length-bad.length;while(navStack.length>back)navStack.pop();show(navStack[navStack.length-1]||'home');renderHome();
   showConvError(`${ok.length} von ${list.length} Songs erstellt.`+(left>0?` ${left} nicht mehr gestartet (abgebrochen).`:'')+(plBad?` ${plBad} Playlist nicht lesbar.`:'')+(bad.length?'\n\nNicht geklappt:\n'+bad.join('\n'):''),'Warteschlange fertig')}
+$('#ytMulti').value=load('kt_lastq')||'';
 $('#ytMultiBtn').onclick=()=>$('#ytMultiBox').classList.toggle('hidden');
 $('#ytMultiGo').onclick=()=>qStart($('#ytMulti').value);
 function addYT(convert){const u=$('#ytUrl').value,id=ytId(u);if(!id){toast('Das ist kein YouTube-Link');return}
@@ -1786,6 +1787,14 @@ $('#resetStats').onclick=()=>{const b=$('#resetStats');if(!b.dataset.c){b.datase
   ST={days:{},songs:{},bestStreak:0,last:null};save('kt_stats',ST);delete b.dataset.c;b.textContent='Löschen';toast('Statistik gelöscht')};
 
 $('#reloadBtn').onclick=()=>location.reload();
+// new version online → load it by itself when the app is opened / comes back to the front (never during a conversion)
+let updBusy=false;function doReload(){location.reload()}
+async function updCheck(){if(updBusy||SCAN.on||Q.on||ytAuto)return;updBusy=true;
+  try{const r=await fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}),t=await r.text(),m=t.match(/id="verTxt">Version ([0-9.]+)/),cur=($('#verTxt').textContent.match(/Version ([0-9.]+)/)||[])[1];
+    let tried=null;try{tried=sessionStorage.getItem('kt_updTried')}catch(e){}
+    if(m&&cur&&m[1]!==cur&&tried!==m[1]&&!SCAN.on&&!Q.on&&!ytAuto){try{sessionStorage.setItem('kt_updTried',m[1])}catch(e){}doReload()}}catch(e){}
+  updBusy=false}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')updCheck()});setTimeout(updCheck,4000);
 
 /* ================= Native bridge (App ≥ 0.5) ================= */
 const NAT={ok:typeof KTNative!=='undefined',info:null,wait:{}};
@@ -1795,7 +1804,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.11 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.13 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2077,7 +2086,7 @@ function earlyFromBars(ev){
   const out=ev.slice();
   for(const n of early){const same=out.find(e=>e.m===n.m&&e.start<=readFrom-SCAN.start+0.1&&e.end>=n.start-0.1&&e.start>=n.start-0.15); // the key was still lit when reading began → correct its start
     if(same){same.start=n.start;if(n.hue!=null&&same.hue==null)same.hue=n.hue}
-    else if(n.end>n.start+0.04)out.push({m:n.m,start:n.start,end:Math.min(n.end,readFrom-SCAN.start),hue:n.hue,early:true})}
+    else if(n.end>n.start+0.12)out.push({m:n.m,start:n.start,end:Math.min(n.end,readFrom-SCAN.start),hue:n.hue,early:true})}
   return out.sort((a,b)=>a.start-b.start)}
 // delay "bar in the reading row" → "key lights up", measured for one kind of key (white/black): in some videos black keys light up 0.17 s earlier than white ones relative to the bar
 function estBD(list,kIdx){const hist=new Map();for(const e of list){for(const o of SCAN.lane[kIdx.get(e.m)].ons){const x=e.start-o;if(x>=-0.05&&x<=6){const b=Math.round(x/0.04);hist.set(b,(hist.get(b)||0)+1)}}}
