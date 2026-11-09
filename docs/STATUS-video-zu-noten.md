@@ -1,6 +1,6 @@
 # Statusbericht: YouTube-Video → Noten (Klavier Trainer)
 
-Stand: 09.11.2026 abends, Web-App v4.3, Android-App 1.0 · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
+Stand: 09.11.2026 abends, Web-App v4.4, Android-App 1.0 · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
 
 Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI gedacht. Er beschreibt, was die Funktion tut, wo der Code liegt, welche Fehler gefunden und behoben wurden, was getestet ist und was offen ist.
 
@@ -11,24 +11,25 @@ Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI
 | Punkt | Stand |
 |---|---|
 | Funktion | YouTube-Klavier-Tutorial (Synthesia-Stil: fallende Balken, Tastatur unten) wird in der App einmal abgespielt, aus den Pixeln wird eine MIDI-Datei gebaut, die als Song zum Üben gespeichert wird. |
-| Gesamtzustand (v4.3) | Nachspielen der Handy-Aufnahmen gegen die Gegenprobe (gefunden / richtig): golden hour 100 / 100, SpongeBob 100 / 100, Wake Me Up 99,8 / 99,4, GUnDodr9GLo 100 / 98,8, 163bCfINABY 100 / 97,8, Peter PlutaX 100 / 92,2. Prüfstand (24 Videos): Treffer 99,2 %, Präzision 95,1 %. |
-| Schwächen | 27 geteilte Noten bei schwarzen Tasten (Peter PlutaX, `barDelay` gilt nicht für schwarze Tasten); Leuchteffekt-Videos im Prüfstand (10, 17, 19, 23). |
+| Gesamtzustand (v4.4) | Nachspielen der Handy-Aufnahmen gegen die Gegenprobe (gefunden / richtig): golden hour 100 / 100, SpongeBob 100 / 100, Wake Me Up 99,8 / 99,4, GUnDodr9GLo 100 / 98,8, 163bCfINABY 100 / 97,8, Peter PlutaX 100 / 99,1. Prüfstand (24 Videos): Treffer 99,2 %, Präzision 95,1 %. |
+| Schwächen | Leuchteffekt-Videos im Prüfstand (10, 17, 19, 23); bei Peter PlutaX 2 geteilte Noten (C#4 8,67 s, F4 24,91 s) offen. |
 | Aufnahme am Handy | Einwandfrei: ~24 Bilder/s, Querformat, 1280 px Zeilenbreite. Diagnosen laden automatisch ins private Repo. |
-| Nächster Schritt | Verzögerung Lesezeile → Taste getrennt für schwarze und weiße Tasten messen (siehe Update v4.2–4.3). |
+| Nächster Schritt | Prüfmenge (neue Videos, anderer Kanal/Stil) messen, danach häufigste Fehler beheben. |
 
 ---
 
 ## Arbeitsweise seit 09.11. nachmittags (vom Nutzer verlangt)
 Keine Code-Änderung ohne: (1) Ursachenanalyse in 2–3 Sätzen, (2) Datenbeleg aus Diagnose/Nachspielen, (3) minimalen Fix mit Seiteneffekten und Prüfweg – Fehler VOR dem Fix nachstellen, danach Rückfalltest auf allen Handy-Aufnahmen und dem Prüfstand. Ein Prüfer-Prompt für eine zweite KI liegt beim Nutzer; Vorschläge werden erst nach dessen Freigabe umgesetzt. Diagnosen kommen automatisch ins private Repo `felixferar/klavier-diagnose` (Abholen: `tools/bench/fetch_diag.sh`).
 
-## Update v4.2–4.3 (09.11. abends)
+## Update v4.2–4.4 (09.11. abends)
 | Version | Ursache (belegt) | Fix | Ergebnis |
 |---|---|---|---|
 | 4.2 E | Geisterfilter löschte kurze echte Wiederholungen ohne erkannten Balken (echte Töne Buntheit 0,45–0,76, Leucht-Geister 0,09–0,23) | Ton bleibt, wenn ≥ 70 % so bunt wie Nachbar mit Balken und wie Median der bestätigten Töne gleicher Tastenart | Wake Me Up 97,0 → 99,8 %, Prüfstand 98,8 → 99,1 % |
 | 4.3 P | Pause-Symbol des Players (farblos, x = Bildmitte) wurde in `earlyFromBars` als Balken gewertet, weil nur 1 Suchbild die Tastatur zeigte (`fr.length<2` hebt die Mindestzahl 2 auf) | früher Balken zählt nicht, wenn sein Farbton > 45° von allen Notenfarbtönen abweicht (ab 4 Noten mit Farbton) | Phantom-E4 bei Peter PlutaX weg |
 | 4.3 M | 45 Wiederholungen (C#4/A#3, Pause 0,19–0,25 s = 5–6 exakte Ruhebilder) wurden in `finishCore` verklebt (Lücke ≤ 0,25 s, kein Balkenanfang, `clean` nur bis 4 Bilder) | `clean`-Grenze 4 → 8 Bilder | Peter PlutaX gefunden 86,4 → 100 % |
+| 4.4 S | 26 von 27 geteilten Noten bei Peter PlutaX: finishCore teilt an `Lane-On + barDelay`; Verzögerung Lesezeile → Taste ist dort bei schwarzen Tasten 0,764 s, bei weißen 0,937 s (andere Aufnahmen: Unterschied 0,00–0,03 s) | `estBD` schätzt die Verzögerung getrennt für weiße/schwarze Tasten (ab 8 Paaren, sonst global); 4 Stellen in `finishCore` nutzen sie | Peter PlutaX richtig 92,2 → 99,1 %; 11 andere Aufnahmen und Prüfstand identisch |
 
-**Offen (belegt, nicht behoben):** 27 geteilte Noten bei Peter PlutaX (26 auf schwarzen Tasten): finishCore teilt an `Lane-On + barDelay`, die gemessene Verzögerung Lesezeile → Taste ist bei schwarzen Tasten ≈ 0,77 s, bei weißen ≈ 0,94 s, das globale `barDelay` ist 0,936 s. Nächster Schritt: Verzögerung getrennt für schwarze/weiße Tasten messen. Warum die Lesezeile in der Passage 60–144 s keine Balken liest, ist ungeklärt.
+**Früher offen, jetzt behoben in 4.4:** 27 geteilte Noten bei Peter PlutaX (26 auf schwarzen Tasten): finishCore teilt an `Lane-On + barDelay`, die gemessene Verzögerung Lesezeile → Taste ist bei schwarzen Tasten ≈ 0,77 s, bei weißen ≈ 0,94 s, das globale `barDelay` ist 0,936 s. Nächster Schritt: Verzögerung getrennt für schwarze/weiße Tasten messen. Warum schwarze Tasten dort früher leuchten und warum die Lesezeile in der Passage 60–144 s keine Balken liest, ist ungeklärt.
 
 **Absicherung der Messung:** siehe `tools/bench/refs/README.md` (Referenzlisten sind Gegenprobe-Zählungen, nicht von Hand geprüft; Einstell- vs. Prüfmenge; Skripte `regress.sh`, `meas.py`, `classify.py`).
 
