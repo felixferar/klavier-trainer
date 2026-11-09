@@ -11,5 +11,5 @@ def rep(a, b):
     s = s.replace(a, b)
 rep("    const st=SCAN.state[k];\n    if(pressed){", "    {SCAN.flog=SCAN.flog||SCAN.keys.map(()=>[]);const ln0=SCAN.lane[k];SCAN.flog[k].push([tt,sat*val,0,0,dist,h,pressed?1:0,ln0&&ln0.on?1:0,(laneOcc&&laneOcc[k])?1:0,SCAN.laneBgc?SCAN.laneBgc[k]:-1,sat,val,r,g,b])}\n    const st=SCAN.state[k];\n    if(pressed){")
 rep("ev=ev.filter(e=>e.bar||!ev.some(", "SCAN.preGhost=ev.slice();ev=ev.filter(e=>e.bar||!ev.some(")
-rep("found.push({m:SCAN.keys[k].m,start:on-SCAN.start", "(SCAN.dbgFound=SCAN.dbgFound||[]).push({t:im.t,m:SCAN.keys[k].m,ya:ya,yb:yb,h:circMean(hs),x:k});found.push({m:SCAN.keys[k].m,start:on-SCAN.start")
+rep("cand.push({yb,m:SCAN.keys[k].m,start:on-SCAN.start", "(SCAN.dbgFound=SCAN.dbgFound||[]).push({t:im.t,m:SCAN.keys[k].m,ya:ya,yb:yb,h:circMean(hs),x:k});cand.push({yb,m:SCAN.keys[k].m,start:on-SCAN.start")
 open(sys.argv[1], 'w').write(s)
