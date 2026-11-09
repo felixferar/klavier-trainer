@@ -1,6 +1,6 @@
 # Statusbericht: YouTube-Video → Noten (Klavier Trainer)
 
-Stand: 09.11.2026 abends, Web-App v4.4, Android-App 1.0 · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
+Stand: 09.11.2026 spätabends, Web-App v4.9, Android-App 1.0 · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
 
 Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI gedacht. Er beschreibt, was die Funktion tut, wo der Code liegt, welche Fehler gefunden und behoben wurden, was getestet ist und was offen ist.
 
@@ -20,6 +20,25 @@ Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI
 
 ## Arbeitsweise seit 09.11. nachmittags (vom Nutzer verlangt)
 Keine Code-Änderung ohne: (1) Ursachenanalyse in 2–3 Sätzen, (2) Datenbeleg aus Diagnose/Nachspielen, (3) minimalen Fix mit Seiteneffekten und Prüfweg – Fehler VOR dem Fix nachstellen, danach Rückfalltest auf allen Handy-Aufnahmen und dem Prüfstand. Ein Prüfer-Prompt für eine zweite KI liegt beim Nutzer; Vorschläge werden erst nach dessen Freigabe umgesetzt. Diagnosen kommen automatisch ins private Repo `felixferar/klavier-diagnose` (Abholen: `tools/bench/fetch_diag.sh`).
+
+## Update v4.5–4.9 (09.11. abends, Hold-out-Runde)
+
+| Version | Änderung | Beleg |
+|---|---|---|
+| 4.5 | Diagnose-Aufnahme komprimiert blockweise (gzip, ~6 MB roh je Block), Limit 900 MB roh → ganze Songs. Format bleibt für `diag.py` lesbar (mehrteiliges gzip). | 3000 Testbilder (80,7 MB) ohne Abschneiden; erste Songs bis 30 MB Upload. |
+| 4.6 | Mehr als 10 „Balken" auf derselben Pixelzeile (±2) sind ein Banner/Text, keine Noten (`earlyFromBars`). Ursache: Titel-Banner (Rush E lila, Interstellar orange) + Einzelbild-Ausnahme aus v4.3. | Rush E 553→513, Interstellar 1257→1217; 12 Altaufnahmen und Prüfstand identisch; Handy: Interstellar-Start sauber. |
+| 4.7 | Fehlermeldung „Umwandlung nicht möglich" ließ sich nicht schließen: OK-Knopf hatte keinen Handler. | Test: vorher bleibt offen, nachher schließt. |
+| 4.8 | Beim Puffern/Laden wird die Zeit-Zuordnung (`vtMap`) geleert. Ursache des falschen „Lochs": Hochrechnung der Videozeit über den Puffer-Stillstand → Sprung 4,7 s / 3,81 s. | Nachrechnung beider Hänger-Aufnahmen: 1 Loch → 0; 8 andere Aufnahmen identisch. Handy-Lauf von Dm7Hir7WiDs ohne Puffern – Fix dort noch nicht live bestätigt. |
+| 4.9 | Warteschlange: mehrere Links und Playlists (Player `getPlaylist`, max. 50), Fehlschläge werden übersprungen, Zusammenfassung am Ende. | Playwright mit Stellvertretern; Handy: Playlist mit 9 Videos läuft. |
+
+**Hold-out (ungesehene Videos, v4.4/4.5):** Die Gegenprobe ist nur bei 3 von 8 Videos brauchbar (Runaway 96,6 %, Canon 96,0 %, ein weiteres); bei Rush E, Interstellar, Viva La Vida, Fly, Peter, Partikel-Video erkennt sie keine Anschläge (blasse Leuchtfarben / Einblendung). Entscheidung Reviewer: manuelle Stichproben aus Standbildern reichen.
+
+**Offen, mit Beleg:**
+- Canon in D: Töne A#5/C#6/D#6 werden 10–45 s gehalten. Ursache: ein dunkler, orange getönter Bereich (Einblendung „Weitere Videos") deckt diese Tasten ab (Pixel sat 0,68 / val 0,10 → HSV-Sättigung rauscht nahe Schwarz). Naiver Fix `val>0,25` im „gedrückt"-Test entfernt die Töne, verschlechtert aber 6 Aufnahmen (golden hour 100 → 92,9 %) → verworfen. Nötig: eine Regel, die Einblendungen von dunkel auslaufenden Leuchttasten trennt.
+- Partikel-Video (t4vt9vABnFQ): Tastatur wird spät gefunden (Scan startet bei 27 s), 48 % Noten < 0,12 s, alle rechte Hand.
+- Fly: Titelbuchstaben als kurze Balken, Noten vor 0 s.
+- Gespaltene Noten / hinzugedichtete Noten: Muster je Video noch nicht gemessen.
+- Gegenprobe-Zähler für blasse Leuchtfarben (bewusst zurückgestellt).
 
 ## Update v4.2–4.4 (09.11. abends)
 | Version | Ursache (belegt) | Fix | Ergebnis |
