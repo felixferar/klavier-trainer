@@ -11,10 +11,10 @@ Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI
 | Punkt | Stand |
 |---|---|
 | Funktion | YouTube-Klavier-Tutorial (Synthesia-Stil: fallende Balken, Tastatur unten) wird in der App einmal abgespielt, aus den Pixeln wird eine MIDI-Datei gebaut, die als Song zum Üben gespeichert wird. |
-| Gesamtzustand | **Funktioniert laut Nachspielen der echten Handy-Daten** (97–99 % Übereinstimmung mit einer unabhängigen Gegenprobe). **Live auf dem Handy mit v2.8 noch nicht bestätigt.** |
-| Gemeldete Fehler (09.11.) | (a) Zähler blieb bei „0 Noten“, fast nichts erkannt → behoben in v2.6/v2.7. (b) Danach viel zu viele Noten (567 statt ~287) → behoben in v2.7/v2.8. |
-| Aufnahme am Handy | Einwandfrei: 24 Bilder/s, keine Lücken, YouTube-Qualität hd720, Zeitstempel sauber. Die Ursachen lagen in der Bildauswertung, nicht in der Aufnahme. |
-| Nächster Schritt | Nutzer wandelt golden hour mit v2.8 erneut um; bei Fehlern Diagnose-Datei auswerten (siehe Abschnitt 6). |
+| Gesamtzustand (v4.1) | Nachspielen der Handy-Aufnahmen gegen die unabhängige Gegenprobe: golden hour 100 % / 100 %, SpongeBob 100 % / 100 %, Wake Me Up 97,6 % gefunden / 99,6 % richtig. Prüfstand (24 Videos): 98,8 % / 95,4 %. |
+| Schwächen | Leuchteffekt-Videos (Geisternoten auf Nachbartasten), 9 verschluckte schnelle Wiederholungen in Wake Me Up. |
+| Aufnahme am Handy | Einwandfrei: ~24 Bilder/s, Querformat, 1280 px Zeilenbreite. Diagnosen laden automatisch ins private Repo. |
+| Nächster Schritt | D2-Nachfolger: erst messen, woran sich eine echte Wiederholung von einer Leucht-Geisternote unterscheidet, dann Vorschlag an den Prüfer. |
 
 ---
 
