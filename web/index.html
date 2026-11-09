@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.6</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1764,7 +1764,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.6 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2030,11 +2030,13 @@ function earlyFromBars(ev){
   const pps=(yT-yL)/d;if(!(pps>10))return ev;
   const readFrom=SCAN.start+(SCAN.okT!=null?SCAN.okT:0),found=[];
   const K=SCAN.keys.length;
-  for(const im of fr){const D=im.data,y0=Math.round(yT)-3,occ=[];
+  for(const im of fr){const D=im.data,y0=Math.round(yT)-3,occ=[],cand=[];
     for(let y=y0;y>=1;y--){const o=laneBars((r,x)=>{const i=(y*W+x)*4;return [D[i],D[i+1],D[i+2]]},W,0,0,true);occ[y]=o}
     for(let k=0;k<K;k++){const cx=Math.round(SCAN.keys[k].x*(W-1));let y=y0;
       while(y>=1){if(!occ[y][k]){y--;continue}const yb=y,hs=[];while(y>=1&&occ[y][k]){const i=(y*W+cx)*4;hs.push(rgb2hsv(D[i],D[i+1],D[i+2])[0]);y--}const ya=y+1;
-        if(yb-ya>=3&&yb<y0-1){const on=im.t+(yT-yb)/pps,off=im.t+(yT-ya)/pps;found.push({m:SCAN.keys[k].m,start:on-SCAN.start,end:off-SCAN.start,hue:circMean(hs)})}}}} // a bar already touching the keys does not tell when it arrived
+        if(yb-ya>=3&&yb<y0-1){const on=im.t+(yT-yb)/pps,off=im.t+(yT-ya)/pps;cand.push({yb,m:SCAN.keys[k].m,start:on-SCAN.start,end:off-SCAN.start,hue:circMean(hs)})}}}
+    // more than 10 'bars' ending on the same pixel row (±2) is a wide banner / line of text, not notes (two hands press at most 10 keys)
+    for(const c of cand)if(cand.filter(o=>Math.abs(o.yb-c.yb)<=2).length<=10)found.push(c)} // a bar already touching the keys does not tell when it arrived
   // the same bar in several images → one note (average); only notes that began before the reading started
   found.sort((a,b)=>a.m-b.m||a.start-b.start);const notes=[];
   for(const f of found){const g=notes.find(n=>n.m===f.m&&Math.abs(n.start-f.start)<0.15);if(g){g.n++;g.ss+=f.start;g.ee+=f.end;g.start=g.ss/g.n;g.end=g.ee/g.n}else notes.push({...f,n:1,ss:f.start,ee:f.end})}
