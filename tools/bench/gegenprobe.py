@@ -1,5 +1,5 @@
 """Gegenprobe: einfacher, unabhängiger Zähler leuchtender Tasten auf einer Diagnose-Aufnahme.
-usage: python3 tools/bench/gegenprobe.py DIAG_DIR NOTES.json
+usage: python3 tools/bench/gegenprobe.py DIAG_DIR NOTES.json [--dump REF.json]  (--dump friert die gezählten Anschläge als Referenzliste ein, siehe refs/README.md)
 Zählt nur Bilder, in denen die Tastatur sichtbar ist (≥ 60 % der weißen UND ≥ 60 % der schwarzen Tasten wie in Ruhe oder farbig leuchtend) –
 sonst würden Abspann-/Intro-Grafiken an Tastenpositionen als Töne gezählt (Fehlalarm 09.11.: 'fehlender Schlussakkord')."""
 import json, base64, colorsys, collections, sys
@@ -28,6 +28,7 @@ for f, b in rec['frames']:
         elif not lit and m in on:
             if f - on[m] > 0.06: ev.append((m, on[m], f))
             del on[m]
+if '--dump' in sys.argv: json.dump({'review': 'unreviewed', 'source': D.rstrip('/').split('/')[-1], 'events': [[m, round(s, 3), round(e, 3)] for m, s, e in ev]}, open(sys.argv[sys.argv.index('--dump') + 1], 'w'))
 N = json.load(open(notesf)); nm = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
 name = lambda m: nm[m % 12] + str(m // 12 - 1)
 c = collections.Counter(round(s - x[1], 2) for m, s, e in ev for x in N if x[0] == m)
