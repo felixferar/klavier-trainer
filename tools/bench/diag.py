@@ -80,10 +80,23 @@ def replay(out):
     js = open(os.path.join(here, 'replay.js')).read()
     rec = json.load(open(os.path.join(out, 'rec.json')))
     meta = json.load(open(os.path.join(out, 'meta.json')))
+    still = os.path.join(out, 'still.jpg')
+    # Tastatur mit der AKTUELLEN Erkennung neu aus dem Standbild bestimmen (sonst würden die alten Tastenpositionen nachgespielt)
+    relayout = None
+    if os.path.exists(still) and meta.get('scanRows'):
+        relayout = {'img': 'data:image/jpeg;base64,' + base64.b64encode(open(still, 'rb').read()).decode(), 'rows': meta['scanRows']}
     async def go():
         async with async_playwright() as p:
             br = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
             pg = await br.new_page(); await pg.goto(app); await pg.wait_for_timeout(300)
+            if relayout:
+                info = await pg.evaluate("""async (o)=>{const img=await new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);r(x.getImageData(0,0,i.width,i.height))};i.src=o.img});
+                  const det=detectKeys(img,o.rows.yA);if(!det)return null;const keys=keyLayout(det,0);restColors(keys,[img],o.rows);return {keys,kw:det.w/det.W}}""", relayout)
+                if info:
+                    old = {k['m']: k['x'] for k in rec['meta']['keys']}
+                    moved = [(k['m'], round((k['x'] - old.get(k['m'], k['x'])) * rec['meta']['w'], 1)) for k in info['keys'] if abs(k['x'] - old.get(k['m'], k['x'])) * rec['meta']['w'] > 0.5]
+                    print('Tastatur neu bestimmt:', len(info['keys']), 'Tasten; verschoben (px):', moved)
+                    rec['meta']['keys'] = info['keys']; rec['meta']['kw'] = info['kw']
             got = await pg.evaluate(js, rec); await br.close(); return got
     got = asyncio.run(go())
     json.dump(got, open(os.path.join(out, 'replay-notes.json'), 'w'))

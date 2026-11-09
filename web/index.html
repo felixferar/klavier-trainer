@@ -428,7 +428,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 2.6</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1739,7 +1739,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 2.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 2.6 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1856,7 +1856,13 @@ function detectKeys(img,yAf){
     const good=pts.filter(([X,Y])=>Math.abs(x0+w*X-Y)<w*0.35);if(good.length>=5&&good.length<pts.length){[w,x0]=fit(good);pts=good}
     unit=w; // next round: classify the gaps with the fitted key width
   }
-  const xOf=m=>isWhitePC(m%12)?x0+w*(whiteIndex(m)+0.5):x0+w*whiteIndex(m);
+  // black keys are NOT centred on the white-key boundary on real keyboards (C#/F# sit left, D#/A# right, up to ~0.2 key widths):
+  // learn the offset per black key type from the measured black keys, and use the measured position itself where there is one
+  const bOff=[[],[],[],[],[],[]],bAt=new Map();
+  for(const [X,Y] of pts){const r=(Y-(x0+w*X))/w;bOff[(((X-1)%7)+7)%7].push(r);bAt.set(X,Y)}
+  const med=v=>{if(!v.length)return 0;const q=v.slice().sort((p,q)=>p-q);return q[q.length>>1]},off=bOff.map(med);
+  const xOf=m=>{if(isWhitePC(m%12))return x0+w*(whiteIndex(m)+0.5);const X=whiteIndex(m),Y=bAt.get(X),xm=x0+w*(X+off[(((X-1)%7)+7)%7]);
+    return Y!=null&&Math.abs(Y-xm)<w*0.25?Y:xm};
   let xL=0,xR=W-1;while(xL<W-1&&a[xL]<thr)xL++;while(xR>0&&a[xR]<thr)xR--;
   let lo=null,hi=null;for(let m=0;m<=127;m++){const x=xOf(m);if(x>=xL+w*0.2&&x<=xR-w*0.2){if(lo===null)lo=m;hi=m}}
   const whitesVisible=(xR-xL)/w;let shift=0;
@@ -2148,6 +2154,7 @@ async function diagSave(extra){if(!S.diagConv||!NAT.ok||!DIAG.meta)return;
   const blob=new Blob([enc.encode('KTD1'),len,head,...DIAG.frames]);DIAG.frames=[];DIAG.on=false;DIAG.meta=null;
   let buf;try{buf=await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()}catch(e){buf=await blob.arrayBuffer()}
   const r=await nat('save',{name:`klavier-diagnose-${dayKey()}.txt`,data:'KTDIAG1\n'+b64FromBuf(buf)},'saved');
+  if(r&&r.ok){S.diagConv=false;saveS()} // only once – the recording costs memory
   toast(r&&r.ok?'Diagnose gespeichert – schick die Datei an Claude':'Diagnose nicht gespeichert',5000)}
 
 /* ================= YouTube-Link → Song (automatisch) ================= */
