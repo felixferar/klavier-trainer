@@ -7,7 +7,7 @@ usage: python3 tools/bench/diag.py DATEI [--out DIR] [--replay]
 - --replay: spielt die Aufnahme durch scanCore/finishScan aus web/index.html und vergleicht
   mit den Noten, die das Handy erkannt hat
 """
-import base64, gzip, json, math, os, struct, sys, statistics as stt
+import base64, glob, gzip, json, math, os, struct, sys, statistics as stt
 
 def load(path):
     raw = open(path, 'rb').read()
@@ -75,11 +75,11 @@ def write(meta, frames, out):
         json.dump(rec, open(os.path.join(out, 'rec.json'), 'w'))
     print('geschrieben nach', out)
 
-def replay(out):
+def replay(out, still_only=False, phone_rest=False):
     import asyncio
     from playwright.async_api import async_playwright
     here = os.path.dirname(os.path.abspath(__file__))
-    app = 'file://' + os.path.abspath(os.path.join(here, '..', '..', 'web', 'index.html'))
+    app = os.environ.get('DIAG_APP') or 'file://' + os.path.abspath(os.path.join(here, '..', '..', 'web', 'index.html'))
     js = open(os.path.join(here, 'replay.js')).read()
     rec = json.load(open(os.path.join(out, 'rec.json')))
     meta = json.load(open(os.path.join(out, 'meta.json')))
@@ -89,9 +89,28 @@ def replay(out):
     if os.path.exists(still) and meta.get('scanRows'):
         relayout = {'img': 'data:image/jpeg;base64,' + base64.b64encode(open(still, 'rb').read()).decode(), 'rows': meta['scanRows']}
     async def go():
+        nonlocal relayout
         async with async_playwright() as p:
             br = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
             pg = await br.new_page(); await pg.goto(app); await pg.wait_for_timeout(300)
+            searches = sorted(glob.glob(os.path.join(out, 'search*_*.jpg')), key=lambda f: int(os.path.basename(f)[6:].split('_')[0]))
+            if relayout and searches and not still_only:
+                # HANDY-NAH (Standard, wenn die Aufnahme Suchbilder enthält): wie scanRun auf dem Handy –
+                # Ruhefarben aus Fundbild + letzten 5 Suchbildern, frühe Töne (earlyFromBars) aus den Suchbildern
+                rel = dict(relayout, search=[{'t': float(os.path.basename(f).rsplit('_', 1)[1][:-4]), 'img': 'data:image/jpeg;base64,' + base64.b64encode(open(f, 'rb').read()).decode()} for f in searches])
+                info = await pg.evaluate("""async (o)=>{const load=s=>new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);r(x.getImageData(0,0,i.width,i.height))};i.src=s});
+                  const img=await load(o.img),fr=[];for(const s of o.search){const im=await load(s.img);im.t=s.t;fr.push(im)}
+                  scanImg=img;scanRows=o.rows;scanDet=detectKeys(img,o.rows.yA);if(!scanDet)return null;scanOct=0;scanFrames=fr;
+                  const keys=keyLayout(scanDet,0);restColors(keys,[img,...fr.slice(-5)],o.rows);window.__handy=true;return {keys,kw:scanDet.w/scanDet.W,n:fr.length}}""", rel)
+                if info:
+                    print('Handy-nah: Tastatur + Ruhefarben aus Fundbild und', info['n'], 'Suchbildern; frühe Töne aus Suchbildern')
+                    if phone_rest:  # Ruhefarben exakt wie am Handy beim Start (ab v3.7 in der Diagnose)
+                        pr = {k['m']: k['rest'] for k in meta.get('keys', []) if k.get('rest')}
+                        for k in info['keys']:
+                            if k['m'] in pr: k['rest'] = pr[k['m']]
+                        print('Ruhefarben vom Handy übernommen')
+                    rec['meta']['keys'] = info['keys']; rec['meta']['kw'] = info['kw']
+                    relayout = None
             if relayout:
                 info = await pg.evaluate("""async (o)=>{const img=await new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);r(x.getImageData(0,0,i.width,i.height))};i.src=o.img});
                   const det=detectKeys(img,o.rows.yA);if(!det)return null;const keys=keyLayout(det,0);restColors(keys,[img],o.rows);return {keys,kw:det.w/det.W}}""", relayout)
@@ -103,7 +122,7 @@ def replay(out):
             # in Paketen: große Aufnahmen (1280 px Zeilen) sprengen sonst die Seite
             M = rec['meta']
             await pg.evaluate("""(M)=>{const keys=M.keys.map(k=>({...k}));
-              Object.assign(SCAN,{oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:M.kw,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:M.start})}""", M)
+              Object.assign(SCAN,{oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:M.kw,fromFile:!window.__handy,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:M.start})}""", M)
             fr = rec['frames']
             for i in range(0, len(fr), 300):
                 await pg.evaluate("""([M,frames])=>{for(const [f,b] of frames){if(!SCAN.on)break;const raw=atob(b),w=M.w;scanCore((r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]},w,M.n,f)}}""", [M, fr[i:i + 300]])
@@ -119,4 +138,4 @@ if __name__ == '__main__':
     meta, frames = load(a[0])
     summary(meta, frames)
     write(meta, frames, out)
-    if '--replay' in a: replay(out)
+    if '--replay' in a: replay(out, still_only='--still-only' in a, phone_rest='--phone-rest' in a)
