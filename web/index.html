@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.5</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.6</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1764,7 +1764,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 3.5 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 3.6 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1988,13 +1988,13 @@ function scanCore(px,w,n,f){
 // (sampling at a fixed spot fails for black keys: the bars of the two white neighbours reach almost up to it, especially in blurry videos)
 function laneBars(px,w,row,li,noBg){
   const ww=Math.max(2,(SCAN.kw||0.02)*(w-1)),keys=SCAN.keys,occ=new Array(keys.length).fill(false);
-  if(noBg){const B=new Float32Array(w*3);SCAN._zbg=B}else{SCAN.laneBg=SCAN.laneBg||[];}if(!noBg&&!SCAN.laneBg[li]||SCAN.laneBg[li].length!==w*3){const B=SCAN.laneBg[li]=new Float32Array(w*3);for(let x=0;x<w;x++){const p=px(row,x);B[x*3]=p[0];B[x*3+1]=p[1];B[x*3+2]=p[2]}}
+  if(noBg){const B=new Float32Array(w*3);SCAN._zbg=B}else{SCAN.laneBg=SCAN.laneBg||[];}if(!noBg&&(!SCAN.laneBg[li]||SCAN.laneBg[li].length!==w*3)){const B=SCAN.laneBg[li]=new Float32Array(w*3);for(let x=0;x<w;x++){const p=px(row,x);B[x*3]=p[0];B[x*3+1]=p[1];B[x*3+2]=p[2]}}
   const bg=noBg?SCAN._zbg:SCAN.laneBg[li],mask=new Uint8Array(w); // 1 = bar colour, 2 = bright and grey (letters on a bar), 0 = background
   for(let x=0;x<w;x++){const p=px(row,x),[,sa,va]=rgb2hsv(p[0],p[1],p[2]),i=x*3,dd=Math.hypot(p[0]-bg[i],p[1]-bg[i+1],p[2]-bg[i+2]);
     if(noBg){if(sa>0.3&&va>0.3)mask[x]=1;else if(va>0.6&&sa<=0.3)mask[x]=2;continue}
     if(sa>0.3&&va>0.3&&dd>45)mask[x]=1;else if(va>0.6&&sa<=0.3&&dd>45)mask[x]=2;if(mask[x])continue;if(dd<30){bg[i]+=(p[0]-bg[i])*0.05;bg[i+1]+=(p[1]-bg[i+1])*0.05;bg[i+2]+=(p[2]-bg[i+2])*0.05}}
   if(!SCAN.keyPx||SCAN.keyPx.w!==w){const xs=keys.map(k=>k.x*(w-1)),bnd=[];keys.forEach((k,i)=>{if(!k.black){bnd.push(xs[i]-ww/2,xs[i]+ww/2)}});SCAN.keyPx={w,x:xs,bnd}}const kx=SCAN.keyPx.x;
-  const gapMax=Math.max(2,Math.round(ww*0.4));
+  const gapMax=Math.max(2,Math.round(ww*0.65)); // bright letters inside a bar: at 1280 px a letter can be wider than 0.4 key widths
   let x=0;while(x<w){if(mask[x]!==1){x++;continue}let e=x+1,last=x;
     while(e<w){if(mask[e]===1){last=e;e++;continue}
       if(mask[e]===2){let f=e;while(f<w&&mask[f]===2)f++;if(f<w&&mask[f]===1&&f-e<=gapMax){e=f;continue}break} // letters inside a bar
@@ -2065,7 +2065,7 @@ function finishCore(raw,preview){
         for(const e of list){if(cur){const gap=e.start-cur.end,newBar=d!==null&&ons.some(o=>Math.abs(o+d-e.start)<0.12);
             if(gap<=(d!==null?0.25:0.1)&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
       ev=out.sort((a,b)=>a.start-b.start)}
-    if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+d).filter(x=>x>e.start+0.14&&x<e.end-0.05);
+    if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+d).filter(x=>x>e.start+0.2&&x<e.end-0.05);
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
   // ghost notes: a key next to a real note only lights up from its glow / a slightly misplaced sample point. A real note always has its own bar
   // falling onto exactly this key – so a note without its own bar is dropped if a neighbouring key has a real note at the same moment.
