@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.1</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.2</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1764,7 +1764,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.1 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.2 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1967,12 +1967,12 @@ function scanCore(px,w,n,f){
     const st=SCAN.state[k];
     if(pressed){
       // repeated note: between two strikes the key looks EXACTLY like at rest for a single frame (~40 ms) → a new note, not a flicker
-      if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),clean:!!st.split});st.start=tt;st.hue=[];st.split=true}
+      if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,clean:!!st.split});st.start=tt;st.hue=[];st.cs=0;st.cn=0;st.split=true}
       // D1: a new strike after a gap of 1–4 frames in which the key looked EXACTLY like at rest is a repeated note, not a flicker
       if(!st.on&&st.cnt===0)st.cleanStart=!!(st.hadNote&&st.gapClean&&st.offN>=1&&st.offN<=4);
-      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1)st.start=tt;if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h)}
+      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1)st.start=tt;if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.cs=0;st.cn=0;st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h);if(st.on){st.cs=(st.cs||0)+sat*val;st.cn=(st.cn||0)+1}}
     else{st.cnt=0;{const cl=dist<30&&sat*val<0.2;st.offN=(st.offN||0)+1;st.gapClean=st.offN===1?cl:(st.gapClean&&cl)}
-      if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),clean:!!st.split});st.split=false;st.hadNote=true}}
+      if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,clean:!!st.split});st.split=false;st.hadNote=true}}
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
   SCAN.lastVt=tt;
@@ -2046,7 +2046,7 @@ function earlyFromBars(ev){
   return out.sort((a,b)=>a.start-b.start)}
 function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
 function finishScan(preview){
-  const open=[];for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)open.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue)})}
+  const open=[];for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)open.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0})}
   if(!preview)SCAN.events.push(...open);
   const lanes0=SCAN.lane;if(preview&&lanes0)SCAN.lane=lanes0.map(l=>({...l,ons:l.ons.slice(),offs:l.offs.slice(),pre:l.pre?{...l.pre}:l.pre}));
   try{return finishCore(preview?SCAN.events.concat(open):SCAN.events,preview)}finally{if(preview)SCAN.lane=lanes0}}
@@ -2079,7 +2079,10 @@ function finishCore(raw,preview){
     const withBar=ev.filter(e=>e.bar).length;SCAN.dbg=ev.map(e=>({m:e.m,s:+e.start.toFixed(2),e:+e.end.toFixed(2),bar:e.bar,hue:e.hue==null?null:Math.round(e.hue)}));SCAN.dbgD=d;
     const wEv=ev.filter(e=>isWhitePC(e.m%12)),wBar=wEv.filter(e=>e.bar).length;
     if(wEv.length?wBar>=wEv.length*0.5:withBar>=ev.length*0.5){ // only if this video really has readable bars (some videos only light the keys); judged on white keys – ghost notes (mostly black keys) must not switch this off
-      ev=ev.filter(e=>e.bar||!ev.some(f=>f!==e&&f.bar&&Math.abs(f.m-e.m)<=2&&Math.abs(f.start-e.start)<0.15)&&e.end-e.start>=0.1)}}
+      // E: a key lit as strongly as the neighbour AND as strongly as the bar-confirmed notes of its kind (white/black) is a real strike whose bar was missed – glow only tints (measured: real ≥ 0.86 / 0.75, glow ≤ 0.66 / 0.59)
+      const chRef=[0,1].map(bl=>{const a=ev.filter(e=>e.bar&&e.ch>0&&!isWhitePC(e.m%12)===!!bl).map(e=>e.ch).sort((p,q)=>p-q);return a.length?a[a.length>>1]:null});
+      const full=(e,f)=>e.ch>0&&f.ch>0&&e.ch>=0.7*f.ch&&chRef[isWhitePC(e.m%12)?0:1]!=null&&e.ch>=0.7*chRef[isWhitePC(e.m%12)?0:1];
+      ev=ev.filter(e=>e.bar||!ev.some(f=>f!==e&&f.bar&&Math.abs(f.m-e.m)<=2&&Math.abs(f.start-e.start)<0.15&&!full(e,f))&&e.end-e.start>=0.1)}}
   // length from the bar: the bar is exactly as long as the note; the key itself can look lit a bit longer (glow of a neighbour)
   if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
     for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];let bi=-1,bd=0.12;for(let i=0;i<ln.ons.length;i++){const x=Math.abs(ln.ons[i]+d-e.start);if(x<bd){bd=x;bi=i}}
