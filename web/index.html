@@ -442,7 +442,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li hidden" id="crashRow"><div class="grow"><b>Letzter Absturz</b><small id="crashTxt" style="white-space:pre-wrap;word-break:break-word"></small></div><button class="btn sm" id="crashSave">Speichern</button></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.2</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 3.3</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1181,7 +1181,7 @@ function kbMsg(m){
   if(m.cmd==='kbScanDone'){KB.scanning=false;kbUI();return}
   const was=KB.state;Object.assign(KB,{state:m.state,name:m.name||KB.name,addr:m.addr||KB.addr,saved:m.saved||'',msg:m.msg||''});
   if(m.state==='scanning')KB.scanning=true;else if(m.state!=='connecting')KB.scanning=false;
-  const inPlay=document.body.classList.contains('inplayer'); // while practising: no connection messages (status lives in the main menu)
+  const inPlay=!$('#kbSheet').classList.contains('on'); // connection messages only while the user is in the connection window – nowhere else
   if(m.state==='on'&&was!=='on'){if(!inPlay)toast(`Keyboard verbunden: ${KB.name}`);if(mic){try{mic.stream&&mic.stream.getTracks().forEach(t=>t.stop())}catch(e){}}if($('#kbSheet').classList.contains('on'))setTimeout(closeSheets,700);if(song)ensureInput()}
   if(m.state==='lost'&&was==='on'&&!inPlay)toast('Verbindung zum Keyboard verloren – verbinde neu …',3500);
   if(m.state==='btoff'&&$('#kbSheet').classList.contains('on'))nat('kbEnableBt');
@@ -1207,10 +1207,11 @@ function kbUI(){
   if($('#calCard')&&(on||KB.saved))$('#calCard').classList.add('hidden'); // with a keyboard no calibration is needed
   // home
   const c=$('#kbCard');if(c){c.classList.toggle('hidden',!NAT.ok);
-    $('#kbCardT').textContent=on?`Keyboard verbunden`:(st==='connecting'||st==='lost')?'Keyboard wird verbunden …':'Keyboard verbinden';
-    $('#kbCardTxt').textContent=on?`${KB.name} – jede Taste kommt direkt an.`:!sup?'Für Bluetooth-Keyboards brauchst du die neue App-Version (Einstellungen → App aktualisieren).':
-      KB.saved?'Keyboard einschalten – die App verbindet sich dann von selbst.':'Hast du ein Keyboard mit Bluetooth? Dann erkennt die App jede Taste sofort.';
-    $('#kbCardBtn').classList.toggle('hidden',on||!sup);$('#kbCardBtn').textContent=KB.saved?'Suchen':'Verbinden'}
+    // no live status here (no flickering "connecting/lost") – the status is only shown in the connection window
+    $('#kbCardT').textContent=KB.saved||on?(KB.name||'Keyboard'):'Keyboard verbinden';
+    $('#kbCardTxt').textContent=!sup?'Für Bluetooth-Keyboards brauchst du die neue App-Version (Einstellungen → App aktualisieren).':
+      KB.saved||on?'Verbindet sich automatisch, sobald es eingeschaltet ist.':'Hast du ein Keyboard mit Bluetooth? Dann erkennt die App jede Taste sofort.';
+    $('#kbCardBtn').classList.toggle('hidden',!sup);$('#kbCardBtn').textContent=KB.saved||on?'Verbindung':'Verbinden'}
   // settings
   if($('#kbSetTxt')){$('#kbSetTxt').textContent=on?`Verbunden: ${KB.name}`+(KB.last!=null?` · zuletzt gedrückt: ${noteName(KB.last)}`:'')+(KB.shift?` · Verschiebung ${KB.shift>0?'+':''}${KB.shift}`:''):!sup?'Braucht die neue App-Version':KB.saved?`${KB.name||'Keyboard'} – nicht in der Nähe oder aus`:'Nicht verbunden – die App hört über das Mikrofon';
     $('#kbSetBtn').textContent=on?'Trennen':'Verbinden';$('#kbSetBtn').disabled=!sup;$('#kbShiftRow').classList.toggle('hidden',!KB.shift)}
@@ -1220,6 +1221,7 @@ function kbUI(){
     $('#kbList').innerHTML=KB.found.map((f,i)=>`<button class="li" data-kb="${i}" style="width:100%;text-align:left;color:var(--tx);background:transparent;border:0;font:inherit"><svg class="i" style="color:var(--ac)"><use href="#i-kb"/></svg><div class="grow"><b>${esc(f.name)}</b><small>${f.usb?'USB':'Bluetooth'}</small></div>${on&&KB.addr===f.addr?'<span class="mu sm">verbunden</span>':''}</button>`).join('')||'';
     $('#kbOff').classList.toggle('hidden',!on&&!KB.saved);$('#kbAgain').disabled=KB.scanning}}
 function kbOpen(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
+  if(kbOn()){openSheet('#kbSheet');kbUI();return} // connected: just show the status
   KB.found=[];KB.scanning=true;openSheet('#kbSheet');kbUI();nat('kbScan')}
 $('#kbCardBtn').onclick=kbOpen;
 $('#kbShiftReset').onclick=()=>{KB.shift=0;save('kt_kbshift',0);kbUI();toast('Verschiebung zurückgesetzt')};
@@ -1760,7 +1762,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 3.2 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 3.3 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2146,9 +2148,15 @@ async function scanRun(live){
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{ytp.setPlaybackRate(1);ytRate=1;if(ytAuto)ytp.mute()}catch(e){}
   if(!live){ytp.seekTo(Math.max(0,SCAN.start-0.3),true);ytp.playVideo();if(ytAuto)await waitMainVideo(180000)} // live: the video is already playing – start reading at once
+  // keyboard check first: video at quarter speed (pausing would put YouTube's play button and "more videos" bar over the keyboard),
+  // so hardly any note passes while the app still checks the keyboard – and those few are read in slow motion
+  const prep=live&&ytAuto;if(prep){try{ytp.setPlaybackRate(0.25);ytRate=0.25}catch(e){}convProgress(null,'Tastatur wird geprüft …')}
   const box=$('#ytBox').getBoundingClientRect();
   const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:Math.max(480,Math.min(1280,Math.round(box.width*(devicePixelRatio||1)))),interval:40},'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
+  if(prep){const t0=performance.now(); // ≥ 2.3 s on the still picture (lets the resting colours settle), until the keyboard looks normal; at most 7 s
+    while(ytAuto&&SCAN.on&&performance.now()-t0<7000&&(SCAN.okT==null||SCAN.frames<58))await sleep(100);
+    try{ytp.setPlaybackRate(1)}catch(e){}ytRate=1;SCAN.vtMap=[];if(!ytAuto||!SCAN.on)return;convProgress(null,'Noten werden gelesen …')}
   diagStart({w:r.w,n:7,box:{x:box.left,y:box.top,w:box.width,h:box.height},rowsSent:[scanRows.yA,scanRows.yB,scanRows.yC,...laneHigh(scanRows,scanDet,scanImg)],
     scanRows,scanDet,keys:SCAN.keys,kw:SCAN.kw,start:SCAN.start,live:!!live});
   let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}const p0=SCAN.p0!=null?SCAN.p0:SCAN.start,full=dur+SCAN.start-p0;
@@ -2230,8 +2238,8 @@ $('#markYes').onclick=()=>markDone(true);$('#markNo').onclick=()=>markDone(false
 function convCancelled(){ytAuto=false;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}try{ytp.pauseVideo();ytp.unMute()}catch(e){}convUI(false);showConvError('Die Umwandlung wurde abgebrochen. Es wurde nichts gespeichert.')}
 async function resumeVideo(){try{ytp.playVideo()}catch(e){}const t0=performance.now();while(performance.now()-t0<8000){let st=-1;try{st=ytp.getPlayerState()}catch(e){}if(st===1)return;await sleep(150)}}
 // reading runs, but after 15 s the keyboard still never looked normal → ask the user to mark it (video paused, then on from the same spot)
-async function markLate(){if(!SCAN.on||!ytAuto)return;SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop');try{ytp.pauseVideo()}catch(e){}
-  const img=await grabVideo()||scanImg;if(!ytAuto)return;const ok=await markKeyboard(img);if(!ok||!ytAuto){convCancelled();return}
+async function markLate(){if(!SCAN.on||!ytAuto)return;SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop');
+  const img=await grabVideo()||scanImg;try{ytp.pauseVideo()}catch(e){} // still image first: a paused YouTube player covers the keyboardif(!ytAuto)return;const ok=await markKeyboard(img);if(!ok||!ytAuto){convCancelled();return}
   scanFrames=[img];convProgress(null,'Noten werden gelesen …');await resumeVideo();if(ytAuto)scanRun(true)}
 
 /* ================= YouTube-Link → Song (automatisch) ================= */
