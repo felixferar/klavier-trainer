@@ -1,6 +1,6 @@
 # Statusbericht: YouTube-Video → Noten (Klavier Trainer)
 
-Stand: 09.11.2026, Commit `0a312dc` (Web-App v2.9, Android-App 0.7) · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
+Stand: 09.11.2026, Commit `74eb135` (Web-App v3.2, Android-App 0.8) · Repo: https://github.com/felixferar/klavier-trainer (öffentlich, Branch `main`)
 
 Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI gedacht. Er beschreibt, was die Funktion tut, wo der Code liegt, welche Fehler gefunden und behoben wurden, was getestet ist und was offen ist.
 
@@ -17,6 +17,13 @@ Dieser Bericht ist als Übergabe an einen anderen Entwickler oder eine andere KI
 | Nächster Schritt | Nutzer wandelt golden hour mit v2.8 erneut um; bei Fehlern Diagnose-Datei auswerten (siehe Abschnitt 6). |
 
 ---
+
+## Update v3.0–3.2 / App 0.8 (09.11. mittags)
+- **v3.0 Tastatursuche bei echten (versetzten) schwarzen Tasten**: Startwert der Tastenbreite = (kleiner + großer Abstand der schwarzen Tasten) / 3 statt 25-%-Abstand mit Rundung (Verhältnis lag bei echten Tastaturen an der Rundungsgrenze ~1,5); `findKeyboardRows` Gruppenmuster ab 1,28×. Prüfstand `gen.py` zeichnet schwarze Tasten jetzt versetzt (70 % der Videos, `BK=0` = alt). 24 realistische Videos live: 61,7 % → 95,5 % gefunden; Nachspielen 98 % / 95,6 %.
+- **v3.1 / App 0.8**: `onRenderProcessGone` (Darstellung abgestürzt → protokollieren + neu starten statt App-Absturz; Verdacht für den Absturz beim Drehen mit 1080p), globales Absturzprotokoll (`info.crash`, Einstellungen → Fehlersuche). Keyboard-Meldungen („verbunden“/„verloren“) nicht mehr beim Üben.
+- **v3.2 Wiederholte Töne**: ein einzelnes Bild mit exakter Ruhefarbe trennt zwei gleiche Töne (vorher 2 Bilder nötig; helle Balkenränder ohne dunkle Lücke). SpongeBob 92 → 112 Noten (Gegenprobe 93 % / 100 %), golden hour unverändert, Prüfstand 98,5 %.
+- Handy-Test SpongeBob (App 0.7, quer, 1280 px, hd1080, 24,6 Bilder/s): lief gut; Drehen 1× abgestürzt, 1× ok.
+- **Offen**: Leuchteffekt-Geisternoten auf versetzten schwarzen Tasten (Prüfstand-Videos 10/17/19/23): weißer Balken wird der hineinragenden schwarzen Taste zugeordnet. Erster Fix (Balken nicht auf die schwarze Taste zentriert → nicht zählen) brachte 97,5 % richtig, kostete aber Treffer; verfeinerte Variante griff nicht. Noch nicht im Code.
 
 ## Update v2.9 / App 0.7 (09.11., nach diesem Bericht)
 - **Querformat**: Während der YouTube-Umwandlung dreht die App quer (Brücke `orient`, nur mit App ≥ 0.7), das Video füllt den Bildschirm bis auf eine 40-px-Fortschrittsleiste darunter. Nichts liegt über dem Video, auch Hinweise nicht, weil alles darüber mitfotografiert würde. Beim Ende der Umwandlung (`convUI(false)`) wird wieder freigegeben.
