@@ -447,7 +447,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.27</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.28</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1824,7 +1824,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.27 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.28 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2433,8 +2433,10 @@ function cropBars(img){ // black bars above/below the video (phone upright, vide
   let y0=0,y1=H-1;while(y0<H-1&&!used(y0))y0++;while(y1>y0&&!used(y1))y1--;
   if(y1-y0<H*0.15||(y0<3&&y1>H-4))return {img,y0:0,h:H};
   const out=new ImageData(W,y1-y0+1);out.data.set(data.subarray(y0*W*4,(y1+1)*W*4));return {img:out,y0,h:y1-y0+1}}
+// Passung der schwarzen Tasten: echte Tastaturen liegen bei 0,11 (14 Aufnahmen: 0,109–0,113); die Bench (Kunstvideos mit Beschriftung) bis 0,152; die Intro-Grafik von rYglC8WAm5g (blaue Klaviertasten) kam auf 0,172 (Handy) bzw. 0,208 (Standbild) und wurde als Tastatur genommen → Raster 1,56× zu breit, falsche Tonhöhen. Schlechter als KB_RES_MAX = noch keine Tastatur, Suche geht weiter.
+const KB_RES_MAX=0.16;
 // best of several candidate images: a real keyboard has at most 88 keys; then the one whose black keys fit the pattern best
-function pickKb(list){let best=null;for(const r of list){if(!r||r.n>87)continue;const sc=r.det.res-Math.min(r.det.nb,40)*0.002;if(!best||sc<best.sc)best={...r,sc}}return best}
+function pickKb(list){let best=null;for(const r of list){if(!r||r.n>87||r.det.res>KB_RES_MAX)continue;const sc=r.det.res-Math.min(r.det.nb,40)*0.002;if(!best||sc<best.sc)best={...r,sc}}return best}
 function tryKeyboard(img){const c=cropBars(img),H=img.height;let rows=findKeyboardRows(c.img);if(!rows)return null;
   const map=f=>(c.y0+f*(c.h-1))/(H-1);rows={yC:map(rows.yC),yA:map(rows.yA),yB:map(rows.yB),yT:map(rows.yT)};
   const det=detectKeys(img,rows.yA);if(!det)return null;return {rows,det,img,n:det.hi-det.lo}}
