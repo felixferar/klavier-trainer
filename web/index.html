@@ -620,6 +620,27 @@ body.short #onbDots{margin:8px 0}
 </div>
 
 <!-- ===================== CALIBRATION ===================== -->
+<div id="mem" class="screen hidden">
+  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Auswendig lernen</div><span class="sp"></span></div>
+  <div class="scroll" style="flex:1;padding:0 16px 30px">
+    <div id="memHome">
+      <div style="font-weight:800;font-size:18px;margin:8px 0 2px" id="memSong"></div>
+      <div class="mu sm" id="memSum" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn pri" id="memGo" style="flex:1.4;height:48px">Weiter lernen</button><button class="btn hidden" id="memMix" style="flex:1;height:48px">Mischen</button></div>
+      <div class="lbl">Abschnitte</div><div class="list" id="memList"></div>
+      <div class="lbl" style="margin-top:16px">So lernst du am besten</div>
+      <div class="mu sm" style="line-height:1.5">Aus dem Gedächtnis abrufen bringt mehr als wieder anschauen. Die App nimmt dir die Hilfe Stufe für Stufe weg (1 Tasten zeigen, 2 nach 2,5 s, 3 nach 5 s, 4 ganz ohne). Geübt wird verteilt: nach bestandener Prüfung kommt der Abschnitt nach 1, 3, 7, 14, 30 Tagen wieder. Üb lieber oft kurz als einmal lang, und schlaf nach dem Üben – das festigt Bewegungen.</div>
+    </div>
+    <div id="memRunV" class="hidden">
+      <div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
+      <div class="mu sm" id="memProg"></div>
+      <canvas id="memCv" style="width:100%;height:150px;display:block;margin:12px 0;border-radius:8px;background:var(--s1)"></canvas>
+      <div id="memMsg" style="min-height:44px;font-size:15px;margin-bottom:8px"></div>
+      <div id="memResBox" class="hidden" style="display:none;flex-direction:column;gap:8px"><button class="btn pri" id="memNext" style="height:48px">Weiter</button><button class="btn" id="memChain" style="height:44px">Mit dem Abschnitt davor verbinden</button><button class="btn" id="memAgain" style="height:44px">Nochmal</button></div>
+      <button class="btn" id="memStop" style="width:100%;height:44px">Beenden</button>
+    </div>
+  </div>
+</div>
 <div id="calib" class="screen hidden">
   <div class="topbar"><button class="ib" id="cBack" title="Später weitermachen"><svg class="i"><use href="#i-x"/></svg></button><div class="ttl" style="font-size:16px">Kalibrierung</div><span class="chip" id="calCount" style="margin-right:6px">0 / 88</span></div>
   <div id="calRun" class="cb">
@@ -679,6 +700,7 @@ body.short #onbDots{margin:8px 0}
     <input class="field" id="smName" maxlength="60">
     <div style="display:flex;gap:8px;margin-top:12px"><button class="btn danger" id="smDel" style="flex:1">Löschen</button><button class="btn pri" id="smSave" style="flex:1.4">Speichern</button></div>
     <button class="btn" id="smMidi" style="width:100%;margin-top:10px">Als MIDI-Datei speichern</button>
+    <button class="btn hidden" id="smMem" style="width:100%;margin-top:10px">Auswendig lernen</button>
     <button class="btn hidden" id="smCmp" style="width:100%;margin-top:10px">Mit Video vergleichen</button>
   </div>
 </div>
@@ -794,7 +816,7 @@ $('#dLand').onclick=()=>{deskMode='land';applyDesk()};$('#dPort').onclick=()=>{d
 let navStack=['home'];
 function show(id){$('#app').scrollTop=0;$$('.toast').forEach(t=>t.remove());document.body.classList.toggle('inplayer',id==='player');for(const s of $$('.screen'))s.classList.add('hidden');$('#'+id).classList.remove('hidden');onResize()}
 function go(id){if(id==='calib')return openCal();navStack.push(id);show(id);if(id==='settings')renderSettings();if(id==='profile')renderProfile()}
-function back(){navStack.pop();const id=navStack[navStack.length-1]||'home';show(id);if(id==='home')renderHome()}
+function back(){if(MEM.run||MEM.timer)memStop();navStack.pop();const id=navStack[navStack.length-1]||'home';show(id);if(id==='home')renderHome()}
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return}
   const b=e.target.closest('[data-back]');if(b){back();return}
@@ -950,7 +972,87 @@ function renderHome(){handVars();
 }
 $('#q').oninput=renderHome;
 let smItem=null;
-function openSongMenu(it){smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
+// --- Auswendig lernen (v4.44): sections, hint ladder (1 always shown … 4 none), spaced review. Concept + sources: project doc konzept-auswendig-lernen
+const MEM={run:null,timer:null,song:null,item:null,gs:[],secs:[],rec:null,queue:[],last:null,flash:new Map(),pos:null};
+const MEM_HINT=[0,0,2.5,5,8],MEM_DAYS=[0,1,3,7,14,30,60],memNow=()=>Date.now();
+let MEMS=load('kt_mem')||{};
+function memGroups(notes){const ns=notes.slice().sort((a,b)=>a.start-b.start||a.midi-b.midi),gs=[];
+  for(const n of ns){const g=gs[gs.length-1];if(g&&n.start-g.start<0.06){g.mids.add(n.midi);g.end=Math.max(g.end,n.start+n.dur)}else gs.push({start:n.start,end:n.start+n.dur,mids:new Set([n.midi])})}
+  return gs}
+function memSplit(gs){const out=[];let a=0;
+  for(let i=0;i<gs.length;i++){const n=i-a+1,gap=i+1<gs.length?gs[i+1].start-gs[i].end:9;if(i===gs.length-1||n>=16||(n>=8&&gap>=0.3)){out.push([a,i]);a=i+1}}
+  if(out.length>1){const l=out[out.length-1];if(l[1]-l[0]+1<5){out.pop();out[out.length-1][1]=l[1]}}
+  return out}
+function memApply(rec,run,now){ // returns 'pass' | 'up' | 'down' | 'same' | 'fail'
+  const bad=run.errors+run.hints;rec.runs=(rec.runs||0)+1;
+  const sched=()=>{rec.box=Math.min((rec.box||0)+1,MEM_DAYS.length-1);rec.due=now+MEM_DAYS[rec.box]*864e5};
+  if(run.review){if(bad<=1){sched();return 'pass'}rec.box=Math.max(0,(rec.box||0)-2);rec.due=now;rec.lvl=2;return 'fail'}
+  if(rec.lvl>=4){if(bad<=1){sched();rec.passed=(rec.passed||0)+1;return 'pass'}if(bad>=3){rec.lvl=3;return 'down'}return 'same'}
+  if(bad===0){rec.lvl++;return 'up'}
+  if(bad>=3&&rec.lvl>1){rec.lvl--;return 'down'}
+  return 'same'}
+const memSaveAll=()=>save('kt_mem',MEMS);
+function openMem(it){let s;try{s=songForItem(it)}catch(e){toast('Fehler: '+e.message);return}
+  const gs=memGroups(s.notes);if(gs.length<3){toast('Der Song ist zu kurz zum Auswendiglernen',3000);return}
+  const secs=memSplit(gs),sig=gs.length+':'+secs.length;let rec=MEMS[it.id];
+  if(!rec||rec.sig!==sig){rec=MEMS[it.id]={sig,secs:secs.map(()=>({lvl:1,box:0,due:0,runs:0,passed:0}))};memSaveAll()}
+  Object.assign(MEM,{item:it,song:s,gs,secs,rec,queue:[],run:null,last:null});
+  let lo=127,hi=0;for(const g of gs)for(const m of g.mids){if(m<lo)lo=m;if(m>hi)hi=m}lo-=2;hi+=2;while(isBlack(lo))lo--;while(isBlack(hi))hi++;
+  let tog=0,wh=()=>{let c=0;for(let m=lo;m<=hi;m++)if(!isBlack(m))c++;return c};while(wh()<15){if(tog++%2===0&&lo>21){lo--;while(isBlack(lo))lo--}else if(hi<108){hi++;while(isBlack(hi))hi++}else break}
+  MEM.lo=lo;MEM.hi=hi;closeSheets();navStack.push('mem');show('mem');memHome()}
+const memDate=t=>new Date(t).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
+function memStatus(r,now){if(r.passed>0||r.box>0){return r.due<=now?'fällig – jetzt wiederholen':'sicher bis '+memDate(r.due)}return r.runs?`Stufe ${r.lvl} von 4`:'neu'}
+function memPickNext(now){const rs=MEM.rec.secs;let i=rs.findIndex(r=>(r.passed>0||r.box>0)&&r.due<=now);if(i>=0)return {i,review:true};
+  i=rs.findIndex(r=>!(r.passed>0||r.box>0));return i>=0?{i,review:false}:null}
+function memHome(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;$('#memHome').classList.remove('hidden');$('#memRunV').classList.add('hidden');
+  const now=memNow(),rs=MEM.rec.secs,done=rs.filter(r=>r.passed>0||r.box>0).length,due=rs.filter(r=>(r.passed>0||r.box>0)&&r.due<=now).length;
+  $('#memSong').textContent=MEM.item.title;
+  $('#memSum').textContent=`${done} von ${rs.length} Abschnitten gelernt`+(due?` · ${due} heute fällig`:'');
+  const nx=memPickNext(now);$('#memGo').textContent=nx?(nx.review?'Wiederholen':'Weiter lernen'):'Alles für heute geschafft ✓';$('#memGo').disabled=!nx;
+  $('#memMix').classList.toggle('hidden',done<2);$('#memMix').textContent='Alles mischen';
+  $('#memList').innerHTML=MEM.secs.map((sc,i)=>{const r=rs[i],d=(r.passed>0||r.box>0)&&r.due<=now;return `<div class="li" data-i="${i}"><div class="grow"><b>Abschnitt ${i+1}</b><div class="mu sm">${sc[1]-sc[0]+1} Anschläge · <span style="color:${d?'var(--gold)':'inherit'}">${memStatus(r,now)}</span></div></div></div>`}).join('')}
+function memStart(i,review,range,chain){const r=MEM.rec.secs[i],sc=MEM.secs[i],a=range?range[0]:sc[0],b=range?range[1]:sc[1];
+  const lvl=(review||chain)?4:r.lvl;MEM.run={i,a,b,pos:a,hit:new Set(),errors:0,hints:0,lvl,review:!!review,chain:!!chain,gStart:memNow(),hinted:false,done:false};
+  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';
+  $('#memRunT').textContent=(chain?'Verbinden: Abschnitt '+i+' + '+(i+1):'Abschnitt '+(i+1))+(review?' · Wiederholung':'')+' · Stufe '+lvl+' von 4';
+  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memTick()}
+const memHintOn=()=>{const R=MEM.run;return R.lvl===1||(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]};
+function memTick(){const R=MEM.run;if(!R)return;
+  if(!R.done&&R.lvl>=2&&!R.hinted&&(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]){R.hinted=true;R.hints++} // a hint that had to appear counts like a mistake
+  memDraw()}
+function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepCv(cv);if(!p)return;const c=p.c,now=performance.now();
+  const exp=R.done?null:MEM.gs[R.pos].mids,hint=!R.done&&memHintOn();
+  MEM.pos=drawKeys(c,MEM.lo,MEM.hi,p.w,p.h,(m,b)=>{const w=MEM.flash.get(m);if(w&&now-w<450)return '#D9705F';if(exp&&exp.has(m)){if(R.hit.has(m))return '#7FB4F0';if(hint)return '#3BB273'}return b?'#2C2C2A':'#E8E6DF'},true);
+  const tot=R.b-R.a+1,at=Math.min(tot,R.pos-R.a);
+  $('#memProg').textContent=R.done?'Fertig':`Anschlag ${at+1} von ${tot}  ·  Fehler ${R.errors+R.hints}`;
+  if(!R.done)$('#memMsg').textContent=R.lvl===1?'Spiele die grünen Tasten.':hint?'Hilfe: hier sind die Tasten.':R.lvl===4?'Prüfung: spiele aus dem Gedächtnis, ohne Hilfe.':'Spiele aus dem Gedächtnis – wenn du stockst, erscheint Hilfe.'}
+function memPress(m){const R=MEM.run;if(!R||R.done)return;const exp=MEM.gs[R.pos].mids;
+  if(exp.has(m)){if(R.hit.has(m))return;R.hit.add(m);if(R.hit.size===exp.size){R.pos++;R.hit=new Set();R.gStart=memNow();R.hinted=false;if(R.pos>R.b)return memFinish()}}
+  else{R.errors++;MEM.flash.set(m,performance.now())}
+  memDraw()}
+function memFinish(){const R=MEM.run;R.done=true;const rec=MEM.rec.secs[R.i],now=memNow();let msg;
+  if(R.chain){const bad=R.errors+R.hints;if(bad<=1){rec.chained=true;msg='pass'}else msg='same'}else msg=memApply(rec,R,now);
+  memSaveAll();MEM.last=msg;memDraw();
+  const bad=R.errors+R.hints,txt={pass:'Bestanden! Dieser Abschnitt kommt am '+memDate(rec.due)+' zur Wiederholung.',up:'Fehlerfrei! Weiter mit Stufe '+rec.lvl+' (weniger Hilfe).',down:'Noch zu unsicher – zurück auf Stufe '+rec.lvl+'.',same:'Fast. Nochmal auf derselben Stufe.',fail:'Das saß noch nicht – der Abschnitt wird heute noch einmal geübt.'}[msg];
+  if(R.chain)$('#memMsg').textContent=msg==='pass'?'Die Verbindung sitzt.':'Die Verbindung braucht noch Übung.';else $('#memMsg').textContent=txt+(bad?`  (${R.errors} falsche Tasten, ${R.hints} Hänger)`:'');
+  $('#memProg').textContent='Fertig';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
+  const hasNext=MEM.queue.length>0||!!memPickNext(now);$('#memNext').textContent=MEM.queue.length?'Nächster Abschnitt':hasNext?'Weiter':'Zur Übersicht';
+  $('#memChain').style.display=(msg==='pass'&&!R.chain&&!R.review&&R.i>0&&!rec.chained)?'':'none';$('#memAgain').style.display=(msg==='pass'&&!R.review&&!R.chain)?'none':''}
+function memStop(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;MEM.queue=[]}
+$('#memStop').onclick=()=>{memStop();memHome()};
+$('#memNext').onclick=()=>{const R=MEM.run;if(MEM.queue.length){const q=MEM.queue.shift();memStart(q,true);return}
+  const nx=memPickNext(memNow());if(nx)memStart(nx.i,nx.review);else{memStop();memHome()}};
+$('#memAgain').onclick=()=>{const R=MEM.run;if(R)memStart(R.i,R.review,R.chain?[R.a,R.b]:null,R.chain)};
+$('#memChain').onclick=()=>{const R=MEM.run;if(!R)return;const prev=MEM.secs[R.i-1];memStart(R.i,false,[prev[0],MEM.secs[R.i][1]],true)};
+$('#memGo').onclick=()=>{const nx=memPickNext(memNow());if(nx)memStart(nx.i,nx.review)};
+$('#memMix').onclick=()=>{const idx=MEM.rec.secs.map((r,i)=>(r.passed>0||r.box>0)?i:-1).filter(i=>i>=0);for(let k=idx.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[idx[k],idx[j]]=[idx[j],idx[k]]}
+  if(!idx.length)return;MEM.queue=idx.slice(1);memStart(idx[0],true)};
+$('#memList').onclick=e=>{const li=e.target.closest('[data-i]');if(!li)return;const i=+li.dataset.i,r=MEM.rec.secs[i],done=r.passed>0||r.box>0;memStart(i,done)};
+$('#memCv').addEventListener('pointerdown',e=>{if(!MEM.run||!MEM.pos)return;const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let hit=null;
+  for(const pb of [true,false])for(let m=MEM.lo;m<=MEM.hi;m++){const k=MEM.pos[m];if(!k||k.b!==pb||hit!==null)continue;const h=k.b?r.height*0.6:r.height;if(x>=k.x&&x<k.x+k.w&&y<=h)hit=m}
+  if(hit!==null)userPress(hit,true)});
+$('#smMem').onclick=()=>{if(smItem)openMem(smItem)};
+function openSongMenu(it){smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));$('#smMem').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
 $('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome()};
 $('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();renderHome();toast('Song gelöscht')};
 for(const b of $$('#filt button'))b.onclick=()=>{filt=b.dataset.f;$$('#filt button').forEach(x=>x.classList.toggle('on',x===b));renderHome()};
@@ -1266,7 +1368,7 @@ function kbEvent(st,a,v){const hi=st&0xF0;
   if(hi===0x90&&v>0){KB.held.add(a);KB.last=a;kbNoteOn(a);kbUI()}
   else if(hi===0x80||hi===0x90){KB.held.delete(a)}
   else if(hi===0xB0&&a===64)KB.pedal=v>=64}
-function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);
+function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);if(MEM.run){memPress(m);return}
   if(!song||!listening())return;
   // wrong key while the app waits for you: red – but not for notes of the song around here (other hand, next notes, a bit early)
   const g=groups[gi];if(!S.wait||!g||t<g.start-0.6*Math.max(S.speed,.3)){pushPress(m);return}
@@ -1340,7 +1442,7 @@ function resetPointers(from){PRESS.length=0;for(const n of song.notes)n.hit=fals
 function newPass(){pass={p:0,g:0,m:0}}
 function markHit(m){const g=groups[gi];if(!g)return;for(const n of g.notes)if(n.midi===m&&!n.hit){n.hit=true;pressFlash.set(m,performance.now())}}
 const PRESS=[];function pushPress(m){PRESS.push({m,t:performance.now(),used:false});if(PRESS.length>48)PRESS.shift()}
-function userPress(m,sound){if(sound)playTone(m,0.6);const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);if(song&&listening())pushPress(m)}
+function userPress(m,sound){if(sound)playTone(m,0.6);if(MEM.run){memPress(m);return}const now=performance.now();lastPress.set(m,now);pressFlash.set(m,now);if(song&&listening())pushPress(m)}
 function judge(r){pass[r]++;if(S.wait)return;const txt={p:'Perfekt',g:'Gut',m:'Verpasst'}[r];fx.push({txt,r,t0:performance.now()});if(fx.length>4)fx.shift();updScore()}
 function passAcc(p){const tot=p.p+p.g+p.m;return tot?(p.p+0.7*p.g)/tot:null}
 const starsFor=a=>a>=0.9?3:a>=0.75?2:a>=0.5?1:0;
