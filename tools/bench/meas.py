@@ -37,7 +37,7 @@ async def go():
         res = await pg.evaluate("""()=>{SCAN.on=false;const fin=finishScan();const pg=SCAN.preGhost||[];
           return {start:SCAN.start,barDelay:SCAN.barDelay,keys:SCAN.keys.map(k=>({m:k.m,x:k.x,black:k.black})),
             notes:fin.map(n=>[n.m,n.start,n.dur,n.hand]),
-            pre:pg.map(e=>({m:e.m,s:e.start,e:e.end,bar:!!e.bar,clean:!!e.clean,early:!!e.early,hue:e.hue})),
+            pre:pg.map(e=>({m:e.m,s:e.start,e:e.end,bar:!!e.bar,clean:!!e.clean,early:!!e.early,hue:e.hue,ch:e.ch})),
             flog:SCAN.flog.map(a=>a.map(r=>r.map(v=>Math.round(v*1000)/1000))),raw:SCAN.events.map(e=>({m:e.m,s:e.start,e:e.end,clean:!!e.clean})),found:SCAN.dbgFound||[],early:SCAN.dbgEarly||[],yT:scanRows.yT,laneHigh:laneHigh(scanRows,scanDet,scanFrames[0]),H:scanFrames[0].height,firstNote:SCAN.firstNote,dbg:SCAN.dbg,lane:SCAN.lane.map(l=>({ons:l.ons,offs:l.offs}))}}""")
         # which pre-ghost events survived: same as the ghost filter
         pre = res['pre']
