@@ -455,7 +455,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.41</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.42</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1687,7 +1687,7 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
   if(tx){const nm=on.length?on.map(n=>noteName(n.midi)+' '+(Math.round(n.dur*10)/10).toString().replace('.',',')+' s').join('   '):'keine Note',t=fmt(Math.max(0,Tc))+'  ·  '+nm;if(tx.textContent!==t)tx.textContent=t}
   if(df){let t=' ',col='var(--mu)';if(CMP.calibrating){t='Messe die Geschwindigkeit der Balken im Video …'}else if(CMP.busy){t='Prüfe Video …'}else if(CMP.cover&&CMP.step){t='Video verdeckt (YouTube-Karte) – hier nicht vergleichbar';col='#EF9F27'}else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok'),app=bad.filter(([,k])=>k==='app').map(([m])=>noteName(m)),vid=bad.filter(([,k])=>k==='vid').map(([m])=>noteName(m));
     if(!bad.length){t=on.length||lit.size?'Passt zum Video':'Beides still';col='#3BB273'}else{t=[app.length?'nur App: '+app.join(' '):'',vid.length?'nur Video: '+vid.join(' '):''].filter(Boolean).join('   ·   ');col='#E24B4A'}}
-    if(!lit&&!CMP.busy&&!CMP.calibrating&&CMP.speed===null&&t===' ')t='Balken im Video nicht messbar – nur die Tasten werden verglichen';if(df.textContent!==t)df.textContent=t;df.style.color=col}}
+    if(!lit&&!CMP.busy&&!CMP.calibrating&&CMP.speed===null&&t===' ')t='Balken im Video nicht messbar – nur die Tasten werden verglichen';{const vq=CMP.it&&CMP.it.video&&CMP.it.video.q;if(vq&&vq<=240&&t.trim()&&!CMP.busy&&!CMP.calibrating)t+='  ·  Umwandlung nur '+vq+'p'}if(df.textContent!==t)df.textContent=t;df.style.color=col}}
 function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpVT=()=>{try{return ytp.getCurrentTime()}catch(e){return 0}};
 async function cmpMeasure(){ // picture of the video box → which keys glow
@@ -1928,7 +1928,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.41 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.42 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2097,6 +2097,10 @@ function scanFrame(msg){
   scanCore(px,w,n,f);
 }
 // one video frame: px(row,x) → [r,g,b] for row 0 = black keys, 1 = white keys, 2 = just above the keyboard (falling bars); f = video time in s
+const Q_RANK={tiny:144,small:240,medium:360,large:480,hd720:720,hd1080:1080,hd1440:1440,hd2160:2160,highres:4320};
+const qPx=q=>Q_RANK[q]||null,qLowPx=240; // 240p and below: keys/bars too blurry for a reliable reading
+function scanQuality(){if(!SCAN.on||SCAN.fromFile||(SCAN.frames%50)!==0)return;let q=null;try{q=ytp.getPlaybackQuality()}catch(e){}const p=qPx(q);if(p&&(SCAN.qMin==null||p<SCAN.qMin))SCAN.qMin=p;
+  if(p&&p<=qLowPx&&!SCAN.qWarned){SCAN.qWarned=true;try{toast('Videoqualität ist gerade sehr niedrig ('+p+'p) – das Ergebnis kann ungenau werden',6000)}catch(e){}}}
 function scanCore(px,w,n,f){
   if(f<SCAN.start-0.05)return;
   if(SCAN.lastF!=null&&f-SCAN.lastF>0.5&&SCAN.okT!=null)SCAN.hole=true;if(SCAN.lastF==null||f>SCAN.lastF)SCAN.lastF=f;
@@ -2142,7 +2146,7 @@ function scanCore(px,w,n,f){
       if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,clean:!!st.split});st.split=false;st.hadNote=true}}
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
-  SCAN.lastVt=tt;
+  SCAN.lastVt=tt;try{scanQuality()}catch(e){}
   // the keyboard must have looked normal for a moment first (a channel intro before it is not the end of the song)
   if(nPressed<=SCAN.keys.length*0.12&&nLit<=Math.max(10,SCAN.keys.length*0.3)){SCAN.okF=(SCAN.okF||0)+1;if(SCAN.okF===1)SCAN.okS=tt;if(SCAN.okF===8&&SCAN.okT==null)SCAN.okT=SCAN.okS+0.07}else if(SCAN.okT==null)SCAN.okF=0;
   if(SCAN.okT==null)return;
@@ -2335,7 +2339,7 @@ async function scanRun(live){
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   restColors(keys,[scanImg,...(scanFrames&&scanFrames.length?scanFrames.slice(-5):[])],scanRows); // always include the image the keyboard was found in (earlier frames may still show the intro)
-  liveN.t=0;liveN.n=0;Object.assign(SCAN,{oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
   SCAN.start=+$('#scStart').dataset.v||0;if(live){try{SCAN.start=ytp.getCurrentTime()}catch(e){}}
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{if(!live){ytp.setPlaybackRate(1);ytRate=1}if(ytAuto)ytp.mute()}catch(e){}
@@ -2377,7 +2381,7 @@ function scanSave(auto){
   const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
   const buf=writeMidi(notes);
   const it={id:'m'+Date.now(),type:'midi',title,artist:SCAN.fromFile?'Aus Video-Datei':'Aus YouTube-Video',data:b64FromBuf(buf),fromYT:ytOld&&!SCAN.fromFile?ytOld.videoId:null,
-    video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m],geo:videoGeo()},
+    video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m],geo:videoGeo(),q:SCAN.qMin||null},
     octUnsure:!!(scanDet&&scanDet.octEst),oneColor:!!SCAN.oneColor};
   let s;try{s=songForItem(it,buf)}catch(e){toast('Fehler: '+e.message);return}
   const libBak=LIB.slice();
@@ -2678,7 +2682,7 @@ async function fileConvert(file){
   restColors(keys,scanFrames&&scanFrames.length?scanFrames:[scanImg],scanRows);
   sv.removeAttribute('src');sv.load();sv.remove();FV.sv=null;
   // 2) play the file once from the very beginning to the end and read 3 pixel rows of every frame (the intro is recognised and ignored)
-  liveN.t=0;liveN.n=0;Object.assign(SCAN,{oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
   const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=7;const rx=rc.getContext('2d',{willReadFrequently:true});
   const ys=[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)].map(f=>Math.round(f*(vh-1)));
   let lastT=-1,minDt=1,drops=[];
