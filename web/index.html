@@ -445,7 +445,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.22</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.23</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -973,6 +973,7 @@ function ytPlaylistIds(listId){return new Promise(res=>{let done=false,p,d;const
     try{p=new YT.Player(d,{playerVars:{listType:'playlist',list:listId},events:{onReady:()=>{let t=0;const iv=setInterval(()=>{let a=null;try{a=p.getPlaylist()}catch(e){}if(a&&a.length){clearInterval(iv);fin(a)}else if(++t>60){clearInterval(iv);fin([])}},250)},onError:()=>fin([])}})}catch(e){fin([])}})})}
 function parseLinks(txt){const out=[];for(const raw of txt.split(/[\s,;]+/)){const u=raw.trim();if(!u)continue;const pl=(u.match(/[?&]list=([A-Za-z0-9_-]{10,})/)||[])[1],v=/playlist\?/.test(u)?null:ytId(u);
     if(v)out.push({id:v,start:ytIdStart(u)});else if(pl)out.push({list:pl})}return out}
+function qClearInput(){try{$('#ytMulti').value='';save('kt_lastq','')}catch(e){}}
 async function qStart(txt){if(Q.on)return;if(!NAT.ok){toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
   const raw=parseLinks(txt);if(!raw.length){toast('Keine YouTube-Links gefunden');return}
   toast('Warteschlange wird vorbereitet …',2500);const list=[];let plBad=0;
@@ -981,7 +982,7 @@ async function qStart(txt){if(Q.on)return;if(!NAT.ok){toast('Für die Umwandlung
   // videos that already exist as a finished song (or appear twice in the list) are skipped, so a restart after a crash does not create duplicates
   const have=new Set(LIB.map(x=>x.fromYT).filter(Boolean));let skipped=0;
   for(let i=list.length-1;i>=0;i--){if(have.has(list[i].id)||list.findIndex(o=>o.id===list[i].id)<i){list.splice(i,1);skipped++}}
-  if(!list.length){showConvError(`Alle ${skipped} Videos sind schon als Song vorhanden – nichts zu tun. (Zum Wiederholen den Song löschen.)`,'Warteschlange');return}
+  if(!list.length){qClearInput();showConvError(`Alle ${skipped} Videos sind schon als Song vorhanden – nichts zu tun. (Zum Wiederholen den Song löschen.)`,'Warteschlange');return}
   save('kt_lastq',txt);closeSheets();Q.on=true;Q.cancel=false;Q.n=list.length;const ok=[],bad=[],back=navStack.length;
   for(Q.i=0;Q.i<list.length&&!Q.cancel;Q.i++){
     const it={id:'y'+Date.now()+Q.i,type:'yt',title:'YouTube-Video',videoId:list[Q.i].id,start:list[Q.i].start||0};
@@ -990,7 +991,8 @@ async function qStart(txt){if(Q.on)return;if(!NAT.ok){toast('Für die Umwandlung
     if(r.ok)ok.push(r.info);else{bad.push((it.title&&it.title!=='YouTube-Video'?it.title:'https://youtu.be/'+it.videoId)+' – '+r.info);
       ytAuto=false;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);try{nat('scanStop')}catch(e){}}try{fileAbort()}catch(e){}convUI(false);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}clearInterval(ytTimer);while(navStack.length>back)navStack.pop()}
     await sleep(800)}
-  Q.on=false;const left=list.length-ok.length-bad.length;while(navStack.length>back)navStack.pop();show(navStack[navStack.length-1]||'home');renderHome();
+  Q.on=false;if(!Q.cancel)qClearInput(); // Warteschlange durchgelaufen: Eingabefeld leeren (bei Abbruch bleibt der Text, damit man weitermachen kann)
+  const left=list.length-ok.length-bad.length;while(navStack.length>back)navStack.pop();show(navStack[navStack.length-1]||'home');renderHome();
   showConvError(`${ok.length} von ${list.length} Songs erstellt.`+(skipped?` ${skipped} schon vorhanden, übersprungen.`:'')+(left>0?` ${left} nicht mehr gestartet (abgebrochen).`:'')+(plBad?` ${plBad} Playlist nicht lesbar.`:'')+(bad.length?'\n\nNicht geklappt:\n'+bad.join('\n'):''),'Warteschlange fertig')}
 $('#ytMulti').value=load('kt_lastq')||'';
 $('#ytMultiBtn').onclick=()=>$('#ytMultiBox').classList.toggle('hidden');
@@ -1818,7 +1820,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.22 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.23 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
