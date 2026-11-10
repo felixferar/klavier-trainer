@@ -455,7 +455,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.39</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.40</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1593,7 +1593,7 @@ function openYT(it,auto,cmp){fileAbort();ytAuto=!!auto;
     if(ytp){try{ytp.destroy()}catch(e){}ytp=null}
     if(!$('#ytFrame')){const f=document.createElement('div');f.id='ytFrame';$('#ytBox').prepend(f)}
     ytp=new YT.Player('ytFrame',{videoId:it.videoId,playerVars:{playsinline:1,rel:0,modestbranding:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,cc_load_policy:0,start:Math.floor(it.start||0)},events:{
-      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;if(LIB.includes(it))saveLib()}}catch(e){}if(ytAuto){convShowTitle(it);convTitlePoll(it);autoConvert(it)}},
+      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;if(LIB.includes(it))saveLib()}}catch(e){}if(ytAuto){convShowTitle(it);convTitlePoll(it);autoConvert(it)}else if(CMP)setTimeout(cmpCalib,1200)},
       onStateChange:e=>{ytPlaying=e.data===1;ytLast=performance.now();$('#yPlayI').innerHTML=`<use href="#i-${ytPlaying?'pause':'play'}"/>`;keepAwake(ytPlaying)},
       onError:()=>{$('#ytMsg').textContent='Dieses Video lässt sich nicht einbetten.';if(Q.on)Q.finish(false,'lässt sich nicht einbetten')}}});
   };
@@ -1632,11 +1632,33 @@ function cmpLit(im,g,lo,bw,bh){const k=im.width/bw,P=cmpPx(g,bw,bh),W=im.width,H
   const med=a=>{const s=a.map(q=>q.c).sort((x,y)=>x-y);return s.length?s[s.length>>1]:0},mw=med(rows.filter(q=>!q.bl)),mb=med(rows.filter(q=>q.bl)),lit=new Set();
   for(const q of rows){const base=q.bl?mb:mw;if(q.c>Math.max(0.22,base+0.15))lit.add(q.m)}
   return lit}
+// --- how fast do the bars fall in the video? (v4.40) two pictures 0.4 s apart: every bar's lower edge moves down by the same distance. Two such measurements must agree, otherwise no result
+const cmpChroma=(d,i)=>(Math.max(d[i],d[i+1],d[i+2])-Math.min(d[i],d[i+1],d[i+2]))/255;
+function cmpBottoms(im,yT){const W=im.width,d=im.data,lim=Math.max(0,yT-2),minRun=Math.max(2,Math.round(im.height/240)),out=[];
+  for(let x=0;x<W;x+=3){const b=[];let y=0;while(y<lim){if(cmpChroma(d,(y*W+x)*4)>0.4){const s0=y;while(y<lim&&cmpChroma(d,(y*W+x)*4)>0.4)y++;if(y-s0>=minRun)b.push(y-1)}else y++}out.push(b)}return out}
+function cmpShift(imA,imB,yT,maxShift){const A=cmpBottoms(imA,yT),B=cmpBottoms(imB,yT),d=[];
+  for(let c=0;c<A.length;c++)for(const a of A[c]){let best=0;for(const b of B[c]){const sh=b-a;if(sh>0&&sh<=maxShift&&(!best||sh<best))best=sh}if(best)d.push(best)}
+  if(d.length<8)return null;
+  const bins=new Map();for(const sh of d){const k=Math.floor(sh/2);bins.set(k,(bins.get(k)||0)+1)}let pk=0,pc=-1;for(const [k,c] of bins)if(c>pc){pc=c;pk=k*2}
+  const sel=d.filter(sh=>Math.abs(sh-pk-1)<=3);if(!sel.length)return null;return {px:sel.reduce((a,b)=>a+b,0)/sel.length,n:d.length}}
+// pairs: [{a,b,dt}] pictures of the video box; result in video heights per second, or null
+function cmpSpeedFrom(pairs,g,bw,bh){const vs=[];for(const p of pairs){const k=p.a.width/bw,yT=Math.round(cmpPx(g,bw,bh).Y(g.yT)*k),r=cmpShift(p.a,p.b,yT,Math.round(0.95*p.a.height*p.dt));if(r&&p.dt>0.05)vs.push(r.px/p.dt/p.a.height)}
+  if(vs.length<2||Math.abs(vs[0]/vs[1]-1)>0.06)return null;return (vs[0]+vs[1])/2}
+async function cmpFrameAt(t){ // still picture at video time t
+  try{ytp.pauseVideo();ytp.seekTo(Math.max(0,t),true)}catch(e){}
+  const t0=performance.now();while(performance.now()-t0<3500){let st=-1;try{st=ytp.getPlayerState()}catch(e){}if(st!==3&&Math.abs(cmpVT()-t)<0.12)break;await sleep(120)}
+  await sleep(350);const im=await grabVideo();return im?{im,t:cmpVT()}:null}
+async function cmpCalib(){
+  if(!CMP||CMP.speed!==undefined||CMP.calibrating)return;if(!NAT.ok||!ytp){CMP.speed=null;return}
+  CMP.calibrating=true;const me=CMP;try{const ms=me.moments;if(ms.length<6){me.speed=null;return}
+    const pairs=[];for(const f of [0.3,0.6]){if(CMP!==me)return;const m=ms[Math.floor(ms.length*f)],a=await cmpFrameAt(m+me.off-0.6),b=a&&await cmpFrameAt(a.t+0.4);if(a&&b)pairs.push({a:a.im,b:b.im,dt:b.t-a.t})}
+    const r=$('#ytBox').getBoundingClientRect();me.speed=pairs.length===2?cmpSpeedFrom(pairs,me.g,r.width,r.height):null}
+  catch(e){me.speed=null}finally{me.calibrating=false}}
 function openCompare(it){
   if(!cmpOK(it)){toast('Bitte den Song aus dem Video neu umwandeln – dann kann er verglichen werden.',4500);return}
   let s;try{s=songFromMidi(bufFromB64(it.data),it.title)}catch(e){toast('Fehler: '+e.message);return}
   const notes=s.notes.slice().sort((a,b)=>a.start-b.start);
-  CMP={it,notes,moments:cmpMoments(notes),lo:it.video.keys[0],g:it.video.geo,off:(it.video.first||0)-1,lit:null,litT:0,busy:false,gen:0,step:false};
+  CMP={it,notes,moments:cmpMoments(notes),lo:it.video.keys[0],g:it.video.geo,off:(it.video.first||0)-1,lit:null,litT:0,busy:false,gen:0,step:false,speed:undefined,calibrating:false};
   closeSheets();openYT({id:'cmp',videoId:it.fromYT,title:it.title,start:Math.max(0,it.video.start||0)},false,true)}
 const CMPC={ok:'#3BB273',app:'#E24B4A',vid:'#EF9F27',play:'#378ADD'};
 function cmpCls(on,lit){const m=new Map(),A=new Set(on.map(n=>n.midi));for(const x of A)m.set(x,!lit?'play':lit.has(x)?'ok':'app');if(lit)for(const x of lit)if(!A.has(x))m.set(x,'vid');return m}
@@ -1645,9 +1667,14 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
   const V=fit(cv),S=fit(sc),g=CMP.g,P=cmpPx(g,V.w,V.h),y0=P.Y(g.yT),y1=P.Y(g.yB);let vt=0;try{vt=ytp&&ytp.getCurrentTime?ytp.getCurrentTime():0}catch(e){}
   const T=vt-CMP.off,lit=CMP.step?CMP.lit:null,Tc=lit?CMP.litT:T,on=cmpSounding(CMP.notes,Tc),cls=cmpCls(on,lit);
   V.c.clearRect(0,0,V.w,V.h);
+  if(CMP.speed>0){ // the app's bars in the video's own scale, laid over the video's bars
+    const vs=CMP.speed*V.h,yK=P.Y(g.yT),V0=V.c;V0.lineWidth=1.5;V0.strokeStyle='#00E0FF';V0.fillStyle='rgba(0,224,255,.14)';
+    for(const n of CMP.notes){if(n.start>T+yK/vs)break;if(n.start+n.dur<T)continue;const i=n.midi-CMP.lo;if(i<0||i>=g.kx.length)continue;
+      const ww=P.kw*(cmpBlack(n.midi)?0.5:0.78),x=P.X(g.kx[i])-ww/2,bot=Math.min(yK,yK-(n.start-T)*vs),top=Math.max(0,yK-(n.start+n.dur-T)*vs);if(bot<=top)continue;
+      V0.fillRect(x,top,ww,bot-top);V0.strokeRect(x,top,ww,bot-top)}}
   for(const [m,k] of cls){const i=m-CMP.lo;if(i<0||i>=g.kx.length)continue;const ww=P.kw*(cmpBlack(m)?0.62:0.9);cmpRect(V.c,P.X(g.kx[i])-ww/2,y0,ww,y1-y0,k,true)}
   // scene: falling notes + keyboard, same columns as the video
-  const c=S.c,kh=Math.min(46,S.h*0.28),rh=S.h-kh,fut=3.2,pps=rh/fut;c.clearRect(0,0,S.w,S.h);
+  const c=S.c,kh=Math.min(46,S.h*0.28),rh=S.h-kh,pps=CMP.speed>0?CMP.speed*V.h:rh/3.2,fut=rh/pps;c.clearRect(0,0,S.w,S.h);
   for(const n of CMP.notes){if(n.start>T+fut)break;if(n.start+n.dur<T)continue;const i=n.midi-CMP.lo;if(i<0||i>=g.kx.length)continue;
     const ww=P.kw*(cmpBlack(n.midi)?0.5:0.78),x=P.X(g.kx[i])-ww/2,yb=rh-(n.start-T)*pps,yt=rh-(n.start+n.dur-T)*pps,top=Math.max(0,yt),bot=Math.min(rh,yb);if(bot<=top)continue;
     c.fillStyle=n.start<=T&&T<n.start+n.dur?'#7FB4F0':'#378ADD';c.fillRect(x,top,ww,Math.max(3,bot-top))}
@@ -1658,9 +1685,9 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
   c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.beginPath();c.moveTo(0,rh);c.lineTo(S.w,rh);c.stroke();
   const tx=$('#cmpTxt'),df=$('#cmpDiff');
   if(tx){const nm=on.length?on.map(n=>noteName(n.midi)+' '+(Math.round(n.dur*10)/10).toString().replace('.',',')+' s').join('   '):'keine Note',t=fmt(Math.max(0,Tc))+'  ·  '+nm;if(tx.textContent!==t)tx.textContent=t}
-  if(df){let t=' ',col='var(--mu)';if(CMP.busy){t='Prüfe Video …'}else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok'),app=bad.filter(([,k])=>k==='app').map(([m])=>noteName(m)),vid=bad.filter(([,k])=>k==='vid').map(([m])=>noteName(m));
+  if(df){let t=' ',col='var(--mu)';if(CMP.calibrating){t='Messe die Geschwindigkeit der Balken im Video …'}else if(CMP.busy){t='Prüfe Video …'}else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok'),app=bad.filter(([,k])=>k==='app').map(([m])=>noteName(m)),vid=bad.filter(([,k])=>k==='vid').map(([m])=>noteName(m));
     if(!bad.length){t=on.length||lit.size?'Passt zum Video':'Beides still';col='#3BB273'}else{t=[app.length?'nur App: '+app.join(' '):'',vid.length?'nur Video: '+vid.join(' '):''].filter(Boolean).join('   ·   ');col='#E24B4A'}}
-    if(df.textContent!==t)df.textContent=t;df.style.color=col}}
+    if(!lit&&!CMP.busy&&!CMP.calibrating&&CMP.speed===null&&t===' ')t='Balken im Video nicht messbar – nur die Tasten werden verglichen';if(df.textContent!==t)df.textContent=t;df.style.color=col}}
 function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpVT=()=>{try{return ytp.getCurrentTime()}catch(e){return 0}};
 async function cmpMeasure(){ // picture of the video box → which keys glow
@@ -1672,9 +1699,9 @@ async function cmpGo(t){ // jump to a moment: play slowly for a moment (YouTube'
   await sleep(450);if(!CMP||gen!==CMP.gen)return;
   try{await cmpMeasure()}catch(e){}
   if(!CMP||gen!==CMP.gen)return;CMP.busy=false;try{ytp.pauseVideo()}catch(e){}}
-$('#cmpNextN').onclick=()=>{if(!CMP||!ytp)return;const T=cmpVT()-CMP.off,m=CMP.moments.find(x=>x>T+0.15);if(m!=null)cmpGo(m+CMP.off);else toast('Das war die letzte Note',1500)};
-$('#cmpPrevN').onclick=()=>{if(!CMP||!ytp)return;const T=cmpVT()-CMP.off;let p=null;for(const x of CMP.moments){if(x<T-0.3)p=x;else break}if(p!=null)cmpGo(p+CMP.off);else toast('Das ist der Anfang',1500)};
-$('#cmpPlay').onclick=()=>{if(!CMP||!ytp)return;CMP.gen++;CMP.busy=false;let st=-1;try{st=ytp.getPlayerState()}catch(e){}
+$('#cmpNextN').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}const T=cmpVT()-CMP.off,m=CMP.moments.find(x=>x>T+0.15);if(m!=null)cmpGo(m+CMP.off);else toast('Das war die letzte Note',1500)};
+$('#cmpPrevN').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}const T=cmpVT()-CMP.off;let p=null;for(const x of CMP.moments){if(x<T-0.3)p=x;else break}if(p!=null)cmpGo(p+CMP.off);else toast('Das ist der Anfang',1500)};
+$('#cmpPlay').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}CMP.gen++;CMP.busy=false;let st=-1;try{st=ytp.getPlayerState()}catch(e){}
   if(st===1){try{ytp.pauseVideo()}catch(e){}CMP.step=false;$('#cmpPlay').textContent='Abspielen'}
   else{CMP.step=false;CMP.lit=null;try{ytp.setPlaybackRate(1);ytRate=1;ytp.playVideo()}catch(e){}$('#cmpPlay').textContent='Anhalten'}};
 $('#smCmp').onclick=()=>{if(smItem)openCompare(smItem)};
@@ -1901,7 +1928,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.39 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.40 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
