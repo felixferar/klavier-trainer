@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.13</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.14</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1789,10 +1789,11 @@ $('#resetStats').onclick=()=>{const b=$('#resetStats');if(!b.dataset.c){b.datase
 $('#reloadBtn').onclick=()=>location.reload();
 // new version online → load it by itself when the app is opened / comes back to the front (never during a conversion)
 let updBusy=false;function doReload(){location.reload()}
-async function updCheck(){if(updBusy||SCAN.on||Q.on||ytAuto)return;updBusy=true;
+const convBusy=()=>SCAN.on||Q.on||ytAuto||!!SCAN.result; // a finished but not yet saved result also counts as busy
+async function updCheck(){if(updBusy||convBusy())return;updBusy=true;
   try{const r=await fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}),t=await r.text(),m=t.match(/id="verTxt">Version ([0-9.]+)/),cur=($('#verTxt').textContent.match(/Version ([0-9.]+)/)||[])[1];
     let tried=null;try{tried=sessionStorage.getItem('kt_updTried')}catch(e){}
-    if(m&&cur&&m[1]!==cur&&tried!==m[1]&&!SCAN.on&&!Q.on&&!ytAuto){try{sessionStorage.setItem('kt_updTried',m[1])}catch(e){}doReload()}}catch(e){}
+    if(m&&cur&&m[1]!==cur&&tried!==m[1]&&!convBusy()){try{sessionStorage.setItem('kt_updTried',m[1])}catch(e){}doReload()}}catch(e){}
   updBusy=false}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')updCheck()});setTimeout(updCheck,4000);
 
@@ -1804,7 +1805,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.13 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.14 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2236,7 +2237,7 @@ function scanStop(){
   const L=notes.filter(n=>n.hand==='L').length;
   $('#scDoneTxt').textContent=`${notes.length} Noten erkannt (${notes.length-L} rechts, ${L} links) · ${fmt(Math.max(...notes.map(n=>n.start+n.dur)))} Min`;
   $('#scName').value=(ytItem&&ytItem.title&&ytItem.title!=='YouTube-Video'?ytItem.title:'Song aus Video').slice(0,60);
-  SCAN.result=notes;if(ytAuto){ytAuto=false;convProgress(100,'Fertig');setTimeout(()=>{convUI(false);scanSave(true)},500);return}$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
+  SCAN.result=notes;if(ytAuto){ytAuto=false;convProgress(100,'Fertig');setTimeout(()=>{convUI(false);if(SCAN.result)scanSave(true)},500);return}$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
 }
 function scanSave(auto){
   const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
@@ -2245,8 +2246,15 @@ function scanSave(auto){
     video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m]},
     octUnsure:!!(scanDet&&scanDet.octEst),oneColor:!!SCAN.oneColor};
   let s;try{s=songForItem(it,buf)}catch(e){toast('Fehler: '+e.message);return}
+  const libBak=LIB.slice();
   if(ytOld&&!SCAN.fromFile)LIB=LIB.filter(x=>x.id!==ytOld.id); // the video entry is replaced by the finished song
-  LIB.unshift(it);saveLib();if(auto)toast(`Song „${title}“ erstellt – ${notes.length} Noten`,3500);
+  LIB.unshift(it);
+  if(!save('kt_lib',LIB)){ // storage full: NOT saved – never report success (rule: 100 % saved or nothing)
+    LIB=libBak;const msg='Speicher voll – der Song wurde NICHT gespeichert. Lösche alte Songs und starte die Umwandlung neu.';
+    if(Q.on){SCAN.result=null;Q.cancel=true;Q.finish(false,msg);return}
+    toast(msg,6000);if(auto){$('#scanDone').classList.add('on');$('#gDim').classList.add('on')} // result stays, so "Speichern" works again after freeing space
+    return}
+  if(auto)toast(`Song „${title}“ erstellt – ${notes.length} Noten`,3500);
   $('#scanDone').classList.remove('on');$('#gDim').classList.remove('on');SCAN.result=null;if(SCAN.fromFile){fileAbort();keepAwake(false)}
   if(ytp){try{ytp.destroy()}catch(e){}ytp=null}clearInterval(ytTimer);navStack.pop();if(Q.on){Q.finish(true,title+' ('+notes.length+' Noten)');return}openSong(s,it.id);
 }
@@ -2329,7 +2337,7 @@ function markDone(ok){$('#markOv').classList.add('hidden');const r=MK.res;MK.res
   r(!!ok)}
 $('#markCv').addEventListener('pointerdown',e=>{markDrag(e);const mv=ev=>markDrag(ev),up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};addEventListener('pointermove',mv);addEventListener('pointerup',up)});
 $('#markYes').onclick=()=>markDone(true);$('#markNo').onclick=()=>markDone(false);
-function convCancelled(){if(Q.on)Q.cancel=true;ytAuto=false;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}try{ytp.pauseVideo();ytp.unMute()}catch(e){}convUI(false);showConvError('Die Umwandlung wurde abgebrochen. Es wurde nichts gespeichert.')}
+function convCancelled(){if(Q.on)Q.cancel=true;ytAuto=false;SCAN.result=null;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}try{ytp.pauseVideo();ytp.unMute()}catch(e){}convUI(false);showConvError('Die Umwandlung wurde abgebrochen. Es wurde nichts gespeichert.')}
 async function resumeVideo(){try{ytp.playVideo()}catch(e){}const t0=performance.now();while(performance.now()-t0<8000){let st=-1;try{st=ytp.getPlayerState()}catch(e){}if(st===1)return;await sleep(150)}}
 // reading runs, but after 15 s the keyboard still never looked normal → ask the user to mark it (video paused, then on from the same spot)
 async function markLate(){if(!SCAN.on||!ytAuto)return;SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop');
