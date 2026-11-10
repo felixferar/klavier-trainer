@@ -59,6 +59,10 @@ class KeyboardLink {
     private MidiOutputPort port;
     private String curAddr, curName;
     private boolean wanted = false; // soll verbunden sein (automatisch neu verbinden)
+    private boolean openPending = false;
+    private long openSince = 0;
+    private int retryFails = 0;
+    private long retryDelay() { return Math.min(60000L, RETRY_MS * (1L << Math.min(retryFails, 4))); }
     private String state = "off";
 
     KeyboardLink(Context ctx, SharedPreferences prefs, Out out) {
@@ -235,10 +239,6 @@ class KeyboardLink {
         }
     };
 
-    private boolean openPending = false;
-    private long openSince = 0;
-    private int retryFails = 0;
-    private long retryDelay() { return Math.min(60000L, RETRY_MS * (1L << Math.min(retryFails, 4))); }
 
     /** Beim App-Start: zuletzt verbundenes Keyboard still wieder verbinden */
     void autoConnect() {
