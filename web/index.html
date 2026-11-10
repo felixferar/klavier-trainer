@@ -231,6 +231,8 @@ body.inplayer .toast{top:34%;font-size:14px}
 #count{position:absolute;left:0;right:0;top:32%;text-align:center;font-size:64px;font-weight:800;pointer-events:none;z-index:2;color:#fff;text-shadow:0 4px 30px rgba(124,156,255,.6)}
 /* youtube */
 #ytBox{flex:1;min-height:0;background:#000;position:relative}
+#cmpCv{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+#cmpBar{flex:none;display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--s1);border-top:1px solid var(--bd)}
 #ytFrame,#ytBox iframe{position:absolute;inset:0;width:100%;height:100%}
 #ytMsg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--mu);font-size:14px}
 .ybar{flex:none;display:flex;align-items:center;gap:6px;padding:8px;background:var(--s1);border-top:1px solid var(--bd);flex-wrap:wrap;justify-content:center;row-gap:6px}
@@ -447,7 +449,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.35</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.36</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -546,7 +548,8 @@ body.short #onbDots{margin:8px 0}
 <!-- ===================== YOUTUBE ===================== -->
 <div id="yt" class="screen hidden">
   <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div></div>
-  <div id="ytBox"><div id="ytFrame"></div><div id="ytMsg"></div><div id="ytBlock" class="hidden" style="position:absolute;inset:0;z-index:5;background:transparent"></div></div>
+  <div id="ytBox"><div id="ytFrame"></div><canvas id="cmpCv" class="hidden"></canvas><div id="ytMsg"></div><div id="ytBlock" class="hidden" style="position:absolute;inset:0;z-index:5;background:transparent"></div></div>
+  <div id="cmpBar" class="hidden"><button class="btn sm" id="cmpPrevN">⏮ Note</button><button class="btn sm" id="cmpM1">−0,1 s</button><button class="btn sm" id="cmpP1">+0,1 s</button><button class="btn sm" id="cmpNextN">Note ⏭</button><span id="cmpTxt" class="sm" style="flex:1;min-width:0;font-weight:600;margin-left:6px">App: –</span></div>
   <div id="convPanel" class="hidden" style="flex:none;padding:16px 18px 20px;background:var(--s1);border-top:1px solid var(--bd);text-align:center">
     <div style="font-weight:800;font-size:17px" id="convTitle">Song wird erstellt …</div>
     <div class="mu sm" id="convSub" style="margin:4px 0 12px">Bitte warten, bis 100 % erreicht sind. Leg das Handy so lange einfach hin.</div>
@@ -650,6 +653,7 @@ body.short #onbDots{margin:8px 0}
     <input class="field" id="smName" maxlength="60">
     <div style="display:flex;gap:8px;margin-top:12px"><button class="btn danger" id="smDel" style="flex:1">Löschen</button><button class="btn pri" id="smSave" style="flex:1.4">Speichern</button></div>
     <button class="btn" id="smMidi" style="width:100%;margin-top:10px">Als MIDI-Datei speichern</button>
+    <button class="btn hidden" id="smCmp" style="width:100%;margin-top:10px">Mit Video vergleichen</button>
   </div>
 </div>
 <div class="sheet" id="addSheet">
@@ -919,7 +923,7 @@ function renderHome(){handVars();
 }
 $('#q').oninput=renderHome;
 let smItem=null;
-function openSongMenu(it){smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
+function openSongMenu(it){smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
 $('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome()};
 $('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();renderHome();toast('Song gelöscht')};
 for(const b of $$('#filt button'))b.onclick=()=>{filt=b.dataset.f;$$('#filt button').forEach(x=>x.classList.toggle('on',x===b));renderHome()};
@@ -1573,9 +1577,10 @@ window.addEventListener('keydown',e=>{
 /* ================= YouTube ================= */
 let ytp=null,ytItem=null,ytLoop=null,ytTimer=null,ytRate=1,ytReps=0,ytPlaying=false,ytLast=0;
 let ytAuto=false;
-function openYT(it,auto){fileAbort();ytAuto=!!auto;
+function openYT(it,auto,cmp){fileAbort();ytAuto=!!auto;
   ytItem=it;navStack.push('yt');show('yt');$('#yTitle').textContent=it.title;$('#ytMsg').textContent='YouTube wird geladen …';ytLoop=null;ytInfo();
-  if(!ytAuto){ST.last={id:it.id,am:null,bm:null};songStat(it.id).sessions++;stDirty=true}
+  if(!ytAuto&&!cmp){ST.last={id:it.id,am:null,bm:null};songStat(it.id).sessions++;stDirty=true}
+  $('#yScan').classList.toggle('hidden',!!CMP);$('#cmpBar').classList.toggle('hidden',!CMP);$('#cmpCv').classList.toggle('hidden',!CMP);if(CMP)cmpLoop();
   const fail='YouTube lässt sich hier nicht laden. In der Vorschau ist das blockiert – in der Android-App funktioniert es.';
   const make=()=>{
     if(ytp){try{ytp.destroy()}catch(e){}ytp=null}
@@ -1602,6 +1607,32 @@ function ytPoll(){
 }
 const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function ytInfo(){$('#ySpeed').textContent=Math.round(ytRate*100)+'%';$('#yRep').textContent=ytReps||'∞';$('#yInfo').textContent=ytLoop?`${fmt(ytLoop.a)} – ${ytLoop.b!=null?fmt(ytLoop.b):'…'}`:'';$('#yA').classList.toggle('pri',!!ytLoop);$('#yB').classList.toggle('pri',!!(ytLoop&&ytLoop.b!=null))}
+/* --- Vergleichsansicht (v4.36, nur Ansicht): das Video läuft, darüber werden die Tasten umrandet, die die App gerade als klingend erkennt --- */
+let CMP=null,cmpRaf=0;
+const cmpOK=it=>{const g=it&&it.video&&it.video.geo;return !!(it&&it.type==='midi'&&it.fromYT&&it.data&&g&&g.kx&&g.kx.length&&g.ar>0&&g.yT!=null&&g.yB!=null&&g.kw>0&&it.video.keys&&it.video.first!=null)};
+// fractions of the measuring area at conversion (width×height = ar×1, the 16:9 video centred in it) → pixels in a box bw×bh
+function cmpPx(g,bw,bh){const ar=g.ar,cw=Math.min(ar,16/9),ch=cw*9/16,cw2=Math.min(bw,bh*16/9),ch2=cw2*9/16,ox=(bw-cw2)/2,oy=(bh-ch2)/2;
+  return {X:f=>ox+((f*ar-(ar-cw)/2)/cw)*cw2,Y:f=>oy+((f-(1-ch)/2)/ch)*ch2,kw:g.kw*ar/cw*cw2}}
+function cmpSounding(notes,T){const o=[];for(const n of notes){if(n.start>T)break;if(T<n.start+n.dur)o.push(n)}return o}
+function openCompare(it){
+  if(!cmpOK(it)){toast('Bitte den Song aus dem Video neu umwandeln – dann kann er verglichen werden.',4500);return}
+  let s;try{s=songFromMidi(bufFromB64(it.data),it.title)}catch(e){toast('Fehler: '+e.message);return}
+  CMP={it,notes:s.notes.slice().sort((a,b)=>a.start-b.start),lo:it.video.keys[0],g:it.video.geo,off:(it.video.first||0)-1};
+  closeSheets();openYT({id:'cmp',videoId:it.fromYT,title:it.title,start:Math.max(0,it.video.start||0)},false,true)}
+function cmpDraw(){const cv=$('#cmpCv');if(!CMP||!cv)return;const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);
+  if(cv.width!==w)cv.width=w;if(cv.height!==h)cv.height=h;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,r.width,r.height);
+  let vt=0;try{vt=ytp&&ytp.getCurrentTime?ytp.getCurrentTime():0}catch(e){}const T=vt-CMP.off,g=CMP.g,P=cmpPx(g,r.width,r.height),y0=P.Y(g.yT),y1=P.Y(g.yB);
+  const on=cmpSounding(CMP.notes,T);c.lineWidth=2;
+  for(const n of on){const i=n.midi-CMP.lo;if(i<0||i>=g.kx.length)continue;const bl=[1,3,6,8,10].includes(n.midi%12),ww=P.kw*(bl?0.62:0.9),x=P.X(g.kx[i])-ww/2;
+    c.fillStyle='rgba(0,220,255,.22)';c.strokeStyle='#00E0FF';c.fillRect(x,y0,ww,y1-y0);c.strokeRect(x,y0,ww,y1-y0)}
+  const tx=$('#cmpTxt');if(tx){const t='App: '+(on.length?on.map(n=>noteName(n.midi)).join(' '):'–')+' · '+fmt(Math.max(0,T));if(tx.textContent!==t)tx.textContent=t}}
+function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
+const cmpSeek=d=>{if(!ytp||!ytp.getCurrentTime)return;try{ytp.pauseVideo();ytp.seekTo(Math.max(0,ytp.getCurrentTime()+d),true)}catch(e){}};
+$('#cmpM1').onclick=()=>cmpSeek(-0.1);$('#cmpP1').onclick=()=>cmpSeek(0.1);
+$('#cmpNextN').onclick=()=>{if(!CMP||!ytp)return;const T=ytp.getCurrentTime()-CMP.off,n=CMP.notes.find(x=>x.start>T+0.05);if(n){ytp.pauseVideo();ytp.seekTo(n.start+CMP.off,true)}};
+$('#cmpPrevN').onclick=()=>{if(!CMP||!ytp)return;const T=ytp.getCurrentTime()-CMP.off;let p=null;for(const x of CMP.notes){if(x.start<T-0.15)p=x;else break}if(p){ytp.pauseVideo();ytp.seekTo(p.start+CMP.off,true)}};
+$('#smCmp').onclick=()=>{if(smItem)openCompare(smItem)};
+$('#yBack').addEventListener('click',()=>{CMP=null;cancelAnimationFrame(cmpRaf);$('#cmpBar').classList.add('hidden');$('#cmpCv').classList.add('hidden');$('#yScan').classList.remove('hidden')});
 $('#yBack').onclick=()=>{convUI(false);ytAuto=false;fileAbort();if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}$('#scanOv').classList.add('hidden');$('#scanBar').classList.add('hidden');clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
 $('#yPlay').onclick=()=>{if(!ytp||!ytp.getPlayerState)return;ytp.getPlayerState()===1?ytp.pauseVideo():ytp.playVideo()};
 $('#yBackS').onclick=()=>{if(ytp&&ytp.getCurrentTime)ytp.seekTo(Math.max(0,ytp.getCurrentTime()-5),true)};
@@ -1824,7 +1855,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.35 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.36 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2268,7 +2299,7 @@ function scanStop(){
 }
 /* where the keyboard sits in the video picture (fractions of the picture), saved with the song so a later comparison view can lay the notes over the video */
 function videoGeo(){try{const k=SCAN.keys,r=(typeof scanRows!=='undefined'&&scanRows)||{},d=(typeof scanDet!=='undefined'&&scanDet)||{},f=(v,n)=>v==null||!isFinite(v)?null:+(+v).toFixed(n);
-  return {x:[f(k[0].x,4),f(k[k.length-1].x,4)],kw:f(SCAN.kw,5),yT:f(r.yT,3),yA:f(r.yA,3),yB:f(r.yB,3),yC:f(r.yC,3),sh:d.shift==null?null:d.shift}}catch(e){return null}}
+  return {x:[f(k[0].x,4),f(k[k.length-1].x,4)],kw:f(SCAN.kw,5),yT:f(r.yT,3),yA:f(r.yA,3),yB:f(r.yB,3),yC:f(r.yC,3),sh:d.shift==null?null:d.shift,kx:k.map(q=>f(q.x,4)),ar:(typeof scanBox!=='undefined'&&scanBox&&scanBox.h>0)?f(scanBox.w/scanBox.h,4):null}}catch(e){return null}}
 function scanSave(auto){
   const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
   const buf=writeMidi(notes);
