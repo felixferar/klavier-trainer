@@ -20,7 +20,7 @@ async def main():
         br=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
         pg=await br.new_page(viewport={'width':420,'height':800});errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(500);await pg.evaluate("localStorage.clear()")
-        r=await pg.evaluate("""async([geo,lo,measured])=>{const o={};
+        r=await pg.evaluate("""async([geo,lo,measured,img64])=>{const o={};
           let P=cmpPx(geo,1280,544);o.ident=[0,0.25,0.5,1].map(f=>Math.round(P.X(f)-f*1280)); // gleiche Flaeche: Abbildung = Identitaet
           P=cmpPx(geo,800,450);const ar=geo.ar,cw=Math.min(ar,16/9),leftF=(ar-cw)/2/ar,rightF=1-leftF;o.rand=[Math.round(P.X(leftF)),Math.round(P.X(rightF))]; // 16:9-Flaeche: Videorand 0..800
           P=cmpPx(geo,1280,544);o.sitz=measured.map(px=>{let best=null;for(let m=lo;m<lo+geo.kx.length;m++){const x=P.X(geo.kx[m-lo]);if(best==null||Math.abs(x-px)<Math.abs(best.x-px))best={m,x}}return [px,best.m,Math.round(best.x)]});
@@ -31,8 +31,8 @@ async def main():
           openSongMenu(c);o.menuOhneYT=$('#smCmp').classList.contains('hidden');openSongMenu(a);o.menuYT=$('#smCmp').classList.contains('hidden');
           openSongMenu(b);openCompare(b);o.ohneGeoCMP=CMP===null;o.ohneGeoToast=!!document.querySelector('.toast');closeSheets();
           // Ansicht mit Stub-Player
-          let call=null;window.openYT=(it,auto,cmp)=>{call=[it.videoId,auto,cmp,it.start];$('#yScan').classList.toggle('hidden',!!CMP);$('#cmpBar').classList.toggle('hidden',!CMP);$('#cmpCv').classList.toggle('hidden',!CMP);show('yt')};
-          let vt=0,paused=false,seek=null;ytp={getCurrentTime:()=>vt,pauseVideo(){paused=true},seekTo(t){seek=t;vt=t}};
+          let call=null;window.openYT=(it,auto,cmp)=>{call=[it.videoId,auto,cmp,it.start];cmpMode(!!CMP);show('yt')};
+          let vt=0,paused=false,seek=null;ytp={getCurrentTime:()=>vt,pauseVideo(){paused=true},seekTo(t){seek=t;vt=t},setPlaybackRate(){},playVideo(){},getPlayerState:()=>2};
           openCompare(a);o.cmp=!!CMP;o.call=call;o.off=CMP&&CMP.off;
           vt=1+2+0.5; // Notenzeit 1.5 -> Note 60 klingt (1..3)
           await new Promise(z=>setTimeout(z,300));cmpDraw();o.txt=$('#cmpTxt').textContent;
@@ -40,19 +40,31 @@ async def main():
           o.pixel60=ctx.getImageData(Math.round(x60*dpr),Math.round(yMid*dpr),1,1).data[3]>0;
           o.pixelDanebenLeer=ctx.getImageData(Math.round((x60+Pp.kw*3)*dpr),Math.round(yMid*dpr),1,1).data[3]===0;
           vt=2+4.5;cmpDraw();o.txtStille=$('#cmpTxt').textContent; // Notenzeit 4.5: nichts klingt
-          const tx=$('#cmpTxt'),bar=$('#cmpBar'),box=$('#ytBox');o.barH=[];o.boxH=[];
-          for(const t of ['0:05  ·  App: keine Note','0:05  ·  App: C4 E4 G4 C5 E5 G5 C6 E6 G6 C7','x']){tx.textContent=t;o.barH.push(Math.round(bar.getBoundingClientRect().height*10)/10);o.boxH.push(Math.round(box.getBoundingClientRect().height*10)/10)}
-          $('#cmpNextN').click();o.nextSeek=seek;  // naechste Note nach 4.5 beginnt bei 5 -> Videozeit 5+2=7
+          const tx=$('#cmpTxt'),bar=$('#cmpBar'),box=$('#ytBox');o.sceneVisible=!$('#cmpScene').classList.contains('hidden');o.boxRatio=Math.round(box.getBoundingClientRect().width/box.getBoundingClientRect().height*100)/100;o.barH=[];o.boxH=[];
+          for(const t of ['0:05  ·  keine Note','0:05  ·  C4 1,0 s   E4 1,0 s   G4 1,0 s   C5 1,0 s   E5 1,0 s   G5 1,0 s','x']){tx.textContent=t;o.barH.push(Math.round(bar.getBoundingClientRect().height*10)/10);o.boxH.push(Math.round(box.getBoundingClientRect().height*10)/10)}
+          
+          $('#cmpNextN').click();o.nextSeek=seek;  // naechster Moment nach 4.5 beginnt bei 5 -> Videozeit 7
+          // Leuchterkennung am Embers-Standbild + grün/rot-Anzeige
+          const im2=await new Promise(res=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);res(x.getImageData(0,0,c.width,c.height))};i.src='data:image/jpeg;base64,'+img64});
+          o.imgSize=[im2.width,im2.height];
+          o.lit=[...cmpLit(im2,geo,lo,1280,544)].sort((a,b)=>a-b);
+          NAT.ok=true;grabVideo=async()=>im2;
+          CMP.notes=[{midi:60,start:1,dur:2,hand:'R'},{midi:55,start:1,dur:2,hand:'R'},{midi:64,start:1,dur:2,hand:'R'}];CMP.moments=cmpMoments(CMP.notes);
+          $('#ytBox').style.cssText='width:1280px;height:544px;aspect-ratio:auto;flex:none'; // Box so gross wie das Standbild
+          vt=0;await cmpGo(1+CMP.off);await new Promise(z=>setTimeout(z,60));
+          cmpDraw();o.diff=$('#cmpDiff').textContent;o.txt2=$('#cmpTxt').textContent;o.paused2=paused;o.litT=CMP.litT;
+            // naechste Note nach 4.5 beginnt bei 5 -> Videozeit 5+2=7
           $('#yBack').click();o.nachZurueck={cmp:CMP===null,bar:$('#cmpBar').classList.contains('hidden'),cv:$('#cmpCv').classList.contains('hidden'),scan:$('#yScan').classList.contains('hidden')};
-          return o}""",[geo,lo,measured])
+          return o}""",[geo,lo,measured,base64.b64encode(open(os.path.join(H,"embers_mid1.jpg"),"rb").read()).decode()])
         print(json.dumps(r,ensure_ascii=False,indent=1));print('gemessen',measured)
         kwpx=r['kw']
         ok=(all(abs(v)<=1 for v in r['ident']) and abs(r['rand'][0])<=1 and abs(r['rand'][1]-800)<=1
             and all(abs(a-b)<=kwpx/2 for a,b,c in [(x[0],x[2],0) for x in r['sitz']]) and len(r['sitz'])>=3
             and r['menuOhneYT'] and not r['menuYT'] and r['ohneGeoCMP'] and r['ohneGeoToast']
             and r['cmp'] and r['call'][2] is True and r['call'][1] is False and r['off']==2
-            and 'App: ' in r['txt'] and 'C4' in r['txt'] and r['pixel60'] and r['pixelDanebenLeer']
+            and 'C4' in r['txt'] and r['pixel60'] and r['pixelDanebenLeer']
             and 'keine Note' in r['txtStille'] and len(set(r['barH']))==1 and len(set(r['boxH']))==1 and abs(r['nextSeek']-7)<0.01
+            and r['lit']==[55,60,72] and 'nur App: E4' in r['diff'] and 'nur Video: C5' in r['diff'] and r['paused2'] and abs(r['litT']-1)<0.2 and r['sceneVisible'] and abs(r['boxRatio']-1.78)<0.02
             and r['nachZurueck']['cmp'] and r['nachZurueck']['bar'] and r['nachZurueck']['cv'] and not r['nachZurueck']['scan'])
         print('pageerrors',errs,'ERGEBNIS','OK' if ok and not errs else 'FEHLER');await br.close()
 asyncio.run(main())
