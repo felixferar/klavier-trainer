@@ -47,10 +47,22 @@ def scan(REL):
                 del on[m]
     return ev, skipped, len(rec['frames'])
 FORCE = '--rel' in sys.argv; CLASSIC = '--klassisch' in sys.argv
-mode = 'relativ' if FORCE else 'klassisch'
-ev, skipped, nf = scan(FORCE)
-if not FORCE and not CLASSIC and (skipped > 0.5 * nf or len(ev) < 0.3 * len(N)):  # klassisch findet keine Tastatur/kaum Anschläge → blasse Farben, auf Relativmodus wechseln
-    ev, skipped, nf = scan(True); mode = 'relativ (automatisch)'
+def passung(ev):  # Güte = gefunden × richtig, mit bestem Zeitversatz (nur zur Moduswahl)
+    if not ev: return 0
+    c = collections.Counter(round(s - x[1], 2) for m, s, e in ev for x in N if x[0] == m)
+    if not c: return 0
+    bd = max([k for k, _ in c.most_common(20)], key=lambda d: sum(1 for m, s, e in ev if any(x[0] == m and abs(x[1] + d - s) < 0.12 for x in N)))
+    us = set(); h = 0
+    for m, s, e in ev:
+        j = [i for i, x in enumerate(N) if i not in us and x[0] == m and abs(x[1] + bd - s) < 0.2]
+        if j: us.add(j[0]); h += 1
+    return (h / len(ev)) * (h / len(N))
+if FORCE: ev, skipped, nf = scan(True); mode = 'relativ'
+elif CLASSIC: ev, skipped, nf = scan(False); mode = 'klassisch'
+else:  # beide Modi rechnen, besseren nehmen (klassisch ist bei blassen Farben zu streng, relativ bei Effekten zu empfindlich)
+    e1, s1, nf = scan(False); e2, s2, _ = scan(True); p1, p2 = passung(e1), passung(e2)
+    if p2 > p1 + 0.02: ev, skipped, mode = e2, s2, 'relativ (automatisch, %.2f vs %.2f)' % (p2, p1)
+    else: ev, skipped, mode = e1, s1, 'klassisch (%.2f vs relativ %.2f)' % (p1, p2)
 if '--dump' in sys.argv: json.dump({'review': 'unreviewed', 'source': D.rstrip('/').split('/')[-1], 'events': [[m, round(s, 3), round(e, 3)] for m, s, e in ev]}, open(sys.argv[sys.argv.index('--dump') + 1], 'w'))
 nm = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
 name = lambda m: nm[m % 12] + str(m // 12 - 1)
@@ -73,3 +85,21 @@ if '--verteilung' in sys.argv:  # wo fehlen Anschläge? (Zeit in 20-s-Blöcken, 
     print('Fehlende', len(fehl), '| je 20 s:', sorted(cc.items()))
     print('Tasten:', collections.Counter(name(m) for m, s, d in fehl).most_common(6))
     dd = sorted(d for m, s, d in fehl); print('Dauer: median', round(dd[len(dd)//2], 2) if dd else '-', '| <0.15 s:', sum(1 for d in dd if d < 0.15), '| >=0.3 s:', sum(1 for d in dd if d >= 0.3), '| Versatz', best)
+if '--verteilung' in sys.argv:  # App-Noten ohne Zähler-Anschlag: wo, welche Tasten, wie lang
+    ux = [(N[i][0], N[i][1] + best, N[i][2]) for i in range(len(N)) if i not in used]
+    cx = collections.Counter(int(s // 20) * 20 for m, s, d in ux)
+    print('App-Noten ohne Anschlag', len(ux), '| je 20 s:', sorted(cx.items()))
+    print('Tasten:', collections.Counter(name(m) for m, s, d in ux).most_common(6))
+    dx = sorted(d for m, s, d in ux); print('Dauer: median', round(dx[len(dx)//2], 2) if dx else '-', '| <0.15 s:', sum(1 for d in dx if d < 0.15), '| >=0.5 s:', sum(1 for d in dx if d >= 0.5))
+if '--paare' in sys.argv:  # zeitgleich fehlender Anschlag und unbestätigte App-Note: Halbton-Abstand (Taste verwechselt?)
+    fe = [(m, s) for m, s, e in ev if not any(i for i in [])]  # alle Anschläge
+    usedN = set(i for i in used); un = [(i, N[i][0], N[i][1] + best) for i in range(len(N)) if i not in usedN]
+    ue = [(m, s) for m, s, d in [(m, s, e - s) for m, s, e in ev] if not any(abs(N[i][1] + best - s) < 0.2 and N[i][0] == m for i in usedN)]
+    hist = collections.Counter(); n_ok = 0
+    for i, m, s in un:
+        c = [(abs(m2 - m), m2 - m) for m2, s2 in ue if abs(s2 - s) < 0.25]
+        if c: hist[min(c)[1]] += 1; n_ok += 1
+    print('unbestätigte App-Noten mit zeitgleichem fehlendem Anschlag:', n_ok, 'von', len(un), '| Halbton-Differenz (Zähler−App):', sorted(hist.items()))
+if '--paare' in sys.argv:  # unbestätigte App-Noten, deren Taste im Zähler schon durchgehend leuchtet (gleiche Taste ohne Lücke → Zähler zählt nur einen Anschlag)
+    cov = sum(1 for i, m, s in un if any(m2 == m and s2 - 0.1 < s < e2 - 0.05 for m2, s2, e2 in ev))
+    print('davon mitten in einem durchgehenden Zähler-Anschlag der gleichen Taste (Zähler verschmilzt):', cov, 'von', len(un))

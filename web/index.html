@@ -444,7 +444,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.20</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.21</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1809,7 +1809,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.20 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.21 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2233,6 +2233,7 @@ async function scanRun(live){
   let dur=0;try{dur=ytp.getDuration()-SCAN.start}catch(e){}const p0=SCAN.p0!=null?SCAN.p0:SCAN.start,full=dur+SCAN.start-p0;
   SCAN.timer=setInterval(()=>{const p=full>0?Math.min(100,Math.round((SCAN.lastVt+SCAN.start-p0)/full*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${scanCountTxt()}`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${scanCountTxt()}`;
     try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}
+    diagMidTick(SCAN.lastVt,dur);
     if(ytAuto&&SCAN.on&&SCAN.okT==null&&SCAN.lastVt>15&&!SCAN.fromFile)markLate()},300);
 }
 function scanStop(){
@@ -2366,6 +2367,13 @@ async function grabVideo(){ // still image of the video area, taken while the vi
   const box=$('#ytBox').getBoundingClientRect();const m=await nat('capture');if(!m||!m.ok)return null;
   return await new Promise(res=>{const img=new Image();img.onload=()=>{const k=img.width/innerWidth,c=document.createElement('canvas');c.width=Math.max(1,Math.round(box.width*k));c.height=Math.max(1,Math.round(box.height*k));
     const x=c.getContext('2d');x.drawImage(img,-box.left*k,-box.top*k);res(x.getImageData(0,0,c.width,c.height))};img.onerror=()=>res(null);img.src=m.img})}
+const MID_AT=[0.25,0.5,0.75]; // Diagnose: Standbilder aus der Songmitte (25/50/75 % und 5 s vor Ende), damit Auffälligkeiten nach dem Scan im Bild nachgeprüft werden können
+let midBusy=false;
+function diagMidTick(vt,dur){ // vt = Videozeit seit Start, dur = Länge ab Start; läuft im 300-ms-Takt des Scans, wartet nicht auf das Bild und verändert den Scan nicht
+  try{if(!DIAG.on||!DIAG.meta||SCAN.fromFile||!(dur>20)||midBusy)return;
+    const got=DIAG.meta.midStills=DIAG.meta.midStills||[],n=got.length;if(n>=4)return;
+    const want=n<3?dur*MID_AT[n]:dur-5;if(vt<want)return;midBusy=true;
+    grabVideo().then(img=>{midBusy=false;if(DIAG.meta&&DIAG.meta.midStills===got)got.push({t:+vt.toFixed(1),img:img?imgJpeg(img,0.6):null})},()=>{midBusy=false;if(DIAG.meta&&DIAG.meta.midStills===got)got.push({t:+vt.toFixed(1),img:null})})}catch(e){midBusy=false;try{DIAG.meta.midStills.push({t:+vt.toFixed(1),img:null})}catch(e2){}}}
 function medianImage(imgs){ // per pixel the median of several frames → briefly lit keys and short overlays disappear
   const a=imgs[0],out=new ImageData(a.width,a.height),o=out.data,n=imgs.length,L=new Array(n);
   for(let i=0;i<o.length;i+=4){for(let f=0;f<n;f++){const d=imgs[f].data;L[f]=[d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11,f]}L.sort((p,q)=>p[0]-q[0]);const d=imgs[L[n>>1][1]].data;o[i]=d[i];o[i+1]=d[i+1];o[i+2]=d[i+2];o[i+3]=255}
