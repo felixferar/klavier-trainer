@@ -447,7 +447,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.26</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.27</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -968,7 +968,7 @@ $('#midiFile').onchange=async e=>{
 function ytIdStart(u){return ytStartFromUrl(u)}
 function ytId(u){u=u.trim();const m=u.match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([A-Za-z0-9_-]{11})/);if(m)return m[1];if(/^[A-Za-z0-9_-]{11}$/.test(u))return u;return null}
 /* ---- queue: several links / a playlist, converted one after the other (phone can lie on the charger) ---- */
-const Q={on:false,i:0,n:0,cancel:false,res:null,finish(ok,info){const r=Q.res;Q.res=null;if(r)r({ok,info})}};
+const Q={on:false,i:0,n:0,cancel:false,force:false,res:null,finish(ok,info){const r=Q.res;Q.res=null;if(r)r({ok,info})}};
 function ytApiReady(cb){if(window.YT&&YT.Player){cb();return}window.onYouTubeIframeAPIReady=cb;if(!document.getElementById('ytapi')){const s=document.createElement('script');s.id='ytapi';s.src='https://www.youtube.com/iframe_api';document.head.appendChild(s)}}
 function ytPlaylistIds(listId){return new Promise(res=>{let done=false,p,d;const fin=a=>{if(done)return;done=true;try{p&&p.destroy()}catch(e){}try{d&&d.remove()}catch(e){}res(a)};
   setTimeout(()=>fin([]),20000);ytApiReady(()=>{d=document.createElement('div');d.style.cssText='position:fixed;left:-9999px;top:0;width:200px;height:120px';document.body.appendChild(d);
@@ -976,13 +976,13 @@ function ytPlaylistIds(listId){return new Promise(res=>{let done=false,p,d;const
 function parseLinks(txt){const out=[];for(const raw of txt.split(/[\s,;]+/)){const u=raw.trim();if(!u)continue;const pl=(u.match(/[?&]list=([A-Za-z0-9_-]{10,})/)||[])[1],v=/playlist\?/.test(u)?null:ytId(u);
     if(v)out.push({id:v,start:ytIdStart(u)});else if(pl)out.push({list:pl})}return out}
 function qClearInput(){try{$('#ytMulti').value='';save('kt_lastq','')}catch(e){}}
-async function qStart(txt){if(Q.on)return;if(!NAT.ok){toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
+async function qStart(txt,opt){if(Q.on)return;Q.force=!!(opt&&opt.force);if(!NAT.ok){toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
   const raw=parseLinks(txt);if(!raw.length){toast('Keine YouTube-Links gefunden');return}
   toast('Warteschlange wird vorbereitet …',2500);const list=[];let plBad=0;
   for(const r of raw){if(r.id)list.push(r);else{const ids=await ytPlaylistIds(r.list);if(!ids.length)plBad++;for(const id of ids.slice(0,50))list.push({id,start:0})}}
   if(!list.length){showConvError('Die Playlist konnte nicht gelesen werden. Ist sie öffentlich oder „nicht gelistet“? Sonst füge die Video-Links einzeln ein.','Warteschlange');return}
   // videos that already exist as a finished song (or appear twice in the list) are skipped, so a restart after a crash does not create duplicates
-  const have=new Set(LIB.map(x=>x.fromYT).filter(Boolean));let skipped=0;
+  const have=Q.force?new Set():new Set(LIB.map(x=>x.fromYT).filter(Boolean));let skipped=0; // „neu umwandeln“: vorhandene Songs werden nicht übersprungen, der alte Song wird erst beim erfolgreichen Speichern ersetzt
   for(let i=list.length-1;i>=0;i--){if(have.has(list[i].id)||list.findIndex(o=>o.id===list[i].id)<i){list.splice(i,1);skipped++}}
   if(!list.length){qClearInput();showConvError(`Alle ${skipped} Videos sind schon als Song vorhanden – nichts zu tun. (Zum Wiederholen den Song löschen.)`,'Warteschlange');return}
   save('kt_lastq',txt);closeSheets();Q.on=true;Q.cancel=false;Q.n=list.length;const ok=[],bad=[],back=navStack.length;
@@ -992,6 +992,7 @@ async function qStart(txt){if(Q.on)return;if(!NAT.ok){toast('Für die Umwandlung
     openYT(it,true);const r=await w;clearTimeout(to);
     if(r.ok)ok.push(r.info);else{bad.push((it.title&&it.title!=='YouTube-Video'?it.title:'https://youtu.be/'+it.videoId)+' – '+r.info);
       ytAuto=false;if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);try{nat('scanStop')}catch(e){}}try{fileAbort()}catch(e){}convUI(false);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}clearInterval(ytTimer);while(navStack.length>back)navStack.pop()}
+    try{rqSong(list[Q.i].id,r)}catch(e){}
     await sleep(800)}
   Q.on=false;if(!Q.cancel)qClearInput(); // Warteschlange durchgelaufen: Eingabefeld leeren (bei Abbruch bleibt der Text, damit man weitermachen kann)
   const left=list.length-ok.length-bad.length;while(navStack.length>back)navStack.pop();show(navStack[navStack.length-1]||'home');renderHome();
@@ -1823,7 +1824,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.26 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.27 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2271,6 +2272,7 @@ function scanSave(auto){
   let s;try{s=songForItem(it,buf)}catch(e){toast('Fehler: '+e.message);return}
   const libBak=LIB.slice();
   if(ytOld&&!SCAN.fromFile)LIB=LIB.filter(x=>x.id!==ytOld.id); // the video entry is replaced by the finished song
+  if(Q.on&&Q.force&&ytOld&&ytOld.videoId&&!SCAN.fromFile)LIB=LIB.filter(x=>x.fromYT!==ytOld.videoId); // neu umwandeln: alter Song desselben Videos wird ersetzt (bei Speicherfehler stellt libBak alles wieder her)
   LIB.unshift(it);
   if(!save('kt_lib',LIB)){ // storage full: NOT saved – never report success (rule: 100 % saved or nothing)
     LIB=libBak;const msg='Speicher voll – der Song wurde NICHT gespeichert. Lösche alte Songs und starte die Umwandlung neu.';
@@ -2323,6 +2325,10 @@ let rqBusy=false,rqTouch=Date.now();
 ['touchstart','pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{rqTouch=Date.now()},{passive:true,capture:true}));
 function b64Utf8(b){try{return decodeURIComponent(escape(atob((b||'').replace(/\s/g,''))))}catch(e){return ''}}
 async function rqPut(path,text,msg){try{const repo=await ghRepo(),u=`/repos/${repo}/contents/${path}`;const g=await ghApi(u);const body={message:msg,content:btoa(unescape(encodeURIComponent(text)))};if(g.ok&&g.j&&g.j.sha)body.sha=g.j.sha;await ghApi(u,{method:'PUT',body:JSON.stringify(body)})}catch(e){}}
+let RQ=null;
+function rqSong(id,r){if(!RQ)return;RQ.res.push((r.ok?'OK ':'FEHLER ')+id+' – '+String(r.info||'').replace(/\s+/g,' ').slice(0,160));rqStatus('läuft')}
+async function rqStatus(ph){if(!RQ)return;const done=RQ.res.filter(x=>x.startsWith('OK')).length,bad=RQ.res.length-done;
+  await rqPut('queue/status.txt',`${new Date().toISOString()} · ${RQ.ver} · ${ph} · Start ${RQ.t0}${RQ.force?' · neu umwandeln':''}\nSongs: ${RQ.res.length} von ${RQ.n} verarbeitet (${done} ok, ${bad} Fehler) · ${LIB.length} Songs in der Bibliothek\n`+RQ.res.join('\n'),'Status: '+ph)}
 async function rqPoll(){
   if(rqBusy||!S.remoteQ||!ghTok()||!NAT.ok||convBusy()||document.visibilityState!=='visible'||Date.now()-rqTouch<120000)return;
   rqBusy=true;
@@ -2332,9 +2338,10 @@ async function rqPoll(){
     save('kt_rq_sha',r.j.sha); // vor dem Start gemerkt: bei Absturz wird nicht endlos neu gestartet (neue Links = Datei ändern)
     if(!n)return;
     const ver=($('#verTxt').textContent||'').split('·')[0].trim();
-    await rqPut('queue/status.txt',`${new Date().toISOString()} · ${ver} · gestartet: ${n} Links`,'Status: gestartet');
-    await qStart(txt);
-    await rqPut('queue/status.txt',`${new Date().toISOString()} · ${ver} · beendet (${LIB.length} Songs in der Bibliothek)`,'Status: beendet')
+    const force=/^\s*#(neu|force)\b/mi.test(txt);RQ={ver,n,force,res:[],t0:new Date().toISOString()};
+    await rqStatus('gestartet');
+    await qStart(txt,{force});
+    await rqStatus('beendet')
   }catch(e){}finally{rqBusy=false}}
 setInterval(()=>{if(S.remoteQ&&document.visibilityState==='visible')keepAwake(true);rqPoll()},60000);
 /* --- automatic upload to the user's private GitHub repo "klavier-diagnose" (token only on this phone, never in backups) --- */
