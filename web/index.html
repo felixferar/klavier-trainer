@@ -447,7 +447,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.33</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.34</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1824,7 +1824,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.33 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.34 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -1910,15 +1910,18 @@ function findKeyboardRows(img){
       const wMed=sg.map(q=>q[1]-q[0]).sort((p,q)=>p-q)[sg.length>>1],bigF=gp.filter(g=>g>u*1.28).length/gp.length; // between groups ≥ ~1.35× inside a group on real (off-centre) keyboards
       if(wMed>=u*0.3&&wMed>=W/160&&bigF>=0.15&&bigF<=0.6)cands.push({y,score:sg.length,segs:sg.length,x0:sg[0][0],x1:sg[sg.length-1][1],wMin:wMed*0.6})}}
   const segsAt=(y,wMin)=>{const a=L(y);let mx=0;for(const v of a)mx=Math.max(mx,v);return segsOf(a,mx*0.55).filter(q=>q[1]-q[0]>=(wMin||2)).length}; // only black-key-wide segments (not the thin gaps between white keys)
-  cands.sort((p,q)=>q.score-p.score);let best=null,yA0=0,yA1=0;
+  cands.sort((p,q)=>q.score-p.score);let best=null,yA0=0,yA1=0;const pass=[];
   for(const c of cands.slice(0,40)){
+    if(pass.some(q=>c.y>=q.a0-2&&c.y<=q.a1+2))continue; // same band as an already accepted keyboard
     let a0=c.y,a1=c.y;while(a0>0&&segsAt(a0-1,c.wMin)>=c.segs*0.8)a0--;while(a1<H-1&&segsAt(a1+1,c.wMin)>=c.segs*0.8)a1++;
     if(a1-a0<H*0.06)continue;                                   // black keys are tall – a line of text is not
     // below the black keys there must be white keys (take the brightest of a few rows: labels or overlays may cover some)
     let bestBr=0;for(const fr of [0.12,0.25,0.4]){const yw=Math.min(H-1,Math.round(a1+Math.max(2,(H-1-a1)*fr))),aw=L(yw);let mxw=0;for(const v of aw)mxw=Math.max(mxw,v);
       let br=0,n=0;for(let x=Math.max(0,c.x0);x<=Math.min(W-1,c.x1);x++){n++;if(aw[x]>Math.max(150,mxw*0.6))br++}if(n)bestBr=Math.max(bestBr,br/n)}
     if(bestBr<0.7)continue;
-    best=c;yA0=a0;yA1=a1;break}
+    pass.push({c,a0,a1});if(pass.length>=4)break}
+  // two keyboards stacked (e.g. falling bars on a virtual keyboard + a filmed real keyboard with hands below): the upper one, right under the bars, is the one that lights up
+  if(pass.length){let b=pass[0];for(const q of pass.slice(1))if(q.a1<b.a0-2&&Math.min(q.c.x1,b.c.x1)-Math.max(q.c.x0,b.c.x0)>=0.75*Math.min(q.c.x1-q.c.x0,b.c.x1-b.c.x0)&&q.c.segs>=pass[0].c.segs*0.5&&q.a0<b.a0)b=q;best=b.c;yA0=b.a0;yA1=b.a1}
   if(!best)return null;
   const yA=Math.round(yA0+(yA1-yA0)*0.5);                       // middle of the black keys
   let yB=Math.min(H-1,Math.round(yA1+Math.max(3,(H-1-yA1)*0.25)));{let bb=-1;for(const fr of [0.12,0.25,0.4]){const y=Math.min(H-1,Math.round(yA1+Math.max(2,(H-1-yA1)*fr))),a=L(y);let c=0;for(const v of a)if(v>180)c++;if(c>bb){bb=c;yB=y}}} // white keys: the cleanest row below the black keys
