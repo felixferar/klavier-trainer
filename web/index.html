@@ -447,7 +447,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.28</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.29</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1581,7 +1581,7 @@ function openYT(it,auto){fileAbort();ytAuto=!!auto;
     if(ytp){try{ytp.destroy()}catch(e){}ytp=null}
     if(!$('#ytFrame')){const f=document.createElement('div');f.id='ytFrame';$('#ytBox').prepend(f)}
     ytp=new YT.Player('ytFrame',{videoId:it.videoId,playerVars:{playsinline:1,rel:0,modestbranding:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,cc_load_policy:0,start:Math.floor(it.start||0)},events:{
-      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;if(LIB.includes(it))saveLib()}}catch(e){}if(ytAuto){convShowTitle(it);autoConvert(it)}},
+      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;if(LIB.includes(it))saveLib()}}catch(e){}if(ytAuto){convShowTitle(it);convTitlePoll(it);autoConvert(it)}},
       onStateChange:e=>{ytPlaying=e.data===1;ytLast=performance.now();$('#yPlayI').innerHTML=`<use href="#i-${ytPlaying?'pause':'play'}"/>`;keepAwake(ytPlaying)},
       onError:()=>{$('#ytMsg').textContent='Dieses Video lässt sich nicht einbetten.';if(Q.on)Q.finish(false,'lässt sich nicht einbetten')}}});
   };
@@ -1824,7 +1824,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.28 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.29 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2401,6 +2401,7 @@ async function convLandscape(on){const was=$('#yt').classList.contains('convL');
   document.body.classList.toggle('convL',on);$('#yt').classList.toggle('convL',on);await nat('orient',{landscape:on});
   if(on){const t0=performance.now();while(innerWidth<=innerHeight&&performance.now()-t0<4000)await sleep(100);await sleep(700)} // Drehen + YouTube passt die Größe an
   return true}
+function convTitlePoll(it){let n=0;const iv=setInterval(()=>{if(!ytAuto||++n>40){clearInterval(iv);return}try{const d=ytp&&ytp.getVideoData&&ytp.getVideoData();if(d&&d.title){if(it.title==='YouTube-Video')it.title=d.title;convShowTitle(it);clearInterval(iv)}}catch(e){}},500)} // der Titel ist beim onReady oft noch leer: bis zu 20 s nachfragen
 function convShowTitle(it){const t=it&&it.title&&it.title!=='YouTube-Video'?it.title:'';convProgress(null,null,Q.on?`${Q.i} von ${Q.n} fertig · ${t||'Song wird erstellt …'}`:(t?'Song wird erstellt: '+t:'Song wird erstellt …'))} // zeigt während der Umwandlung, welches Video gerade dran ist (in der Warteschlange mit (n/N))
 function convProgress(p,info,title){if(p!=null){$('#convBar').style.width=p+'%';$('#convPct').textContent=p+' %'}if(info)$('#convInfo').textContent=info;if(title)$('#convTitle').textContent=title}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
