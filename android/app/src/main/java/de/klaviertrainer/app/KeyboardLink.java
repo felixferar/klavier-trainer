@@ -158,10 +158,12 @@ class KeyboardLink {
         BluetoothDevice d;
         try { d = bt.getRemoteDevice(addr); } catch (Exception e) { setState("fail", "Ungültiges Gerät."); return; }
         setState("connecting", null);
-        midi.openBluetoothDevice(d, dev -> {
-            if (dev == null) { failOrRetry("Verbindung fehlgeschlagen. Ist das Keyboard eingeschaltet und in der Nähe?"); return; }
-            attach(dev);
-        }, h);
+        try {
+            midi.openBluetoothDevice(d, dev -> {
+                if (dev == null) { failOrRetry("Verbindung fehlgeschlagen. Ist das Keyboard eingeschaltet und in der Nähe?"); return; }
+                attach(dev);
+            }, h);
+        } catch (RuntimeException e) { setState("fail", "Android erlaubt gerade keine weitere Verbindung. Bitte Bluetooth kurz aus- und einschalten."); return; }
         h.postDelayed(connectTimeout, 15000);
     }
 
@@ -215,11 +217,28 @@ class KeyboardLink {
         if (!wanted || device != null || curAddr == null || !bluetoothOn()) return;
         BluetoothDevice d;
         try { d = bt.getRemoteDevice(curAddr); } catch (Exception e) { return; }
-        midi.openBluetoothDevice(d, dev -> {
-            if (dev == null) { h.postDelayed(KeyboardLink.this.retry, RETRY_MS); return; }
-            attach(dev);
-        }, h);
+        // Nur ein Verbindungsversuch gleichzeitig und wachsende Pausen: sonst stauen sich offene Versuche auf
+        // und Android wirft nach einigen Minuten SecurityException "too many MIDI connections" (App-Absturz).
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (openPending && now - openSince < 60000) { h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
+        openPending = true; openSince = now;
+        try {
+            midi.openBluetoothDevice(d, dev -> {
+                openPending = false;
+                if (dev == null) { retryFails++; h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
+                retryFails = 0;
+                attach(dev);
+            }, h);
+        } catch (RuntimeException e) { // z. B. SecurityException: zu viele MIDI-Verbindungen – nicht abstürzen, später erneut
+            openPending = false; retryFails++;
+            h.postDelayed(KeyboardLink.this.retry, retryDelay());
+        }
     };
+
+    private boolean openPending = false;
+    private long openSince = 0;
+    private int retryFails = 0;
+    private long retryDelay() { return Math.min(60000L, RETRY_MS * (1L << Math.min(retryFails, 4))); }
 
     /** Beim App-Start: zuletzt verbundenes Keyboard still wieder verbinden */
     void autoConnect() {
