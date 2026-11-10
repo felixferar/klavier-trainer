@@ -181,7 +181,8 @@ body.wide .sheet .grab{display:none}
 #yt.convL .topbar{display:none}
 #yt.convL #ytBox{position:fixed;left:0;right:0;top:0;bottom:40px;z-index:1}
 #yt.convL #convPanel{position:fixed;left:0;right:0;bottom:0;height:40px;padding:0 14px!important;display:flex;align-items:center;gap:14px;border-top:none!important;z-index:2}
-#yt.convL #convTitle,#yt.convL #convSub{display:none}
+#yt.convL #convSub{display:none}
+#yt.convL #convTitle{font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 46%;min-width:0;text-align:left}
 #yt.convL #convPanel>div:nth-child(3){flex:1;height:6px!important}
 #yt.convL #convPanel>div:nth-child(4){margin:0!important;gap:12px;flex:none}
 #markOv{position:fixed;inset:0;z-index:55;background:#07090D;display:flex;flex-direction:column;padding:10px 14px;gap:8px}
@@ -445,7 +446,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.24</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.25</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1820,7 +1821,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.24 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.25 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2372,8 +2373,8 @@ async function convLandscape(on){const was=$('#yt').classList.contains('convL');
   document.body.classList.toggle('convL',on);$('#yt').classList.toggle('convL',on);await nat('orient',{landscape:on});
   if(on){const t0=performance.now();while(innerWidth<=innerHeight&&performance.now()-t0<4000)await sleep(100);await sleep(700)} // Drehen + YouTube passt die Größe an
   return true}
-function convShowTitle(it){const t=it&&it.title&&it.title!=='YouTube-Video'?it.title:'';convProgress(null,null,t?'Song wird erstellt: '+t:'Song wird erstellt …')} // zeigt während der Umwandlung, welches Video gerade dran ist (in der Warteschlange mit (n/N))
-function convProgress(p,info,title){if(title&&Q.on)title=`(${Q.i+1}/${Q.n}) `+title;if(p!=null){$('#convBar').style.width=p+'%';$('#convPct').textContent=p+' %'}if(info)$('#convInfo').textContent=info;if(title)$('#convTitle').textContent=title}
+function convShowTitle(it){const t=it&&it.title&&it.title!=='YouTube-Video'?it.title:'';convProgress(null,null,Q.on?`${Q.i} von ${Q.n} fertig · ${t||'Song wird erstellt …'}`:(t?'Song wird erstellt: '+t:'Song wird erstellt …'))} // zeigt während der Umwandlung, welches Video gerade dran ist (in der Warteschlange mit (n/N))
+function convProgress(p,info,title){if(p!=null){$('#convBar').style.width=p+'%';$('#convPct').textContent=p+' %'}if(info)$('#convInfo').textContent=info;if(title)$('#convTitle').textContent=title}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function grabVideo(){ // still image of the video area, taken while the video is playing
   const box=$('#ytBox').getBoundingClientRect();const m=await nat('capture');if(!m||!m.ok)return null;
