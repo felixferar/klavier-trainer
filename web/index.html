@@ -455,7 +455,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.40</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.41</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1685,16 +1685,16 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
   c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.beginPath();c.moveTo(0,rh);c.lineTo(S.w,rh);c.stroke();
   const tx=$('#cmpTxt'),df=$('#cmpDiff');
   if(tx){const nm=on.length?on.map(n=>noteName(n.midi)+' '+(Math.round(n.dur*10)/10).toString().replace('.',',')+' s').join('   '):'keine Note',t=fmt(Math.max(0,Tc))+'  ·  '+nm;if(tx.textContent!==t)tx.textContent=t}
-  if(df){let t=' ',col='var(--mu)';if(CMP.calibrating){t='Messe die Geschwindigkeit der Balken im Video …'}else if(CMP.busy){t='Prüfe Video …'}else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok'),app=bad.filter(([,k])=>k==='app').map(([m])=>noteName(m)),vid=bad.filter(([,k])=>k==='vid').map(([m])=>noteName(m));
+  if(df){let t=' ',col='var(--mu)';if(CMP.calibrating){t='Messe die Geschwindigkeit der Balken im Video …'}else if(CMP.busy){t='Prüfe Video …'}else if(CMP.cover&&CMP.step){t='Video verdeckt (YouTube-Karte) – hier nicht vergleichbar';col='#EF9F27'}else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok'),app=bad.filter(([,k])=>k==='app').map(([m])=>noteName(m)),vid=bad.filter(([,k])=>k==='vid').map(([m])=>noteName(m));
     if(!bad.length){t=on.length||lit.size?'Passt zum Video':'Beides still';col='#3BB273'}else{t=[app.length?'nur App: '+app.join(' '):'',vid.length?'nur Video: '+vid.join(' '):''].filter(Boolean).join('   ·   ');col='#E24B4A'}}
     if(!lit&&!CMP.busy&&!CMP.calibrating&&CMP.speed===null&&t===' ')t='Balken im Video nicht messbar – nur die Tasten werden verglichen';if(df.textContent!==t)df.textContent=t;df.style.color=col}}
 function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpVT=()=>{try{return ytp.getCurrentTime()}catch(e){return 0}};
 async function cmpMeasure(){ // picture of the video box → which keys glow
   if(!CMP||!NAT.ok)return;const t0=cmpVT(),im=await grabVideo(),t1=cmpVT();if(!im||!CMP)return;const r=$('#ytBox').getBoundingClientRect();
-  CMP.lit=cmpLit(im,CMP.g,CMP.lo,r.width,r.height);CMP.litT=(t0+t1)/2-CMP.off}
+  const L=cmpLit(im,CMP.g,CMP.lo,r.width,r.height);CMP.cover=L.size>Math.max(10,CMP.g.kx.length*0.2);CMP.lit=CMP.cover?null:L;CMP.litT=(t0+t1)/2-CMP.off}
 async function cmpGo(t){ // jump to a moment: play slowly for a moment (YouTube's pause overlay covers keys), measure, then stop
-  if(!CMP||!ytp)return;const gen=++CMP.gen;CMP.step=true;CMP.lit=null;CMP.busy=true;
+  if(!CMP||!ytp)return;const gen=++CMP.gen;CMP.step=true;CMP.lit=null;CMP.cover=false;CMP.busy=true;
   try{ytp.setPlaybackRate(0.25);ytRate=0.25;ytp.seekTo(Math.max(0,t),true);ytp.playVideo()}catch(e){}
   await sleep(450);if(!CMP||gen!==CMP.gen)return;
   try{await cmpMeasure()}catch(e){}
@@ -1928,7 +1928,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.40 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.41 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
