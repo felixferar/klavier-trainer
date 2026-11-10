@@ -40,6 +40,8 @@ async def main():
           o.pixel60=ctx.getImageData(Math.round(x60*dpr),Math.round(yMid*dpr),1,1).data[3]>0;
           o.pixelDanebenLeer=ctx.getImageData(Math.round((x60+Pp.kw*3)*dpr),Math.round(yMid*dpr),1,1).data[3]===0;
           vt=2+4.5;cmpDraw();o.txtStille=$('#cmpTxt').textContent; // Notenzeit 4.5: nichts klingt
+          const tx=$('#cmpTxt'),bar=$('#cmpBar'),box=$('#ytBox');o.barH=[];o.boxH=[];
+          for(const t of ['0:05  ·  App: keine Note','0:05  ·  App: C4 E4 G4 C5 E5 G5 C6 E6 G6 C7','x']){tx.textContent=t;o.barH.push(Math.round(bar.getBoundingClientRect().height*10)/10);o.boxH.push(Math.round(box.getBoundingClientRect().height*10)/10)}
           $('#cmpNextN').click();o.nextSeek=seek;  // naechste Note nach 4.5 beginnt bei 5 -> Videozeit 5+2=7
           $('#yBack').click();o.nachZurueck={cmp:CMP===null,bar:$('#cmpBar').classList.contains('hidden'),cv:$('#cmpCv').classList.contains('hidden'),scan:$('#yScan').classList.contains('hidden')};
           return o}""",[geo,lo,measured])
@@ -49,8 +51,8 @@ async def main():
             and all(abs(a-b)<=kwpx/2 for a,b,c in [(x[0],x[2],0) for x in r['sitz']]) and len(r['sitz'])>=3
             and r['menuOhneYT'] and not r['menuYT'] and r['ohneGeoCMP'] and r['ohneGeoToast']
             and r['cmp'] and r['call'][2] is True and r['call'][1] is False and r['off']==2
-            and r['txt'].startswith('App: ') and 'C4' in r['txt'] and r['pixel60'] and r['pixelDanebenLeer']
-            and r['txtStille'].startswith('App: –') and abs(r['nextSeek']-7)<0.01
+            and 'App: ' in r['txt'] and 'C4' in r['txt'] and r['pixel60'] and r['pixelDanebenLeer']
+            and 'keine Note' in r['txtStille'] and len(set(r['barH']))==1 and len(set(r['boxH']))==1 and abs(r['nextSeek']-7)<0.01
             and r['nachZurueck']['cmp'] and r['nachZurueck']['bar'] and r['nachZurueck']['cv'] and not r['nachZurueck']['scan'])
         print('pageerrors',errs,'ERGEBNIS','OK' if ok and not errs else 'FEHLER');await br.close()
 asyncio.run(main())

@@ -232,7 +232,9 @@ body.inplayer .toast{top:34%;font-size:14px}
 /* youtube */
 #ytBox{flex:1;min-height:0;background:#000;position:relative}
 #cmpCv{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
-#cmpBar{flex:none;display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--s1);border-top:1px solid var(--bd)}
+#cmpBar{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:var(--s1);border-top:1px solid var(--bd)}
+#cmpTxt{height:22px;line-height:22px;text-align:center;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+#cmpBtns{display:flex;gap:6px}#cmpBtns .btn{flex:1;min-width:0;padding-left:4px;padding-right:4px;white-space:nowrap}
 #ytFrame,#ytBox iframe{position:absolute;inset:0;width:100%;height:100%}
 #ytMsg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--mu);font-size:14px}
 .ybar{flex:none;display:flex;align-items:center;gap:6px;padding:8px;background:var(--s1);border-top:1px solid var(--bd);flex-wrap:wrap;justify-content:center;row-gap:6px}
@@ -449,7 +451,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.37</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.38</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -549,7 +551,7 @@ body.short #onbDots{margin:8px 0}
 <div id="yt" class="screen hidden">
   <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div></div>
   <div id="ytBox"><div id="ytFrame"></div><canvas id="cmpCv" class="hidden"></canvas><div id="ytMsg"></div><div id="ytBlock" class="hidden" style="position:absolute;inset:0;z-index:5;background:transparent"></div></div>
-  <div id="cmpBar" class="hidden"><button class="btn sm" id="cmpPrevN">⏮ Note</button><button class="btn sm" id="cmpM1">−0,1 s</button><button class="btn sm" id="cmpP1">+0,1 s</button><button class="btn sm" id="cmpNextN">Note ⏭</button><span id="cmpTxt" class="sm" style="flex:1;min-width:0;font-weight:600;margin-left:6px">App: –</span></div>
+  <div id="cmpBar" class="hidden"><div id="cmpTxt">–</div><div id="cmpBtns"><button class="btn sm" id="cmpPrevN">⏮ Note</button><button class="btn sm" id="cmpM1">−0,1 s</button><button class="btn sm" id="cmpP1">+0,1 s</button><button class="btn sm" id="cmpNextN">Note ⏭</button></div></div>
   <div id="convPanel" class="hidden" style="flex:none;padding:16px 18px 20px;background:var(--s1);border-top:1px solid var(--bd);text-align:center">
     <div style="font-weight:800;font-size:17px" id="convTitle">Song wird erstellt …</div>
     <div class="mu sm" id="convSub" style="margin:4px 0 12px">Bitte warten, bis 100 % erreicht sind. Leg das Handy so lange einfach hin.</div>
@@ -1625,7 +1627,7 @@ function cmpDraw(){const cv=$('#cmpCv');if(!CMP||!cv)return;const r=cv.getBoundi
   const on=cmpSounding(CMP.notes,T);c.lineWidth=2;
   for(const n of on){const i=n.midi-CMP.lo;if(i<0||i>=g.kx.length)continue;const bl=[1,3,6,8,10].includes(n.midi%12),ww=P.kw*(bl?0.62:0.9),x=P.X(g.kx[i])-ww/2;
     c.fillStyle='rgba(0,220,255,.22)';c.strokeStyle='#00E0FF';c.fillRect(x,y0,ww,y1-y0);c.strokeRect(x,y0,ww,y1-y0)}
-  const tx=$('#cmpTxt');if(tx){const t='App: '+(on.length?on.map(n=>noteName(n.midi)).join(' '):'–')+' · '+fmt(Math.max(0,T));if(tx.textContent!==t)tx.textContent=t}}
+  const tx=$('#cmpTxt');if(tx){const t=fmt(Math.max(0,T))+'  ·  App: '+(on.length?on.map(n=>noteName(n.midi)).join(' '):'keine Note');if(tx.textContent!==t)tx.textContent=t}}
 function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpSeek=d=>{if(!ytp||!ytp.getCurrentTime)return;try{ytp.pauseVideo();ytp.seekTo(Math.max(0,ytp.getCurrentTime()+d),true)}catch(e){}};
 $('#cmpM1').onclick=()=>cmpSeek(-0.1);$('#cmpP1').onclick=()=>cmpSeek(0.1);
@@ -1855,7 +1857,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.37 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.38 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
