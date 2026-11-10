@@ -447,7 +447,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.29</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.30</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1824,7 +1824,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.29 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.30 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2316,6 +2316,7 @@ async function diagSave(extra){if(!(S.diagConv||ghTok())||!NAT.ok||!DIAG.meta)re
   const b64=b64FromBuf(buf);
   if(ghTok()){const up=await ghUpload(`diag/${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}_${meta.videoId||'video'}_${meta.reason||'x'}.ktd.gz`,b64,`Diagnose ${meta.videoId||''} (${meta.reason||''}, ${meta.notes?meta.notes.length:'?'} Noten)`);
     if(up.ok){if(S.diagConv){S.diagConv=false;saveS()}toast('Diagnose an Claude gesendet',3000);return}
+    try{if(RQ){RQ.diagErr=up.err+' ('+Math.round(b64.length/1e6)+' MB)';rqStatus('läuft')}}catch(e){} // Fehler auch ins Status-Archiv, damit er nicht nur kurz auf dem Handy steht
     if(!S.diagConv){toast('Diagnose konnte nicht hochgeladen werden: '+up.err,5000);return}}
   const r=await nat('save',{name:`klavier-diagnose-${dayKey()}.txt`,data:'KTDIAG1\n'+b64},'saved');
   if(r&&r.ok){S.diagConv=false;saveS()} // only once – the recording costs memory
@@ -2328,7 +2329,7 @@ async function rqPut(path,text,msg){try{const repo=await ghRepo(),u=`/repos/${re
 let RQ=null;
 function rqSong(id,r){if(!RQ)return;RQ.res.push((r.ok?'OK ':'FEHLER ')+id+' – '+String(r.info||'').replace(/\s+/g,' ').slice(0,160));rqStatus('läuft')}
 async function rqStatus(ph){if(!RQ)return;const done=RQ.res.filter(x=>x.startsWith('OK')).length,bad=RQ.res.length-done;
-  await rqPut('queue/status.txt',`${new Date().toISOString()} · ${RQ.ver} · ${ph} · Start ${RQ.t0}${RQ.force?' · neu umwandeln':''}\nSongs: ${RQ.res.length} von ${RQ.n} verarbeitet (${done} ok, ${bad} Fehler) · ${LIB.length} Songs in der Bibliothek\n`+RQ.res.join('\n'),'Status: '+ph)}
+  await rqPut('queue/status.txt',`${new Date().toISOString()} · ${RQ.ver} · ${ph} · Start ${RQ.t0}${RQ.force?' · neu umwandeln':''}\nSongs: ${RQ.res.length} von ${RQ.n} verarbeitet (${done} ok, ${bad} Fehler) · ${LIB.length} Songs in der Bibliothek\n`+RQ.res.join('\n')+(RQ.diagErr?'\nDIAGNOSE-UPLOAD FEHLER: '+RQ.diagErr:''),'Status: '+ph)}
 async function rqPoll(){
   if(rqBusy||!S.remoteQ||!ghTok()||!NAT.ok||convBusy()||document.visibilityState!=='visible'||Date.now()-rqTouch<120000)return;
   rqBusy=true;
@@ -2351,7 +2352,7 @@ async function ghApi(path,opt){const r=await fetch('https://api.github.com'+path
 async function ghRepo(){if(ghRepo.v)return ghRepo.v;const u=await ghApi('/user');if(!u.ok){ // fine-grained tokens without account read: try the owner of this app's repo
     ghRepo.v='felixferar/klavier-diagnose';return ghRepo.v}ghRepo.v=u.j.login+'/klavier-diagnose';return ghRepo.v}
 async function ghUpload(path,b64,msg){try{const repo=await ghRepo();const r=await ghApi(`/repos/${repo}/contents/${path}`,{method:'PUT',body:JSON.stringify({message:msg,content:b64})});
-    return r.ok?{ok:true}:{ok:false,err:(r.status===404?'Archiv „klavier-diagnose“ nicht gefunden oder kein Zugriff':r.status===401?'Schlüssel ungültig oder abgelaufen':(r.j&&r.j.message)||('Fehler '+r.status))}}
+    return r.ok?{ok:true}:{ok:false,err:(r.status===404?'Archiv „klavier-diagnose“ nicht gefunden oder kein Zugriff':r.status===401?'Schlüssel ungültig oder abgelaufen':'Fehler '+r.status+((r.j&&r.j.message)?': '+String(r.j.message).slice(0,120):''))}}
   catch(e){return {ok:false,err:'keine Verbindung'}}}
 function ghUI(){const t=ghTok();$('#ghTok').value=t?'••••••••••••':'';$('#ghInfo').textContent=t?'Aktiv: jede YouTube-Umwandlung wird automatisch an Claude gesendet (privates Archiv „klavier-diagnose“).':'Jede YouTube-Umwandlung wird aufgezeichnet und in dein privates GitHub-Archiv „klavier-diagnose“ hochgeladen. Dafür einmal den Zugangsschlüssel einfügen.'}
 $('#ghTok').onfocus=e=>{if(e.target.value.startsWith('•'))e.target.value=''};
