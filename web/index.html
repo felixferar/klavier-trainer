@@ -393,6 +393,7 @@ body.short #onbDots{margin:8px 0}
     <div class="card kpis" id="pfStats"></div>
     <div class="lbl">Daten</div>
     <div class="list">
+      <div class="li"><div class="grow"><b>Alle Songs löschen</b><small id="delSongsTxt">Alle Songs aus der Bibliothek entfernen – Profil, Statistik und Einstellungen bleiben</small></div><button class="btn sm danger" id="delSongs">Löschen</button></div>
       <div class="li"><div class="grow"><b>Statistik zurücksetzen</b><small>Übungszeit, Serie und Sterne löschen</small></div><button class="btn sm danger" id="resetStats">Löschen</button></div>
       <div class="li"><div class="grow"><b>Alle Daten löschen</b><small>Songs, Fortschritt, Kalibrierung, Profil und Einstellungen – die App startet wie neu installiert</small></div><button class="btn sm danger" id="wipeBtn">Löschen</button></div>
     </div>
@@ -444,7 +445,7 @@ body.short #onbDots{margin:8px 0}
         <div style="display:flex;gap:8px;margin-top:8px"><input class="field" id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="ghTest">Prüfen</button></div></div></div>
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.21</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.22</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1787,6 +1788,14 @@ $('#micTest2').onclick=async()=>{if(micT2){micT2=false;$('#micTest2').textConten
       if(win&&!win.done&&now>win.t0+300){win.done=true;const g=bestGuess(diffBands(R.X,win.before));$('#micInfo2').textContent=g>=0?'Erkannt: '+noteName(g):'Ton gehört, aber nicht sicher erkannt'}};
     requestAnimationFrame(loop)}
   catch(e){$('#micInfo2').textContent=e.message}};
+$('#delSongs').onclick=()=>{const b=$('#delSongs'),n=LIB.length;
+  if(convBusy()){toast('Während einer Umwandlung nicht möglich – bitte warten oder abbrechen',4000);return}
+  if(!n){toast('Keine Songs vorhanden');return}
+  const reset=()=>{delete b.dataset.c;b.textContent='Löschen'};
+  if(!b.dataset.c){b.dataset.c=1;b.textContent=`Wirklich alle ${n} Songs?`;setTimeout(()=>{if(b.dataset.c==='1')reset()},4000);return}
+  if(b.dataset.c==='1'){b.dataset.c=2;b.textContent='Letzte Chance – tippen';setTimeout(()=>{if(b.dataset.c==='2')reset()},4000);return}
+  const bak=LIB.slice();LIB=[];if(!save('kt_lib',LIB)){LIB=bak;reset();toast('Löschen fehlgeschlagen – nichts geändert',5000);return}
+  reset();renderHome();toast(`${n} Songs gelöscht`)};
 $('#resetStats').onclick=()=>{const b=$('#resetStats');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich?';setTimeout(()=>{delete b.dataset.c;b.textContent='Löschen'},3000);return}
   ST={days:{},songs:{},bestStreak:0,last:null};save('kt_stats',ST);delete b.dataset.c;b.textContent='Löschen';toast('Statistik gelöscht')};
 
@@ -1809,7 +1818,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.21 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.22 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
