@@ -433,7 +433,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li hidden" id="kbShiftRow"><div class="grow"><b>Keyboard-Verschiebung</b><small>Wurde automatisch erkannt und wird ausgeglichen</small></div><button class="btn sm" id="kbShiftReset">Zurücksetzen</button></div>
       <div class="li hidden"><div class="grow"><b>Erkennung über</b></div><select id="inputSel2"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
       <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
-      <div class="li"><div class="grow"><b>Kalibrierung</b><small id="calStat2">–</small></div><button class="btn sm" data-go="calib">Öffnen</button></div>
+      <div class="li hidden"><div class="grow"><b>Kalibrierung</b><small id="calStat2">–</small></div><button class="btn sm" data-go="calib">Öffnen</button></div>
       <div class="li"><div class="grow"><b>Einführung ansehen</b><small>Die kurze Erklärung vom ersten Start</small></div><button class="btn sm" id="onbAgain">Zeigen</button></div>
       <div class="li"><div class="grow"><b>Mikrofon testen</b><small id="micInfo2">Zeigt den Ton, den die App gerade hört</small></div><button class="btn sm" id="micTest2">Test</button></div>
     </div>
@@ -456,7 +456,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.43</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.44</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -917,7 +917,8 @@ function renderHome(){handVars();
   cw.querySelector('.ttl').textContent=ci.title;
   cw.querySelector('.card').onclick=()=>openItem(ci,!!last);
   // calibration card
-  kbUI();const cc=calCount(),N=NK();$('#calCard').classList.toggle('hidden',cc>=N||kbOn()||!!KB.saved);$('#calCardTxt').textContent=cc?`${cc} von ${N} Tasten erledigt – weitermachen?`:`Einmal alle ${N} Tasten spielen, damit die Erkennung genau wird.`;
+  kbUI();const cc=calCount(),N=NK();$('#calCard').classList.add('hidden'); // calibration paused (v4.44): the keyboard is connected via Bluetooth, calibration comes later
+  $('#calCardTxt').textContent=cc?`${cc} von ${N} Tasten erledigt – weitermachen?`:`Einmal alle ${N} Tasten spielen, damit die Erkennung genau wird.`;
   // recent list
   const rl=$('#recentList');rl.innerHTML='';
   const items=allItems().slice().sort((a,b)=>((ST.songs[b.id]||{}).last||0)-((ST.songs[a.id]||{}).last||0)).slice(0,4);
@@ -1764,9 +1765,8 @@ function artSvg(kind){
 const ONB=[
   {art:'fall',h:'Willkommen!',p:'Leg dein Handy aufs Klavier. Die Noten fallen von oben auf die Tasten – spiel sie, wenn sie unten ankommen.'},
   {art:'tools',h:'Üben, wie du willst',p:'Langsamer spielen, nur eine Hand üben oder einen schwierigen Abschnitt so oft wiederholen, bis er sitzt.'},
-  {art:'ear',h:'Die App hört zu',p:'Im Lern-Modus laufen die Noten erst weiter, wenn du den richtigen Ton triffst. Dafür lernt die App jetzt einmal dein Klavier kennen.'},
+  {art:'ear',h:'Die App hört zu',p:'Im Lern-Modus laufen die Noten erst weiter, wenn du den richtigen Ton triffst. Verbinde dazu dein Keyboard per Bluetooth.'},
   {art:'keys',h:'Wie viele Tasten hat dein Klavier?',p:'Ein normales Klavier hat 88 Tasten. Keyboards haben oft 76, 61 oder 49.',lay:true},
-  {art:'keys',h:'Kalibrierung',p:'Du spielst alle Tasten nacheinander – von ganz links nach ganz rechts. Es geht erst weiter, wenn die Taste erkannt wurde. Dauert etwa 5 Minuten.',tip:'Tipp: leiser Raum, Handy auf dem Klavier, jede Taste kräftig anschlagen.'}
 ];
 let onbI=0;
 for(const b of $$('#onbLay button'))b.onclick=()=>{S.layout=+b.dataset.l;saveS();renderOnb()};
@@ -1775,9 +1775,9 @@ function renderOnb(){const s=ONB[onbI],last=onbI===ONB.length-1;
   $('#onbArt').innerHTML=artSvg(s.art);$('#onbH').textContent=s.h;$('#onbP').textContent=s.p;$('#onbTip').textContent=s.tip||'';
   $('#onbLay').classList.toggle('hidden',!s.lay);for(const b of $$('#onbLay button'))b.classList.toggle('on',+b.dataset.l===S.layout);
   $('#onbDots').innerHTML=ONB.map((_,i)=>`<i class="${i===onbI?'on':''}"></i>`).join('');
-  $('#onbNext').textContent=last?'Kalibrierung starten':'Weiter';$('#onbSkip').textContent=last?'Später':'Überspringen';
+  $('#onbNext').textContent=last?'Los geht\'s':'Weiter';$('#onbSkip').classList.toggle('hidden',last);
   $('#onbBody').classList.remove('fade');void $('#onbBody').offsetWidth;$('#onbBody').classList.add('fade')}
-$('#onbNext').onclick=()=>{if(onbI<ONB.length-1){onbI++;renderOnb();return}save('kt_onb',1);navStack=['home'];openCal()};
+$('#onbNext').onclick=()=>{if(onbI<ONB.length-1){onbI++;renderOnb();return}save('kt_onb',1);navStack=['home'];show('home');renderHome()};
 $('#onbSkip').onclick=()=>{save('kt_onb',1);navStack=['home'];show('home');renderHome()};
 
 /* ================= calibration (all 88 keys) ================= */
@@ -1955,7 +1955,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.43 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.44 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
