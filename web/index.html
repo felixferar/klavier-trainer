@@ -232,12 +232,21 @@ body.inplayer .toast{top:34%;font-size:14px}
 /* youtube */
 #ytBox{flex:1;min-height:0;background:#000;position:relative}
 #cmpCv{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
-#yt.cmpMode #ytBox{flex:none;width:100%;aspect-ratio:16/9}
-#cmpScene{flex:1;min-height:0;width:100%;display:block;background:var(--s1)}
+#yt.cmpMode{--cw:min(100vw,calc((100dvh - 285px)/2*16/9))}
+#yt.cmpMode #ytBox{flex:none;width:var(--cw);aspect-ratio:16/9;margin:0 auto}
+#cmpScene{flex:none;width:var(--cw);aspect-ratio:16/9;margin:0 auto;display:block;background:var(--s1)}
 #cmpScene.hidden{display:none}
+@media (orientation:landscape) and (max-height:600px){ /* sideways: the two pictures stacked on the left, controls on the right */
+ #yt.cmpMode{--cw:min(calc(100vw - 260px),calc(100dvh/2*16/9));display:grid;grid-template-columns:var(--cw) 1fr;grid-template-rows:1fr 1fr}
+ #yt.cmpMode .topbar{position:absolute;top:0;left:var(--cw);right:0;z-index:6}
+ #yt.cmpMode #ytBox{grid-column:1;grid-row:1;margin:0}
+ #yt.cmpMode #cmpScene{grid-column:1;grid-row:2;margin:0}
+ #yt.cmpMode #cmpBar{grid-column:2;grid-row:1/3;overflow:auto;border-top:0;border-left:1px solid var(--bd);padding-top:56px;justify-content:center}
+ #yt.cmpMode #cmpBtns{flex-wrap:wrap}#yt.cmpMode #cmpBtns .btn{flex:1 1 30%;height:44px;font-size:15px}
+}
 #cmpBar{flex:none;display:flex;flex-direction:column;gap:4px;padding:8px 10px 12px;background:var(--s1);border-top:1px solid var(--bd)}
-#cmpTxt{height:22px;line-height:22px;text-align:center;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
-#cmpDiff{height:20px;line-height:20px;text-align:center;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cmpTxt{display:none;height:22px;line-height:22px;text-align:center;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+#cmpDiff{height:26px;line-height:26px;text-align:center;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cmpEdit,#cmpSave{display:flex;gap:6px}#cmpEdit.hidden,#cmpSave.hidden{display:none}#cmpEdit .btn,#cmpSave .btn{flex:1;min-width:0;height:44px;font-size:14px;white-space:nowrap;padding:0 4px}
 #cmpBtns{display:flex;gap:8px;margin-top:4px}#cmpBtns .btn{flex:1;min-width:0;height:48px;font-size:16px;white-space:nowrap}
 #ytFrame,#ytBox iframe{position:absolute;inset:0;width:100%;height:100%}
@@ -456,7 +465,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.44</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.46</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1669,28 +1678,26 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
   const V=fit(cv),S=fit(sc),g=CMP.g,P=cmpPx(g,V.w,V.h),y0=P.Y(g.yT),y1=P.Y(g.yB);let vt=0;try{vt=ytp&&ytp.getCurrentTime?ytp.getCurrentTime():0}catch(e){}
   const T=vt-CMP.off,lit=CMP.step?CMP.lit:null,Tc=lit?CMP.litT:T,on=cmpSounding(CMP.notes,Tc),cls=cmpCls(on,lit);
   V.c.clearRect(0,0,V.w,V.h);
-  if(CMP.speed>0){ // the app's bars in the video's own scale, laid over the video's bars
-    const vs=CMP.speed*V.h,yK=P.Y(g.yT),V0=V.c;V0.lineWidth=1.5;V0.strokeStyle='#00E0FF';V0.fillStyle='rgba(0,224,255,.14)';
-    for(const n of CMP.notes){if(n.start>T+yK/vs)break;if(n.start+n.dur<T)continue;const i=n.midi-CMP.lo;if(i<0||i>=g.kx.length)continue;
-      const ww=P.kw*(cmpBlack(n.midi)?0.5:0.78),x=P.X(g.kx[i])-ww/2,bot=Math.min(yK,yK-(n.start-T)*vs),top=Math.max(0,yK-(n.start+n.dur-T)*vs);if(bot<=top)continue;
-      V0.fillRect(x,top,ww,bot-top);V0.strokeRect(x,top,ww,bot-top)}}
-  for(const [m,k] of cls){const i=m-CMP.lo;if(i<0||i>=g.kx.length)continue;const ww=P.kw*(cmpBlack(m)?0.62:0.9);cmpRect(V.c,P.X(g.kx[i])-ww/2,y0,ww,y1-y0,k,true)}
+  // the video stays clean (v4.46): differences are marked in the lower picture only
   // scene: falling notes + keyboard, same columns as the video
-  const c=S.c,kh=Math.min(46,S.h*0.28),rh=S.h-kh,pps=CMP.speed>0?CMP.speed*V.h:rh/3.2,fut=rh/pps;c.clearRect(0,0,S.w,S.h);
+  const c=S.c,kh=Math.min(64,S.h*0.3),rh=S.h-kh,pps=CMP.speed>0?CMP.speed*V.h:rh/3.2,fut=rh/pps;c.clearRect(0,0,S.w,S.h);
   for(const n of CMP.notes){if(n.start>T+fut)break;if(n.start+n.dur<T)continue;const i=n.midi-CMP.lo;if(i<0||i>=g.kx.length)continue;
     const ww=P.kw*(cmpBlack(n.midi)?0.5:0.78),x=P.X(g.kx[i])-ww/2,yb=rh-(n.start-T)*pps,yt=rh-(n.start+n.dur-T)*pps,top=Math.max(0,yt),bot=Math.min(rh,yb);if(bot<=top)continue;
-    c.fillStyle=n.start<=T&&T<n.start+n.dur?'#7FB4F0':'#378ADD';c.fillRect(x,top,ww,Math.max(3,bot-top));if(n===CMP.sel){c.strokeStyle='#fff';c.lineWidth=2.5;c.strokeRect(x,top,ww,Math.max(3,bot-top))}}
+    c.fillStyle=n.start<=T&&T<n.start+n.dur?(cls.get(n.midi)==='app'?'#E24B4A':'#7FB4F0'):'#378ADD';c.fillRect(x,top,ww,Math.max(3,bot-top));if(n===CMP.sel){c.strokeStyle='#fff';c.lineWidth=2.5;c.strokeRect(x,top,ww,Math.max(3,bot-top))}}
   CMP.hit={P,rh,kh,pps,T:Tc};
   const white=[],black=[];for(let i=0;i<g.kx.length;i++)(cmpBlack(CMP.lo+i)?black:white).push(i);
   for(const i of white){const x=P.X(g.kx[i]);c.fillStyle='#E8E6DF';c.fillRect(x-P.kw*0.47,rh,P.kw*0.94,kh)}
   for(const i of black){const x=P.X(g.kx[i]);c.fillStyle='#2C2C2A';c.fillRect(x-P.kw*0.31,rh,P.kw*0.62,kh*0.62)}
   for(const [m,k] of cls){const i=m-CMP.lo;if(i<0||i>=g.kx.length)continue;const bl=cmpBlack(m),ww=P.kw*(bl?0.62:0.94);cmpRect(c,P.X(g.kx[i])-ww/2,rh,ww,bl?kh*0.62:kh,k,true)}
   c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.beginPath();c.moveTo(0,rh);c.lineTo(S.w,rh);c.stroke();
-  const tx=$('#cmpTxt'),df=$('#cmpDiff');
-  if(tx){const nm=on.length?on.map(n=>noteName(n.midi)+' '+(Math.round(n.dur*10)/10).toString().replace('.',',')+' s').join('   '):'keine Note',t=CMP.sel?'Gewählt: '+noteName(CMP.sel.midi)+'  ·  '+(Math.round(CMP.sel.dur*10)/10).toString().replace('.',',')+' s  ·  ab '+fmt(Math.max(0,CMP.sel.start)):fmt(Math.max(0,Tc))+'  ·  '+nm;if(tx.textContent!==t)tx.textContent=t}
-  if(df){let t=' ',col='var(--mu)';if(CMP.calibrating){t='Messe die Geschwindigkeit der Balken im Video …'}else if(CMP.busy){t='Prüfe Video …'}else if(CMP.cover&&CMP.step){t='Video verdeckt (YouTube-Karte) – hier nicht vergleichbar';col='#EF9F27'}else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok'),app=bad.filter(([,k])=>k==='app').map(([m])=>noteName(m)),vid=bad.filter(([,k])=>k==='vid').map(([m])=>noteName(m));
-    if(!bad.length){t=on.length||lit.size?'Passt zum Video':'Beides still';col='#3BB273'}else{t=[app.length?'nur App: '+app.join(' '):'',vid.length?'nur Video: '+vid.join(' '):''].filter(Boolean).join('   ·   ');col='#E24B4A'}}
-    if(!lit&&!CMP.busy&&!CMP.calibrating&&CMP.speed===null&&t===' ')t='Balken im Video nicht messbar – nur die Tasten werden verglichen';{const vq=CMP.it&&CMP.it.video&&CMP.it.video.q;if(vq&&vq<=240&&t.trim()&&!CMP.busy&&!CMP.calibrating)t+='  ·  Umwandlung nur '+vq+'p'}if(df.textContent!==t)df.textContent=t;df.style.color=col}}
+  const df=$('#cmpDiff');
+  if(df){let t=' ',col='var(--mu)';const sel=CMP.sel;
+    if(sel){t=noteName(sel.midi)+'  ·  '+(Math.round(sel.dur*10)/10).toString().replace('.',',')+' s';col='#fff'}
+    else if(CMP.calibrating){t='Messe …'}else if(CMP.busy){t='Prüfe …'}else if(CMP.cover&&CMP.step){t='Video verdeckt';col='#EF9F27'}
+    else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok');if(!bad.length){t=on.length||lit.size?'✓ passt':'✓ beides still';col='#3BB273'}else{t='✗ '+bad.length+(bad.length===1?' Unterschied':' Unterschiede');col='#E24B4A'}}
+    else if(!CMP.busy&&!CMP.calibrating&&CMP.speed===null)t='Balken nicht messbar';
+    {const vq=CMP.it&&CMP.it.video&&CMP.it.video.q;if(vq&&vq<=240&&t.trim()&&!sel)t+=' · '+vq+'p'}
+    if(df.textContent!==t)df.textContent=t;df.style.color=col}}
 function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpVT=()=>{try{return ytp.getCurrentTime()}catch(e){return 0}};
 async function cmpMeasure(){ // picture of the video box → which keys glow
@@ -1955,7 +1962,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.44 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.46 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

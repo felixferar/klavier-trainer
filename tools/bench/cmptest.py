@@ -48,8 +48,10 @@ async def main():
           // Balken der App im Video-Maßstab (v4.40)
           {const g2=CMP.g;CMP.speed=0.2;CMP.notes=[{midi:60,start:3,dur:1,hand:'R'}];CMP.step=false;vt=2+CMP.off;cmpDraw();
            const cv2=$('#cmpCv'),c2=cv2.getContext('2d'),r2=cv2.getBoundingClientRect(),dpr2=window.devicePixelRatio||1,P2=cmpPx(g2,r2.width,r2.height),yK=P2.Y(g2.yT),xk=P2.X(g2.kx[60-CMP.lo]),vs=0.2*r2.height;
-           const al=(y)=>c2.getImageData(Math.round(xk*dpr2),Math.round(y*dpr2),1,1).data[3];
-           o.bar={mitte:al(yK-vs*1.5)>0,ueber:al(yK-vs*2.2)===0,davor:al(yK-vs*0.5)===0,unterTop:al(yK-vs*1.05)>0};
+           const sc2=$('#cmpScene'),cs=sc2.getContext('2d'),rs=sc2.getBoundingClientRect(),kh2=Math.min(64,rs.height*0.3),rh2=rs.height-kh2,pps2=0.2*r2.height;
+           const al=(y)=>cs.getImageData(Math.round(xk*dpr2),Math.round(y*dpr2),1,1).data[3];
+           const alV=(y)=>c2.getImageData(Math.round(xk*dpr2),Math.round(y*dpr2),1,1).data[3];
+           o.bar={mitte:al(rh2-pps2*1.5)>0,ueber:al(rh2-pps2*2.2)===0,davor:al(rh2-pps2*0.5)===0,unterTop:al(rh2-pps2*1.95)>0,videoSauber:alV(yK-vs*1.5)===0&&alV(yK-2)===0};
            CMP.speed=undefined}
           // Messung der Fallgeschwindigkeit: Ablauf mit vier Bildern (Video 1 des Prüfstands, wahre Geschwindigkeit 183 px/s bei 720 px Höhe)
           {const ld=b=>new Promise(res=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);res(x.getImageData(0,0,c.width,c.height))};i.src='data:image/jpeg;base64,'+b});
@@ -76,9 +78,9 @@ async def main():
             and all(abs(a-b)<=kwpx/2 for a,b,c in [(x[0],x[2],0) for x in r['sitz']]) and len(r['sitz'])>=3
             and r['menuOhneYT'] and not r['menuYT'] and r['ohneGeoCMP'] and r['ohneGeoToast']
             and r['cmp'] and r['call'][2] is True and r['call'][1] is False and r['off']==2
-            and 'C4' in r['txt'] and r['pixel60'] and r['pixelDanebenLeer']
-            and 'keine Note' in r['txtStille'] and len(set(r['barH']))==1 and len(set(r['boxH']))==1 and abs(r['nextSeek']-7)<0.01
-            and all(r['bar'].values()) and r['calib']['v'] is not None and abs(r['calib']['v']/183-1)<0.03 and r['calib']['frames']==4 and not r['calib']['calibrating'] and r['lit']==[55,60,72] and 'nur App: E4' in r['diff'] and 'nur Video: C5' in r['diff'] and r['paused2'] and abs(r['litT']-1)<0.2 and r['sceneVisible'] and abs(r['boxRatio']-1.78)<0.02
+            and (not r['pixel60'])
+            and len(set(r['barH']))==1 and len(set(r['boxH']))==1 and abs(r['nextSeek']-7)<0.01
+            and all(r['bar'].values()) and r['calib']['v'] is not None and abs(r['calib']['v']/183-1)<0.03 and r['calib']['frames']==4 and not r['calib']['calibrating'] and r['lit']==[55,60,72] and r['diff']=='✗ 2 Unterschiede' and r['paused2'] and abs(r['litT']-1)<0.2 and r['sceneVisible'] and abs(r['boxRatio']-1.78)<0.02
             and r['nachZurueck']['cmp'] and r['nachZurueck']['bar'] and r['nachZurueck']['cv'] and not r['nachZurueck']['scan'])
         print('pageerrors',errs,'ERGEBNIS','OK' if ok and not errs else 'FEHLER');await br.close()
 asyncio.run(main())
