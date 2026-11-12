@@ -198,6 +198,7 @@ body.convL .toast{top:auto;bottom:4px;padding:6px 12px;font-size:12px;max-width:
 body.convL .toast.mini{bottom:50px}
 #shotFab{position:fixed;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;border:1px solid var(--bd2);background:rgba(28,32,42,.8);color:#E8E6DF;font-size:15px;line-height:1;z-index:55;opacity:.5;padding:0}
 #shotFab:active{opacity:1}
+body.inplayer #shotFab{display:none}
 .toast{pointer-events:none;position:absolute;left:50%;top:64px;transform:translateX(-50%);background:rgba(28,32,42,.96);border:1px solid var(--bd2);padding:10px 16px;border-radius:14px;z-index:60;max-width:88%;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:tin .25s}
 body.inplayer .toast{top:34%;font-size:14px}
 @keyframes tin{from{opacity:0;transform:translate(-50%,-8px)}}
@@ -474,7 +475,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.54</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.55</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -761,6 +762,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function load(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+let svWarnAt=0;function saveW(k,v){const ok=save(k,v);if(!ok&&Date.now()-svWarnAt>60000){svWarnAt=Date.now();toast('Speicher voll – Änderungen werden nicht gesichert. Lösche alte Songs.',5000)}return ok}
 function toast(msg,ms=2600,mini){$$('.toast').forEach(t=>t.remove());const d=document.createElement('div');d.className='toast'+(mini?' mini':'');d.textContent=msg;$('#app').appendChild(d);setTimeout(()=>d.remove(),ms)}
 function lowerBound(arr,v,key){let lo=0,hi=arr.length;while(lo<hi){const m=(lo+hi)>>1;if(key(arr[m])<v)lo=m+1;else hi=m}return lo}
 function rrect(c,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
@@ -781,7 +783,7 @@ const PAL={green:{n:'Grün',l:'#63E6A0',d:'#1E9E5A'},blue:{n:'Blau',l:'#74AAFF',
 const KEYSETS={88:[21,108,'A0 – C8'],76:[28,103,'E1 – G7'],73:[28,100,'E1 – E7'],61:[36,96,'C2 – C7'],49:[36,84,'C2 – C6'],37:[48,84,'C3 – C6']};
 const S=Object.assign({layout:88,sound:true,speed:1,hand:'B',other:'show',soundMine:false,swap:false,wait:false,score:true,input:'mic',sens:6,names:true,full:false,look:2.5,reps:3,autoNext:false,speedUp:false,colL:'green',colR:'blue',goal:15},load('kt_settings')||{});
 if(S.speed>1)S.speed=1;S.input='mic';S.score=false;S.soundMine=false;
-const saveS=()=>save('kt_settings',S);
+const saveS=()=>saveW('kt_settings',S);
 const fmtSpeed=v=>(Math.round(v*100)/100).toLocaleString('de-DE')+'×';
 const KR=()=>KEYSETS[S.layout]||KEYSETS[88];
 const NK=()=>KR()[1]-KR()[0]+1;
@@ -797,8 +799,8 @@ const dayKey=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart
 const songStat=id=>ST.songs[id]||(ST.songs[id]={time:0,last:0,sessions:0,best:0,stars:0,sections:{}});
 function addTime(id,sec){const k=dayKey();ST.days[k]=(ST.days[k]||0)+sec;if(id){const s=songStat(id);s.time+=sec;s.last=Date.now()}const st=streak();if(st>ST.bestStreak)ST.bestStreak=st;stDirty=true}
 function streak(){const d=new Date();let c=0;if(!((ST.days[dayKey(d)]||0)>=60))d.setDate(d.getDate()-1);while((ST.days[dayKey(d)]||0)>=60){c++;d.setDate(d.getDate()-1)}return c}
-setInterval(()=>{if(stDirty){save('kt_stats',ST);stDirty=false}},4000);
-function flushOnHide(){if(stDirty)save('kt_stats',ST)}
+setInterval(()=>{if(stDirty){if(saveW('kt_stats',ST))stDirty=false}},4000);
+function flushOnHide(){if(stDirty)save('kt_stats',ST);try{if(CMP&&CMP.dirty)ceSave()}catch(e){}}
 window.addEventListener('pagehide',flushOnHide);
 
 /* ================= desktop phone preview ================= */
@@ -992,7 +994,7 @@ function memApply(rec,run,now){ // returns 'pass' | 'up' | 'down' | 'same' | 'fa
   if(bad===0){rec.clean=(rec.clean||0)+1;if(rec.clean>=2){rec.clean=0;rec.lvl++;return 'up'}return 'clean1'} // v4.54: two clean runs in a row before the help is reduced
   rec.clean=0;if(bad>=3&&rec.lvl>1){rec.lvl--;return 'down'}
   return 'same'}
-const memSaveAll=()=>save('kt_mem',MEMS);
+const memSaveAll=()=>saveW('kt_mem',MEMS);
 function openMem(it){if(memLoad(it)){closeSheets();navStack.push('mem');show('mem');memHome()}}
 function memLoad(it){let s;try{s=songForItem(it)}catch(e){toast('Fehler: '+e.message);return false}
   const gs=memGroups(s.notes);if(gs.length<3){toast('Der Song ist zu kurz zum Auswendiglernen',3000);return false}
@@ -1025,12 +1027,14 @@ function memWatchTick(R){const g0=MEM.gs[R.a].start,gl=MEM.gs[R.b];R.watchT=(mem
   memDraw()}
 function memStart(i,review,range,chain){const r=MEM.rec.secs[i],sc=MEM.secs[i],a=range?range[0]:sc[0],b=range?range[1]:sc[1];
   if(!review&&!chain&&!range&&!r.runs&&!r.watched)return memWatch(i);
-  const lvl=(review||chain)?4:r.lvl;MEM.run={i,a,b,pos:a,hit:new Set(),errors:0,hints:0,lvl,review:!!review,chain:!!chain,gStart:memNow(),hinted:false,done:false};
+  const lvl=(review||chain)?4:r.lvl;MEM.run={i,a,b,pos:a,hit:new Set(),errors:0,hints:0,lvl,review:!!review,chain:!!chain,gStart:memNow(),hinted:false,done:false,kbWas:kbOn(),paused:false,pausedAt:0};
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';
   $('#memRunT').textContent=(chain?'Verbinden: Abschnitt '+i+' + '+(i+1):'Abschnitt '+(i+1))+(review?' · Wiederholung':'')+' · Stufe '+lvl+' von 4';
   if(!MEM.timer)MEM.timer=setInterval(memTick,100);memTick()}
 const memHintOn=()=>{const R=MEM.run;return R.lvl===1||(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]};
 function memTick(){const R=MEM.run;if(!R)return;if(R.watch){memWatchTick(R);return}
+  if(R.paused){if(R.kbWas&&kbOn()){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.hinted=false}else return}
+  else if(R.kbWas&&!kbOn()&&!R.done){R.paused=true;R.pausedAt=memNow();$('#memMsg').textContent='Klavier getrennt – der Lauf ist angehalten. Verbinde es wieder oder spiele auf dem Bildschirm weiter.';toast('Klavier getrennt – Lauf angehalten',3500);return}
   if(!R.done&&R.lvl>=2&&!R.hinted&&(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]){R.hinted=true;R.hints++} // a hint that had to appear counts like a mistake
   memDraw()}
 function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepCv(cv);if(!p)return;const c=p.c,now=performance.now(),kb=Math.min(110,p.h*0.42),hn=p.h-kb;MEM.kbH=kb;MEM.hn=hn;c.clearRect(0,0,p.w,p.h);
@@ -1045,7 +1049,7 @@ function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prep
   if(R.watch){if(!R.watchDone)$('#memProg').textContent='Ansehen und anhören';return}
   $('#memProg').textContent=R.done?'Fertig':`Anschlag ${at+1} von ${tot}  ·  Fehler ${R.errors+R.hints}`;
   if(!R.done)$('#memMsg').textContent=R.lvl===1?'Spiele die Noten nach – die Tasten leuchten.':R.lvl===2?'Nur die nächsten Noten sind sichtbar – den Rest musst du dir merken.':hint?'Hilfe: hier sind die Tasten.':R.lvl===4?'Prüfung: spiele aus dem Gedächtnis, ohne Hilfe.':'Spiele aus dem Gedächtnis – wenn du stockst, erscheint Hilfe.'}
-function memPress(m){const R=MEM.run;if(!R||R.done)return;const exp=MEM.gs[R.pos].mids;
+function memPress(m){const R=MEM.run;if(!R||R.done)return;if(R.paused){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.kbWas=false;R.hinted=false}const exp=MEM.gs[R.pos].mids;
   if(exp.has(m)){if(R.hit.has(m))return;R.hit.add(m);if(R.hit.size===exp.size){R.pos++;R.hit=new Set();R.gStart=memNow();R.hinted=false;if(R.pos>R.b)return memFinish()}}
   else{R.errors++;MEM.flash.set(m,performance.now())}
   memDraw()}
@@ -2019,7 +2023,7 @@ function judgeCal(m,A,B,P,Pmid,sustain){
 }
 function showDbg(m,v){const el=$('#calDbg');if(!S.debug){el.classList.add('hidden');return}el.classList.remove('hidden');
   el.textContent=`${noteName(m)}: ${v.ok?'OK':'nein'}${v.sus?'':' · klingt nicht aus'} · Muster ${v.cj.own} dB (Nachbar ${v.cj.nb}, ungerade ${v.cj.odd}, Oktave tiefer ${v.cj.sub}) · Tonhöhe ${v.b?noteName(v.b[0])+' '+v.b[1]+'/'+v.b[2]:'–'} · scharf ${v.sp[0]}/${v.sp[1]}`}
-function saveKey(m,D){CAL[m]=Array.from(D,v=>+v.toPrecision(4));tplCache.delete(m);save('kt_cal',CAL)}
+function saveKey(m,D){CAL[m]=Array.from(D,v=>+v.toPrecision(4));tplCache.delete(m);saveW('kt_cal',CAL)}
 function calAdvance(){CQ.i++;CQ.att=0;ringState('');if(CQ.i>=CQ.list.length){showSum();return}CQ.state='listen';setCalMsg('Spiel die blaue Taste einmal kräftig an','');calUI()}
 $('#cSkip').onclick=()=>{if(CQ.state==='err')return;CQ.state='listen';calAdvance()};
 $('#cPrev').onclick=()=>{if(CQ.i>0){CQ.i--;CQ.att=0;CQ.state=CQ.state==='err'?'err':'listen';ringState('');setCalMsg('Spiel die blaue Taste einmal kräftig an','');calUI()}};
@@ -2126,7 +2130,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.54 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.55 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2173,7 +2177,7 @@ $('#yCap').onclick=async()=>{const r=$('#ytBox').getBoundingClientRect();toast('
 
 /* ================= profile ================= */
 let PF=Object.assign({name:'',email:'',col:'blue',since:Date.now()},load('kt_profile')||{});if(!load('kt_profile'))save('kt_profile',PF);
-const savePF=()=>save('kt_profile',PF);
+const savePF=()=>saveW('kt_profile',PF);
 $('#pfSave').onclick=()=>{const m=$('#pfMail').value.trim();if(m&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){toast('Diese E-Mail-Adresse sieht nicht richtig aus');return}
   PF.name=$('#pfName').value.trim();PF.email=m;savePF();toast('Profil gespeichert');back()};
 const initials=()=>{const p=(PF.name||'').trim().split(/\s+/).filter(Boolean);return p.length?(p[0][0]+(p[1]?p[1][0]:'')).toUpperCase():'?'};
@@ -2917,6 +2921,7 @@ window.appBack=function(){
   if(cur==='player'){$('#pBack').click();return true}
   if($('#convErr').classList.contains('on')){$('#convErrOk').click();return true}
   if(cur==='yt'){$('#yBack').click();return true}
+  if(cur==='mem'){back();return true}
   if(cur==='calib'){$('#cBack').click();return true}
   if(cur==='onb'){$('#onbSkip').click();return true}
   if(cur==='settings'||cur==='profile'){back();return true}
@@ -2925,6 +2930,11 @@ window.appBack=function(){
 };
 
 /* ================= start ================= */
+// v4.55: leaving the app must neither cost mistakes nor lose edits
+document.addEventListener('visibilitychange',()=>{try{
+  if(document.visibilityState==='hidden'){if(MEM.run)MEM.hiddenAt=Date.now();try{if(CMP&&CMP.dirty)ceSave()}catch(e){}}
+  else if(MEM.hiddenAt){const d=Date.now()-MEM.hiddenAt;MEM.hiddenAt=null;const R=MEM.run;if(R){R.gStart+=d;if(R.watch)R.watchStart+=d;if(R.paused)R.pausedAt+=d}}
+}catch(e){}});
 applyDesk();renderHome();syncUI();requestAnimationFrame(tick);
 $('#onbAgain').onclick=openOnb;
 if(!load('kt_onb'))openOnb();
