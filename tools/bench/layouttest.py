@@ -14,6 +14,6 @@ async def main():
             if name=='klein':
                 res['kleinEdit']=await pg.evaluate("([W,H])=>{CMP.sel=CMP.notes[0]||{};CMP.dirty=true;ceUI();const r=s=>{const b=$(s).getBoundingClientRect();return {y:b.y,h:b.height,b:b.bottom}};const c=r('#cmpScene'),bar=r('#cmpBar');return {sceneH:Math.round(c.h),inside:bar.b<=H+1,noOverlap:bar.y>=c.b-1}}",[vp['width'],vp['height']])
         print(json.dumps(res));ke=res['kleinEdit'];h,q,k=res['hoch'],res['quer'],res['klein']
-        ok=all(x['same'] and (x['sceneTall'] or x['barSide']) and abs(x['ratio']-1.78)<0.02 and (x['stacked'] or x['barSide']) and x['inside'] and x['textHidden'] and not x['err'] for x in (h,q,k)) and h['barBelow'] and k['barBelow'] and ke['sceneH']>=119 and ke['inside'] and ke['noOverlap'] and h['filled'] and k['filled'] and h['sceneH']>h['vh']*1.5 and q['barSide'] and q['sceneFull'] and q['barUnder'] and q['vw']>=300
+        ok=all(x['same'] and (x['sceneTall'] or x['barSide']) and abs(x['ratio']-1.78)<0.02 and (x['stacked'] or x['barSide']) and x['inside'] and x['textHidden'] and not x['err'] for x in (h,q,k)) and h['barBelow'] and k['barBelow'] and ke['sceneH']>=119 and ke['inside'] and ke['noOverlap'] and h['filled'] and k['filled'] and h['sceneH']>h['vh']*1.1 and q['barSide'] and q['sceneFull'] and q['barUnder'] and q['vw']>=300
         print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())

@@ -256,6 +256,9 @@ body.inplayer .toast{top:34%;font-size:14px}
 #cmpTxt{display:none;height:22px;line-height:22px;text-align:center;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 #cmpDiff{display:none;height:26px;line-height:26px;text-align:center;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cmpEdit,#cmpSave{display:flex;gap:6px}#cmpEdit.hidden,#cmpSave.hidden{display:none}#cmpEdit .btn,#cmpSave .btn{flex:1;min-width:0;height:44px;font-size:13px;padding-left:4px;padding-right:4px;white-space:nowrap;padding:0 4px}
+#cmpTl{display:flex;flex-direction:column;gap:2px}#cmpTl #tlFlag{padding:0 10px;height:24px;min-height:0;line-height:1}#yt.cmpMode #cmpBar{gap:3px}
+#cmpTl .tlr{display:flex;align-items:center;gap:8px}#cmpTl #tlT{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;min-width:58px}#cmpTl #tlV{font-variant-numeric:tabular-nums;display:none}@media (min-height:760px){#cmpTl #tlV{display:block}}
+#tlTrack{position:relative;flex:1;min-width:0;height:22px;touch-action:none;border-radius:8px;background:var(--s2);overflow:hidden}#tlCv{width:100%;height:100%;display:block}
 #cmpBtns{display:flex;gap:8px}#cmpBtns .btn{flex:1;min-width:0;height:46px;font-size:16px;white-space:nowrap}
 #ytFrame,#ytBox iframe{position:absolute;inset:0;width:100%;height:100%}
 #ytMsg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--mu);font-size:14px}
@@ -628,7 +631,7 @@ body.short #onbDots{margin:8px 0}
   <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div></div>
   <div id="ytBox"><div id="ytFrame"></div><canvas id="cmpCv" class="hidden"></canvas><div id="ytMsg"></div><div id="ytBlock" class="hidden" style="position:absolute;inset:0;z-index:5;background:transparent"></div></div>
   <canvas id="cmpScene" class="hidden"></canvas>
-  <div id="cmpBar" class="hidden"><div id="cmpTxt">–</div><div id="cmpDiff"> </div><div id="cmpEdit" class="hidden"><button class="btn" id="ceDel">Löschen</button><button class="btn" id="ceDn">Ton ▼</button><button class="btn" id="ceUp">Ton ▲</button><button class="btn" id="ceSplit">Teilen</button><button class="btn" id="ceShort">Kürzer</button><button class="btn" id="ceLong">Länger</button></div><div id="cmpSave" class="hidden"><button class="btn" id="ceUndo">Rückgängig</button><button class="btn pri" id="ceSave">Speichern</button></div><div id="cmpBtns"><button class="btn" id="cmpPrevN">‹ Zurück</button><button class="btn" id="cmpPlay">Abspielen</button><button class="btn" id="cmpNextN">Weiter ›</button></div></div>
+  <div id="cmpBar" class="hidden"><div id="cmpTl"><div class="tlr"><b id="tlT">0:00,0</b><div id="tlTrack"><canvas id="tlCv"></canvas></div><button class="btn sm" id="tlFlag" title="Fehler markieren">⚑</button></div><span id="tlV" class="mu xs">Video 0:00</span></div><div id="cmpTxt">–</div><div id="cmpDiff"> </div><div id="cmpEdit" class="hidden"><button class="btn" id="ceDel">Löschen</button><button class="btn" id="ceDn">Ton ▼</button><button class="btn" id="ceUp">Ton ▲</button><button class="btn" id="ceSplit">Teilen</button><button class="btn" id="ceShort">Kürzer</button><button class="btn" id="ceLong">Länger</button></div><div id="cmpSave" class="hidden"><button class="btn" id="ceUndo">Rückgängig</button><button class="btn pri" id="ceSave">Speichern</button></div><div id="cmpBtns"><button class="btn" id="cmpPrevN">‹ Zurück</button><button class="btn" id="cmpPlay">Abspielen</button><button class="btn" id="cmpNextN">Weiter ›</button></div></div>
   <div id="convPanel" class="hidden" style="flex:none;padding:16px 18px 20px;background:var(--s1);border-top:1px solid var(--bd);text-align:center">
     <div style="font-weight:800;font-size:17px" id="convTitle">Song wird erstellt …</div>
     <div class="mu sm" id="convSub" style="margin:4px 0 12px">Bitte warten, bis 100 % erreicht sind. Leg das Handy so lange einfach hin.</div>
@@ -2031,7 +2034,27 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
     else if(!CMP.busy&&!CMP.calibrating&&CMP.speed===null)t='Balken nicht messbar';
     {const vq=CMP.it&&CMP.it.video&&CMP.it.video.q;if(vq&&vq<=240&&t.trim()&&!sel)t+=' · '+vq+'p'}
     if(df.textContent!==t)df.textContent=t;df.style.color=col}}
-function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
+// --- v4.64: time line in the comparison view – exact position (song time and video time), notes per second, own error marks, tap/drag to jump
+const tlFmt=t=>{t=Math.max(0,t);const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1).replace('.',',')};
+const tlFlags=()=>{try{return (load('kt_cmpflags')||{})[CMP.it.id]||[]}catch(e){return []}};
+const tlSetFlags=a=>{try{const o=load('kt_cmpflags')||{};o[CMP.it.id]=a;save('kt_cmpflags',o)}catch(e){}};
+function tlDur(){if(!CMP)return 1;if(!CMP.dur){let e=0;for(const n of CMP.notes)e=Math.max(e,n.start+n.dur);CMP.dur=Math.max(5,e+1);const b=new Array(Math.ceil(CMP.dur)+1).fill(0);for(const n of CMP.notes)b[Math.floor(n.start)]++;CMP.dens=b}return CMP.dur}
+function tlDraw(){const cv=$('#tlCv');if(!CMP||!cv)return;const dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect(),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(!w||!h)return;if(cv.width!==w)cv.width=w;if(cv.height!==h)cv.height=h;
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);const W=r.width,H=r.height,D=tlDur(),vt=cmpVT(),T=CMP.tlDrag!=null?CMP.tlDrag:vt-CMP.off;
+  c.clearRect(0,0,W,H);const mx=Math.max(1,...CMP.dens),bw=W/CMP.dens.length;
+  for(let i=0;i<CMP.dens.length;i++){const v=CMP.dens[i]/mx,hh=Math.max(v>0?2:0,v*(H-18));c.fillStyle=i<T?'#378ADD':'#378ADD66';c.fillRect(i*bw,H-hh-12,Math.max(1,bw-0.5),hh)}
+  c.fillStyle='#9AA3B2';c.font='10px sans-serif';c.textBaseline='bottom';const step=D>240?60:D>90?30:10;for(let t=0;t<=D;t+=step){const x=t/D*W;c.fillRect(x,H-12,1,4);c.fillText(Math.floor(t/60)+':'+String(t%60).padStart(2,'0'),Math.min(W-26,x+2),H-1)}
+  c.fillStyle='#E24B4A';for(const f of tlFlags()){const x=f/D*W;c.fillRect(x-1.5,0,3,H-12);c.beginPath();c.arc(x,5,5,0,7);c.fill()}
+  const px=Math.min(W,Math.max(0,T/D*W));c.fillStyle='#fff';c.fillRect(px-1,0,2,H-12);c.beginPath();c.arc(px,H-12,4,0,7);c.fill();
+  $('#tlT').textContent=tlFmt(T);$('#tlV').textContent='Video '+tlFmt(T+CMP.off)+' · Song '+tlFmt(D)}
+(()=>{const tr=$('#tlTrack'),at=e=>{const r=tr.getBoundingClientRect();return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))*tlDur()};
+  tr.addEventListener('pointerdown',e=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}tr.setPointerCapture(e.pointerId);CMP.tlDrag=at(e);tlDraw()});
+  tr.addEventListener('pointermove',e=>{if(CMP&&CMP.tlDrag!=null){CMP.tlDrag=at(e);tlDraw()}});
+  const up=e=>{if(!CMP||CMP.tlDrag==null)return;const T=CMP.tlDrag;CMP.tlDrag=null;cmpGo(T+CMP.off)};
+  tr.addEventListener('pointerup',up);tr.addEventListener('pointercancel',()=>{if(CMP)CMP.tlDrag=null});
+  $('#tlFlag').onclick=()=>{if(!CMP)return;const T=cmpVT()-CMP.off,a=tlFlags(),i=a.findIndex(x=>Math.abs(x-T)<0.6);
+    if(i>=0){a.splice(i,1);toast('Markierung entfernt',1200)}else{a.push(Math.round(T*10)/10);a.sort((p,q)=>p-q);toast('Fehler markiert bei '+tlFmt(T),1800)}tlSetFlags(a);tlDraw()}})();
+function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}try{tlDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpVT=()=>{try{return ytp.getCurrentTime()}catch(e){return 0}};
 let CMP_MARKS=false; // v4.48: the right/wrong marks are off until the glow measurement is reliable (YouTube overlays in the paused picture fooled it)
 async function cmpMeasure(){ // picture of the video box → which keys glow
@@ -2095,7 +2118,7 @@ async function shotSend(){const tok=ghTok();if(!tok){toast('Kein Diagnose-Schlü
   const R=sel=>{const e=$(sel);if(!e)return null;const b=e.getBoundingClientRect();return [Math.round(b.x),Math.round(b.y),Math.round(b.width),Math.round(b.height)]};
   let vt=null;try{vt=ytp&&ytp.getCurrentTime&&ytp.getCurrentTime()}catch(e){}
   const info={ts,version:(document.getElementById('verTxt')||{}).textContent||null,screen:[innerWidth,innerHeight,devicePixelRatio],capture:[img.width,img.height],kb:{state:KB.state,name:KB.name,msg:KB.msg,log:KB.log},rects:{ytBox:R('#ytBox'),cmpScene:R('#cmpScene'),cmpBar:R('#cmpBar'),cmpCv:R('#cmpCv')},
-    cmp:CMP?{off:CMP.off,speed:CMP.speed,lo:CMP.lo,aspect:CMP.g&&CMP.g.ar,notes:CMP.notes.length,step:CMP.step,litT:CMP.litT,lit:CMP.lit?[...CMP.lit]:null,cover:CMP.cover,vt,quality:(function(){try{return ytp.getPlaybackQuality()}catch(e){return null}})(),geo:CMP.g}:null};
+    cmp:CMP?{flags:tlFlags(),T:cmpVT()-CMP.off,vt:cmpVT(),off:CMP.off,speed:CMP.speed,lo:CMP.lo,aspect:CMP.g&&CMP.g.ar,notes:CMP.notes.length,step:CMP.step,litT:CMP.litT,lit:CMP.lit?[...CMP.lit]:null,cover:CMP.cover,vt,quality:(function(){try{return ytp.getPlaybackQuality()}catch(e){return null}})(),geo:CMP.g}:null};
   const a=await ghUpload(`diag/shots/${ts}.jpg`,jpg,'Bildschirmfoto '+ts),b=await ghUpload(`diag/shots/${ts}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Bildschirmfoto Daten '+ts);
   toast(a.ok&&b.ok?'📷 gesendet':'Senden fehlgeschlagen: '+(a.err||b.err),a.ok&&b.ok?1800:4000,true)}
 const shotFabShow=()=>{const f=$('#shotFab');if(f)f.classList.toggle('hidden',!ghTok())};
