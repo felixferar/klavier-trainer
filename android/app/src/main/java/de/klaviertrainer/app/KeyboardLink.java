@@ -55,6 +55,7 @@ class KeyboardLink {
     private BluetoothLeScanner scanner;
     private ScanCallback scanCb;
     private final Set<String> seen = new HashSet<>();
+    private boolean scanAll = false;
     private MidiDevice device;
     private MidiOutputPort port;
     private String curAddr, curName;
@@ -91,13 +92,38 @@ class KeyboardLink {
 
     // ------------------------------------------------------------ Suchen
 
-    void scan() {
+    void scan() { scan(false); }
+
+    /** all = true: ohne MIDI-Filter suchen (für Keyboards, die ihre MIDI-Kennung nicht mitsenden) */
+    void scan(boolean all) {
         if (midi == null) { setState("fail", "Dieses Handy unterstützt kein MIDI."); return; }
         seen.clear();
-        // USB-Geräte gleich mit anbieten
+        scanAll = all;
+        // 1) schon geöffnete MIDI-Geräte (USB und Bluetooth) – so zeigt Android sie auch
         for (MidiDeviceInfo info : midi.getDevices()) {
-            if (info.getType() == MidiDeviceInfo.TYPE_USB && info.getOutputPortCount() > 0) found(nameOf(info), "usb:" + info.getId(), true);
+            if (info.getOutputPortCount() <= 0) continue;
+            if (info.getType() == MidiDeviceInfo.TYPE_USB) found(nameOf(info), "usb:" + info.getId(), true, "usb");
+            else if (info.getType() == MidiDeviceInfo.TYPE_BLUETOOTH) {
+                try {
+                    @SuppressWarnings("deprecation")
+                    BluetoothDevice bd = (BluetoothDevice) info.getProperties().getParcelable(MidiDeviceInfo.PROPERTY_BLUETOOTH_DEVICE);
+                    if (bd != null) found(nameOf(info), bd.getAddress(), false, "connected");
+                } catch (Exception ignored) {}
+            }
         }
+        // 2) gekoppelte Geräte (wie in den Bluetooth-Einstellungen): nur Low-Energy- und MIDI-Geräte, keine Kopfhörer
+        try {
+            if (bt != null && bt.isEnabled()) {
+                for (BluetoothDevice d : bt.getBondedDevices()) {
+                    boolean le = d.getType() == BluetoothDevice.DEVICE_TYPE_LE || d.getType() == BluetoothDevice.DEVICE_TYPE_DUAL;
+                    boolean midiUuid = false;
+                    if (d.getUuids() != null) for (android.os.ParcelUuid u : d.getUuids()) if (MIDI_UUID.equals(u)) midiUuid = true;
+                    if (!le && !midiUuid) continue;
+                    String n = d.getName();
+                    found(n == null || n.isEmpty() ? "Bluetooth-Gerät" : n, d.getAddress(), false, "paired");
+                }
+            }
+        } catch (Exception ignored) {}
         if (!bluetoothOn()) { setState("btoff", "Bluetooth ist aus."); return; }
         scanner = bt.getBluetoothLeScanner();
         if (scanner == null) { setState("btoff", "Bluetooth ist aus."); return; }
@@ -110,7 +136,8 @@ class KeyboardLink {
         ScanFilter f = new ScanFilter.Builder().setServiceUuid(MIDI_UUID).build();
         ScanSettings s = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         try {
-            scanner.startScan(Collections.singletonList(f), s, scanCb);
+            if (scanAll) scanner.startScan(null, s, scanCb);
+            else scanner.startScan(Collections.singletonList(f), s, scanCb);
         } catch (Exception e) {
             setState("fail", "Suche nicht möglich: " + e.getMessage());
             return;
@@ -130,12 +157,13 @@ class KeyboardLink {
         if (d == null) return;
         String name = d.getName();
         if ((name == null || name.isEmpty()) && r.getScanRecord() != null) name = r.getScanRecord().getDeviceName();
-        found(name == null || name.isEmpty() ? "Bluetooth-Keyboard" : name, d.getAddress(), false);
+        if (scanAll && (name == null || name.isEmpty())) return; // ohne Namen nicht anzeigbar
+        found(name == null || name.isEmpty() ? "Bluetooth-Keyboard" : name, d.getAddress(), false, scanAll ? "any" : "new");
     }
 
-    private void found(String name, String addr, boolean usb) {
+    private void found(String name, String addr, boolean usb, String kind) {
         if (!seen.add(addr)) return;
-        try { out.send(new JSONObject().put("cmd", "kbFound").put("name", name).put("addr", addr).put("usb", usb)); } catch (Exception ignored) {}
+        try { out.send(new JSONObject().put("cmd", "kbFound").put("name", name).put("addr", addr).put("usb", usb).put("kind", kind)); } catch (Exception ignored) {}
     }
 
     void stopScan() {

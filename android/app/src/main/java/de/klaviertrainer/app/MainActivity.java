@@ -421,9 +421,16 @@ public class MainActivity extends Activity {
                     scanning = false;
                     break;
                 // ---- Keyboard über Bluetooth-MIDI / USB-MIDI
-                case "kbScan":
-                    withBtPerm(() -> kb.scan());
+                case "kbScan": {
+                    final boolean all = m.optBoolean("all", false);
+                    withBtPerm(() -> kb.scan(all));
                     break;
+                }
+                case "openSettings": {
+                    Intent si = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()));
+                    startActivity(si);
+                    break;
+                }
                 case "kbConnect": {
                     final String addr = m.optString("addr"), name = m.optString("name", "Keyboard");
                     withBtPerm(() -> kb.connect(addr, name));
