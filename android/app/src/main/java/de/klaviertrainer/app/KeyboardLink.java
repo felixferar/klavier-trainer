@@ -67,6 +67,9 @@ class KeyboardLink {
     private final Set<String> seen = new HashSet<>();
     private boolean scanAll = false;
     private boolean triedAgain = false;
+    private BluetoothGatt gatt;
+    private boolean gattManual = false;
+    private boolean gattUp = false;
     /** v4.60: kurze Protokollzeilen (Zeit, Ereignis) – werden in der App unter "Technische Details" gezeigt und mit dem Kamera-Knopf hochgeladen */
     private void dbg(String line) {
         try { out.send(new JSONObject().put("cmd", "kbLog").put("line", line)); } catch (Exception ignored) {}
@@ -279,8 +282,6 @@ class KeyboardLink {
     private static final UUID MIDI_SERVICE = UUID.fromString("03B80E5A-EDE8-4B33-A751-6CE34EC4C700");
     private static final UUID MIDI_CHAR = UUID.fromString("7772E5DB-3868-4112-A1A9-F2669D106BF3");
     private static final UUID CCC = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
-    private BluetoothGatt gatt;
-    private boolean gattManual = false;
 
     private void closeGatt() {
         gattUp = false;
@@ -498,7 +499,6 @@ class KeyboardLink {
         device = null;
     }
 
-    private boolean gattUp = false;
     private boolean up() { return device != null || gattUp; }
     void report() { setState(up() ? "on" : state, null); }
 
