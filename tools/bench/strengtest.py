@@ -1,7 +1,7 @@
 """v4.69: Stufe 1/2 streng im Rhythmus: zu früh gedrückt zählt nicht und wird gezählt; die Songuhr springt nicht vor; keine Tasten-Hilfe in Stufe 1; Hilfe in Stufe 2 erst nach Warten an der Linie"""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};window.playTone=()=>{};
+JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};window.playTone=()=>{};window.__instantEnd=true;
  const notes=[];let t=0;for(let i=0;i<20;i++){notes.push({m:60+(i%5)*2,start:t,dur:0.4,hand:'R'});t+=0.6}
  const it={id:'st',type:'midi',title:'St',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);MEM.rec.secs.forEach(r=>{r.watched=true;r.runs=1});
  memStart(0,false);let R=MEM.run;const g0=[...MEM.gs[R.a].mids][0];
