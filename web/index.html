@@ -236,23 +236,24 @@ body.inplayer .toast{top:34%;font-size:14px}
 /* youtube */
 #ytBox{flex:1;min-height:0;background:#000;position:relative}
 #cmpCv{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
-#yt.cmpMode{--cw:min(100vw,calc((100dvh - 285px)/2*16/9))}
+#yt.cmpMode{--cw:100vw}
+#yt.cmpMode .topbar{min-height:44px;padding-top:max(0px,env(safe-area-inset-top));padding-bottom:0}
 #yt.cmpMode #ytBox{flex:none;width:var(--cw);aspect-ratio:16/9;margin:0 auto}
-#cmpScene{flex:none;width:var(--cw);aspect-ratio:16/9;margin:0 auto;display:block;background:var(--s1)}
+#cmpScene{flex:1 1 0;min-height:120px;width:var(--cw);margin:0 auto;display:block;background:var(--s1)}
 #cmpScene.hidden{display:none}
 @media (orientation:landscape) and (max-height:600px){ /* sideways: the two pictures stacked on the left, controls on the right */
  #yt.cmpMode{--cw:min(calc(100vw - 260px),calc(100dvh/2*16/9));display:grid;grid-template-columns:var(--cw) 1fr;grid-template-rows:1fr 1fr}
  #yt.cmpMode .topbar{position:absolute;top:0;left:var(--cw);right:0;z-index:6}
  #yt.cmpMode #ytBox{grid-column:1;grid-row:1;margin:0}
- #yt.cmpMode #cmpScene{grid-column:1;grid-row:2;margin:0}
+ #yt.cmpMode #cmpScene{grid-column:1;grid-row:2;margin:0;flex:none;min-height:0;aspect-ratio:16/9}
  #yt.cmpMode #cmpBar{grid-column:2;grid-row:1/3;overflow:auto;border-top:0;border-left:1px solid var(--bd);padding-top:56px;justify-content:center}
  #yt.cmpMode #cmpBtns{flex-wrap:wrap}#yt.cmpMode #cmpBtns .btn{flex:1 1 30%;height:44px;font-size:15px}
 }
-#cmpBar{flex:none;display:flex;flex-direction:column;gap:4px;padding:8px 10px 12px;background:var(--s1);border-top:1px solid var(--bd)}
+#cmpBar{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;background:var(--s1);border-top:1px solid var(--bd)}
 #cmpTxt{display:none;height:22px;line-height:22px;text-align:center;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
-#cmpDiff{height:26px;line-height:26px;text-align:center;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cmpDiff{display:none;height:26px;line-height:26px;text-align:center;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cmpEdit,#cmpSave{display:flex;gap:6px}#cmpEdit.hidden,#cmpSave.hidden{display:none}#cmpEdit .btn,#cmpSave .btn{flex:1;min-width:0;height:44px;font-size:14px;white-space:nowrap;padding:0 4px}
-#cmpBtns{display:flex;gap:8px;margin-top:4px}#cmpBtns .btn{flex:1;min-width:0;height:48px;font-size:16px;white-space:nowrap}
+#cmpBtns{display:flex;gap:8px}#cmpBtns .btn{flex:1;min-width:0;height:46px;font-size:16px;white-space:nowrap}
 #ytFrame,#ytBox iframe{position:absolute;inset:0;width:100%;height:100%}
 #ytMsg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--mu);font-size:14px}
 .ybar{flex:none;display:flex;align-items:center;gap:6px;padding:8px;background:var(--s1);border-top:1px solid var(--bd);flex-wrap:wrap;justify-content:center;row-gap:6px}
@@ -471,7 +472,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.50</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.51</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2001,7 +2002,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.50 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.51 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
