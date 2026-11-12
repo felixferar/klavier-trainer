@@ -19,10 +19,10 @@ async def main():
         pg=await br.new_page(viewport={'width':753,'height':360});errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(3500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False),errs)
-        c={'Ziel sichtbar':'2× hintereinander' in r['goal0'] and 'Stufe 2' in r['goal0'],
-           'nach 1× sauber':'Noch einmal so' in r['msg1'] and r['goal1']==1 and r['next1']=='Weiter: 2. Durchgang',
-           'Zögern zählt nicht als sauber':r['cat2']!='s' and r['lvlAfterHes']==1 and r['again2']=='none' and 'nochmal' in r['msg2'],
-           'Stufe 2 erreicht':r['lvlUp']==2 and 'Stufe 2' in r['msg3'] and r['next3']=='Weiter: Stufe 2',
+        c={'Sicherheit sichtbar':'Sicherheit Stufe 1: 60 %' in r['goal0'] and 'Stufe 2' in r['goal0'] and 'noch ca. 2' in r['goal0'],
+           'nach 1× sauber steigt':'76 %' in r['msg1'] and r['next1']=='Nächster Durchgang',
+           'Zögern: nicht sauber, kein Aufstieg':r['cat2']!='s' and r['lvlAfterHes']==1 and r['again2']=='none',
+           'Stufe 2 nach genug Sicherheit':r['lvlUp']==2,
            'gehalten grün':'#3bb273' in [x.lower() for x in r['heldStroke']] and '#ffffff' not in [x.lower() for x in r['heldStroke']],
            'losgelassen weiß':'#ffffff' in [x.lower() for x in r['relStroke']],'keine Fehler':not errs}
         print(c);ok=all(c.values());print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
