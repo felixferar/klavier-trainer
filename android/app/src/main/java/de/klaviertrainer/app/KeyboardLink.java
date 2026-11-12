@@ -386,7 +386,7 @@ class KeyboardLink {
             while (i < n && (d[i] & 0x80) == 0) { raw.write(d[i]); i++; }
         }
         byte[] out2 = raw.toByteArray();
-        if (out2.length > 0) receiver.onSend(out2, 0, out2.length, 0);
+        if (out2.length > 0) { try { receiver.onSend(out2, 0, out2.length, 0); } catch (java.io.IOException ignored) {} }
     }
 
     private final Runnable connectTimeout = () -> {
@@ -445,7 +445,7 @@ class KeyboardLink {
         try { d = bt.getRemoteDevice(curAddr); } catch (Exception e) { return; }
         // Nur ein Verbindungsversuch gleichzeitig und wachsende Pausen: sonst stauen sich offene Versuche auf
         // und Android wirft nach einigen Minuten SecurityException "too many MIDI connections" (App-Absturz).
-        if (prefs.getBoolean("kb_gatt", false)) { if (gatt == null) gattStart(d); h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
+        if (KeyboardLink.this.prefs.getBoolean("kb_gatt", false)) { if (gatt == null) gattStart(d); h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
         long now = android.os.SystemClock.elapsedRealtime();
         if (openPending && now - openSince < 60000) { h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
         openPending = true; openSince = now;
