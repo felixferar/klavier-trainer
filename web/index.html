@@ -531,7 +531,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.65</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.66</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1195,7 +1195,7 @@ function memWatch(i){const sc=MEM.secs[i],r=MEM.rec.secs[i];MEM.run={i,a:sc[0],b
   if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memTick()}
 function memWatchTick(R){const g0=MEM.gs[R.a].start,gl=MEM.gs[R.b];R.watchT=(memNow()-R.watchStart)/1000;
   while(R.played<=R.b&&MEM.gs[R.played].start-g0<=R.watchT){for(const m of MEM.gs[R.played].mids)playTone(m,Math.min(1,Math.max(0.2,MEM.gs[R.played].end-MEM.gs[R.played].start)),0.7);R.played++}
-  if(!R.watchDone&&R.watchT>gl.end-g0+0.6){R.watchDone=true;MEM.rec.secs[R.i].watched=true;memSaveAll();$('#memMsg').textContent='Jetzt bist du dran.';$('#memProg').textContent='Gesehen';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
+  if(!R.watchDone&&R.watchT>gl.end-g0+0.6){R.watchDone=true;MEM.rec.secs[R.i].watched=true;memSaveAll();$('#memMsg').textContent='Jetzt bist du dran – fang einfach an zu spielen.';$('#memProg').textContent='Gesehen';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
     $('#memNext').textContent='Jetzt spielen';$('#memChain').style.display='none';$('#memAgain').style.display='';$('#memAgain').textContent='Nochmal ansehen'}
   memDraw()}
 function memStart(i,review,range,chain){const r=MEM.rec.secs[i],sc=MEM.secs[i],a=range?range[0]:sc[0],b=range?range[1]:sc[1];
@@ -1222,7 +1222,7 @@ function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prep
   if(R.watch){if(!R.watchDone)$('#memProg').textContent='Ansehen und anhören';return}
   $('#memProg').textContent=R.done?'Fertig':`Anschlag ${at+1} von ${tot}  ·  Fehler ${R.errors+R.hints}`;
   if(!R.done)$('#memMsg').textContent=R.lvl===1?'Spiele die Noten nach – die Tasten leuchten.':R.lvl===2?'Nur die nächsten Noten sind sichtbar – den Rest musst du dir merken.':hint?'Hilfe: hier sind die Tasten.':R.lvl===4?'Prüfung: spiele aus dem Gedächtnis, ohne Hilfe.':'Spiele aus dem Gedächtnis – wenn du stockst, erscheint Hilfe.'}
-function memPress(m,src){const R=MEM.run;if(!R||R.done)return;if(R.paused){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.kbWas=false;R.hinted=false;memG(R,R.pos).paused=true}const exp=MEM.gs[R.pos].mids;
+function memPress(m,src){let R=MEM.run;if(!R||R.done)return;if(R.watch){if(!R.watchDone)return;memStart(R.i,false);R=MEM.run;if(!R)return}/* v4.66: nach dem Anhören startet der erste Ton direkt das Nachspielen */if(R.paused){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.kbWas=false;R.hinted=false;memG(R,R.pos).paused=true}const exp=MEM.gs[R.pos].mids;
   const tp=performance.now(),G=memG(R,R.pos);if(src!=='kb')R.touch=true;
   if(exp.has(m)){if(R.hit.has(m))return;R.hit.add(m);G.ok.push({m,t:tp});if(G.first==null)G.first=tp;if(R.hit.size===exp.size){G.last=tp;R.pos++;R.hit=new Set();R.gStart=memNow();R.hinted=false;if(R.pos>R.b)return memFinish()}}
   else{R.errors++;MEM.flash.set(m,tp);G.bad.push({m,t:tp})}
@@ -2398,7 +2398,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.65 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.66 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
