@@ -64,6 +64,7 @@ async def main():
            'Stufen':r['after']['box']==1 and r['after']['passed']==1 and r['after']['dueDays']==1,'speichern':r['persist']==1,
            'Hilfe3':(not r['hint3']['before']) and r['hint3']['after'] and r['hint3']['hints']==1 and r['hint3']['once']==1,'Hilfe4':r['hint4']==1,'kb':r['kbPos']==1,
            'faellig':('1 heute fällig' in r['dueTxt']) and r['goDue']=='Wiederholen','mischen':r['mix'] and r['mixRun']['review'] and r['mixRun']['lvl']==4 and r['mixRun']['queue']==1,
-           'rvfail':r['rvfail']['lvl']==2,'zurueck':r['backStops'],'touch':r['touchPos']==1,'Verbinden':r['chainBtn']=='' and r['chainRun']=={'a':0,'b':19,'chain':True,'lvl':4} and r['chained'],'fehlerfrei':not errs}
+           'rvfail':r['rvfail']['lvl']==2,'zurueck':r['backStops'],'touch':r['touchPos']==0,  # v4.67: Bildschirm-Tasten im Auswendig-Modus aus
+           'Verbinden':r['chainBtn']=='' and r['chainRun']=={'a':0,'b':19,'chain':True,'lvl':4} and r['chained'],'fehlerfrei':not errs}
         print(c);ok=all(c.values());print('ERGEBNIS','OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())

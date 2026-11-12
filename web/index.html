@@ -531,7 +531,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.66</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.67</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1223,7 +1223,11 @@ function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prep
   MEM.pos=drawKeys(c,MEM.lo,MEM.hi,p.w,kb,(m,b)=>{const w=MEM.flash.get(m);if(w&&now-w<450)return '#D9705F';if(lit.has(m))return '#7FB4F0';if(exp&&exp.has(m)){if(R.hit.has(m))return '#7FB4F0';if(hint)return '#3BB273'}return b?'#2C2C2A':'#E8E6DF'},true);c.restore();
   const bar=(m,y0,y1,col)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.5:0.7);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0))};
   if(R.watch){const g0=MEM.gs[R.a].start,pps=hn/2.5;for(const n of memSecNotes(R)){const rel=n.start-g0,yb=hn-(rel-R.watchT)*pps,yt=yb-n.dur*pps;if(yt>hn||yb<0)continue;bar(n.midi,Math.max(0,yt),Math.min(hn,yb),noteCol(n))}}
-  else if(!R.done){const n=R.lvl===1?8:R.lvl===2?2:0;for(let j=0;j<n&&R.pos+j<=R.b;j++){const yb=hn-6-j*30;for(const m of MEM.gs[R.pos+j].mids)bar(m,yb-24,yb,j===0?'#7FB4F0':'#378ADD')}}
+  else if(!R.done&&R.lvl<=2){ // v4.67: dieselbe Notenbahn wie beim Üben – echte Längen und Abstände, Handfarben; Stufe 2 zeigt nur die nächste Sekunde
+    const cur=MEM.gs[R.pos],t0=cur.start,pps=hn/3,lim=R.lvl===2?1.0:9;c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
+    for(const n of memSecNotes(R)){const rel=n.start-t0;if(rel>lim||rel<-0.001&&n.start+n.dur<t0)continue;if(rel<-0.001)continue;const yb=hn-4-rel*pps,yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;
+      const now1=rel<=cur.last-t0+0.001;bar(n.midi,Math.max(0,yt),yb,noteCol(n));if(now1){const k=MEM.pos[n.midi];if(k){const ww=k.w*(k.b?0.5:0.7);c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(k.x+k.w/2-ww/2,Math.max(0,yt),ww,Math.max(4,yb-Math.max(0,yt)))}}}
+    c.restore()}
   const tot=R.b-R.a+1,at=Math.min(tot,R.pos-R.a);
   if(R.watch){if(!R.watchDone)$('#memProg').textContent='Ansehen und anhören';return}
   $('#memProg').textContent=R.done?'Fertig':`Anschlag ${at+1} von ${tot}  ·  Fehler ${R.errors+R.hints}`;
@@ -1252,7 +1256,8 @@ $('#memGo').onclick=()=>{const nx=memPickNext(memNow());if(nx)memStart(nx.i,nx.r
 $('#memMix').onclick=()=>{const idx=MEM.rec.secs.map((r,i)=>(r.passed>0||r.box>0)?i:-1).filter(i=>i>=0);for(let k=idx.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[idx[k],idx[j]]=[idx[j],idx[k]]}
   if(!idx.length)return;MEM.queue=idx.slice(1);memStart(idx[0],true)};
 $('#memList').onclick=e=>{const li=e.target.closest('[data-i]');if(!li)return;const i=+li.dataset.i,r=MEM.rec.secs[i],done=r.passed>0||r.box>0;memStart(i,done)};
-$('#memCv').addEventListener('pointerdown',e=>{if(!MEM.run||!MEM.pos)return;const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top-(MEM.hn||0);let hit=null;if(y<0)return;
+$('#memCv').addEventListener('pointerdown',e=>{if(!MEM.run||!MEM.pos)return;if(!S.memTouch){if(!MEM.touchMsg){MEM.touchMsg=1;toast('Im Auswendig-Modus spielst du auf deinem Klavier – die Bildschirm-Tasten sind aus.',3500)}return} // v4.67: Bildschirm-Tasten aus (Wunsch des Nutzers)
+  const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top-(MEM.hn||0);let hit=null;if(y<0)return;
   for(const pb of [true,false])for(let m=MEM.lo;m<=MEM.hi;m++){const k=MEM.pos[m];if(!k||k.b!==pb||hit!==null)continue;const h=k.b?MEM.kbH*0.6:MEM.kbH;if(x>=k.x&&x<k.x+k.w&&y<=h)hit=m}
   if(hit!==null)userPress(hit,true)});
 $('#smMem').onclick=()=>{if(smItem)openMem(smItem)};
@@ -2404,7 +2409,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.66 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.67 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
