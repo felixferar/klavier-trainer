@@ -2541,8 +2541,10 @@ function scanCore(px,w,n,f){
       if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,clean:!!st.split});st.start=tt;st.hue=[];st.cs=0;st.cn=0;st.split=true}
       // D1: a new strike after a gap of 1–4 frames in which the key looked EXACTLY like at rest is a repeated note, not a flicker
       if(!st.on&&st.cnt===0)st.cleanStart=!!(st.hadNote&&st.gapClean&&st.offN>=1&&st.offN<=8);
-      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1)st.start=tt;if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.cs=0;st.cn=0;st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h);if(st.on){st.cs=(st.cs||0)+sat*val;st.cn=(st.cn||0)+1}}
-    else{st.cnt=0;{const cl=dist<30&&sat*val<0.2;st.offN=(st.offN||0)+1;st.gapClean=st.offN===1?cl:(st.gapClean&&cl)}
+      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1){st.start=tt;st.h1=h;st.c1=sat*val}if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.cs=0;st.cn=0;st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h);if(st.on){st.cs=(st.cs||0)+sat*val;st.cn=(st.cn||0)+1}}
+    else{ // v4.64: a key lit for a SINGLE frame (≤ 41 ms at 24 fps) is no event yet (flicker) – kept as a candidate; finishCore adopts it if the key's own bar arrived at that moment
+      if(!st.on&&st.cnt===1){const L=SCAN.events.single||(SCAN.events.single=[]);L.push({m:key.m,start:st.start,end:tt,hue:st.h1,ch:st.c1||0,single:true})}
+      st.cnt=0;{const cl=dist<30&&sat*val<0.2;st.offN=(st.offN||0)+1;st.gapClean=st.offN===1?cl:(st.gapClean&&cl)}
       if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,clean:!!st.split});st.split=false;st.hadNote=true}}
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
@@ -2668,6 +2670,21 @@ function finishCore(raw,preview){
       // overlay / end screen: ≥3 such keys lit at the same moment (a screen lighting up many keys) or a key that is almost colourless (dark tint); one or two held bass notes whose bar was missed stay
       {const lg=ev.filter(e=>!e.bar&&e.end-e.start>8),T=lg.filter(e=>lg.filter(o=>Math.abs(o.start-e.start)<0.3).length>=3||!(e.ch>=0.15)).map(e=>e.start);
         ev=ev.filter(e=>e.bar||!T.some(t=>Math.abs(t-e.start)<0.3))}}}  // also drops short bar-less notes that start together with such an overlay (e.g. the last 'B' of an end screen)
+  // v4.64: very short notes (one video frame lit) – real when the key's own bar arrived exactly then (Golden Hour: fast F#4 in the G#/F# figure was lost)
+  if(SCAN.lane&&SCAN.barDelay!=null&&raw.single&&raw.single.length){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay,add=[];
+    const first=ev.length?ev[0].start:0,lastE=ev.length?Math.max(...ev.map(e=>e.end)):0;
+    const cs0=ev.filter(e=>e.bar&&e.ch>0).map(e=>e.ch).sort((p,q)=>p-q),ref0=cs0.length?cs0[cs0.length>>1]:null; // a real strike lights the key as strongly as the bar-confirmed notes (measured: real 0.98–1.0 of that, glow ≤ 0.86)
+    for(const c of raw.single){if(SCAN.okT!=null&&c.end<SCAN.okT+0.05)continue;if(c.start<first||c.start>lastE)continue;if(ref0==null||!(c.ch>=0.9*ref0))continue; // only between the first and the last real note (intro / outro graphics must not move the song)
+      
+      const ki=kIdx.get(c.m);if(ki==null)continue;const ln=SCAN.lane[ki],de=SCAN.dK&&SCAN.dK[SCAN.keys[ki].black?1:0],dd=de!=null?de:d;
+      let bi=-1,bd=0.09;for(let i=0;i<ln.ons.length;i++){const x=Math.abs(ln.ons[i]+dd-c.start);if(x<bd){bd=x;bi=i}}
+      if(bi<0)continue;                                                                     // no own bar at that moment: flicker / glow
+      if(ev.some(e=>e.m===c.m&&c.start<e.end+0.06&&c.end>e.start-0.06))continue;            // the key already has a note there
+      if(ln.offs[bi]==null)continue;const len=ln.offs[bi]-ln.ons[bi];
+      if(!(len<=0.14))continue;                                                             // a key lit for one frame means a note of that length – a long bar with a one-frame light is something else (lost light), not adopted
+      add.push({m:c.m,start:c.start,end:c.start+Math.min(0.5,Math.max(0.05,len)),hue:c.hue,ch:c.ch,bar:true,early:false})}
+    {const cs=ev.filter(e=>e.bar&&e.ch>0).map(e=>e.ch).sort((p,q)=>p-q);SCAN.adopted=add.map(c=>({m:c.m,s:+c.start.toFixed(2),ch:+c.ch.toFixed(2),ref:cs.length?+cs[cs.length>>1].toFixed(2):null}))}
+    if(add.length)ev=ev.concat(add).sort((a,b)=>a.start-b.start)}
   // length from the bar: the bar is exactly as long as the note; the key itself can look lit a bit longer (glow of a neighbour)
   if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
     for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];let bi=-1,bd=0.12;for(let i=0;i<ln.ons.length;i++){const de=SCAN.dK&&SCAN.dK[SCAN.keys[kIdx.get(e.m)].black?1:0],x=Math.abs(ln.ons[i]+(de!=null?de:d)-e.start);if(x<bd){bd=x;bi=i}}
