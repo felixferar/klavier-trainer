@@ -1256,8 +1256,14 @@ function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prep
 function memPress(m,src){let R=MEM.run;if(!R||R.done||R.ending)return;if(R.watch){if(!R.watchDone)return;memStart(R.i,false);R=MEM.run;if(!R)return;R.vt=MEM.gs[R.pos].start}/* v4.66: nach dem Anhören startet der erste Ton direkt das Nachspielen */if(R.paused){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.kbWas=false;R.hinted=false;memG(R,R.pos).paused=true}const exp=MEM.gs[R.pos].mids;
   const tp=performance.now(),G=memG(R,R.pos);if(src!=='kb')R.touch=true;
   if(exp.has(m)&&!R.hit.has(m)&&R.lvl<=2&&R.vt!=null&&(MEM.gs[R.pos].start-R.vt)/Math.max(0.3,S.speed||1)>MEV.early){G.early++;MEM.flash.set(m,tp);MEM.early=tp;memDraw();return} // v4.69: zu früh – erst drücken, wenn der Balken unten ankommt
-  if(exp.has(m)){if(R.hit.has(m))return;R.hit.add(m);G.ok.push({m,t:tp});if(G.first==null)G.first=tp;MEM.good.set(m,tp);if(R.hit.size===exp.size){G.last=tp;R.pos++;R.arrAt=null;R.hit=new Set();R.gStart=memNow();R.hinted=false;if(R.pos>R.b){/* v4.70: erst fertig, wenn der letzte Ton zu Ende ist */R.ending=true;R.endT=Math.max(...memSecNotes(R).map(n=>n.start+n.dur));if(window.__instantEnd||R.vt==null||R.vt>=R.endT)return memFinish()}}}
-  else{R.errors++;MEM.flash.set(m,tp);G.bad.push({m,t:tp})}
+  if(exp.has(m)){if(R.hit.has(m))return;R.hit.add(m);G.ok.push({m,t:tp});if(G.first==null)G.first=tp;MEM.good.set(m,tp);
+    while(R.pos<=R.b&&R.hit.size===MEM.gs[R.pos].mids.size){const Gc=memG(R,R.pos);Gc.last=Gc.last||tp;R.pos++;R.arrAt=null;R.hit=new Set();R.gStart=memNow();R.hinted=false;
+      if(R.pos<=R.b&&R.pre&&R.pre[R.pos]){const Gn=memG(R,R.pos);for(const [pm,pt] of R.pre[R.pos]){R.hit.add(pm);Gn.ok.push({m:pm,t:pt});if(Gn.first==null||pt<Gn.first)Gn.first=pt}delete R.pre[R.pos]}}
+    if(R.pos>R.b){/* v4.70: erst fertig, wenn der letzte Ton zu Ende ist */R.ending=true;R.endT=Math.max(...memSecNotes(R).map(n=>n.start+n.dur));if(window.__instantEnd||R.vt==null||R.vt>=R.endT)return memFinish()}}
+  else{ // v4.70: Ton gehört zu einem Anschlag, der laut Video nur minimal später kommt (Akkord leicht versetzt erkannt) → gilt als mitgespielt
+    let pj=-1;for(let j=R.pos+1;j<=R.b&&MEM.gs[j].start-MEM.gs[R.pos].start<=0.16;j++)if(MEM.gs[j].mids.has(m)){pj=j;break}
+    if(pj>=0){R.pre=R.pre||{};(R.pre[pj]=R.pre[pj]||new Map()).set(m,tp);MEM.good.set(m,tp);memDraw();return}
+    R.errors++;MEM.flash.set(m,tp);G.bad.push({m,t:tp})}
   memDraw()}
 function memFinish(){const R=MEM.run;R.done=true;const rec=MEM.rec.secs[R.i],now=memNow();let msg;try{R.ev=memEval(R);memEvShow(R.ev);memEvLog(R)}catch(e){console.warn(e)}
   if(R.chain){const bad=R.errors+R.hints;if(bad<=1){rec.chained=true;msg='pass'}else msg='same'}else msg=memApply(rec,R,now);
