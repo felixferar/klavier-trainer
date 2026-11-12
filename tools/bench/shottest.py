@@ -31,6 +31,6 @@ async def main():
           return o}""",[geo,lo,PNG]);print(json.dumps(r,ensure_ascii=False),errs)
         ok=(r['settingsRow'] and r['btnHiddenOutside'] and r['noTok'][1]==0 and 'Schlüssel' in r['noTok'][0][0] and r['noCap'][1]==0 and 'nicht möglich' in r['noCap'][0][0]
             and r['btnShown'] and len(r['ups'])==2 and r['ups'][0].startswith('diag/shots/TS') and r['jpgOK'] and 'gesendet' in r['toast'][-1]
-            and r['info']['q']=='tiny' and r['info']['hasRects'] and r['info']['off']==2 and 'Version 4.59' in (r['info']['ver'] or 'Version 4.54') and r['sofort']==0 and r['settingsToast'] and not errs)
+            and r['info']['q']=='tiny' and r['info']['hasRects'] and r['info']['off']==2 and 'Version 4.60' in (r['info']['ver'] or 'Version 4.54') and r['sofort']==0 and r['settingsToast'] and not errs)
         print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())

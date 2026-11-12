@@ -56,6 +56,12 @@ class KeyboardLink {
     private ScanCallback scanCb;
     private final Set<String> seen = new HashSet<>();
     private boolean scanAll = false;
+    private boolean triedAgain = false;
+    /** v4.60: kurze Protokollzeilen (Zeit, Ereignis) – werden in der App unter "Technische Details" gezeigt und mit dem Kamera-Knopf hochgeladen */
+    private void dbg(String line) {
+        try { out.send(new JSONObject().put("cmd", "kbLog").put("line", line)); } catch (Exception ignored) {}
+    }
+    private static String why(Throwable e) { return e.getClass().getSimpleName() + ": " + e.getMessage(); }
     private MidiDevice device;
     private MidiOutputPort port;
     private String curAddr, curName;
@@ -193,13 +199,32 @@ class KeyboardLink {
         if (!bluetoothOn()) { setState("btoff", "Bluetooth ist aus."); return; }
         BluetoothDevice d;
         try { d = bt.getRemoteDevice(addr); } catch (Exception e) { setState("fail", "Ungültiges Gerät."); return; }
+        triedAgain = false;
         setState("connecting", null);
+        openManual(d);
+    }
+
+    /** Ein Verbindungsversuch von Hand. Android meldet beim ersten Versuch oft "null" (GATT-Fehler 133) – dann einmal still wiederholen. */
+    private void openManual(BluetoothDevice d) {
+        h.removeCallbacks(connectTimeout);
+        dbg("Öffne " + curName + " (" + d.getAddress() + ") bond=" + d.getBondState() + " type=" + d.getType());
         try {
             midi.openBluetoothDevice(d, dev -> {
-                if (dev == null) { failOrRetry("Verbindung fehlgeschlagen. Ist das Keyboard eingeschaltet und in der Nähe?"); return; }
+                dbg("Antwort: " + (dev == null ? "null" : (dev.getInfo() == null ? "ohne Info" : "Gerät " + dev.getInfo().getOutputPortCount() + " Ausgänge")));
+                if (dev == null && !triedAgain && wanted && "connecting".equals(state)) {
+                    triedAgain = true;
+                    dbg("zweiter Versuch in 1,5 s");
+                    h.postDelayed(() -> { if (wanted && "connecting".equals(state) && device == null) openManual(d); }, 1500);
+                    return;
+                }
+                if (dev == null) { failOrRetry("Verbindung fehlgeschlagen (auch beim zweiten Versuch). Ist das Keyboard eingeschaltet, in der Nähe und nicht mit einem anderen Gerät verbunden?"); return; }
                 attach(dev);
             }, h);
-        } catch (RuntimeException e) { setState("fail", "Android erlaubt gerade keine weitere Verbindung. Bitte Bluetooth kurz aus- und einschalten."); return; }
+        } catch (RuntimeException e) {
+            dbg("Fehler beim Öffnen: " + why(e));
+            setState("fail", "Android lehnt die Verbindung ab (" + why(e) + "). Bitte die App einmal ganz schließen und neu öffnen.");
+            return;
+        }
         h.postDelayed(connectTimeout, 15000);
     }
 
@@ -231,6 +256,7 @@ class KeyboardLink {
         int n = dev.getInfo().getOutputPortCount();
         if (n < 1) { setState("fail", "Das Gerät sendet keine Tasten."); closeDevice(); return; }
         port = dev.openOutputPort(0);
+        dbg("Ausgang geöffnet: " + (port != null));
         if (port == null) { setState("fail", "Das Keyboard ist schon mit einer anderen App verbunden."); closeDevice(); return; }
         port.connect(receiver);
         String nm = nameOf(dev.getInfo());

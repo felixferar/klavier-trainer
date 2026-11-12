@@ -525,7 +525,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.59</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.60</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -757,6 +757,7 @@ body.short #onbDots{margin:8px 0}
     <div class="kbSec" id="kbSecNew"><div class="lbl" style="display:flex;align-items:center;gap:8px">Verfügbare Geräte<span class="kbSpin" id="kbSpin"></span></div><div class="list" id="kbListNew"></div><div class="mu sm" id="kbNone" style="margin:6px 4px 0"></div></div>
     <div class="mu sm" id="kbStatus" style="margin:10px 4px 0"></div>
     <button class="btn pri hidden" id="kbPerm" style="width:100%;height:46px;margin-top:10px">Einstellungen öffnen</button>
+    <details style="margin:10px 4px 0"><summary class="mu xs">Technische Details</summary><pre id="kbLog" class="mu xs" style="white-space:pre-wrap;user-select:text;margin:6px 0 0"></pre></details>
     <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="kbAgain" style="flex:1">Neu suchen</button><button class="btn" id="kbAll" style="flex:1">Alle Geräte zeigen</button></div>
     <button class="btn pri hidden" id="kbNow" style="width:100%;height:46px;margin-top:10px">Gespeichertes Klavier jetzt verbinden</button>
     <p class="mu xs" style="margin:12px 4px 0;line-height:1.4">Klavier einschalten und Bluetooth am Klavier aktivieren. Ist es schon mit einer anderen App oder dem Handy verbunden, taucht es unter „Verbunden“ oder „Gekoppelt“ auf. Beim ersten Mal fragt Android nach „Geräte in der Nähe“ – bitte zulassen.</p>
@@ -1492,11 +1493,12 @@ async function startMidiIn(){
 
 /* ================= Keyboard über Bluetooth-MIDI ================= */
 // The keyboard reports every key directly (note, time, strength) – no microphone, no calibration, ~10–20 ms delay.
-const KB={sup:false,state:'off',name:'',addr:'',saved:'',found:[],msg:'',scanning:false,pedal:false,held:new Set(),shift:+(load('kt_kbshift')||0),cand:null,last:null};
+const KB={log:[],sup:false,state:'off',name:'',addr:'',saved:'',found:[],msg:'',scanning:false,pedal:false,held:new Set(),shift:+(load('kt_kbshift')||0),cand:null,last:null};
 const kbOn=()=>KB.state==='on';
 function kbMsg(m){
   if(m.cmd==='midi'){for(const [st,a,v] of m.e)kbEvent(st,a,v);return}
   KB.sup=true;
+  if(m.cmd==='kbLog'){KB.log.push(new Date().toTimeString().slice(0,8)+' '+m.line);if(KB.log.length>20)KB.log.shift();kbUI();return}
   if(m.cmd==='kbFound'){if(!KB.found.some(f=>f.addr===m.addr))KB.found.push(m);kbUI();return}
   if(m.cmd==='kbScanDone'){KB.scanning=false;kbUI();return}
   KB.perm=false;clearTimeout(KB.wd);const was=KB.state;Object.assign(KB,{state:m.state,name:m.name||KB.name,addr:m.addr||KB.addr,saved:m.saved||'',msg:m.msg||''});
@@ -1569,6 +1571,7 @@ function kbUI(){
     $('#kbSpin').classList.toggle('on',KB.scanning);
     $('#kbNone').textContent=nw.length?'':(KB.scanning?'Suche läuft …':'Nichts gefunden. Ist das Klavier eingeschaltet und Bluetooth am Klavier an? Mit „Alle Geräte zeigen“ siehst du jedes Bluetooth-Gerät in der Nähe.');
     $('#kbStatus').textContent=(st==='fail'||st==='noperm'||st==='btoff'||st==='waiting')?msg:(st==='connecting'?`Verbinde mit ${KB.name||'Klavier'} … (bis zu 15 Sekunden)`:'');
+    $('#kbLog').textContent=KB.log.length?KB.log.join('\n'):'(noch nichts)';
     $('#kbPerm').classList.toggle('hidden',!(st==='noperm'||(st==='fail'&&KB.perm)));
     $('#kbAgain').disabled=KB.scanning;$('#kbAll').disabled=KB.scanning}}
 function kbOpen(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
@@ -2066,7 +2069,7 @@ async function shotSend(){const tok=ghTok();if(!tok){toast('Kein Diagnose-Schlü
   const jpg=c.toDataURL('image/jpeg',0.8).split(',')[1],ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
   const R=sel=>{const e=$(sel);if(!e)return null;const b=e.getBoundingClientRect();return [Math.round(b.x),Math.round(b.y),Math.round(b.width),Math.round(b.height)]};
   let vt=null;try{vt=ytp&&ytp.getCurrentTime&&ytp.getCurrentTime()}catch(e){}
-  const info={ts,version:(document.getElementById('verTxt')||{}).textContent||null,screen:[innerWidth,innerHeight,devicePixelRatio],capture:[img.width,img.height],rects:{ytBox:R('#ytBox'),cmpScene:R('#cmpScene'),cmpBar:R('#cmpBar'),cmpCv:R('#cmpCv')},
+  const info={ts,version:(document.getElementById('verTxt')||{}).textContent||null,screen:[innerWidth,innerHeight,devicePixelRatio],capture:[img.width,img.height],kb:{state:KB.state,name:KB.name,msg:KB.msg,log:KB.log},rects:{ytBox:R('#ytBox'),cmpScene:R('#cmpScene'),cmpBar:R('#cmpBar'),cmpCv:R('#cmpCv')},
     cmp:CMP?{off:CMP.off,speed:CMP.speed,lo:CMP.lo,aspect:CMP.g&&CMP.g.ar,notes:CMP.notes.length,step:CMP.step,litT:CMP.litT,lit:CMP.lit?[...CMP.lit]:null,cover:CMP.cover,vt,quality:(function(){try{return ytp.getPlaybackQuality()}catch(e){return null}})(),geo:CMP.g}:null};
   const a=await ghUpload(`diag/shots/${ts}.jpg`,jpg,'Bildschirmfoto '+ts),b=await ghUpload(`diag/shots/${ts}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Bildschirmfoto Daten '+ts);
   toast(a.ok&&b.ok?'📷 gesendet':'Senden fehlgeschlagen: '+(a.err||b.err),a.ok&&b.ok?1800:4000,true)}
@@ -2291,7 +2294,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 /* ================= Native bridge (App ≥ 0.5) ================= */
 const NAT={ok:typeof KTNative!=='undefined',info:null,wait:{}};
 function nat(cmd,extra,resp){return new Promise(res=>{if(!NAT.ok)return res(null);NAT.wait[resp||cmd]=res;KTNative.postMessage(JSON.stringify(Object.assign({cmd},extra||{})))})}
-if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(m.cmd==='rows'){scanFrame(m);return}if(m.cmd==='midi'||m.cmd==='kbState'||m.cmd==='kbFound'||m.cmd==='kbScanDone'){kbMsg(m);return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
+if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}if(m.cmd==='rows'){scanFrame(m);return}if(m.cmd==='midi'||m.cmd==='kbState'||m.cmd==='kbLog'||m.cmd==='kbFound'||m.cmd==='kbScanDone'){kbMsg(m);return}const f=NAT.wait[m.cmd];if(f){delete NAT.wait[m.cmd];f(m)}};
   nat('info').then(m=>{NAT.info=m;updVer();if(m&&m.crash){save('kt_lastcrash',m.crash);nat('crashClear');if(ghTok())ghUpload(`diag/${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}_absturz.txt`,btoa(unescape(encodeURIComponent(m.crash+'\n\n'+navigator.userAgent))),'Absturzprotokoll');setTimeout(()=>toast('Die App ist beim letzten Mal abgestürzt – das Protokoll steht unter Einstellungen → Fehlersuche.',5000),1500)}crashUI()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
@@ -2300,7 +2303,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.59 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.60 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

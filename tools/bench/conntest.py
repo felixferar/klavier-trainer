@@ -39,6 +39,7 @@ JS="""async([geo,lo])=>{const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms
  cmds.length=0;document.querySelector('#kbListOn [data-off]').click();o.offCmd=cmds.includes('kbDisconnect');
  cmds.length=0;$('#kbAll').disabled=false;$('#kbAll').click();o.allCmd=cmds.includes('kbScan')&&cmds.args.kbScan&&cmds.args.kbScan.all===true;
  kbMsg({cmd:'kbState',state:'noperm',msg:'Ohne Erlaubnis'});o.permBtn=!$('#kbPerm').classList.contains('hidden');cmds.length=0;$('#kbPerm').click();o.permCmd=cmds.includes('openSettings');
+ kbMsg({cmd:'kbLog',line:'Öffne Test'});kbUI();o.logTxt=$('#kbLog').textContent.includes('Öffne Test');
  kbMsg({cmd:'kbScanDone'});closeSheets();
  // ---- Note teilen
  const mk=(id)=>({id,type:'midi',title:'Test',artist:'x',data:b64FromBuf(writeMidi([{m:60,start:1,dur:1.26,hand:'R'},{m:64,start:5,dur:0.06,hand:'R'}])),fromYT:'abcdefghijk',video:{v:2,src:'yt',start:2,first:3,fps:25,keys:[lo,lo+geo.kx.length-1],geo}});
@@ -71,7 +72,7 @@ async def main():
         ok=(c('none')=='none' and c('notFound')=='off' and c('busy')=='busy' and c('waiting')=='off' and c('on')=='on' and c('lost')=='busy' and c('btoff')=='off'
             and r['on']['t']=='Klavier verbunden' and r['notFound']['t']=='Klavier nicht gefunden' and not r['on']['hid'] and r['chipMem'].startswith('Klavier verbunden|kbchip on') and r['chipSp']=='Klavier verbunden'
             and r['nowShown'] and r['nowHiddenOn'] and r['nowHiddenNone'] and r['tapAuto'] and r['nowCmd'] and r['nowState']=='connecting' and r['resume'] and r['noDouble'] and r['noWhenOn']
-            and r['secOnHidden'] and r['pairRows']==['Casio CT-S300'] and r['newRows']==['Yamaha P-45','USB Piano'] and r['connCmd'] and r['tryingTxt']=='Verbinde …' and r['onRows']==['Yamaha P-45'] and r['onSecShown'] and r['offBtn'] and r['newAfter']==['USB Piano'] and r['offCmd'] and r['allCmd'] and r['permBtn'] and r['permCmd']
+            and r['secOnHidden'] and r['pairRows']==['Casio CT-S300'] and r['newRows']==['Yamaha P-45','USB Piano'] and r['connCmd'] and r['tryingTxt']=='Verbinde …' and r['onRows']==['Yamaha P-45'] and r['onSecShown'] and r['offBtn'] and r['newAfter']==['USB Piano'] and r['offCmd'] and r['allCmd'] and r['permBtn'] and r['permCmd'] and r['logTxt']
             and r['sel'] and r['splitBtn'] and r['count']==1 and r['parts']==2 and r['endsOk'] and r['gap']==0.04 and r['cutAtPlayhead'] and r['cutNearMid'] and r['undo'] and r['shortNoSplit'] and not errs)
         print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())
