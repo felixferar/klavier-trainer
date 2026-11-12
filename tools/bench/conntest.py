@@ -38,7 +38,18 @@ JS="""async([geo,lo])=>{const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms
  st({state:'on',name:'Yamaha P-45',addr:'AA:02',saved:'AA:02'});o.onRows=rows('kbListOn');o.onSecShown=!$('#kbSecOn').classList.contains('hidden');o.offBtn=!!document.querySelector('#kbListOn [data-off]');o.newAfter=rows('kbListNew');
  cmds.length=0;document.querySelector('#kbListOn [data-off]').click();o.offCmd=cmds.includes('kbDisconnect');
  cmds.length=0;$('#kbAll').disabled=false;$('#kbAll').click();o.allCmd=cmds.includes('kbScan')&&cmds.args.kbScan&&cmds.args.kbScan.all===true;
- kbMsg({cmd:'kbState',state:'noperm',msg:'Ohne Erlaubnis'});o.permBtn=!$('#kbPerm').classList.contains('hidden');cmds.length=0;$('#kbPerm').click();o.permCmd=cmds.includes('openSettings');
+ kbMsg({cmd:'kbState',state:'noperm',msg:'Ohne Erlaubnis'});o.permBtn=!$('#kbBigBtn').classList.contains('hidden')&&$('#kbBigBtn').textContent==='Erlaubnis öffnen';cmds.length=0;$('#kbBigBtn').click();o.permCmd=cmds.includes('openSettings');
+ // v4.63: clear phases in the connection window
+ const ph=()=>({k:$('#kbBig').className,t:$('#kbBig b').textContent,s:$('#kbBig .s').textContent,b:$('#kbBigBtn').classList.contains('hidden')?'':$('#kbBigBtn').textContent});
+ KB.found=[];KB.scanning=true;KB.state='scanning';kbUI();o.phSearch=ph();
+ KB.scanning=false;KB.state='off';kbUI();o.phNone=ph();
+ KB.found=[{name:'GZUT-MIDI',addr:'41:88',usb:false,kind:'new'}];kbUI();o.phPick=ph();
+ cmds.length=0;$('#kbListNew .kbRow').click();o.phConn=ph();o.connSent=cmds.includes('kbConnect');
+ kbMsg({cmd:'kbLog',line:'Nicht gekoppelt – koppeln …'});o.phStep=ph().s;
+ cmds.length=0;$('#kbBigBtn').click();o.cancelCmd=cmds.includes('kbDisconnect');o.phCancel=ph();
+ kbMsg({cmd:'kbState',state:'fail',name:'GZUT-MIDI',addr:'41:88',msg:'Test-Fehler'});o.phFail=ph();
+ cmds.length=0;$('#kbBigBtn').click();o.retryCmd=cmds.includes('kbConnect');o.phRetry=ph().t;
+ kbMsg({cmd:'kbState',state:'on',name:'GZUT-MIDI',addr:'41:88'});o.phOn=ph();
  kbMsg({cmd:'kbLog',line:'Öffne Test'});kbUI();o.logTxt=$('#kbLog').textContent.includes('Öffne Test');
  kbMsg({cmd:'kbScanDone'});closeSheets();
  // ---- Note teilen
@@ -72,7 +83,7 @@ async def main():
         ok=(c('none')=='none' and c('notFound')=='off' and c('busy')=='busy' and c('waiting')=='off' and c('on')=='on' and c('lost')=='busy' and c('btoff')=='off'
             and r['on']['t']=='Klavier verbunden' and r['notFound']['t']=='Klavier nicht gefunden' and not r['on']['hid'] and r['chipMem'].startswith('Klavier verbunden|kbchip on') and r['chipSp']=='Klavier verbunden'
             and r['nowShown'] and r['nowHiddenOn'] and r['nowHiddenNone'] and r['tapAuto'] and r['nowCmd'] and r['nowState']=='connecting' and r['resume'] and r['noDouble'] and r['noWhenOn']
-            and r['secOnHidden'] and r['pairRows']==['Casio CT-S300'] and r['newRows']==['Yamaha P-45','USB Piano'] and r['connCmd'] and r['tryingTxt']=='Verbinde …' and r['onRows']==['Yamaha P-45'] and r['onSecShown'] and r['offBtn'] and r['newAfter']==['USB Piano'] and r['offCmd'] and r['allCmd'] and r['permBtn'] and r['permCmd'] and r['logTxt']
+            and r['secOnHidden'] and r['pairRows']==['Casio CT-S300'] and r['newRows']==['Yamaha P-45','USB Piano'] and r['connCmd'] and r['tryingTxt']=='Verbinde …' and r['onRows']==['Yamaha P-45'] and r['onSecShown'] and r['offBtn'] and r['newAfter']==['USB Piano'] and r['offCmd'] and r['allCmd'] and r['permBtn'] and r['permCmd'] and r['phSearch']['k']=='kbBig busy' and r['phSearch']['t']=='Suche nach Klavieren …' and r['phNone']['b']=='Nochmal suchen' and r['phPick']['t']=='Klavier auswählen' and r['phConn']['k']=='kbBig busy' and r['phConn']['t']=='Verbinde mit GZUT-MIDI …' and r['connSent'] and r['phStep'].startswith('Koppeln') and r['cancelCmd'] and r['phCancel']['t']=='Klavier auswählen' and r['phFail']['k']=='kbBig off' and r['phFail']['t']=='Verbindung fehlgeschlagen' and r['phFail']['s']=='Test-Fehler' and r['phFail']['b']=='Nochmal versuchen' and r['retryCmd'] and r['phRetry']=='Verbinde mit GZUT-MIDI …' and r['phOn']['k']=='kbBig on' and r['phOn']['t']=='Verbunden mit GZUT-MIDI' and r['phOn']['b']=='Fertig' and r['logTxt']
             and r['sel'] and r['splitBtn'] and r['count']==1 and r['parts']==2 and r['endsOk'] and r['gap']==0.04 and r['cutAtPlayhead'] and r['cutNearMid'] and r['undo'] and r['shortNoSplit'] and not errs)
         print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())
