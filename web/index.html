@@ -335,7 +335,18 @@ body.short #onbDots{margin:8px 0}
 .kbchip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--tx);padding-right:6px}
 .kbchip i{width:10px;height:10px;border-radius:5px;background:var(--mu2)}.kbchip.on i{background:#4CC38A}
 .memEv{background:var(--s1);border-radius:14px;padding:12px 14px;margin:4px 0 12px;display:flex;flex-direction:column;gap:8px}.memEv .h{display:flex;align-items:center;gap:10px}.memEv .bd{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;color:#0E0F13}.memEv .bd.s{background:#4CC38A}.memEv .bd.f{background:#F0C04A}.memEv .bd.w{background:#E8743B}.memEv .bd.n{background:#8C8F9A}.memEv .st{display:flex;gap:3px}.memEv .st i{flex:1;height:14px;border-radius:3px;background:#4CC38A}.memEv .st i.z{background:#F0C04A}.memEv .st i.x{background:#E8743B}.memEv .lg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--mu)}.memEv .lg span:before{content:'';display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;background:var(--c)}.memEv .nums{font-size:12px;color:var(--mu);line-height:1.4}
-.tasBox{display:flex;align-items:center;gap:12px;margin:10px 0 8px}.tasBox #memMsg{flex:1;margin:0!important;font-size:16px;font-weight:700;line-height:1.3}
+.tasBox{display:flex;align-items:center;gap:12px;margin:10px 0 8px}
+#memRunV{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"h" "c" "r"}#memRunV .mHead{grid-area:h;min-width:0}#memRunV #memCv{grid-area:c}#memRunV .mRest{grid-area:r;min-width:0}
+@media (orientation:landscape) and (max-height:600px){ /* v4.68 quer: Notenbahn + Klaviatur links über die ganze Höhe, rechts Stand, Rückmeldung und Knöpfe – ohne Scrollen */
+ #mem.running .topbar{display:none}#mem.running .scroll{padding:6px 8px 6px max(8px,env(safe-area-inset-left))!important;overflow:hidden}
+ #mem.running #memRunV{grid-template-columns:minmax(0,1fr) min(300px,38vw);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"c h" "c r";column-gap:12px;height:calc(100vh - 12px);height:calc(100dvh - 12px)}
+ #mem.running #memCv{height:100%!important;margin:0!important}
+ #mem.running .mHead #memRunT{font-size:14px!important;margin:0!important}#mem.running .mHead .segs{margin-top:6px}
+ #mem.running .mRest{overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-bottom:4px}
+ #mem.running .tasBox{margin:6px 0 0}#mem.running .tasBox .tasti{display:none}#mem.running .tasBox #memMsg{font-size:14px;min-height:0!important}
+ #mem.running .memEv{margin:0;padding:8px 10px;gap:6px}#mem.running .memEv .lg{display:none}#mem.running .memEv .nums{font-size:11px}
+ #mem.running #memResBox{gap:6px!important}#mem.running #memResBox .btn,#mem.running #memStop{height:40px!important}
+}.tasBox #memMsg{flex:1;margin:0!important;font-size:16px;font-weight:700;line-height:1.3}
 .spHero{padding:2px 4px 0}.spHero h1{font:800 40px/1 var(--font);letter-spacing:-.025em;margin:0;overflow-wrap:anywhere}
 .spBars{display:flex;gap:6px;align-items:flex-end;height:96px;margin-top:14px}
 .spBars>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
@@ -531,7 +542,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.67</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.68</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -703,13 +714,13 @@ body.short #onbDots{margin:8px 0}
       <div class="mu sm" style="line-height:1.5">Aus dem Gedächtnis abrufen bringt mehr als wieder anschauen. Du siehst und hörst jeden Abschnitt erst einmal. Dann nimmt dir die App die Hilfe Stufe für Stufe weg (1 alle Noten und Tasten, 2 nur die nächsten Noten, 3 Hilfe nach 5 s, 4 ganz ohne) – nach zwei sauberen Durchgängen in Folge geht es eine Stufe weiter. Geübt wird verteilt: nach bestandener Prüfung kommt der Abschnitt nach 1, 3, 7, 14, 30 Tagen wieder. Üb lieber oft kurz als einmal lang, und schlaf nach dem Üben – das festigt Bewegungen.</div>
     </div>
     <div id="memRunV" class="hidden">
-      <div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
-      <div class="mu sm" id="memProg"></div><div class="segs" id="memStages"></div>
+      <div class="mHead"><div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
+      <div class="mu sm" id="memProg"></div><div class="segs" id="memStages"></div></div>
       <canvas id="memCv" style="width:100%;height:280px;display:block;margin:12px 0;border-radius:8px;background:var(--s1)"></canvas>
-      <div class="tasBox"><span id="memTasti" class="tasti"></span><div id="memMsg" style="min-height:44px"></div></div>
+      <div class="mRest"><div class="tasBox"><span id="memTasti" class="tasti"></span><div id="memMsg" style="min-height:44px"></div></div>
       <div id="memEv" class="memEv hidden"></div>
       <div id="memResBox" style="display:none;flex-direction:column;gap:8px"><button class="btn pri" id="memNext" style="height:48px">Weiter</button><button class="btn" id="memChain" style="height:44px">Mit dem Abschnitt davor verbinden</button><button class="btn" id="memAgain" style="height:44px">Nochmal</button></div>
-      <button class="btn" id="memStop" style="width:100%;height:44px">Beenden</button>
+      <button class="btn" id="memStop" style="width:100%;height:44px">Beenden</button></div>
     </div>
   </div>
 </div>
@@ -1186,7 +1197,7 @@ const memDate=t=>new Date(t).toLocaleDateString('de-DE',{day:'numeric',month:'sh
 function memStatus(r,now){if(r.passed>0||r.box>0){return r.due<=now?'fällig – jetzt wiederholen':'sicher bis '+memDate(r.due)}return r.runs?`Stufe ${r.lvl} von 4`:'neu'}
 function memPickNext(now){const rs=MEM.rec.secs;let i=rs.findIndex(r=>(r.passed>0||r.box>0)&&r.due<=now);if(i>=0)return {i,review:true};
   i=rs.findIndex(r=>!(r.passed>0||r.box>0));return i>=0?{i,review:false}:null}
-function memHome(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;try{memKbChip()}catch(e){}$('#memHome').classList.remove('hidden');$('#memRunV').classList.add('hidden');
+function memHome(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;$('#mem').classList.remove('running');try{memKbChip()}catch(e){}$('#memHome').classList.remove('hidden');$('#memRunV').classList.add('hidden');
   const now=memNow(),rs=MEM.rec.secs,done=rs.filter(r=>r.passed>0||r.box>0).length,due=rs.filter(r=>(r.passed>0||r.box>0)&&r.due<=now).length;
   $('#memSong').textContent=MEM.item.title;$('#memCheck').classList.toggle('hidden',!cmpOK(MEM.item));
   $('#memSum').textContent=`${done} von ${rs.length} Abschnitten gelernt`+(due?` · ${due} heute fällig`:'');
@@ -1197,7 +1208,7 @@ const MEM_AGAIN=$('#memAgain').textContent;
 function memWatch(i){const sc=MEM.secs[i],r=MEM.rec.secs[i];MEM.run={i,a:sc[0],b:sc[1],pos:sc[0],hit:new Set(),errors:0,hints:0,lvl:r.lvl,review:false,chain:false,gStart:memNow(),hinted:false,done:false,watch:true,watchStart:memNow(),watchT:0,played:sc[0],watchDone:false};
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';$('#memEv').classList.add('hidden');
   $('#memRunT').textContent='Abschnitt '+(i+1)+' · erst ansehen und anhören';$('#memMsg').textContent='Hör zu und sieh dir den Abschnitt an. Danach spielst du ihn nach.';
-  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memTick()}
+  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memLoopOn();memTick()}
 function memWatchTick(R){const g0=MEM.gs[R.a].start,gl=MEM.gs[R.b];R.watchT=(memNow()-R.watchStart)/1000;
   const NS=memSecNotes(R);if(R.np==null)R.np=0;while(R.np<NS.length&&NS[R.np].start-g0<=R.watchT){const n=NS[R.np++];playTone(n.midi,Math.max(0.15,n.dur),n.vel!=null?Math.max(0.35,n.vel):0.7)}R.played=R.b+1;
   if(!R.watchDone&&R.watchT>gl.end-g0+0.6){R.watchDone=true;MEM.rec.secs[R.i].watched=true;memSaveAll();$('#memMsg').textContent='Jetzt bist du dran – fang einfach an zu spielen.';$('#memProg').textContent='Gesehen';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
@@ -1205,11 +1216,16 @@ function memWatchTick(R){const g0=MEM.gs[R.a].start,gl=MEM.gs[R.b];R.watchT=(mem
   memDraw()}
 function memStart(i,review,range,chain){const r=MEM.rec.secs[i],sc=MEM.secs[i],a=range?range[0]:sc[0],b=range?range[1]:sc[1];
   if(!review&&!chain&&!range&&!r.runs&&!r.watched)return memWatch(i);
-  const lvl=(review||chain)?4:r.lvl;MEM.run={i,a,b,pos:a,hit:new Set(),errors:0,hints:0,lvl,review:!!review,chain:!!chain,gStart:memNow(),hinted:false,done:false,kbWas:kbOn(),paused:false,pausedAt:0,G:{},touch:false};$('#memEv').classList.add('hidden');
+  const lvl=(review||chain)?4:r.lvl;MEM.run={i,a,b,pos:a,hit:new Set(),errors:0,hints:0,lvl,review:!!review,chain:!!chain,gStart:memNow(),hinted:false,done:false,kbWas:kbOn(),paused:false,pausedAt:0,G:{},touch:false,vt:MEM.gs[a].start-1.2};$('#memEv').classList.add('hidden');
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';
   $('#memRunT').textContent=(chain?'Verbinden: Abschnitt '+i+' + '+(i+1):'Abschnitt '+(i+1))+(review?' · Wiederholung':'')+' · Stufe '+lvl+' von 4';
-  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memTick()}
+  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memLoopOn();memTick()}
 function memSecNotes(R){if(R._ns)return R._ns;const a=MEM.gs[R.a].start-0.001,b=MEM.gs[R.b].last+0.001;return R._ns=MEM.song.notes.filter(n=>n.start>=a&&n.start<=b)}
+function memLoop(){const R=MEM.run;if(!R||$('#mem').classList.contains('hidden')){MEM.raf=0;return}
+  const now=performance.now(),dt=Math.min(0.1,(now-(MEM.lastF||now))/1000);MEM.lastF=now;
+  if(R.watch)memWatchTick(R);else{if(!R.done&&!R.paused&&R.vt!=null){const tg=MEM.gs[R.pos].start;if(R.vt<tg)R.vt=Math.min(tg,R.vt+dt*Math.max(0.3,S.speed||1))}memDraw()}
+  MEM.raf=requestAnimationFrame(memLoop)}
+function memLoopOn(){$('#mem').classList.add('running');if(!MEM.raf){MEM.lastF=performance.now();MEM.raf=requestAnimationFrame(memLoop)}}
 const memHintOn=()=>{const R=MEM.run;return R.lvl===1||(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]};
 function memTick(){const R=MEM.run;if(!R)return;memKbChip();if(R.watch){memWatchTick(R);return}
   if(R.paused){if(R.kbWas&&kbOn()){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.hinted=false}else return}
@@ -1224,9 +1240,9 @@ function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prep
   const bar=(m,y0,y1,col)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.5:0.7);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0))};
   if(R.watch){const g0=MEM.gs[R.a].start,pps=hn/2.5;for(const n of memSecNotes(R)){const rel=n.start-g0,yb=hn-(rel-R.watchT)*pps,yt=yb-n.dur*pps;if(yt>hn||yb<0)continue;bar(n.midi,Math.max(0,yt),Math.min(hn,yb),noteCol(n))}}
   else if(!R.done&&R.lvl<=2){ // v4.67: dieselbe Notenbahn wie beim Üben – echte Längen und Abstände, Handfarben; Stufe 2 zeigt nur die nächste Sekunde
-    const cur=MEM.gs[R.pos],t0=cur.start,pps=hn/3,lim=R.lvl===2?1.0:9;c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
-    for(const n of memSecNotes(R)){const rel=n.start-t0;if(rel>lim||rel<-0.001&&n.start+n.dur<t0)continue;if(rel<-0.001)continue;const yb=hn-4-rel*pps,yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;
-      const now1=rel<=cur.last-t0+0.001;bar(n.midi,Math.max(0,yt),yb,noteCol(n));if(now1){const k=MEM.pos[n.midi];if(k){const ww=k.w*(k.b?0.5:0.7);c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(k.x+k.w/2-ww/2,Math.max(0,yt),ww,Math.max(4,yb-Math.max(0,yt)))}}}
+    const cur=MEM.gs[R.pos],t0=R.vt!=null?R.vt:cur.start,pps=hn/3,lim=R.lvl===2?Math.max(1.0,cur.start-t0+1.0):9;c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
+    for(const n of memSecNotes(R)){const rel=n.start-t0;if(rel>lim||n.start+Math.max(0.12,n.dur)<t0-0.05)continue;const yb=hn-4-rel*pps,yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;
+      const now1=n.start>=cur.start-0.001&&n.start<=cur.last+0.001;bar(n.midi,Math.max(0,yt),yb,noteCol(n));if(now1){const k=MEM.pos[n.midi];if(k){const ww=k.w*(k.b?0.5:0.7);c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(k.x+k.w/2-ww/2,Math.max(0,yt),ww,Math.max(4,yb-Math.max(0,yt)))}}}
     c.restore()}
   const tot=R.b-R.a+1,at=Math.min(tot,R.pos-R.a);
   if(R.watch){if(!R.watchDone)$('#memProg').textContent='Ansehen und anhören';return}
@@ -1234,7 +1250,7 @@ function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prep
   if(!R.done)$('#memMsg').textContent=R.lvl===1?'Spiele die Noten nach – die Tasten leuchten.':R.lvl===2?'Nur die nächsten Noten sind sichtbar – den Rest musst du dir merken.':hint?'Hilfe: hier sind die Tasten.':R.lvl===4?'Prüfung: spiele aus dem Gedächtnis, ohne Hilfe.':'Spiele aus dem Gedächtnis – wenn du stockst, erscheint Hilfe.'}
 function memPress(m,src){let R=MEM.run;if(!R||R.done)return;if(R.watch){if(!R.watchDone)return;memStart(R.i,false);R=MEM.run;if(!R)return}/* v4.66: nach dem Anhören startet der erste Ton direkt das Nachspielen */if(R.paused){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.kbWas=false;R.hinted=false;memG(R,R.pos).paused=true}const exp=MEM.gs[R.pos].mids;
   const tp=performance.now(),G=memG(R,R.pos);if(src!=='kb')R.touch=true;
-  if(exp.has(m)){if(R.hit.has(m))return;R.hit.add(m);G.ok.push({m,t:tp});if(G.first==null)G.first=tp;if(R.hit.size===exp.size){G.last=tp;R.pos++;R.hit=new Set();R.gStart=memNow();R.hinted=false;if(R.pos>R.b)return memFinish()}}
+  if(exp.has(m)){if(R.hit.has(m))return;R.hit.add(m);G.ok.push({m,t:tp});if(G.first==null)G.first=tp;if(R.hit.size===exp.size){G.last=tp;if(R.vt!=null&&R.vt<MEM.gs[R.pos].start)R.vt=MEM.gs[R.pos].start;R.pos++;R.hit=new Set();R.gStart=memNow();R.hinted=false;if(R.pos>R.b)return memFinish()}}
   else{R.errors++;MEM.flash.set(m,tp);G.bad.push({m,t:tp})}
   memDraw()}
 function memFinish(){const R=MEM.run;R.done=true;const rec=MEM.rec.secs[R.i],now=memNow();let msg;try{R.ev=memEval(R);memEvShow(R.ev);memEvLog(R)}catch(e){console.warn(e)}
@@ -2409,7 +2425,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.67 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.68 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
