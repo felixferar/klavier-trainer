@@ -8,7 +8,7 @@
 <title>Klavier Trainer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&display=swap" rel="stylesheet">
 <style>
 :root{
   /* the instrument itself: black lacquer, ivory keys, brass (pedals, hinges), red felt strip above the keys */
@@ -305,6 +305,42 @@ body.short #onbArt svg{height:80px}
 body.short #onbDots{margin:8px 0}
 .meter{height:6px;background:var(--s3);border-radius:3px;overflow:hidden;width:min(280px,80%)}
 .meter i{display:block;height:100%;width:0;background:var(--good);transition:width .05s}
+
+/* ===== v4.56 "Studio": near-black, amber, Nunito. All colours/fonts hang on these variables (themes: Studio / Bühne / Wald in the design doc) ===== */
+:root{--bg:#0E0F13;--s1:#17191F;--s2:#1D2027;--s3:#262932;--bd:rgba(236,235,230,.07);--bd2:rgba(236,235,230,.14);--tx:#ECEBE6;--mu:#8C8F9A;--mu2:#666A75;--ac:#F0A93B;--ac2:#8A5E1E;--acs:rgba(240,169,59,.16);--gold:#F0A93B;--ink:#1A1204;--key:#E9E4D8;--font:'Nunito','Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--serif:var(--font)}
+.btn.pri{color:var(--ink)}
+.tasti{flex:none;display:block}
+.stHdr{display:flex;align-items:center;gap:12px;padding:6px 0 4px}
+.stHdr h1{font:800 26px/1.05 var(--font);margin:0}
+.stHdr .grow>div{font-size:13px;color:var(--mu);font-weight:700}
+.stCont{padding:18px 0 0}
+.stLbl{font-size:12px;font-weight:800;letter-spacing:.09em;color:var(--mu);text-transform:uppercase}
+.stTtl{font:800 36px/1.02 var(--font);letter-spacing:-.02em;margin-top:6px;overflow-wrap:anywhere}
+.stSub{font-size:15px;color:var(--mu);font-weight:700;margin-top:6px}
+.segs{display:flex;gap:5px;margin-top:14px}.segs i{flex:1;height:6px;border-radius:3px;background:var(--s3)}.segs i.d{background:var(--ac)}.segs i.c{background:var(--ac2)}
+.btn.big{width:100%;height:56px;font-size:18px;font-weight:800;border-radius:16px;margin-top:16px}
+.weekBox{margin-top:26px;padding-top:16px;border-top:1px solid var(--bd2)}
+.weekBox .wh{display:flex;justify-content:space-between;font-size:15px;font-weight:800}.weekBox .wh span+span{color:var(--mu);font-weight:700}
+.wkeys{position:relative;height:104px;margin-top:12px}
+.wkeys .k{position:absolute;top:0;bottom:0;width:calc(100%/7 - 3px);background:var(--key);border-radius:0 0 9px 9px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:7px;color:var(--ink);font-weight:800}
+.wkeys .k b{font-size:15px}.wkeys .k span{font-size:12px;opacity:.65;font-weight:700}
+.wkeys .k.on{background:var(--ac);top:4px}.wkeys .k.td{box-shadow:0 0 0 2px var(--ac)}
+.wkeys .bk{position:absolute;top:0;height:55%;width:calc(100%/7*.44);background:var(--bg);border-radius:0 0 6px 6px}
+.dueH{font-size:15px;font-weight:800;margin:24px 0 2px}
+.dueRow{display:flex;align-items:center;gap:14px;padding:13px 14px;background:var(--s1);border-radius:16px;margin-top:10px;cursor:pointer}
+.dueRow b{display:block;font-size:17px;font-weight:800}.dueRow span{font-size:14px;color:var(--mu);font-weight:700}
+.kbchip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--tx);padding-right:6px}
+.kbchip i{width:10px;height:10px;border-radius:5px;background:var(--mu2)}.kbchip.on i{background:#4CC38A}
+.tasBox{display:flex;align-items:center;gap:12px;margin:10px 0 8px}.tasBox #memMsg{flex:1;margin:0!important;font-size:16px;font-weight:700;line-height:1.3}
+.spHero{padding:2px 4px 0}.spHero h1{font:800 40px/1 var(--font);letter-spacing:-.025em;margin:0;overflow-wrap:anywhere}
+.spBars{display:flex;gap:6px;align-items:flex-end;height:96px;margin-top:14px}
+.spBars>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+.spBars .bx{background:var(--s3);position:relative;border-radius:3px}.spBars .bx i{position:absolute;left:0;right:0;bottom:0;background:var(--ac2);border-radius:3px}
+.spBars .full i{background:var(--tx)}.spBars .cur .bx{outline:2px solid var(--ac);outline-offset:3px}
+.spNum{display:flex;gap:6px;margin-top:8px}.spNum span{flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--mu)}.spNum .cur{color:var(--ac);font-weight:800}
+.spRows{margin-top:20px;border-top:1px solid var(--bd2)}
+.spRow{display:flex;align-items:center;gap:12px;padding:16px 4px;border-bottom:1px solid var(--bd);cursor:pointer}
+.spRow b{display:block;font-size:18px;font-weight:800}.spRow span{font-size:14px;color:var(--mu);font-weight:700}
 </style>
 </head>
 <body>
@@ -340,6 +376,8 @@ body.short #onbDots{margin:8px 0}
   <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m23 9-6 6M17 9l6 6"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
   <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 22c4 0 7-2.7 7-7 0-3.5-2.5-6.5-4-8-.3 2-1.5 3.5-3 4 0-3-1-6-4-9 0 4-5 7-5 13 0 4.3 4 7 9 7z"/></symbol>
 </svg>
 
@@ -348,23 +386,16 @@ body.short #onbDots{margin:8px 0}
   <div class="scroll main" id="homeScroll">
 
     <section id="vStart">
-      <div class="hdr">
-        <div class="grow"><h1 id="greet">Hallo!</h1></div>
+      <div class="stHdr"><span id="tasti" class="tasti"></span>
+        <div class="grow"><div id="dateTxt"></div><h1 id="greet">Heute</h1></div>
         <span class="chip streak" id="streakChip"><svg class="i" style="width:15px;height:15px"><use href="#i-flame"/></svg><span>0 Tage</span></span>
         <button class="ib" data-go="settings" title="Einstellungen"><svg class="i"><use href="#i-gear"/></svg></button>
         <button class="avatar" id="homeAv" data-go="profile" title="Profil">?</button>
       </div>
-      <div class="cols two">
-        <div class="card goal">
-          <div class="ring"><svg width="76" height="76"><circle cx="38" cy="38" r="32" stroke="#312C25" stroke-width="8" fill="none"/><circle id="goalArc" cx="38" cy="38" r="32" stroke="#C29A5B" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201"/></svg><b id="goalPct">0%</b></div>
-          <div class="grow">
-            <div style="font-weight:700">Tagesziel</div>
-            <div class="mu sm" id="goalTxt">0 von 15 Min</div>
-            <div class="week" id="week" style="margin-top:8px;height:44px"></div>
-          </div>
-        </div>
-        <div id="contWrap"></div>
-      </div>
+      <div id="contWrap" class="stCont"></div>
+      <div class="weekBox"><div class="wh"><span>Diese Woche</span><span id="goalTxt2"></span></div><div class="wkeys" id="wkeys"></div></div>
+      <div id="dueWrap"></div>
+      <div class="goal hidden" style="display:none"><div class="ring"><svg width="76" height="76"><circle id="goalArc" cx="38" cy="38" r="32" stroke="#C29A5B" stroke-width="8" fill="none" stroke-dasharray="201" stroke-dashoffset="201"/></svg><b id="goalPct">0%</b></div><div class="grow"><div id="goalTxt">0 von 15 Min</div><div class="week" id="week"></div></div></div>
       <div id="kbCard" class="card hidden" style="margin-top:12px;display:flex;gap:14px;align-items:center">
         <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-kb"/></svg></div>
         <div class="grow"><div class="ttl" id="kbCardT" style="white-space:normal">Keyboard verbinden</div><div class="meta" id="kbCardTxt">Keyboard mit Bluetooth-MIDI? Dann erkennt die App jede Taste sofort und ohne Mikrofon.</div></div>
@@ -399,7 +430,7 @@ body.short #onbDots{margin:8px 0}
 
   </div>
   <nav class="tabbar">
-    <button data-tab="start" class="on"><svg class="i"><use href="#i-home"/></svg>Start</button>
+    <button data-tab="start" class="on"><svg class="i"><use href="#i-home"/></svg>Heute</button>
     <button data-tab="songs"><svg class="i"><use href="#i-music"/></svg>Songs</button>
     <button data-tab="stats"><svg class="i"><use href="#i-chart"/></svg>Fortschritt</button>
   </nav>
@@ -475,7 +506,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.55</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.56</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -621,8 +652,21 @@ body.short #onbDots{margin:8px 0}
 </div>
 
 <!-- ===================== CALIBRATION ===================== -->
+<div id="songp" class="screen hidden">
+  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><span class="sp"></span><button class="ib" id="spMenu" title="Mehr"><svg class="i"><use href="#i-more"/></svg></button></div>
+  <div class="scroll" style="flex:1;padding:0 20px 30px">
+    <div class="spHero"><h1 id="spTitle"></h1><div class="stSub" id="spMeta"></div></div>
+    <div class="stLbl" style="margin-top:26px" id="spLbl">Auswendig</div>
+    <div class="spBars" id="spBars"></div><div class="spNum" id="spNum"></div>
+    <button class="btn pri big" id="spGo"></button>
+    <div class="spRows">
+      <div class="spRow" id="spPlay"><div class="grow"><b>Spielen</b><span>Mit allen Noten, in deinem Tempo</span></div><svg class="i"><use href="#i-chev"/></svg></div>
+      <div class="spRow hidden" id="spCmp"><div class="grow"><b>Noten prüfen und bearbeiten</b><span>Video gegen erkannte Noten, Töne ändern, teilen, ergänzen</span></div><svg class="i"><use href="#i-chev"/></svg></div>
+    </div>
+  </div>
+</div>
 <div id="mem" class="screen hidden">
-  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Auswendig lernen</div><span class="sp"></span></div>
+  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Auswendig lernen</div><span class="sp"></span><span id="memKb" class="kbchip"><i></i><span></span></span></div>
   <div class="scroll" style="flex:1;padding:0 16px 30px">
     <div id="memHome">
       <div style="font-weight:800;font-size:18px;margin:8px 0 2px" id="memSong"></div>
@@ -635,9 +679,9 @@ body.short #onbDots{margin:8px 0}
     </div>
     <div id="memRunV" class="hidden">
       <div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
-      <div class="mu sm" id="memProg"></div>
+      <div class="mu sm" id="memProg"></div><div class="segs" id="memStages"></div>
       <canvas id="memCv" style="width:100%;height:280px;display:block;margin:12px 0;border-radius:8px;background:var(--s1)"></canvas>
-      <div id="memMsg" style="min-height:44px;font-size:15px;margin-bottom:8px"></div>
+      <div class="tasBox"><span id="memTasti" class="tasti"></span><div id="memMsg" style="min-height:44px"></div></div>
       <div id="memResBox" class="hidden" style="display:none;flex-direction:column;gap:8px"><button class="btn pri" id="memNext" style="height:48px">Weiter</button><button class="btn" id="memChain" style="height:44px">Mit dem Abschnitt davor verbinden</button><button class="btn" id="memAgain" style="height:44px">Nochmal</button></div>
       <button class="btn" id="memStop" style="width:100%;height:44px">Beenden</button>
     </div>
@@ -819,7 +863,7 @@ $('#dLand').onclick=()=>{deskMode='land';applyDesk()};$('#dPort').onclick=()=>{d
 let navStack=['home'];
 function show(id){$('#app').scrollTop=0;$$('.toast').forEach(t=>t.remove());document.body.classList.toggle('inplayer',id==='player');for(const s of $$('.screen'))s.classList.add('hidden');$('#'+id).classList.remove('hidden');onResize()}
 function go(id){if(id==='calib')return openCal();navStack.push(id);show(id);if(id==='settings')renderSettings();if(id==='profile')renderProfile()}
-function back(){if(MEM.run||MEM.timer)memStop();navStack.pop();const id=navStack[navStack.length-1]||'home';show(id);if(id==='mem'&&MEM.item){const it=LIB.find(x=>x.id===MEM.item.id);if(it&&memLoad(it))memHome()}if(id==='home')renderHome()}
+function back(){if(MEM.run||MEM.timer)memStop();navStack.pop();const id=navStack[navStack.length-1]||'home';show(id);if(id==='mem'&&MEM.item){const it=LIB.find(x=>x.id===MEM.item.id);if(it&&memLoad(it))memHome()}if(id==='home')renderHome();if(id==='songp')renderSongPage()}
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return}
   const b=e.target.closest('[data-back]');if(b){back();return}
@@ -966,6 +1010,7 @@ function renderHome(){handVars();
   const rl=$('#recentList');rl.innerHTML='';
   const items=allItems().slice().sort((a,b)=>((ST.songs[b.id]||{}).last||0)-((ST.songs[a.id]||{}).last||0)).slice(0,4);
   for(const it of items)rl.appendChild(songRow(it));
+  try{renderStudio()}catch(e){console.error(e)}
   // songs tab
   const q=$('#q').value.trim().toLowerCase();const sl=$('#songList');sl.innerHTML='';
   const fl=allItems().filter(it=>(filt==='all'||(filt==='yt'?it.type==='yt':it.type!=='yt'))&&(!q||it.title.toLowerCase().includes(q)));
@@ -974,6 +1019,55 @@ function renderHome(){handVars();
   if(tab==='stats')renderStats();
 }
 $('#q').oninput=renderHome;
+
+/* ================= v4.56 Studio: Heute, Song-Seite, Mascot ================= */
+function tastiSVG(sz){return `<svg class="tasti" width="${sz}" height="${Math.round(sz*1.15)}" viewBox="0 0 100 115" role="img" aria-label="Tasti"><rect x="26" y="0" width="22" height="34" rx="6" fill="#ECEBE6" opacity=".35"/><rect x="52" y="4" width="22" height="30" rx="6" fill="#ECEBE6" opacity=".35"/><rect x="8" y="26" width="84" height="84" rx="26" fill="#E9E4D8"/><circle cx="35" cy="54" r="5.5" fill="#0E0F13"/><circle cx="65" cy="54" r="5.5" fill="#0E0F13"/><path d="M40 68q10 6 20 0" fill="none" stroke="#0E0F13" stroke-width="3.2" stroke-linecap="round"/></svg>`}
+function memInfo(it){const r=MEMS[it.id];if(!r||!r.secs||!r.secs.length)return null;const now=memNow(),rs=r.secs,n=rs.length;
+  const learned=i=>rs[i].passed>0||rs[i].box>0,due=[];rs.forEach((x,i)=>{if(learned(i)&&x.due<=now)due.push(i)});
+  let next=due.length?due[0]:rs.findIndex((x,i)=>!learned(i));const done=rs.filter((x,i)=>learned(i)).length;
+  return {n,done,next:next<0?null:next,due,rs,learned}}
+function segsHTML(info){if(!info)return '<i></i>'.repeat(6);return info.rs.map((x,i)=>`<i class="${info.learned(i)?'d':(i===info.next?'c':'')}"></i>`).join('')}
+function memSub(it,info){if(!info)return it.type==='demo'?'Demo-Song':(it.artist&&it.artist!=='MIDI'?it.artist+' · ':'')+'Noch nicht auswendig gelernt';
+  return info.next==null?'Auswendig · alles gelernt':`Auswendig · Abschnitt ${info.next+1} von ${info.n}`}
+function renderStudio(){
+  const d=new Date();$('#dateTxt').textContent=d.toLocaleDateString('de-DE',{weekday:'long'});$('#greet').textContent='Heute';
+  $('#tasti').outerHTML=tastiSVG(40).replace('<svg class="tasti"','<svg id="tasti" class="tasti"');
+  // continue block
+  const last=ST.last&&itemById(ST.last.id),ci=last||allItems().find(x=>x.type==='midi'&&MEMS[x.id])||last||DEMO,info=memInfo(ci);
+  const cw=$('#contWrap');cw.innerHTML=`<div class="stLbl">Weiter mit</div><div class="stTtl"></div><div class="stSub"></div><div class="segs">${segsHTML(info)}</div><button class="btn pri big" id="contBtn"><svg class="i" style="width:20px;height:20px"><use href="#i-play"/></svg>Weiterüben</button>`;
+  cw.querySelector('.stTtl').textContent=ci.title;cw.querySelector('.stSub').textContent=memSub(ci,info);
+  cw.querySelector('#contBtn').onclick=()=>openItem(ci);
+  // week keys
+  const goal=S.goal*60,WD=['So','Mo','Di','Mi','Do','Fr','Sa'],wk=$('#wkeys');let h='',tot=0;
+  for(let i=6;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const v=ST.days[dayKey(dd)]||0;tot+=v;const idx=6-i,on=v>=goal,m=Math.round(v/60);
+    h+=`<div class="k${v>0?' on':''}${i===0?' td':''}" style="left:calc(${idx}*100%/7 + 1.5px)${on||v===0?'':';opacity:.78'}"><b>${m||''}</b><span>${WD[dd.getDay()]}</span></div>`}
+  for(const i of [0,1,3,4,5])h+=`<div class="bk" style="left:calc(${i+1}*100%/7 - 100%/7*.22)"></div>`;wk.innerHTML=h;
+  const today=ST.days[dayKey()]||0;$('#goalTxt2').textContent=`Heute ${Math.floor(today/60)} von ${S.goal} Min`;
+  // due list
+  const due=[];for(const it of LIB){const mi=it.type==='midi'?memInfo(it):null;if(mi&&mi.due.length)due.push([it,mi.due[0]])}
+  const dw=$('#dueWrap');dw.innerHTML='';if(due.length){dw.insertAdjacentHTML('beforeend','<div class="dueH">Fällig</div>');
+    for(const [it,i] of due.slice(0,3)){const r=document.createElement('div');r.className='dueRow';r.innerHTML='<div class="grow"><b></b><span></span></div><svg class="i"><use href="#i-chev"/></svg>';r.querySelector('b').textContent=it.title;r.querySelector('span').textContent='Abschnitt '+(i+1)+' · jetzt wiederholen';r.onclick=()=>openSongPage(it);dw.appendChild(r)}}
+}
+const SP={item:null};
+function openSongPage(it){SP.item=it;renderSongPage();navStack.push('songp');show('songp')}
+function renderSongPage(){const it=SP.item;if(!it)return;const info=it.type==='midi'&&it.data?memInfo(it):null,can=it.type==='midi'&&it.data;
+  $('#spTitle').textContent=it.title;$('#spMeta').textContent=(it.artist&&it.artist!=='MIDI'?it.artist:(it.type==='demo'?'Demo':'MIDI'));
+  $('#spMenu').style.visibility=it.type==='demo'?'hidden':'';
+  const bars=$('#spBars'),num=$('#spNum');bars.innerHTML='';num.innerHTML='';
+  $('#spLbl').style.display=can?'':'none';bars.style.display=num.style.display=can?'':'none';
+  if(can){const rs=info?info.rs:null,n=info?info.n:6,H=[46,70,56,84,52,66];
+    for(let i=0;i<n;i++){const st=rs?(info.learned(i)?3:(rs[i].lvl||1)-1):0,cur=info&&i===info.next;
+      bars.insertAdjacentHTML('beforeend',`<div class="${cur?'cur':''}${st>=3?' full':''}"><div class="bx" style="height:${H[i%6]}px"><i style="height:${Math.round(H[i%6]*Math.min(1,st/3))}px"></i></div></div>`);
+      num.insertAdjacentHTML('beforeend',`<span class="${cur?'cur':''}">${i+1}</span>`)}}
+  const go=$('#spGo');go.style.display=can?'':'none';
+  if(can)go.textContent=info?(info.next==null?'Alles wiederholen':(info.due.length?`Wiederholen: Abschnitt ${info.next+1}`:`Weiter: Abschnitt ${info.next+1}`)):'Auswendig lernen starten';
+  $('#spCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT))}
+$('#spGo').onclick=()=>{if(SP.item)openMem(SP.item)};
+$('#spPlay').onclick=()=>{if(SP.item)openItemPlay(SP.item)};
+$('#spCmp').onclick=()=>{if(SP.item)openCompare(SP.item)};
+$('#spMenu').onclick=()=>{if(SP.item)openSongMenu(SP.item)};
+function memKbChip(){const c=$('#memKb');if(!c)return;const on=kbOn(),t=on?'Klavier verbunden':'Kein Klavier';if(c.dataset.s!==t){c.dataset.s=t;c.classList.toggle('on',on);c.querySelector('span').textContent=t}}
+function memStagesUI(){const R=MEM.run;if(!R)return;const l=R.watch?0:R.lvl;$('#memStages').innerHTML=[1,2,3,4].map(i=>`<i class="${i<=l?'d':''}"></i>`).join('');$('#memTasti').outerHTML=tastiSVG(46).replace('<svg class="tasti"','<svg id="memTasti" class="tasti"')}
 let smItem=null;
 // --- Auswendig lernen (v4.44): sections, hint ladder (1 always shown … 4 none), spaced review. Concept + sources: project doc konzept-auswendig-lernen
 const MEM={run:null,timer:null,song:null,item:null,gs:[],secs:[],rec:null,queue:[],last:null,flash:new Map(),pos:null};
@@ -1008,7 +1102,7 @@ const memDate=t=>new Date(t).toLocaleDateString('de-DE',{day:'numeric',month:'sh
 function memStatus(r,now){if(r.passed>0||r.box>0){return r.due<=now?'fällig – jetzt wiederholen':'sicher bis '+memDate(r.due)}return r.runs?`Stufe ${r.lvl} von 4`:'neu'}
 function memPickNext(now){const rs=MEM.rec.secs;let i=rs.findIndex(r=>(r.passed>0||r.box>0)&&r.due<=now);if(i>=0)return {i,review:true};
   i=rs.findIndex(r=>!(r.passed>0||r.box>0));return i>=0?{i,review:false}:null}
-function memHome(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;$('#memHome').classList.remove('hidden');$('#memRunV').classList.add('hidden');
+function memHome(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;try{memKbChip()}catch(e){}$('#memHome').classList.remove('hidden');$('#memRunV').classList.add('hidden');
   const now=memNow(),rs=MEM.rec.secs,done=rs.filter(r=>r.passed>0||r.box>0).length,due=rs.filter(r=>(r.passed>0||r.box>0)&&r.due<=now).length;
   $('#memSong').textContent=MEM.item.title;$('#memCheck').classList.toggle('hidden',!cmpOK(MEM.item));
   $('#memSum').textContent=`${done} von ${rs.length} Abschnitten gelernt`+(due?` · ${due} heute fällig`:'');
@@ -1019,7 +1113,7 @@ const MEM_AGAIN=$('#memAgain').textContent;
 function memWatch(i){const sc=MEM.secs[i],r=MEM.rec.secs[i];MEM.run={i,a:sc[0],b:sc[1],pos:sc[0],hit:new Set(),errors:0,hints:0,lvl:r.lvl,review:false,chain:false,gStart:memNow(),hinted:false,done:false,watch:true,watchStart:memNow(),watchT:0,played:sc[0],watchDone:false};
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';
   $('#memRunT').textContent='Abschnitt '+(i+1)+' · erst ansehen und anhören';$('#memMsg').textContent='Hör zu und sieh dir den Abschnitt an. Danach spielst du ihn nach.';
-  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memTick()}
+  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memTick()}
 function memWatchTick(R){const g0=MEM.gs[R.a].start,gl=MEM.gs[R.b];R.watchT=(memNow()-R.watchStart)/1000;
   while(R.played<=R.b&&MEM.gs[R.played].start-g0<=R.watchT){for(const m of MEM.gs[R.played].mids)playTone(m,Math.min(1,Math.max(0.2,MEM.gs[R.played].end-MEM.gs[R.played].start)),0.7);R.played++}
   if(!R.watchDone&&R.watchT>gl.end-g0+0.6){R.watchDone=true;MEM.rec.secs[R.i].watched=true;memSaveAll();$('#memMsg').textContent='Jetzt bist du dran.';$('#memProg').textContent='Gesehen';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
@@ -1030,9 +1124,9 @@ function memStart(i,review,range,chain){const r=MEM.rec.secs[i],sc=MEM.secs[i],a
   const lvl=(review||chain)?4:r.lvl;MEM.run={i,a,b,pos:a,hit:new Set(),errors:0,hints:0,lvl,review:!!review,chain:!!chain,gStart:memNow(),hinted:false,done:false,kbWas:kbOn(),paused:false,pausedAt:0};
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';
   $('#memRunT').textContent=(chain?'Verbinden: Abschnitt '+i+' + '+(i+1):'Abschnitt '+(i+1))+(review?' · Wiederholung':'')+' · Stufe '+lvl+' von 4';
-  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memTick()}
+  if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memTick()}
 const memHintOn=()=>{const R=MEM.run;return R.lvl===1||(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]};
-function memTick(){const R=MEM.run;if(!R)return;if(R.watch){memWatchTick(R);return}
+function memTick(){const R=MEM.run;if(!R)return;memKbChip();if(R.watch){memWatchTick(R);return}
   if(R.paused){if(R.kbWas&&kbOn()){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.hinted=false}else return}
   else if(R.kbWas&&!kbOn()&&!R.done){R.paused=true;R.pausedAt=memNow();$('#memMsg').textContent='Klavier getrennt – der Lauf ist angehalten. Verbinde es wieder oder spiele auf dem Bildschirm weiter.';toast('Klavier getrennt – Lauf angehalten',3500);return}
   if(!R.done&&R.lvl>=2&&!R.hinted&&(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]){R.hinted=true;R.hints++} // a hint that had to appear counts like a mistake
@@ -1077,8 +1171,8 @@ $('#memCv').addEventListener('pointerdown',e=>{if(!MEM.run||!MEM.pos)return;cons
   if(hit!==null)userPress(hit,true)});
 $('#smMem').onclick=()=>{if(smItem)openMem(smItem)};
 function openSongMenu(it){smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));$('#smMem').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
-$('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome()};
-$('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();renderHome();toast('Song gelöscht')};
+$('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome();if(navStack[navStack.length-1]==='songp')renderSongPage()};
+$('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();if(navStack[navStack.length-1]==='songp')back();renderHome();toast('Song gelöscht')};
 for(const b of $$('#filt button'))b.onclick=()=>{filt=b.dataset.f;$$('#filt button').forEach(x=>x.classList.toggle('on',x===b));renderHome()};
 function renderStats(){
   const total=Object.values(ST.days).reduce((a,b)=>a+b,0);
@@ -1100,7 +1194,8 @@ function renderStats(){
     d.innerHTML=`${coverHTML(it)}<div class="grow"><div class="ttl"></div><div class="meta"><span>${fmtMin(s.time)}</span>${it.type!=='yt'?starsHTML(s.stars||0)+(s.best?`<span>Best ${Math.round(s.best*100)} %</span>`:''):''}${nsec?`<span>${nsec} Abschnitte</span>`:''}<span>${ago(s.last)}</span></div></div>`;
     d.querySelector('.ttl').textContent=it.title;d.onclick=()=>openItem(it);ss.appendChild(d)}
 }
-function openItem(it,resume){
+function openItem(it){if(it.type==='yt')return openYT(it,true);openSongPage(it)}
+function openItemPlay(it,resume){
   if(it.type==='yt')return openYT(it,true); // videos are only converted into songs
   try{const s=it.type==='demo'?demoSong():songForItem(it);openSong(s,it.id,resume)}catch(e){toast('Fehler: '+e.message)}
 }
@@ -2130,7 +2225,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.55 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.56 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2924,7 +3019,7 @@ window.appBack=function(){
   if(cur==='mem'){back();return true}
   if(cur==='calib'){$('#cBack').click();return true}
   if(cur==='onb'){$('#onbSkip').click();return true}
-  if(cur==='settings'||cur==='profile'){back();return true}
+  if(cur==='settings'||cur==='profile'||cur==='songp'){back();return true}
   if(tab!=='start'){setTab('start');return true}
   return false;
 };
