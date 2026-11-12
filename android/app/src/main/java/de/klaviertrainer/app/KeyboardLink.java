@@ -3,6 +3,11 @@ package de.klaviertrainer.app;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -27,7 +32,9 @@ import android.os.ParcelUuid;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -158,7 +165,7 @@ class KeyboardLink {
     private final Runnable scanEnd = () -> {
         stopScan();
         try { out.send(new JSONObject().put("cmd", "kbScanDone")); } catch (Exception ignored) {}
-        if ("scanning".equals(state)) setState(device != null ? "on" : "off", null);
+        if ("scanning".equals(state)) setState(up() ? "on" : "off", null);
     };
 
     private void onResult(ScanResult r) {
@@ -255,15 +262,130 @@ class KeyboardLink {
                     h.postDelayed(() -> { if (wanted && "connecting".equals(state) && device == null) openManual(d); }, 1500);
                     return;
                 }
-                if (dev == null) { failOrRetry("Verbindung fehlgeschlagen (auch beim zweiten Versuch). Ist das Keyboard eingeschaltet, in der Nähe und nicht mit einem anderen Gerät verbunden?"); return; }
+                if (dev == null) { dbg("Android-MIDI-Dienst liefert null – versuche den direkten Bluetooth-Zugriff"); gattStart(d); return; }
                 attach(dev);
             }, h);
         } catch (RuntimeException e) {
             dbg("Fehler beim Öffnen: " + why(e));
-            setState("fail", "Android lehnt die Verbindung ab (" + why(e) + "). Bitte die App einmal ganz schließen und neu öffnen.");
+            gattStart(d);
             return;
         }
         h.postDelayed(connectTimeout, 15000);
+    }
+
+
+    // ------------------------------------------------------------ v4.62: direkter Bluetooth-Zugriff (wenn der Android-MIDI-Dienst null liefert)
+
+    private static final UUID MIDI_SERVICE = UUID.fromString("03B80E5A-EDE8-4B33-A751-6CE34EC4C700");
+    private static final UUID MIDI_CHAR = UUID.fromString("7772E5DB-3868-4112-A1A9-F2669D106BF3");
+    private static final UUID CCC = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
+    private BluetoothGatt gatt;
+    private boolean gattManual = false;
+
+    private void closeGatt() {
+        gattUp = false;
+        h.removeCallbacks(gattTimeout);
+        BluetoothGatt g = gatt;
+        gatt = null;
+        if (g != null) { try { g.disconnect(); } catch (Exception ignored) {} try { g.close(); } catch (Exception ignored) {} }
+    }
+
+    private final Runnable gattTimeout = () -> {
+        if (gatt != null && !gattUp) { dbg("Direkter Zugriff: keine Antwort nach 15 s"); gattFail("Keine Antwort vom Klavier (Bluetooth)."); }
+    };
+
+    private void gattFail(String msg) {
+        boolean manual = "connecting".equals(state) && gattManual;
+        closeGatt();
+        if (manual) setState("fail", msg + " Ist das Klavier eingeschaltet und mit keinem anderen Gerät verbunden?");
+        else if (wanted) setState("waiting", "Keyboard nicht gefunden – ich versuche es weiter.");
+    }
+
+    private void gattStart(BluetoothDevice d) {
+        closeGatt();
+        gattManual = "connecting".equals(state);
+        dbg("Direkter Bluetooth-Zugriff auf " + d.getAddress());
+        try {
+            gatt = d.connectGatt(ctx, false, gattCb, BluetoothDevice.TRANSPORT_LE);
+        } catch (RuntimeException e) { dbg("connectGatt: " + why(e)); gattFail("Bluetooth-Fehler (" + why(e) + ")."); return; }
+        if (gatt == null) { dbg("connectGatt lieferte null"); gattFail("Bluetooth-Fehler."); return; }
+        h.postDelayed(gattTimeout, 15000);
+    }
+
+    private final BluetoothGattCallback gattCb = new BluetoothGattCallback() {
+        @Override public void onConnectionStateChange(BluetoothGatt g, int status, int newState) {
+            h.post(() -> {
+                if (g != gatt) { try { g.close(); } catch (Exception ignored) {} return; }
+                dbg("GATT status=" + status + " zustand=" + newState);
+                if (newState == android.bluetooth.BluetoothProfile.STATE_CONNECTED) {
+                    try { g.discoverServices(); } catch (RuntimeException e) { dbg("discoverServices: " + why(e)); gattFail("Bluetooth-Fehler."); }
+                } else if (newState == android.bluetooth.BluetoothProfile.STATE_DISCONNECTED) {
+                    boolean wasUp = gattUp;
+                    if (wasUp) { closeGatt(); lost(); }
+                    else gattFail("Bluetooth-Verbindung abgelehnt (Code " + status + ").");
+                }
+            });
+        }
+        @Override public void onServicesDiscovered(BluetoothGatt g, int status) {
+            h.post(() -> {
+                if (g != gatt) return;
+                StringBuilder sb = new StringBuilder();
+                BluetoothGattCharacteristic ch = null;
+                for (BluetoothGattService sv : g.getServices()) {
+                    sb.append(sv.getUuid().toString().substring(0, 8)).append(' ');
+                    if (MIDI_SERVICE.equals(sv.getUuid())) ch = sv.getCharacteristic(MIDI_CHAR);
+                }
+                dbg("Dienste (status " + status + "): " + sb);
+                if (ch == null) { gattFail("Das Gerät hat keinen MIDI-Dienst."); return; }
+                try {
+                    g.setCharacteristicNotification(ch, true);
+                    BluetoothGattDescriptor ds = ch.getDescriptor(CCC);
+                    if (ds == null) { gattFail("MIDI-Dienst unvollständig."); return; }
+                    ds.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    boolean ok = g.writeDescriptor(ds);
+                    dbg("Benachrichtigungen anfordern: " + ok);
+                    if (!ok) gattFail("Bluetooth-Fehler beim Aktivieren.");
+                } catch (RuntimeException e) { dbg("Aktivieren: " + why(e)); gattFail("Bluetooth-Fehler (" + why(e) + ")."); }
+            });
+        }
+        @Override public void onDescriptorWrite(BluetoothGatt g, BluetoothGattDescriptor ds, int status) {
+            h.post(() -> {
+                if (g != gatt) return;
+                dbg("Aktivieren fertig, status=" + status);
+                if (status != BluetoothGatt.GATT_SUCCESS) { gattFail("Das Klavier hat die Verbindung nicht freigegeben (Code " + status + "). Bitte in den Android-Einstellungen entkoppeln und neu koppeln."); return; }
+                h.removeCallbacks(gattTimeout);
+                gattUp = true;
+                String nm = curName;
+                if (curAddr != null) prefs.edit().putString("kb_addr", curAddr).putString("kb_name", nm).putBoolean("kb_gatt", true).apply();
+                setState("on", null);
+            });
+        }
+        @SuppressWarnings("deprecation")
+        @Override public void onCharacteristicChanged(BluetoothGatt g, BluetoothGattCharacteristic ch) {
+            byte[] d = ch.getValue();
+            if (d != null) bleToMidi(d);
+        }
+    };
+
+    /** BLE-MIDI-Paket (Kopfbyte, Zeitstempel, Nachricht …) in gewöhnliche MIDI-Bytes umwandeln */
+    private void bleToMidi(byte[] d) {
+        ByteArrayOutputStream raw = new ByteArrayOutputStream();
+        int n = d.length, i = 1;
+        while (i < n) {
+            int b = d[i] & 0xFF;
+            if ((b & 0x80) == 0) { i++; continue; }          // verirrtes Datenbyte (Fortsetzung einer Systemnachricht)
+            i++;                                             // Zeitstempel
+            if (i >= n) break;
+            int st = d[i] & 0xFF;
+            if ((st & 0x80) != 0) {
+                if (st == 0xF0) { while (i < n && (d[i] & 0xFF) != 0xF7) i++; i++; continue; }
+                raw.write(st); i++;
+                if (st >= 0xF8) continue;
+            }
+            while (i < n && (d[i] & 0x80) == 0) { raw.write(d[i]); i++; }
+        }
+        byte[] out2 = raw.toByteArray();
+        if (out2.length > 0) receiver.onSend(out2, 0, out2.length, 0);
     }
 
     private final Runnable connectTimeout = () -> {
@@ -281,7 +403,7 @@ class KeyboardLink {
     private void attach(MidiDevice dev) {
         h.removeCallbacks(connectTimeout);
         // v4.57: zwei Verbindungsversuche gleichzeitig (Suche + Auto) dürfen nicht zwei Geräte offen lassen
-        if (dev != null && device != null) { try { dev.close(); } catch (Exception ignored) {} report(); return; }
+        if (dev != null && up()) { try { dev.close(); } catch (Exception ignored) {} report(); return; }
         // Android meldet ein ausgeschaltetes Bluetooth-Keyboard teils als "geöffnet", aber ohne Geräteinfo
         // (Absturz 09.11. 15:32: NullPointerException hier). Dann: schließen und still später erneut versuchen.
         if (dev == null || dev.getInfo() == null) {
@@ -290,6 +412,7 @@ class KeyboardLink {
             else setState("fail", "Das Keyboard antwortet nicht.");
             return;
         }
+        prefs.edit().putBoolean("kb_gatt", false).apply();
         device = dev;
         int n = dev.getInfo().getOutputPortCount();
         if (n < 1) { setState("fail", "Das Gerät sendet keine Tasten."); closeDevice(); return; }
@@ -316,11 +439,12 @@ class KeyboardLink {
     }
 
     private final Runnable retry = () -> {
-        if (!wanted || device != null || curAddr == null || !bluetoothOn()) return;
+        if (!wanted || up() || curAddr == null || !bluetoothOn()) return;
         BluetoothDevice d;
         try { d = bt.getRemoteDevice(curAddr); } catch (Exception e) { return; }
         // Nur ein Verbindungsversuch gleichzeitig und wachsende Pausen: sonst stauen sich offene Versuche auf
         // und Android wirft nach einigen Minuten SecurityException "too many MIDI connections" (App-Absturz).
+        if (prefs.getBoolean("kb_gatt", false)) { if (gatt == null) gattStart(d); h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
         long now = android.os.SystemClock.elapsedRealtime();
         if (openPending && now - openSince < 60000) { h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
         openPending = true; openSince = now;
@@ -342,7 +466,7 @@ class KeyboardLink {
     /** Beim App-Start: zuletzt verbundenes Keyboard still wieder verbinden */
     void autoConnect() {
         String a = savedAddr();
-        if (a.isEmpty() || device != null || !bluetoothOn()) { report(); return; }
+        if (a.isEmpty() || up() || !bluetoothOn()) { report(); return; }
         // läuft schon ein junger Versuch, nicht dazwischenfunken (zu viele MIDI-Verbindungen stürzen die App ab)
         if (openPending && android.os.SystemClock.elapsedRealtime() - openSince < 20000) { report(); return; }
         curAddr = a;
@@ -367,13 +491,16 @@ class KeyboardLink {
     }
 
     private void closeDevice() {
+        closeGatt();
         try { if (port != null) { port.disconnect(receiver); port.close(); } } catch (Exception ignored) {}
         try { if (device != null) device.close(); } catch (Exception ignored) {}
         port = null;
         device = null;
     }
 
-    void report() { setState(device != null ? "on" : state, null); }
+    private boolean gattUp = false;
+    private boolean up() { return device != null || gattUp; }
+    void report() { setState(up() ? "on" : state, null); }
 
     private void setState(String s, String msg) {
         state = s;
