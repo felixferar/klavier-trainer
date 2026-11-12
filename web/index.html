@@ -194,6 +194,10 @@ body.convL .toast{top:auto;bottom:4px;padding:6px 12px;font-size:12px;max-width:
 #scanOv{position:absolute;inset:0;z-index:20;background:rgba(7,9,13,.92);display:flex;align-items:center;justify-content:center;padding:12px}
 .scanbox{width:min(640px,100%);max-height:100%;overflow:auto;background:var(--s1);border:1px solid var(--bd2);border-radius:18px;padding:14px}
 #scCv{width:100%;border-radius:10px;background:#000;touch-action:none;cursor:ns-resize;display:block}
+.toast.mini{top:auto!important;bottom:60px;left:auto;right:10px;transform:none;padding:4px 10px;font-size:11px;border-radius:10px;box-shadow:none;max-width:60%}
+body.convL .toast.mini{bottom:50px}
+#shotFab{position:fixed;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;border:1px solid var(--bd2);background:rgba(28,32,42,.8);color:#E8E6DF;font-size:15px;line-height:1;z-index:55;opacity:.5;padding:0}
+#shotFab:active{opacity:1}
 .toast{pointer-events:none;position:absolute;left:50%;top:64px;transform:translateX(-50%);background:rgba(28,32,42,.96);border:1px solid var(--bd2);padding:10px 16px;border-radius:14px;z-index:60;max-width:88%;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:tin .25s}
 body.inplayer .toast{top:34%;font-size:14px}
 @keyframes tin{from{opacity:0;transform:translate(-50%,-8px)}}
@@ -302,6 +306,7 @@ body.short #onbDots{margin:8px 0}
 <body>
 <div id="deskBar"><button id="dLand">Handy quer</button><button id="dPort">Handy hochkant</button><button id="dFull">Ganzes Fenster</button></div>
 <div id="app">
+<button id="shotFab" class="hidden" title="Bild an Claude">📷</button>
 <!-- short loading screen: the brass bar falls once onto the felt strip -->
 <div id="splash"><svg viewBox="0 0 108 108" class="logo" aria-hidden="true"><rect width="108" height="108" rx="24" fill="#171512"/><rect class="lbar" x="50" y="24" width="12" height="22" rx="2" fill="#C29A5B"/><rect x="33" y="51" width="42" height="4" fill="#9B2E2E"/><g fill="#ECE4D2"><rect x="33" y="55" width="13" height="25.5" rx="1.5"/><rect x="47.5" y="55" width="13" height="25.5" rx="1.5"/><rect x="62" y="55" width="13" height="25.5" rx="1.5"/></g><g fill="#171512"><rect x="42.5" y="55" width="8.5" height="14"/><rect x="57" y="55" width="8.5" height="14"/></g></svg><div class="sname">Klavier Trainer</div></div>
 
@@ -466,7 +471,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.48</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.49</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -564,7 +569,7 @@ body.short #onbDots{margin:8px 0}
 
 <!-- ===================== YOUTUBE ===================== -->
 <div id="yt" class="screen hidden">
-  <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div><button class="btn sm hidden" id="cmpShot" style="margin-right:8px">Bild an Claude</button></div>
+  <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div></div>
   <div id="ytBox"><div id="ytFrame"></div><canvas id="cmpCv" class="hidden"></canvas><div id="ytMsg"></div><div id="ytBlock" class="hidden" style="position:absolute;inset:0;z-index:5;background:transparent"></div></div>
   <canvas id="cmpScene" class="hidden"></canvas>
   <div id="cmpBar" class="hidden"><div id="cmpTxt">–</div><div id="cmpDiff"> </div><div id="cmpEdit" class="hidden"><button class="btn" id="ceDel">Löschen</button><button class="btn" id="ceDn">Ton ▼</button><button class="btn" id="ceUp">Ton ▲</button><button class="btn" id="ceShort">Kürzer</button><button class="btn" id="ceLong">Länger</button></div><div id="cmpSave" class="hidden"><button class="btn" id="ceUndo">Rückgängig</button><button class="btn pri" id="ceSave">Speichern</button></div><div id="cmpBtns"><button class="btn" id="cmpPrevN">‹ Zurück</button><button class="btn" id="cmpPlay">Abspielen</button><button class="btn" id="cmpNextN">Weiter ›</button></div></div>
@@ -730,7 +735,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function load(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
-function toast(msg,ms=2600){$$('.toast').forEach(t=>t.remove());const d=document.createElement('div');d.className='toast';d.textContent=msg;$('#app').appendChild(d);setTimeout(()=>d.remove(),ms)}
+function toast(msg,ms=2600,mini){$$('.toast').forEach(t=>t.remove());const d=document.createElement('div');d.className='toast'+(mini?' mini':'');d.textContent=msg;$('#app').appendChild(d);setTimeout(()=>d.remove(),ms)}
 function lowerBound(arr,v,key){let lo=0,hi=arr.length;while(lo<hi){const m=(lo+hi)>>1;if(key(arr[m])<v)lo=m+1;else hi=m}return lo}
 function rrect(c,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
 function b64FromBuf(buf){let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
@@ -1605,7 +1610,7 @@ function openYT(it,auto,cmp){fileAbort();ytAuto=!!auto;
     if(ytp){try{ytp.destroy()}catch(e){}ytp=null}
     if(!$('#ytFrame')){const f=document.createElement('div');f.id='ytFrame';$('#ytBox').prepend(f)}
     ytp=new YT.Player('ytFrame',{videoId:it.videoId,playerVars:{playsinline:1,rel:0,modestbranding:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,cc_load_policy:0,start:Math.floor(it.start||0)},events:{
-      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;if(LIB.includes(it))saveLib()}}catch(e){}if(ytAuto){convShowTitle(it);convTitlePoll(it);autoConvert(it)}else if(CMP)setTimeout(cmpCalib,1200)},
+      onReady:()=>{$('#ytMsg').textContent='';try{const d=ytp.getVideoData();if(d&&d.title&&it.title==='YouTube-Video'){it.title=d.title;$('#yTitle').textContent=d.title;if(LIB.includes(it))saveLib()}}catch(e){}if(ytAuto){convShowTitle(it);convTitlePoll(it);autoConvert(it)}},
       onStateChange:e=>{ytPlaying=e.data===1;ytLast=performance.now();$('#yPlayI').innerHTML=`<use href="#i-${ytPlaying?'pause':'play'}"/>`;keepAwake(ytPlaying)},
       onError:()=>{$('#ytMsg').textContent='Dieses Video lässt sich nicht einbetten.';if(Q.on)Q.finish(false,'lässt sich nicht einbetten')}}});
   };
@@ -1628,7 +1633,7 @@ const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
 function ytInfo(){$('#ySpeed').textContent=Math.round(ytRate*100)+'%';$('#yRep').textContent=ytReps||'∞';$('#yInfo').textContent=ytLoop?`${fmt(ytLoop.a)} – ${ytLoop.b!=null?fmt(ytLoop.b):'…'}`:'';$('#yA').classList.toggle('pri',!!ytLoop);$('#yB').classList.toggle('pri',!!(ytLoop&&ytLoop.b!=null))}
 /* --- Vergleichsansicht (v4.39): oben das Video, darunter dieselbe Szene aus den Noten der App (gleiche Tastenspalten). Weiter/Zurück springt von Moment zu Moment; beim Anhalten wird gemessen, welche Tasten im Video leuchten --- */
 let CMP=null,cmpRaf=0;
-function cmpMode(on){$('#yt').classList.toggle('cmpMode',on);for(const id of ['#cmpBar','#cmpCv','#cmpScene'])$(id).classList.toggle('hidden',!on);$('#yScan').classList.toggle('hidden',on);$('#cmpShot').classList.toggle('hidden',!on)}
+function cmpMode(on){$('#yt').classList.toggle('cmpMode',on);for(const id of ['#cmpBar','#cmpCv','#cmpScene'])$(id).classList.toggle('hidden',!on);$('#yScan').classList.toggle('hidden',on)}
 const cmpOK=it=>{const g=it&&it.video&&it.video.geo;return !!(it&&it.type==='midi'&&it.fromYT&&it.data&&g&&g.kx&&g.kx.length&&g.ar>0&&g.yT!=null&&g.yA!=null&&g.yB!=null&&g.kw>0&&it.video.keys&&it.video.first!=null)};
 // fractions of the measuring area at conversion (width×height = ar×1, the 16:9 video centred in it) → pixels in a box bw×bh
 function cmpPx(g,bw,bh){const ar=g.ar,cw=Math.min(ar,16/9),ch=cw*9/16,cw2=Math.min(bw,bh*16/9),ch2=cw2*9/16,ox=(bw-cw2)/2,oy=(bh-ch2)/2;
@@ -1717,12 +1722,17 @@ let CMP_MARKS=false; // v4.48: the right/wrong marks are off until the glow meas
 async function cmpMeasure(){ // picture of the video box → which keys glow
   if(!CMP||!NAT.ok||!CMP_MARKS)return;const t0=cmpVT(),im=await grabVideo(),t1=cmpVT();if(!im||!CMP)return;const r=$('#ytBox').getBoundingClientRect();
   const L=cmpLit(im,CMP.g,CMP.lo,r.width,r.height);CMP.cover=L.size>Math.max(10,CMP.g.kx.length*0.2);CMP.lit=CMP.cover?null:L;CMP.litT=(t0+t1)/2-CMP.off}
+// v4.49: speed is learned on the side while the person steps through the song (no extra jumping of the video): one still per step, estimate once there are enough
+async function cmpSpeedCollect(){const me=CMP;if(!me||me.speed!==undefined||!NAT.ok)return;
+  const t0=cmpVT(),im=await grabVideo();if(!im||CMP!==me)return;const T=(t0+cmpVT())/2-me.off;(me.sf=me.sf||[]).push({im,T});
+  if(me.sf.length>=6){const r=$('#ytBox').getBoundingClientRect(),v=cmpSpeedNotes(me.sf,me.notes,me.lo,me.g,r.width,r.height);
+    if(v!=null){me.speed=v;me.sf=null}else if(me.sf.length>=16){me.speed=null;me.sf=null}}}
 async function cmpGo(t){ // jump to a moment: play slowly for a moment (YouTube's pause overlay covers keys), measure, then stop
   if(!CMP||!ytp)return;const gen=++CMP.gen;CMP.step=true;CMP.lit=null;CMP.cover=false;CMP.busy=true;
   try{ytp.setPlaybackRate(0.25);ytRate=0.25;ytp.seekTo(Math.max(0,t),true);ytp.playVideo()}catch(e){}
   await sleep(CMP_MARKS?450:150);if(!CMP||gen!==CMP.gen)return;
   try{await cmpMeasure()}catch(e){}
-  if(!CMP||gen!==CMP.gen)return;CMP.busy=false;try{ytp.pauseVideo()}catch(e){}}
+  if(!CMP||gen!==CMP.gen)return;await cmpSpeedCollect();if(!CMP||gen!==CMP.gen)return;CMP.busy=false;try{ytp.pauseVideo()}catch(e){}}
 $('#cmpNextN').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}const T=cmpVT()-CMP.off,m=CMP.moments.find(x=>x>T+0.15);if(m!=null)cmpGo(m+CMP.off);else toast('Das war die letzte Note',1500)};
 $('#cmpPrevN').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}const T=cmpVT()-CMP.off;let p=null;for(const x of CMP.moments){if(x<T-0.3)p=x;else break}if(p!=null)cmpGo(p+CMP.off);else toast('Das ist der Anfang',1500)};
 $('#cmpPlay').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}CMP.gen++;CMP.busy=false;let st=-1;try{st=ytp.getPlayerState()}catch(e){}
@@ -1754,8 +1764,8 @@ function ceSave(){if(!CMP||!CMP.dirty)return true;
   CMP.it=it;CMP.dirty=false;CMP.saved=true;CMP.hist=[];ceUI();toast('Gespeichert als „'+it.title+'“',3000);return true}
 $('#ceSave').onclick=ceSave;
 // --- Bildschirmfoto an Claude (v4.47): the phone cannot take screenshots on its own; the app photographs itself (same capture as the video stills) and uploads it with the numbers of the layout
-async function shotSend(){const tok=ghTok();if(!tok){toast('Kein Diagnose-Schlüssel eingetragen (Einstellungen)',4000);return}
-  const m=await nat('capture');if(!m||!m.ok){toast('Bildschirmfoto nicht möglich',3500);return}
+async function shotSend(){const tok=ghTok();if(!tok){toast('Kein Diagnose-Schlüssel eingetragen (Einstellungen)',4000,true);return}
+  const m=await nat('capture');if(!m||!m.ok){toast('Bildschirmfoto nicht möglich',3500,true);return}
   const img=await new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=m.img});if(!img){toast('Bild nicht lesbar',3000);return}
   const k=Math.min(1,1280/img.width),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   const jpg=c.toDataURL('image/jpeg',0.8).split(',')[1],ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
@@ -1764,9 +1774,10 @@ async function shotSend(){const tok=ghTok();if(!tok){toast('Kein Diagnose-Schlü
   const info={ts,version:(document.getElementById('verTxt')||{}).textContent||null,screen:[innerWidth,innerHeight,devicePixelRatio],capture:[img.width,img.height],rects:{ytBox:R('#ytBox'),cmpScene:R('#cmpScene'),cmpBar:R('#cmpBar'),cmpCv:R('#cmpCv')},
     cmp:CMP?{off:CMP.off,speed:CMP.speed,lo:CMP.lo,aspect:CMP.g&&CMP.g.ar,notes:CMP.notes.length,step:CMP.step,litT:CMP.litT,lit:CMP.lit?[...CMP.lit]:null,cover:CMP.cover,vt,quality:(function(){try{return ytp.getPlaybackQuality()}catch(e){return null}})(),geo:CMP.g}:null};
   const a=await ghUpload(`diag/shots/${ts}.jpg`,jpg,'Bildschirmfoto '+ts),b=await ghUpload(`diag/shots/${ts}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Bildschirmfoto Daten '+ts);
-  toast(a.ok&&b.ok?'Foto an Claude gesendet':'Senden fehlgeschlagen: '+(a.err||b.err),4000)}
-$('#cmpShot').onclick=()=>{shotSend()};
-$('#shotBtn').onclick=()=>{toast('Foto in 8 Sekunden – öffne jetzt die gewünschte Ansicht',3500);setTimeout(()=>{shotSend()},8000)};
+  toast(a.ok&&b.ok?'📷 gesendet':'Senden fehlgeschlagen: '+(a.err||b.err),a.ok&&b.ok?1800:4000,true)}
+const shotFabShow=()=>{const f=$('#shotFab');if(f)f.classList.toggle('hidden',!ghTok())};
+$('#shotFab').onclick=async()=>{const f=$('#shotFab');f.style.visibility='hidden';await sleep(120);try{await shotSend()}finally{f.style.visibility='';}};
+$('#shotBtn').onclick=()=>{toast('Foto in 8 s',3500,true);setTimeout(()=>{shotSend()},8000)};
 $('#smCmp').onclick=()=>{if(smItem)openCompare(smItem)};
 $('#yBack').addEventListener('click',()=>{if(CMP&&CMP.dirty)ceSave();CMP=null;cancelAnimationFrame(cmpRaf);cmpMode(false)});
 $('#yBack').onclick=()=>{convUI(false);ytAuto=false;fileAbort();if(SCAN.on){SCAN.on=false;clearInterval(SCAN.timer);nat('scanStop')}$('#scanOv').classList.add('hidden');$('#scanBar').classList.add('hidden');clearInterval(ytTimer);if(ytp){try{ytp.destroy()}catch(e){}ytp=null}ytPlaying=false;keepAwake(false);back()};
@@ -1990,7 +2001,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.48 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.49 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2553,6 +2564,7 @@ async function lvTick(){if(LV.busy||!S.remoteQ||!ghTok()||!NAT.ok||document.visi
 setInterval(lvTick,8000);
 /* --- automatic upload to the user's private GitHub repo "klavier-diagnose" (token only on this phone, never in backups) --- */
 const ghTok=()=>(load('kt_ghtok')||'').trim();
+shotFabShow();setInterval(shotFabShow,4000);
 async function ghApi(path,opt){const r=await fetch('https://api.github.com'+path,Object.assign({},opt,{headers:Object.assign({'Authorization':'Bearer '+ghTok(),'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},(opt&&opt.headers)||{})}));
   let j=null;try{j=await r.json()}catch(e){}return {ok:r.ok,status:r.status,j}}
 // Schreibzugriffe aufs Archiv laufen nacheinander und werden bei 409 (zwei Commits gleichzeitig) / 5xx wiederholt – sonst ging die Diagnose-Aufnahme verloren, wenn gerade der Status geschrieben wurde

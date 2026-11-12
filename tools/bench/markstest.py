@@ -10,10 +10,10 @@ async def main():
           const notes=[];for(let i=0;i<10;i++)notes.push({m:lo+30,start:1+i,dur:0.5,hand:'R'});
           const a={id:'a',type:'midi',title:'T',artist:'x',data:b64FromBuf(writeMidi(notes)),fromYT:'abcdefghijk',video:{v:2,src:'yt',start:2,first:3,fps:25,keys:[lo,lo+geo.kx.length-1],geo}};LIB=[a];
           window.openYT=()=>{cmpMode(!!CMP);show('yt')};let vt=3.2,seeks=[];ytp={getCurrentTime:()=>vt,pauseVideo(){},seekTo(t){vt=t;seeks.push(t)},setPlaybackRate(){},playVideo(){},getPlayerState:()=>2,destroy(){}};
-          openCompare(a);await wait(300);vt=3.4;$('#cmpNextN').click();await wait(500);cmpDraw();
+          openCompare(a);await wait(2200);o.autoSeeks=seeks.length;o.autoGrabs=grabs;vt=3.4;$('#cmpNextN').click();await wait(500);cmpDraw();
           o.seeks=seeks.length;o.grabs=grabs;o.lit=CMP.lit;o.step=CMP.step;o.busy=CMP.busy;o.status=$('#cmpDiff').textContent.trim();o.noBadStatus=!/Unterschied|passt|verdeckt|Messe|Prüfe|messbar/.test($('#cmpDiff').textContent);
           const cls=cmpCls(cmpSounding(CMP.notes,vt-CMP.off),CMP.litT&&CMP.lit);o.cls=[...cls.values()];
           return o}""",[geo,lo]);print(json.dumps(r,ensure_ascii=False),errs)
-        ok=(r['flag'] is False and r['seeks']>=1 and r['grabs']==0 and r['lit'] is None and r['step'] and not r['busy'] and r['noBadStatus'] and all(c=='play' for c in r['cls']) and not errs)
+        ok=(r['flag'] is False and r['seeks']>=1 and r['grabs']==1 and r['autoSeeks']==0 and r['autoGrabs']==0 and r['lit'] is None and r['step'] and not r['busy'] and r['noBadStatus'] and all(c=='play' for c in r['cls']) and not errs)
         print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())
