@@ -527,7 +527,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.63</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.64</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1000,7 +1000,9 @@ function demoSong(){
 }
 
 /* ================= library & home ================= */
-let LIB=(load('kt_lib')||[]).filter(x=>x.type!=='yt'); // a video only appears in the library once it was converted completely
+let LIB=(load('kt_lib')||[]).filter(x=>x.type!=='yt');
+// v4.64: the editor replaces a library entry by a NEW object when saving – screens that kept the old object (song page, menu) would show/play the OLD version. Always take the current entry.
+const fresh=it=>(it&&LIB.find(x=>x.id===it.id))||it; // a video only appears in the library once it was converted completely
 const DEMO={id:'demo',type:'demo',title:'Ode an die Freude',artist:'Beethoven · Demo'};
 const allItems=()=>[...LIB,DEMO];
 const itemById=id=>allItems().find(x=>x.id===id);
@@ -1077,8 +1079,8 @@ function renderStudio(){
     for(const [it,i] of due.slice(0,3)){const r=document.createElement('div');r.className='dueRow';r.innerHTML='<div class="grow"><b></b><span></span></div><svg class="i"><use href="#i-chev"/></svg>';r.querySelector('b').textContent=it.title;r.querySelector('span').textContent='Abschnitt '+(i+1)+' · jetzt wiederholen';r.onclick=()=>openSongPage(it);dw.appendChild(r)}}
 }
 const SP={item:null};
-function openSongPage(it){SP.item=it;renderSongPage();navStack.push('songp');show('songp')}
-function renderSongPage(){const it=SP.item;if(!it)return;const info=it.type==='midi'&&it.data?memInfo(it):null,can=it.type==='midi'&&it.data;
+function openSongPage(it){SP.item=fresh(it);renderSongPage();navStack.push('songp');show('songp')}
+function renderSongPage(){const it=SP.item=fresh(SP.item);if(!it)return;const info=it.type==='midi'&&it.data?memInfo(it):null,can=it.type==='midi'&&it.data;
   $('#spTitle').textContent=it.title;$('#spMeta').textContent=(it.artist&&it.artist!=='MIDI'?it.artist:(it.type==='demo'?'Demo':'MIDI'));
   $('#spMenu').style.visibility=it.type==='demo'?'hidden':'';
   const bars=$('#spBars'),num=$('#spNum');bars.innerHTML='';num.innerHTML='';
@@ -1117,8 +1119,8 @@ function memApply(rec,run,now){ // returns 'pass' | 'up' | 'down' | 'same' | 'fa
   rec.clean=0;if(bad>=3&&rec.lvl>1){rec.lvl--;return 'down'}
   return 'same'}
 const memSaveAll=()=>saveW('kt_mem',MEMS);
-function openMem(it){if(memLoad(it)){closeSheets();navStack.push('mem');show('mem');memHome()}}
-function memLoad(it){let s;try{s=songForItem(it)}catch(e){toast('Fehler: '+e.message);return false}
+function openMem(it){it=fresh(it);if(memLoad(it)){closeSheets();navStack.push('mem');show('mem');memHome()}}
+function memLoad(it){it=fresh(it);let s;try{s=songForItem(it)}catch(e){toast('Fehler: '+e.message);return false}
   const gs=memGroups(s.notes);if(gs.length<3){toast('Der Song ist zu kurz zum Auswendiglernen',3000);return false}
   const secs=memSplit(gs),sig=gs.length+':'+secs.length;let rec=MEMS[it.id];
   if(!rec||rec.sig!==sig){rec=MEMS[it.id]={sig,secs:secs.map(()=>({lvl:1,box:0,due:0,runs:0,passed:0}))};memSaveAll()}
@@ -1198,7 +1200,7 @@ $('#memCv').addEventListener('pointerdown',e=>{if(!MEM.run||!MEM.pos)return;cons
   for(const pb of [true,false])for(let m=MEM.lo;m<=MEM.hi;m++){const k=MEM.pos[m];if(!k||k.b!==pb||hit!==null)continue;const h=k.b?MEM.kbH*0.6:MEM.kbH;if(x>=k.x&&x<k.x+k.w&&y<=h)hit=m}
   if(hit!==null)userPress(hit,true)});
 $('#smMem').onclick=()=>{if(smItem)openMem(smItem)};
-function openSongMenu(it){smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));$('#smMem').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
+function openSongMenu(it){it=fresh(it);smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));$('#smMem').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
 $('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome();if(navStack[navStack.length-1]==='songp')renderSongPage()};
 $('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();if(navStack[navStack.length-1]==='songp')back();renderHome();toast('Song gelöscht')};
 for(const b of $$('#filt button'))b.onclick=()=>{filt=b.dataset.f;$$('#filt button').forEach(x=>x.classList.toggle('on',x===b));renderHome()};
@@ -1223,7 +1225,7 @@ function renderStats(){
     d.querySelector('.ttl').textContent=it.title;d.onclick=()=>openItem(it);ss.appendChild(d)}
 }
 function openItem(it){if(it.type==='yt')return openYT(it,true);openSongPage(it)}
-function openItemPlay(it,resume){
+function openItemPlay(it,resume){it=fresh(it);
   if(it.type==='yt')return openYT(it,true); // videos are only converted into songs
   try{const s=it.type==='demo'?demoSong():songForItem(it);openSong(s,it.id,resume)}catch(e){toast('Fehler: '+e.message)}
 }
@@ -1995,7 +1997,7 @@ async function cmpCalib(){
     if(me.speed==null){const fr=[];for(const f of [0.12,0.25,0.4,0.55,0.7,0.85]){if(CMP!==me)return;const m=ms[Math.floor(ms.length*f)],a=await cmpFrameAt(m+me.off+0.12);if(a)fr.push({im:a.im,T:a.t-me.off})}
       me.speed=cmpSpeedNotes(fr,me.notes,me.lo,me.g,r.width,r.height)}}
   catch(e){me.speed=null}finally{me.calibrating=false}}
-function openCompare(it){
+function openCompare(it){it=fresh(it);
   if(!cmpOK(it)){toast('Bitte den Song aus dem Video neu umwandeln – dann kann er verglichen werden.',4500);return}
   let s;try{s=songFromMidi(bufFromB64(it.data),it.title)}catch(e){toast('Fehler: '+e.message);return}
   const notes=s.notes.slice().sort((a,b)=>a.start-b.start);
@@ -2326,7 +2328,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.63 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.64 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
