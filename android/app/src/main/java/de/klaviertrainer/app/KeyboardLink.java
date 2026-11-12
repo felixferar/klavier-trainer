@@ -118,7 +118,7 @@ class KeyboardLink {
                     boolean le = d.getType() == BluetoothDevice.DEVICE_TYPE_LE || d.getType() == BluetoothDevice.DEVICE_TYPE_DUAL;
                     boolean midiUuid = false;
                     if (d.getUuids() != null) for (android.os.ParcelUuid u : d.getUuids()) if (MIDI_UUID.equals(u)) midiUuid = true;
-                    if (!le && !midiUuid) continue;
+                    if (!midiUuid) continue; // nur Geräte, die sich als MIDI-Gerät melden (keine Uhren, Kopfhörer …)
                     String n = d.getName();
                     found(n == null || n.isEmpty() ? "Bluetooth-Gerät" : n, d.getAddress(), false, "paired");
                 }
@@ -158,6 +158,7 @@ class KeyboardLink {
         String name = d.getName();
         if ((name == null || name.isEmpty()) && r.getScanRecord() != null) name = r.getScanRecord().getDeviceName();
         if (scanAll && (name == null || name.isEmpty())) return; // ohne Namen nicht anzeigbar
+        if (android.os.Build.VERSION.SDK_INT >= 26 && !r.isConnectable()) return; // nur Geräte, mit denen man sich verbinden kann
         found(name == null || name.isEmpty() ? "Bluetooth-Keyboard" : name, d.getAddress(), false, scanAll ? "any" : "new");
     }
 
