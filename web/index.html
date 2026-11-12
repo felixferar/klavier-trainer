@@ -1319,9 +1319,18 @@ function openItemPlay(it,resume){it=fresh(it);
   try{const s=it.type==='demo'?demoSong():songForItem(it);openSong(s,it.id,resume)}catch(e){toast('Fehler: '+e.message)}
 }
 // songs made from a video: sections by time (whole seconds), octave learned while practising, hands exactly as coloured in the video
+// v4.70 Akkord-Erkennung für Video-Songs: Ein Ton, der bis 0,15 s nach einem Akkord (≥ 2 gleichzeitige Töne) einsetzt, während alle Akkordtöne noch klingen,
+// und mit ihnen endet (±0,12 s), ist derselbe Akkord – das Video hat ihn nur 1–3 Bilder später erkannt. Er wird auf den Akkordbeginn gesetzt (Ende bleibt).
+// Geprüft an allen Diagnose-Aufnahmen: golden hour E4 bei 1,12 s → 1,00 s; schnelle Läufe und Melodie über gehaltenem Bass bleiben unverändert.
+function chordAlign(notes){const ns=notes.slice().sort((a,b)=>a.start-b.start||a.midi-b.midi),gs=[];let n=0;
+  for(const x of ns){const g=gs[gs.length-1];if(g&&x.start-g[0].start<=0.03)g.push(x);else gs.push([x])}
+  for(let i=0;i<gs.length;i++){const g=gs[i];if(g.length<2)continue;const t0=g[0].start,ends=g.map(x=>x.start+x.dur).sort((a,b)=>a-b),me=ends[Math.floor(ends.length/2)],mn=ends[0],ms=new Set(g.map(x=>x.midi));
+    for(let j=i+1;j<gs.length&&gs[j][0].start-t0<=0.15;j++){const h=gs[j];if(h.length>2)continue;
+      if(h.every(b=>b.start<mn-0.05&&Math.abs(b.start+b.dur-me)<=0.12&&!ms.has(b.midi))){for(const b of h){const e=b.start+b.dur;b.start=t0;b.dur=e-t0;n++}}}}
+  if(n)notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);return n}
 function songForItem(it,buf){
   const s=songFromMidi(buf||bufFromB64(it.data),it.title);
-  if(it.video){const n=Math.ceil(s.duration)+1;s.measures=[];for(let i=0;i<=n;i++)s.measures.push(i);s.timeSec=true;
+  if(it.video){try{s.chordFix=chordAlign(s.notes)}catch(e){}const n=Math.ceil(s.duration)+1;s.measures=[];for(let i=0;i<=n;i++)s.measures.push(i);s.timeSec=true;
     s.octUnsure=!!it.octUnsure&&!it.octLearned;s.oneColor=!!it.oneColor;
     if(it.octShift)for(const x of s.notes)x.midi=clamp(x.midi+it.octShift,21,108)}
   return s}
