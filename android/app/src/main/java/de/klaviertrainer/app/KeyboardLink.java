@@ -9,7 +9,10 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.media.midi.MidiDevice;
 import android.media.midi.MidiDeviceInfo;
@@ -182,6 +185,7 @@ class KeyboardLink {
     // ------------------------------------------------------------ Verbinden
 
     void connect(String addr, String name) {
+        cleanupBond();
         stopScan();
         closeDevice();
         h.removeCallbacks(retry);
@@ -201,7 +205,41 @@ class KeyboardLink {
         try { d = bt.getRemoteDevice(addr); } catch (Exception e) { setState("fail", "Ungültiges Gerät."); return; }
         triedAgain = false;
         setState("connecting", null);
-        openManual(d);
+        bondThenOpen(d);
+    }
+
+    private BroadcastReceiver bondRx;
+    private Runnable bondTimeout;
+    private void cleanupBond() {
+        if (bondTimeout != null) { h.removeCallbacks(bondTimeout); bondTimeout = null; }
+        if (bondRx != null) { try { ctx.unregisterReceiver(bondRx); } catch (Exception ignored) {} bondRx = null; }
+    }
+
+    /** v4.61: Das Klavier meldet sich als Bluetooth-Low-Energy-Gerät ohne Kopplung (bond=10) und Android liefert beim Öffnen sofort "null".
+     *  Viele BLE-MIDI-Geräte lassen sich nur nach der Kopplung öffnen – deshalb zuerst koppeln (Android fragt ggf. nach), dann öffnen. */
+    private void bondThenOpen(BluetoothDevice d) {
+        cleanupBond();
+        if (d.getBondState() != BluetoothDevice.BOND_NONE) { openManual(d); return; }
+        dbg("Nicht gekoppelt – koppeln …");
+        final String addr = d.getAddress();
+        bondRx = new BroadcastReceiver() {
+            @Override public void onReceive(Context c, Intent i) {
+                BluetoothDevice x = i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (x == null || !addr.equals(x.getAddress())) return;
+                int st = i.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1);
+                dbg("Kopplung: " + (st == BluetoothDevice.BOND_BONDED ? "fertig" : st == BluetoothDevice.BOND_BONDING ? "läuft" : "abgebrochen"));
+                if (st == BluetoothDevice.BOND_BONDING) return;
+                cleanupBond();
+                if (wanted && "connecting".equals(state)) openManual(d);
+            }
+        };
+        ctx.registerReceiver(bondRx, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
+        bondTimeout = () -> { bondTimeout = null; cleanupBond(); dbg("Kopplung: keine Antwort"); if (wanted && "connecting".equals(state)) openManual(d); };
+        h.postDelayed(bondTimeout, 40000);
+        boolean ok = false;
+        try { ok = d.createBond(); } catch (RuntimeException e) { dbg("Koppeln nicht möglich: " + why(e)); }
+        dbg("createBond: " + ok);
+        if (!ok) { cleanupBond(); openManual(d); }
     }
 
     /** Ein Verbindungsversuch von Hand. Android meldet beim ersten Versuch oft "null" (GATT-Fehler 133) – dann einmal still wiederholen. */
@@ -319,6 +357,7 @@ class KeyboardLink {
     }
 
     void disconnect(boolean forget) {
+        cleanupBond();
         wanted = false;
         h.removeCallbacks(retry);
         stopScan();

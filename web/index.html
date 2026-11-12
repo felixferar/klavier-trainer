@@ -525,7 +525,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.60</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.61</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1570,7 +1570,7 @@ function kbUI(){
     $('#kbSecOn').classList.toggle('hidden',!onL.length);$('#kbSecPair').classList.toggle('hidden',!pair.length);
     $('#kbSpin').classList.toggle('on',KB.scanning);
     $('#kbNone').textContent=nw.length?'':(KB.scanning?'Suche läuft …':'Nichts gefunden. Ist das Klavier eingeschaltet und Bluetooth am Klavier an? Mit „Alle Geräte zeigen“ siehst du jedes Bluetooth-Gerät in der Nähe.');
-    $('#kbStatus').textContent=(st==='fail'||st==='noperm'||st==='btoff'||st==='waiting')?msg:(st==='connecting'?`Verbinde mit ${KB.name||'Klavier'} … (bis zu 15 Sekunden)`:'');
+    $('#kbStatus').textContent=(st==='fail'||st==='noperm'||st==='btoff'||st==='waiting')?msg:(st==='connecting'?`Verbinde mit ${KB.name||'Klavier'} … (kann bis zu einer Minute dauern – Android fragt evtl. nach einer Kopplung)`:'');
     $('#kbLog').textContent=KB.log.length?KB.log.join('\n'):'(noch nichts)';
     $('#kbPerm').classList.toggle('hidden',!(st==='noperm'||(st==='fail'&&KB.perm)));
     $('#kbAgain').disabled=KB.scanning;$('#kbAll').disabled=KB.scanning}}
@@ -1590,7 +1590,7 @@ $('#kbSheet').addEventListener('click',e=>{const b=e.target.closest('[data-kb]')
   if(kbOn()&&KB.addr===b.dataset.kb)return;
   KB.name=b.dataset.name;KB.addr=b.dataset.kb;KB.state='connecting';KB.scanning=false;kbUI();nat('kbConnect',{addr:b.dataset.kb,name:b.dataset.name});
   // watchdog: if the app never answers (e.g. the permission window was dismissed), show a clear message instead of silence
-  clearTimeout(KB.wd);KB.wd=setTimeout(()=>{if(KB.state==='connecting'){KB.state='fail';KB.msg='Keine Antwort. Wurde „Geräte in der Nähe“ erlaubt? Sonst unter „Berechtigung öffnen“ erlauben.';KB.perm=true;kbUI()}},22000)});
+  clearTimeout(KB.wd);KB.wd=setTimeout(()=>{if(KB.state==='connecting'){KB.state='fail';KB.msg='Keine Antwort. Wurde „Geräte in der Nähe“ erlaubt? Sonst unter „Berechtigung öffnen“ erlauben.';KB.perm=true;kbUI()}},45000)});
 
 /* ================= player state ================= */
 let song=null,songId=null,t=0,playing=false,lastFrame=0,groups=[],gi=0,soundIdx=0,loop=null,keyLo=21,keyHi=108;
@@ -2303,7 +2303,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.60 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.61 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
