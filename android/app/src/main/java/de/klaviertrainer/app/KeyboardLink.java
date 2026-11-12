@@ -149,6 +149,9 @@ class KeyboardLink {
     void connect(String addr, String name) {
         stopScan();
         closeDevice();
+        h.removeCallbacks(retry);
+        openPending = false;
+        retryFails = 0;
         wanted = true;
         curAddr = addr;
         curName = name;
@@ -185,11 +188,13 @@ class KeyboardLink {
 
     private void attach(MidiDevice dev) {
         h.removeCallbacks(connectTimeout);
+        // v4.57: zwei Verbindungsversuche gleichzeitig (Suche + Auto) dürfen nicht zwei Geräte offen lassen
+        if (dev != null && device != null) { try { dev.close(); } catch (Exception ignored) {} report(); return; }
         // Android meldet ein ausgeschaltetes Bluetooth-Keyboard teils als "geöffnet", aber ohne Geräteinfo
         // (Absturz 09.11. 15:32: NullPointerException hier). Dann: schließen und still später erneut versuchen.
         if (dev == null || dev.getInfo() == null) {
             try { if (dev != null) dev.close(); } catch (Exception ignored) {}
-            if (wanted && curAddr != null && !curAddr.startsWith("usb:")) h.postDelayed(retry, RETRY_MS);
+            if (wanted && curAddr != null && !curAddr.startsWith("usb:")) { setState("waiting", "Keyboard nicht gefunden – ich versuche es weiter."); h.postDelayed(retry, RETRY_MS); }
             else setState("fail", "Das Keyboard antwortet nicht.");
             return;
         }
@@ -229,12 +234,13 @@ class KeyboardLink {
         try {
             midi.openBluetoothDevice(d, dev -> {
                 openPending = false;
-                if (dev == null) { retryFails++; h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
+                if (dev == null) { retryFails++; setState("waiting", "Keyboard nicht gefunden – ich versuche es weiter."); h.postDelayed(KeyboardLink.this.retry, retryDelay()); return; }
                 retryFails = 0;
                 attach(dev);
             }, h);
         } catch (RuntimeException e) { // z. B. SecurityException: zu viele MIDI-Verbindungen – nicht abstürzen, später erneut
             openPending = false; retryFails++;
+            setState("waiting", "Keyboard nicht gefunden – ich versuche es weiter.");
             h.postDelayed(KeyboardLink.this.retry, retryDelay());
         }
     };
@@ -244,9 +250,14 @@ class KeyboardLink {
     void autoConnect() {
         String a = savedAddr();
         if (a.isEmpty() || device != null || !bluetoothOn()) { report(); return; }
+        // läuft schon ein junger Versuch, nicht dazwischenfunken (zu viele MIDI-Verbindungen stürzen die App ab)
+        if (openPending && android.os.SystemClock.elapsedRealtime() - openSince < 20000) { report(); return; }
         curAddr = a;
         curName = prefs.getString("kb_name", "Keyboard");
         wanted = true;
+        openPending = false;
+        retryFails = 0;
+        h.removeCallbacks(retry);
         state = "lost"; // so wird bei Misserfolg leise weiter probiert
         setState("connecting", null);
         retry.run();

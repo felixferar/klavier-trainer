@@ -255,7 +255,7 @@ body.inplayer .toast{top:34%;font-size:14px}
 #cmpBar{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;background:var(--s1);border-top:1px solid var(--bd)}
 #cmpTxt{display:none;height:22px;line-height:22px;text-align:center;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 #cmpDiff{display:none;height:26px;line-height:26px;text-align:center;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#cmpEdit,#cmpSave{display:flex;gap:6px}#cmpEdit.hidden,#cmpSave.hidden{display:none}#cmpEdit .btn,#cmpSave .btn{flex:1;min-width:0;height:44px;font-size:14px;white-space:nowrap;padding:0 4px}
+#cmpEdit,#cmpSave{display:flex;gap:6px}#cmpEdit.hidden,#cmpSave.hidden{display:none}#cmpEdit .btn,#cmpSave .btn{flex:1;min-width:0;height:44px;font-size:13px;padding-left:4px;padding-right:4px;white-space:nowrap;padding:0 4px}
 #cmpBtns{display:flex;gap:8px}#cmpBtns .btn{flex:1;min-width:0;height:46px;font-size:16px;white-space:nowrap}
 #ytFrame,#ytBox iframe{position:absolute;inset:0;width:100%;height:100%}
 #ytMsg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--mu);font-size:14px}
@@ -341,6 +341,17 @@ body.short #onbDots{margin:8px 0}
 .spRows{margin-top:20px;border-top:1px solid var(--bd2)}
 .spRow{display:flex;align-items:center;gap:12px;padding:16px 4px;border-bottom:1px solid var(--bd);cursor:pointer}
 .spRow b{display:block;font-size:18px;font-weight:800}.spRow span{font-size:14px;color:var(--mu);font-weight:700}
+
+.kbBar{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:12px 14px;border:none;border-radius:14px;background:var(--s1);color:var(--tx);font:inherit;text-align:left;cursor:pointer}
+.kbBar.hidden{display:none}
+.kbBar .dot,.kbchip .dot{flex:none;width:12px;height:12px;border-radius:6px;background:var(--mu2)}
+.kbBar.on .dot,.kbchip.on .dot{background:#4CC38A}.kbBar.busy .dot,.kbchip.busy .dot{background:var(--ac);animation:kbp 1s infinite}.kbBar.off .dot,.kbchip.off .dot{background:#D9705F}
+@keyframes kbp{50%{opacity:.35}}
+.kbBar b{display:block;font-size:16px;font-weight:800}.kbBar span.s{display:block;font-size:13px;color:var(--mu);font-weight:700;margin-top:1px}
+.kbBar .act{margin-left:auto;font-size:14px;font-weight:800;color:var(--ac)}
+.kbBig{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:var(--s2);margin:0 0 12px}
+.kbBig .dot{flex:none;width:14px;height:14px;border-radius:7px;background:var(--mu2)}.kbBig.on .dot{background:#4CC38A}.kbBig.busy .dot{background:var(--ac);animation:kbp 1s infinite}.kbBig.off .dot{background:#D9705F}
+.kbBig b{display:block;font-size:17px;font-weight:800}.kbBig span.s{display:block;font-size:14px;color:var(--mu);font-weight:700;margin-top:2px}
 </style>
 </head>
 <body>
@@ -392,6 +403,7 @@ body.short #onbDots{margin:8px 0}
         <button class="ib" data-go="settings" title="Einstellungen"><svg class="i"><use href="#i-gear"/></svg></button>
         <button class="avatar" id="homeAv" data-go="profile" title="Profil">?</button>
       </div>
+      <button class="kbBar hidden" id="kbBar"><span class="dot"></span><span><b></b><span class="s"></span></span><span class="act"></span></button>
       <div id="contWrap" class="stCont"></div>
       <div class="weekBox"><div class="wh"><span>Diese Woche</span><span id="goalTxt2"></span></div><div class="wkeys" id="wkeys"></div></div>
       <div id="dueWrap"></div>
@@ -506,7 +518,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.56</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.57</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -607,7 +619,7 @@ body.short #onbDots{margin:8px 0}
   <div class="topbar"><button class="ib" id="yBack"><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" id="yTitle">YouTube</div></div>
   <div id="ytBox"><div id="ytFrame"></div><canvas id="cmpCv" class="hidden"></canvas><div id="ytMsg"></div><div id="ytBlock" class="hidden" style="position:absolute;inset:0;z-index:5;background:transparent"></div></div>
   <canvas id="cmpScene" class="hidden"></canvas>
-  <div id="cmpBar" class="hidden"><div id="cmpTxt">–</div><div id="cmpDiff"> </div><div id="cmpEdit" class="hidden"><button class="btn" id="ceDel">Löschen</button><button class="btn" id="ceDn">Ton ▼</button><button class="btn" id="ceUp">Ton ▲</button><button class="btn" id="ceShort">Kürzer</button><button class="btn" id="ceLong">Länger</button></div><div id="cmpSave" class="hidden"><button class="btn" id="ceUndo">Rückgängig</button><button class="btn pri" id="ceSave">Speichern</button></div><div id="cmpBtns"><button class="btn" id="cmpPrevN">‹ Zurück</button><button class="btn" id="cmpPlay">Abspielen</button><button class="btn" id="cmpNextN">Weiter ›</button></div></div>
+  <div id="cmpBar" class="hidden"><div id="cmpTxt">–</div><div id="cmpDiff"> </div><div id="cmpEdit" class="hidden"><button class="btn" id="ceDel">Löschen</button><button class="btn" id="ceDn">Ton ▼</button><button class="btn" id="ceUp">Ton ▲</button><button class="btn" id="ceSplit">Teilen</button><button class="btn" id="ceShort">Kürzer</button><button class="btn" id="ceLong">Länger</button></div><div id="cmpSave" class="hidden"><button class="btn" id="ceUndo">Rückgängig</button><button class="btn pri" id="ceSave">Speichern</button></div><div id="cmpBtns"><button class="btn" id="cmpPrevN">‹ Zurück</button><button class="btn" id="cmpPlay">Abspielen</button><button class="btn" id="cmpNextN">Weiter ›</button></div></div>
   <div id="convPanel" class="hidden" style="flex:none;padding:16px 18px 20px;background:var(--s1);border-top:1px solid var(--bd);text-align:center">
     <div style="font-weight:800;font-size:17px" id="convTitle">Song wird erstellt …</div>
     <div class="mu sm" id="convSub" style="margin:4px 0 12px">Bitte warten, bis 100 % erreicht sind. Leg das Handy so lange einfach hin.</div>
@@ -653,7 +665,7 @@ body.short #onbDots{margin:8px 0}
 
 <!-- ===================== CALIBRATION ===================== -->
 <div id="songp" class="screen hidden">
-  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><span class="sp"></span><button class="ib" id="spMenu" title="Mehr"><svg class="i"><use href="#i-more"/></svg></button></div>
+  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><span class="sp"></span><button id="spKb" class="kbchip" style="background:none;border:0;color:var(--tx);font:inherit;margin-right:6px"><span class="dot"></span><span class="t"></span></button><button class="ib" id="spMenu" title="Mehr"><svg class="i"><use href="#i-more"/></svg></button></div>
   <div class="scroll" style="flex:1;padding:0 20px 30px">
     <div class="spHero"><h1 id="spTitle"></h1><div class="stSub" id="spMeta"></div></div>
     <div class="stLbl" style="margin-top:26px" id="spLbl">Auswendig</div>
@@ -666,7 +678,7 @@ body.short #onbDots{margin:8px 0}
   </div>
 </div>
 <div id="mem" class="screen hidden">
-  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Auswendig lernen</div><span class="sp"></span><span id="memKb" class="kbchip"><i></i><span></span></span></div>
+  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Auswendig lernen</div><span class="sp"></span><button id="memKb" class="kbchip" style="background:none;border:0;color:var(--tx);font:inherit"><span class="dot"></span><span class="t"></span></button></div>
   <div class="scroll" style="flex:1;padding:0 16px 30px">
     <div id="memHome">
       <div style="font-weight:800;font-size:18px;margin:8px 0 2px" id="memSong"></div>
@@ -733,9 +745,11 @@ body.short #onbDots{margin:8px 0}
   <div class="sh"><b>Keyboard verbinden</b><button class="ib" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
   <div class="sb">
     <p class="mu sm" style="margin:0 2px 12px">Keyboard einschalten und in die Nähe legen. Wenn das Handy nach „Geräte in der Nähe“ fragt, tippe auf „Zulassen“.</p>
+    <div class="kbBig" id="kbBig"><span class="dot"></span><span><b></b><span class="s"></span></span></div>
     <div id="kbStatus" class="mu sm" style="margin:0 2px 10px"></div>
     <div class="list" id="kbList"></div>
-    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="kbAgain" style="flex:1">Nochmal suchen</button><button class="btn danger hidden" id="kbOff" style="flex:1">Trennen</button></div>
+    <button class="btn pri hidden" id="kbNow" style="width:100%;height:48px;margin-top:12px">Jetzt verbinden</button>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="kbAgain" style="flex:1">Neu suchen</button><button class="btn danger hidden" id="kbOff" style="flex:1">Trennen</button></div>
   </div>
 </div>
 <div class="sheet" id="songMenu">
@@ -1066,7 +1080,7 @@ $('#spGo').onclick=()=>{if(SP.item)openMem(SP.item)};
 $('#spPlay').onclick=()=>{if(SP.item)openItemPlay(SP.item)};
 $('#spCmp').onclick=()=>{if(SP.item)openCompare(SP.item)};
 $('#spMenu').onclick=()=>{if(SP.item)openSongMenu(SP.item)};
-function memKbChip(){const c=$('#memKb');if(!c)return;const on=kbOn(),t=on?'Klavier verbunden':'Kein Klavier';if(c.dataset.s!==t){c.dataset.s=t;c.classList.toggle('on',on);c.querySelector('span').textContent=t}}
+function memKbChip(){try{kbChips()}catch(e){}}
 function memStagesUI(){const R=MEM.run;if(!R)return;const l=R.watch?0:R.lvl;$('#memStages').innerHTML=[1,2,3,4].map(i=>`<i class="${i<=l?'d':''}"></i>`).join('');$('#memTasti').outerHTML=tastiSVG(46).replace('<svg class="tasti"','<svg id="memTasti" class="tasti"')}
 let smItem=null;
 // --- Auswendig lernen (v4.44): sections, hint ladder (1 always shown … 4 none), spaced review. Concept + sources: project doc konzept-auswendig-lernen
@@ -1498,7 +1512,24 @@ function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash
   if(KB.cand&&KB.cand.n>=3){const d=KB.cand.d;KB.shift+=d;save('kt_kbshift',KB.shift);KB.cand=null;pushPress(m+d);
     toast(`Dein Keyboard schickt die Töne ${Math.abs(d)%12===0?(Math.abs(d)/12)+' Oktave'+(Math.abs(d)>12?'n':''):Math.abs(d)+' Halbtöne'} ${d>0?'zu tief':'zu hoch'} (Transponierung) – ab jetzt automatisch korrigiert.`,5000);return}
   pushPress(m);wrongFlash.set(m,now);fx.push({txt:'Falsch: '+noteName(m),r:'m',t0:now});if(fx.length>3)fx.shift()}
+function kbInfo(){const st=KB.state;
+  if(kbOn())return {k:'on',label:'Klavier verbunden',short:'Klavier verbunden',sub:KB.name||'',act:''};
+  if(st==='connecting'||st==='scanning')return {k:'busy',label:'Verbinde …',short:'Verbinde …',sub:KB.name||'Einen Moment',act:''};
+  if(st==='lost')return {k:'busy',label:'Verbindung verloren',short:'Verbinde neu …',sub:'Ich verbinde neu …',act:'Jetzt'};
+  if(st==='btoff')return {k:'off',label:'Bluetooth ist aus',short:'Bluetooth aus',sub:'Einschalten, dann hier tippen',act:'Verbinden'};
+  if(st==='noperm')return {k:'off',label:'Berechtigung fehlt',short:'Nicht verbunden',sub:KB.msg||'Bitte „Geräte in der Nähe“ erlauben',act:'Verbinden'};
+  if(KB.saved)return {k:'off',label:'Klavier nicht gefunden',short:'Nicht verbunden',sub:(KB.name||'Klavier')+' einschalten, dann tippen',act:'Verbinden'};
+  return {k:'none',label:'Kein Klavier verbunden',short:'Kein Klavier',sub:'Tippen zum Verbinden',act:'Verbinden'}}
+function kbChips(){const sup=KB.sup&&NAT.ok,i=kbInfo();
+  const b=$('#kbBar');if(b){b.classList.toggle('hidden',!NAT.ok||!KB.sup);b.className='kbBar '+i.k+(!NAT.ok||!KB.sup?' hidden':'');b.querySelector('b').textContent=i.label;b.querySelector('.s').textContent=i.sub;b.querySelector('.act').textContent=i.act}
+  for(const id of ['memKb','spKb']){const c=$('#'+id);if(!c)continue;c.className='kbchip '+i.k;c.style.display=(NAT.ok&&KB.sup)?'':'none';c.querySelector('.t').textContent=i.short}
+  const g=$('#kbBig');if(g){g.className='kbBig '+i.k;g.querySelector('b').textContent=i.label;g.querySelector('.s').textContent=i.sub}
+  const nw=$('#kbNow');if(nw)nw.classList.toggle('hidden',!(KB.saved&&!kbOn()))}
+function kbTap(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
+  if(!kbOn()&&KB.saved&&KB.state!=='btoff')nat('kbAuto'); // saved keyboard: try right away, the window shows what happens
+  kbOpen()}
 function kbUI(){
+  try{kbChips()}catch(e){}
   const sup=KB.sup,on=kbOn(),st=KB.state;
   if($('#calCard')&&(on||KB.saved))$('#calCard').classList.add('hidden'); // with a keyboard no calibration is needed
   // home
@@ -1512,7 +1543,7 @@ function kbUI(){
   if($('#kbSetTxt')){$('#kbSetTxt').textContent=on?`Verbunden: ${KB.name}`+(KB.last!=null?` · zuletzt gedrückt: ${noteName(KB.last)}`:'')+(KB.shift?` · Verschiebung ${KB.shift>0?'+':''}${KB.shift}`:''):!sup?'Braucht die neue App-Version':KB.saved?`${KB.name||'Keyboard'} – nicht in der Nähe oder aus`:'Nicht verbunden – die App hört über das Mikrofon';
     $('#kbSetBtn').textContent=on?'Trennen':'Verbinden';$('#kbSetBtn').disabled=!sup;$('#kbShiftRow').classList.toggle('hidden',!KB.shift)}
   // sheet
-  const msg={scanning:'Suche läuft …',connecting:'Verbinde …',on:`Verbunden: ${KB.name}`,lost:'Verbindung verloren – verbinde neu …',btoff:'Bluetooth ist aus. Bitte einschalten und nochmal suchen.',noperm:KB.msg,fail:KB.msg,off:KB.found.length?'Tippe auf dein Keyboard.':(KB.scanning?'Suche läuft …':'Kein Keyboard gefunden. Ist es eingeschaltet? Ist Bluetooth am Keyboard an?')}[st]||'';
+  const msg={scanning:'Suche läuft …',connecting:'Verbinde …',on:`Verbunden: ${KB.name}`,lost:'Verbindung verloren – verbinde neu …',waiting:'Klavier nicht gefunden – ich versuche es weiter. Ist es eingeschaltet?',btoff:'Bluetooth ist aus. Bitte einschalten und nochmal suchen.',noperm:KB.msg,fail:KB.msg,off:KB.found.length?'Tippe auf dein Keyboard.':(KB.scanning?'Suche läuft …':'Kein Keyboard gefunden. Ist es eingeschaltet? Ist Bluetooth am Keyboard an?')}[st]||'';
   if($('#kbStatus')){$('#kbStatus').textContent=st==='off'&&KB.scanning?'Suche läuft …':msg;
     $('#kbList').innerHTML=KB.found.map((f,i)=>`<button class="li" data-kb="${i}" style="width:100%;text-align:left;color:var(--tx);background:transparent;border:0;font:inherit"><svg class="i" style="color:var(--ac)"><use href="#i-kb"/></svg><div class="grow"><b>${esc(f.name)}</b><small>${f.usb?'USB':'Bluetooth'}</small></div>${on&&KB.addr===f.addr?'<span class="mu sm">verbunden</span>':''}</button>`).join('')||'';
     $('#kbOff').classList.toggle('hidden',!on&&!KB.saved);$('#kbAgain').disabled=KB.scanning}}
@@ -1520,6 +1551,8 @@ function kbOpen(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die ne
   if(kbOn()){openSheet('#kbSheet');kbUI();return} // connected: just show the status
   KB.found=[];KB.scanning=true;openSheet('#kbSheet');kbUI();nat('kbScan')}
 $('#kbCardBtn').onclick=kbOpen;
+$('#kbBar').onclick=kbTap;$('#memKb').onclick=kbTap;$('#spKb').onclick=kbTap;
+$('#kbNow').onclick=()=>{nat('kbAuto');KB.state='connecting';kbUI()};
 $('#kbShiftReset').onclick=()=>{KB.shift=0;save('kt_kbshift',0);kbUI();toast('Verschiebung zurückgesetzt')};
 $('#kbSetBtn').onclick=()=>{if(kbOn()){nat('kbDisconnect',{forget:true});toast('Keyboard getrennt')}else kbOpen()};
 $('#kbAgain').onclick=()=>{KB.found=[];KB.scanning=true;kbUI();nat('kbScan')};
@@ -1979,6 +2012,14 @@ const cePitch=d=>{if(!CMP||!CMP.sel)return;const n=CMP.sel,m=n.midi+d;if(m<CMP.l
 $('#ceUp').onclick=()=>cePitch(1);$('#ceDn').onclick=()=>cePitch(-1);
 const ceLen=d=>{if(!CMP||!CMP.sel)return;const n=CMP.sel;ceChange(()=>{n.dur=Math.max(CE_MIN,Math.round((n.dur+d)*100)/100)})};
 $('#ceLong').onclick=()=>ceLen(CE_STEP);$('#ceShort').onclick=()=>ceLen(-CE_STEP);
+// v4.57: split one note into two (the same key struck twice was read as one long note). Cut where the video is paused inside the note, otherwise in the middle.
+function ceSplit(){if(!CMP||!CMP.sel)return false;const n=CMP.sel,gap=0.04;
+  if(n.dur<2*CE_MIN+gap+0.02){toast('Die Note ist zu kurz zum Teilen',2000);return false}
+  const T=CMP.hit&&CMP.hit.T,inside=T!=null&&T>n.start+CE_MIN+gap/2&&T<n.start+n.dur-CE_MIN-gap/2;
+  const cut=Math.round((inside?T:n.start+n.dur/2)*100)/100,end=n.start+n.dur;
+  ceChange(()=>{const b=Object.assign({},n);n.dur=Math.round((cut-gap/2-n.start)*1000)/1000;b.start=Math.round((cut+gap/2)*1000)/1000;b.dur=Math.round((end-b.start)*1000)/1000;CMP.notes.push(b);CMP.sel=n});
+  return true}
+$('#ceSplit').onclick=ceSplit;
 $('#ceUndo').onclick=()=>{if(!CMP||!CMP.hist.length)return;const h=CMP.hist.pop();CMP.notes=JSON.parse(h.s);CMP.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);CMP.sel=null;CMP.moments=cmpMoments(CMP.notes);CMP.dirty=CMP.hist.length>0||!!CMP.saved;ceUI()};
 function ceSave(){if(!CMP||!CMP.dirty)return true;
   const notes=CMP.notes.map(n=>({m:n.midi,start:n.start,dur:n.dur,hand:n.hand||'R'})),data=b64FromBuf(writeMidi(notes)),libBak=LIB.slice();let it;
@@ -2224,8 +2265,12 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer();if(m&&m.crash){save('kt_lastcrash',m.crash);nat('crashClear');if(ghTok())ghUpload(`diag/${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}_absturz.txt`,btoa(unescape(encodeURIComponent(m.crash+'\n\n'+navigator.userAgent))),'Absturzprotokoll');setTimeout(()=>toast('Die App ist beim letzten Mal abgestürzt – das Protokoll steht unter Einstellungen → Fehlersuche.',5000),1500)}crashUI()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
+// v4.57: after the phone slept / the app was in the background, and every 30 s while a saved keyboard is not connected: try again (not while an attempt is running)
+const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&&KB.state!=='scanning'&&KB.state!=='btoff';
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
+setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.56 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.57 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
