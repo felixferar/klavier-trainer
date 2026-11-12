@@ -25,14 +25,14 @@ JS="""async([geo,lo])=>{const o={};
  // hinzufuegen: Taste ohne klingende Note antippen
  vt=1+2+0.5;cmpDraw();ceTap(xcol(67),CMP.hit.rh+10);o.add={n:CMP.notes.length,sel:CMP.sel&&CMP.sel.midi,dur:CMP.sel&&CMP.sel.dur,start:CMP.sel&&CMP.sel.start};
  // speichern
- o.saveOK=ceSave();const nl=LIB.length;o.lib={n:nl,first:LIB[0].title,edited:LIB[0].edited,origTitle:LIB[1]&&LIB[1].title,origUnchanged:LIB[1]&&LIB[1].data===origData,origNoEdited:!(LIB[1]&&LIB[1].edited)};
- const s=songFromMidi(bufFromB64(LIB[0].data),'x');o.saved=s.notes.map(n=>[n.midi,Math.round(n.start*100)/100,Math.round(n.dur*100)/100]).sort();
- o.videoKept=JSON.stringify(LIB[0].video)===JSON.stringify(a.video)&&LIB[0].fromYT==='abcdefghijk';
+ o.saveOK=ceSave();const nl=LIB.length;const cur=()=>LIB.find(x=>x.id===a.id),me=cur();o.lib={n:nl,first:me.title,edited:me.edited,origTitle:me.title,origUnchanged:me.data0===origData,origNoEdited:me.data!==origData};
+ const s=songFromMidi(bufFromB64(cur().data),'x');o.saved=s.notes.map(n=>[n.midi,Math.round(n.start*100)/100,Math.round(n.dur*100)/100]).sort();
+ o.videoKept=JSON.stringify(cur().video)===JSON.stringify(a.video)&&cur().fromYT==='abcdefghijk';
  // zweite Aenderung: derselbe bearbeitete Song wird ueberschrieben
- CMP.sel=CMP.notes.find(n=>n.midi===67);$('#ceLong').click();ceSave();o.second={n:LIB.length,dur:songFromMidi(bufFromB64(LIB[0].data),'x').notes.find(n=>n.midi===67).dur};
+ CMP.sel=CMP.notes.find(n=>n.midi===67);$('#ceLong').click();ceSave();o.second={n:LIB.length,dur:songFromMidi(bufFromB64(cur().data),'x').notes.find(n=>n.midi===67).dur};
  // verlassen mit ungespeicherter Aenderung speichert automatisch
  CMP.sel=CMP.notes.find(n=>n.midi===67);$('#ceLong').click();$('#yBack').click();await wait(100);
- o.leave={cmpNull:CMP===null,dur:Math.round(songFromMidi(bufFromB64(LIB[0].data),'x').notes.find(n=>n.midi===67).dur*100)/100,n:LIB.length};
+ o.leave={cmpNull:CMP===null,dur:Math.round(songFromMidi(bufFromB64(cur().data),'x').notes.find(n=>n.midi===67).dur*100)/100,n:LIB.length};
  return o}"""
 async def main():
     async with async_playwright() as p:
@@ -44,7 +44,7 @@ async def main():
            abs(r['undo1']-2.0)<1e-6 or abs(r['undo1']-2.1)<1e-6,r['undoAll']=={'m':60,'d':2,'dirty':False,'n':2},r['lowLimit'],
            r['del']['n']==1 and r['del']['sel'] is None and r['del']['moments']==[5],
            r['add']['n']==2 and r['add']['sel']==67 and r['add']['dur']==0.5 and abs(r['add']['start']-1.5)<0.05,
-           r['saveOK'],r['lib']['n']==2,r['lib']['first']=='Test (bearbeitet)',r['lib']['edited'],r['lib']['origTitle']=='Test',r['lib']['origUnchanged'],r['lib']['origNoEdited'],
-           sorted(x[0] for x in r['saved'])==[64,67],r['videoKept'],r['second']['n']==2,abs(r['second']['dur']-0.6)<0.02,r['leave']['cmpNull'],abs(r['leave']['dur']-0.7)<0.02,r['leave']['n']==2,not errs]
+           r['saveOK'],r['lib']['n']==1,r['lib']['first']=='Test',r['lib']['edited'],r['lib']['origTitle']=='Test',r['lib']['origUnchanged'],r['lib']['origNoEdited'],
+           sorted(x[0] for x in r['saved'])==[64,67],r['videoKept'],r['second']['n']==1,abs(r['second']['dur']-0.6)<0.02,r['leave']['cmpNull'],abs(r['leave']['dur']-0.7)<0.02,r['leave']['n']==1,not errs]
         print(c);ok=all(c);print('ERGEBNIS','OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())

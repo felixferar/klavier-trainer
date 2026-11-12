@@ -471,7 +471,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.49</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.50</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1725,7 +1725,7 @@ async function cmpMeasure(){ // picture of the video box → which keys glow
 // v4.49: speed is learned on the side while the person steps through the song (no extra jumping of the video): one still per step, estimate once there are enough
 async function cmpSpeedCollect(){const me=CMP;if(!me||me.speed!==undefined||!NAT.ok)return;
   const t0=cmpVT(),im=await grabVideo();if(!im||CMP!==me)return;const T=(t0+cmpVT())/2-me.off;(me.sf=me.sf||[]).push({im,T});
-  if(me.sf.length>=6){const r=$('#ytBox').getBoundingClientRect(),v=cmpSpeedNotes(me.sf,me.notes,me.lo,me.g,r.width,r.height);
+  if(me.sf.length>=2){const r=$('#ytBox').getBoundingClientRect(),v=cmpSpeedNotes(me.sf,me.notes,me.lo,me.g,r.width,r.height);
     if(v!=null){me.speed=v;me.sf=null}else if(me.sf.length>=16){me.speed=null;me.sf=null}}}
 async function cmpGo(t){ // jump to a moment: play slowly for a moment (YouTube's pause overlay covers keys), measure, then stop
   if(!CMP||!ytp)return;const gen=++CMP.gen;CMP.step=true;CMP.lit=null;CMP.cover=false;CMP.busy=true;
@@ -1738,7 +1738,7 @@ $('#cmpPrevN').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Eine
 $('#cmpPlay').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}CMP.gen++;CMP.busy=false;let st=-1;try{st=ytp.getPlayerState()}catch(e){}
   if(st===1){try{ytp.pauseVideo()}catch(e){}CMP.step=false;$('#cmpPlay').textContent='Abspielen'}
   else{CMP.step=false;CMP.lit=null;try{ytp.setPlaybackRate(1);ytRate=1;ytp.playVideo()}catch(e){}$('#cmpPlay').textContent='Anhalten'}};
-// --- Etappe 2 (v4.43): notes can be fixed right in the comparison view. Every change goes into a history; saving makes a NEW song („… (bearbeitet)“), the original stays untouched
+// --- Etappe 2 (v4.43): notes can be fixed right in the comparison view. Every change goes into a history; saving changes the song itself (v4.50; the first version is kept as data0)
 const CE_STEP=0.1,CE_MIN=0.05;
 const ceSnap=()=>JSON.stringify(CMP.notes.map(n=>({midi:n.midi,start:n.start,dur:n.dur,hand:n.hand,hand0:n.hand0,vel:n.vel})));
 function ceUI(){if(!CMP)return;$('#cmpEdit').classList.toggle('hidden',!CMP.sel);$('#cmpSave').classList.toggle('hidden',!CMP.dirty)}
@@ -1758,10 +1758,10 @@ $('#ceLong').onclick=()=>ceLen(CE_STEP);$('#ceShort').onclick=()=>ceLen(-CE_STEP
 $('#ceUndo').onclick=()=>{if(!CMP||!CMP.hist.length)return;const h=CMP.hist.pop();CMP.notes=JSON.parse(h.s);CMP.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);CMP.sel=null;CMP.moments=cmpMoments(CMP.notes);CMP.dirty=CMP.hist.length>0||!!CMP.saved;ceUI()};
 function ceSave(){if(!CMP||!CMP.dirty)return true;
   const notes=CMP.notes.map(n=>({m:n.midi,start:n.start,dur:n.dur,hand:n.hand||'R'})),data=b64FromBuf(writeMidi(notes)),libBak=LIB.slice();let it;
-  if(CMP.it.edited){it=Object.assign({},CMP.it,{data});LIB=LIB.map(x=>x.id===it.id?it:x)}
-  else{it=Object.assign({},CMP.it,{id:'m'+Date.now(),title:CMP.it.title+' (bearbeitet)',data,edited:true,video:JSON.parse(JSON.stringify(CMP.it.video))});LIB.unshift(it)}
+  // v4.50: ONE song stays and is changed in place (no new copy per save); the very first recognised version is kept once as data0 so nothing is lost
+  it=Object.assign({},CMP.it,{data,edited:true,data0:CMP.it.data0||CMP.it.data});LIB=LIB.map(x=>x.id===it.id?it:x);
   if(!save('kt_lib',LIB)){LIB=libBak;toast('Speicher voll – Änderungen NICHT gespeichert. Lösche alte Songs.',6000);return false}
-  CMP.it=it;CMP.dirty=false;CMP.saved=true;CMP.hist=[];ceUI();toast('Gespeichert als „'+it.title+'“',3000);return true}
+  CMP.it=it;CMP.dirty=false;CMP.saved=true;CMP.hist=[];ceUI();toast('Gespeichert in „'+it.title+'“',2500);return true}
 $('#ceSave').onclick=ceSave;
 // --- Bildschirmfoto an Claude (v4.47): the phone cannot take screenshots on its own; the app photographs itself (same capture as the video stills) and uploads it with the numbers of the layout
 async function shotSend(){const tok=ghTok();if(!tok){toast('Kein Diagnose-Schlüssel eingetragen (Einstellungen)',4000,true);return}
@@ -2001,7 +2001,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.49 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.50 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
