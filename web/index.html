@@ -466,7 +466,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.47</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.48</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1656,6 +1656,15 @@ function cmpShift(imA,imB,yT,maxShift){const A=cmpBottoms(imA,yT),B=cmpBottoms(i
 // pairs: [{a,b,dt}] pictures of the video box; result in video heights per second, or null
 function cmpSpeedFrom(pairs,g,bw,bh){const vs=[];for(const p of pairs){const k=p.a.width/bw,yT=Math.round(cmpPx(g,bw,bh).Y(g.yT)*k),r=cmpShift(p.a,p.b,yT,Math.round(0.95*p.a.height*p.dt));if(r&&p.dt>0.05)vs.push(r.px/p.dt/p.a.height)}
   if(vs.length<2||Math.abs(vs[0]/vs[1]-1)>0.06)return null;return (vs[0]+vs[1])/2}
+// Second way (v4.48): from the notes themselves. A sounding note whose end is still ahead (0.25–1.2 s) shows its bar above the key; bar height / remaining time = fall speed. Several notes must agree, otherwise no result
+function cmpSpeedNotes(frames,notes,lo,g,bw,bh){const est=[],P=cmpPx(g,bw,bh),yK=P.Y(g.yT);
+  for(const f of frames){const im=f.im,W=im.width,d=im.data,sx=W/bw,sy=im.height/bh,y0=Math.floor((yK-3)*sy);
+    for(const n of cmpSounding(notes,f.T)){const rem=n.start+n.dur-f.T,i=n.midi-lo;if(rem<0.25||rem>1.2||i<0||i>=g.kx.length)continue;
+      const x=Math.round(P.X(g.kx[i])*sx);if(x<0||x>=W)continue;let y=y0,top=null,gap=0;
+      while(y>0){if(cmpChroma(d,(y*W+x)*4)>0.4){top=y;gap=0}else if(++gap>Math.max(4,Math.round(im.height/70)))break;y--}
+      if(top==null||yK*sy-top<Math.max(3,im.height/100))continue;est.push((yK*sy-top)/im.height/rem)}}
+  if(est.length<5)return null;est.sort((a,b)=>a-b);const med=est[est.length>>1],ok=est.filter(v=>Math.abs(v/med-1)<=0.2);
+  if(ok.length<4||ok.length<est.length*0.6)return null;ok.sort((a,b)=>a-b);return ok[ok.length>>1]}
 async function cmpFrameAt(t){ // still picture at video time t
   try{ytp.pauseVideo();ytp.seekTo(Math.max(0,t),true)}catch(e){}
   const t0=performance.now();while(performance.now()-t0<3500){let st=-1;try{st=ytp.getPlayerState()}catch(e){}if(st!==3&&Math.abs(cmpVT()-t)<0.12)break;await sleep(120)}
@@ -1664,7 +1673,9 @@ async function cmpCalib(){
   if(!CMP||CMP.speed!==undefined||CMP.calibrating)return;if(!NAT.ok||!ytp){CMP.speed=null;return}
   CMP.calibrating=true;const me=CMP;try{const ms=me.moments;if(ms.length<6){me.speed=null;return}
     const pairs=[];for(const f of [0.3,0.6]){if(CMP!==me)return;const m=ms[Math.floor(ms.length*f)],a=await cmpFrameAt(m+me.off-0.6),b=a&&await cmpFrameAt(a.t+0.4);if(a&&b)pairs.push({a:a.im,b:b.im,dt:b.t-a.t})}
-    const r=$('#ytBox').getBoundingClientRect();me.speed=pairs.length===2?cmpSpeedFrom(pairs,me.g,r.width,r.height):null}
+    const r=$('#ytBox').getBoundingClientRect();me.speed=pairs.length===2?cmpSpeedFrom(pairs,me.g,r.width,r.height):null;
+    if(me.speed==null){const fr=[];for(const f of [0.12,0.25,0.4,0.55,0.7,0.85]){if(CMP!==me)return;const m=ms[Math.floor(ms.length*f)],a=await cmpFrameAt(m+me.off+0.12);if(a)fr.push({im:a.im,T:a.t-me.off})}
+      me.speed=cmpSpeedNotes(fr,me.notes,me.lo,me.g,r.width,r.height)}}
   catch(e){me.speed=null}finally{me.calibrating=false}}
 function openCompare(it){
   if(!cmpOK(it)){toast('Bitte den Song aus dem Video neu umwandeln – dann kann er verglichen werden.',4500);return}
@@ -1694,6 +1705,7 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
   const df=$('#cmpDiff');
   if(df){let t=' ',col='var(--mu)';const sel=CMP.sel;
     if(sel){t=noteName(sel.midi)+'  ·  '+(Math.round(sel.dur*10)/10).toString().replace('.',',')+' s';col='#fff'}
+    else if(!CMP_MARKS){t=' '}
     else if(CMP.calibrating){t='Messe …'}else if(CMP.busy){t='Prüfe …'}else if(CMP.cover&&CMP.step){t='Video verdeckt';col='#EF9F27'}
     else if(lit){const bad=[...cls].filter(([,k])=>k!=='ok');if(!bad.length){t=on.length||lit.size?'✓ passt':'✓ beides still';col='#3BB273'}else{t='✗ '+bad.length+(bad.length===1?' Unterschied':' Unterschiede');col='#E24B4A'}}
     else if(!CMP.busy&&!CMP.calibrating&&CMP.speed===null)t='Balken nicht messbar';
@@ -1701,13 +1713,14 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
     if(df.textContent!==t)df.textContent=t;df.style.color=col}}
 function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpVT=()=>{try{return ytp.getCurrentTime()}catch(e){return 0}};
+let CMP_MARKS=false; // v4.48: the right/wrong marks are off until the glow measurement is reliable (YouTube overlays in the paused picture fooled it)
 async function cmpMeasure(){ // picture of the video box → which keys glow
-  if(!CMP||!NAT.ok)return;const t0=cmpVT(),im=await grabVideo(),t1=cmpVT();if(!im||!CMP)return;const r=$('#ytBox').getBoundingClientRect();
+  if(!CMP||!NAT.ok||!CMP_MARKS)return;const t0=cmpVT(),im=await grabVideo(),t1=cmpVT();if(!im||!CMP)return;const r=$('#ytBox').getBoundingClientRect();
   const L=cmpLit(im,CMP.g,CMP.lo,r.width,r.height);CMP.cover=L.size>Math.max(10,CMP.g.kx.length*0.2);CMP.lit=CMP.cover?null:L;CMP.litT=(t0+t1)/2-CMP.off}
 async function cmpGo(t){ // jump to a moment: play slowly for a moment (YouTube's pause overlay covers keys), measure, then stop
   if(!CMP||!ytp)return;const gen=++CMP.gen;CMP.step=true;CMP.lit=null;CMP.cover=false;CMP.busy=true;
   try{ytp.setPlaybackRate(0.25);ytRate=0.25;ytp.seekTo(Math.max(0,t),true);ytp.playVideo()}catch(e){}
-  await sleep(450);if(!CMP||gen!==CMP.gen)return;
+  await sleep(CMP_MARKS?450:150);if(!CMP||gen!==CMP.gen)return;
   try{await cmpMeasure()}catch(e){}
   if(!CMP||gen!==CMP.gen)return;CMP.busy=false;try{ytp.pauseVideo()}catch(e){}}
 $('#cmpNextN').onclick=()=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}const T=cmpVT()-CMP.off,m=CMP.moments.find(x=>x>T+0.15);if(m!=null)cmpGo(m+CMP.off);else toast('Das war die letzte Note',1500)};
@@ -1977,7 +1990,7 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.47 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.48 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

@@ -22,7 +22,7 @@ async def main():
           const load=async s=>{const i=new Image();i.src='data:image/jpeg;base64,'+s;await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);return x.getImageData(0,0,c.width,c.height)};
           window.ytp={getCurrentTime:()=>5};NAT.ok=true;$('#ytBox').getBoundingClientRect=()=>({width:1280,height:720});
           for(const [k,s] of [['clean',a],['cover',b]]){const im=await load(s);window.grabVideo=async()=>im;
-            CMP={g:geo,lo,off:0,notes:[],gen:0};await cmpMeasure();out[k]={cover:!!CMP.cover,lit:CMP.lit?CMP.lit.size:null}}
+            CMP_MARKS=true;CMP={g:geo,lo,off:0,notes:[],gen:0};await cmpMeasure();out[k]={cover:!!CMP.cover,lit:CMP.lit?CMP.lit.size:null}}
           return out}""",[geo,lo,img(False),img(True)])
         print(json.dumps(r),errs)
         ok=(not r['clean']['cover'] and r['clean']['lit'] is not None and r['cover']['cover'] and r['cover']['lit'] is None and not errs)

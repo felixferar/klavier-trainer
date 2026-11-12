@@ -33,7 +33,7 @@ async def main():
           // Ansicht mit Stub-Player
           let call=null;window.openYT=(it,auto,cmp)=>{call=[it.videoId,auto,cmp,it.start];cmpMode(!!CMP);show('yt')};
           let vt=0,paused=false,seek=null;ytp={getCurrentTime:()=>vt,pauseVideo(){paused=true},seekTo(t){seek=t;vt=t},setPlaybackRate(){},playVideo(){},getPlayerState:()=>2};
-          openCompare(a);o.cmp=!!CMP;o.call=call;o.off=CMP&&CMP.off;
+          CMP_MARKS=true;openCompare(a);o.cmp=!!CMP;o.call=call;o.off=CMP&&CMP.off;
           vt=1+2+0.5; // Notenzeit 1.5 -> Note 60 klingt (1..3)
           await new Promise(z=>setTimeout(z,300));cmpDraw();o.txt=$('#cmpTxt').textContent;
           const cv=$('#cmpCv'),ctx=cv.getContext('2d'),d=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1,Pp=cmpPx(geo,d.width,d.height),x60=Pp.X(geo.kx[60-lo]),yMid=(Pp.Y(geo.yT)+Pp.Y(geo.yB))/2;
