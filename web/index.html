@@ -1109,7 +1109,8 @@ const MEM={run:null,timer:null,song:null,item:null,gs:[],secs:[],rec:null,queue:
 const MEM_HINT=[0,0,2.5,5,8],MEM_DAYS=[0,1,3,7,14,30,60],memNow=()=>Date.now();
 let MEMS=load('kt_mem')||{};
 function memGroups(notes){const ns=notes.slice().sort((a,b)=>a.start-b.start||a.midi-b.midi),gs=[];
-  for(const n of ns){const g=gs[gs.length-1];if(g&&n.start-g.start<0.06){g.mids.add(n.midi);g.hands.set(n.midi,n.hand||(n.midi>=60?'R':'L'));g.end=Math.max(g.end,n.start+n.dur)}else gs.push({start:n.start,end:n.start+n.dur,mids:new Set([n.midi]),hands:new Map([[n.midi,n.hand||(n.midi>=60?'R':'L')]])})}
+  // v4.66: Töne eines Akkords kommen aus dem Video oft 1–2 Bilder versetzt (40–80 ms) – sie bleiben ein Anschlag (echte schnelle Töne liegen ≥ 120 ms auseinander)
+  for(const n of ns){const g=gs[gs.length-1];if(g&&n.start-g.last<0.09&&n.start-g.start<0.13&&!g.mids.has(n.midi)){g.last=n.start;g.mids.add(n.midi);g.hands.set(n.midi,n.hand||(n.midi>=60?'R':'L'));g.end=Math.max(g.end,n.start+n.dur)}else gs.push({start:n.start,last:n.start,end:n.start+n.dur,mids:new Set([n.midi]),hands:new Map([[n.midi,n.hand||(n.midi>=60?'R':'L')]])})}
   return gs}
 function memSplit(gs){const out=[];let a=0;
   for(let i=0;i<gs.length;i++){const n=i-a+1,gap=i+1<gs.length?gs[i+1].start-gs[i].end:9;if(i===gs.length-1||n>=16||(n>=8&&gap>=0.3)){out.push([a,i]);a=i+1}}
@@ -1170,8 +1171,12 @@ function memEvLog(R){const ev=R.ev;if(!ev)return;const L=load('kt_memeval')||[];
 
 function openMem(it){it=fresh(it);if(memLoad(it)){closeSheets();navStack.push('mem');show('mem');memHome()}}
 function memLoad(it){it=fresh(it);let s;try{s=songForItem(it)}catch(e){toast('Fehler: '+e.message);return false}
+  for(const n of s.notes){n.hand=S.swap?(n.hand0==='R'?'L':'R'):(n.hand0||n.hand);n.midi=foldKey(n.midi)} // v4.66: genau wie beim Abspielen/Üben (applySwap)
+  s.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);try{audio();loadSamples()}catch(e){}
   const gs=memGroups(s.notes);if(gs.length<3){toast('Der Song ist zu kurz zum Auswendiglernen',3000);return false}
   const secs=memSplit(gs),sig=gs.length+':'+secs.length;let rec=MEMS[it.id];
+  if(rec&&rec.sig!==sig&&rec.secs&&rec.secs.length===secs.length){ // v4.66: alte Gruppierung (0,06 s) → Lernstand behalten, wenn die Abschnittszahl gleich bleibt
+    let n=0,g0=-9;for(const x of s.notes.slice().sort((a,b)=>a.start-b.start)){if(x.start-g0>=0.06){n++;g0=x.start}}if(rec.sig===n+':'+secs.length){rec.sig=sig;memSaveAll()}}
   if(!rec||rec.sig!==sig){rec=MEMS[it.id]={sig,secs:secs.map(()=>({lvl:1,box:0,due:0,runs:0,passed:0}))};memSaveAll()}
   Object.assign(MEM,{item:it,song:s,gs,secs,rec,queue:[],run:null,last:null});
   let lo=127,hi=0;for(const g of gs)for(const m of g.mids){if(m<lo)lo=m;if(m>hi)hi=m}lo-=2;hi+=2;while(isBlack(lo))lo--;while(isBlack(hi))hi++;
@@ -1194,7 +1199,7 @@ function memWatch(i){const sc=MEM.secs[i],r=MEM.rec.secs[i];MEM.run={i,a:sc[0],b
   $('#memRunT').textContent='Abschnitt '+(i+1)+' · erst ansehen und anhören';$('#memMsg').textContent='Hör zu und sieh dir den Abschnitt an. Danach spielst du ihn nach.';
   if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memTick()}
 function memWatchTick(R){const g0=MEM.gs[R.a].start,gl=MEM.gs[R.b];R.watchT=(memNow()-R.watchStart)/1000;
-  while(R.played<=R.b&&MEM.gs[R.played].start-g0<=R.watchT){for(const m of MEM.gs[R.played].mids)playTone(m,Math.min(1,Math.max(0.2,MEM.gs[R.played].end-MEM.gs[R.played].start)),0.7);R.played++}
+  const NS=memSecNotes(R);if(R.np==null)R.np=0;while(R.np<NS.length&&NS[R.np].start-g0<=R.watchT){const n=NS[R.np++];playTone(n.midi,Math.max(0.15,n.dur),n.vel!=null?Math.max(0.35,n.vel):0.7)}R.played=R.b+1;
   if(!R.watchDone&&R.watchT>gl.end-g0+0.6){R.watchDone=true;MEM.rec.secs[R.i].watched=true;memSaveAll();$('#memMsg').textContent='Jetzt bist du dran – fang einfach an zu spielen.';$('#memProg').textContent='Gesehen';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
     $('#memNext').textContent='Jetzt spielen';$('#memChain').style.display='none';$('#memAgain').style.display='';$('#memAgain').textContent='Nochmal ansehen'}
   memDraw()}
@@ -1204,6 +1209,7 @@ function memStart(i,review,range,chain){const r=MEM.rec.secs[i],sc=MEM.secs[i],a
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';
   $('#memRunT').textContent=(chain?'Verbinden: Abschnitt '+i+' + '+(i+1):'Abschnitt '+(i+1))+(review?' · Wiederholung':'')+' · Stufe '+lvl+' von 4';
   if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memTick()}
+function memSecNotes(R){if(R._ns)return R._ns;const a=MEM.gs[R.a].start-0.001,b=MEM.gs[R.b].last+0.001;return R._ns=MEM.song.notes.filter(n=>n.start>=a&&n.start<=b)}
 const memHintOn=()=>{const R=MEM.run;return R.lvl===1||(memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]};
 function memTick(){const R=MEM.run;if(!R)return;memKbChip();if(R.watch){memWatchTick(R);return}
   if(R.paused){if(R.kbWas&&kbOn()){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.hinted=false}else return}
@@ -1212,11 +1218,11 @@ function memTick(){const R=MEM.run;if(!R)return;memKbChip();if(R.watch){memWatch
   memDraw()}
 function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepCv(cv);if(!p)return;const c=p.c,now=performance.now(),kb=Math.min(110,p.h*0.42),hn=p.h-kb;MEM.kbH=kb;MEM.hn=hn;c.clearRect(0,0,p.w,p.h);
   const exp=(R.done||R.watch)?null:MEM.gs[R.pos].mids,hint=!R.done&&!R.watch&&memHintOn(),lit=new Set();
-  if(R.watch){const g0=MEM.gs[R.a].start;for(let j=R.a;j<=R.b;j++){const g=MEM.gs[j],rel=g.start-g0;if(rel<=R.watchT&&R.watchT<rel+(g.end-g.start))for(const m of g.mids)lit.add(m)}}
+  if(R.watch){const g0=MEM.gs[R.a].start;for(const n of memSecNotes(R)){const rel=n.start-g0;if(rel<=R.watchT&&R.watchT<rel+n.dur)lit.add(n.midi)}}
   c.save();c.translate(0,hn);
   MEM.pos=drawKeys(c,MEM.lo,MEM.hi,p.w,kb,(m,b)=>{const w=MEM.flash.get(m);if(w&&now-w<450)return '#D9705F';if(lit.has(m))return '#7FB4F0';if(exp&&exp.has(m)){if(R.hit.has(m))return '#7FB4F0';if(hint)return '#3BB273'}return b?'#2C2C2A':'#E8E6DF'},true);c.restore();
   const bar=(m,y0,y1,col)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.5:0.7);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0))};
-  if(R.watch){const g0=MEM.gs[R.a].start,pps=hn/2.5;for(let j=R.a;j<=R.b;j++){const g=MEM.gs[j],rel=g.start-g0,yb=hn-(rel-R.watchT)*pps,yt=yb-(g.end-g.start)*pps;if(yt>hn||yb<0)continue;for(const m of g.mids)bar(m,Math.max(0,yt),Math.min(hn,yb),lit.has(m)?'#7FB4F0':'#378ADD')}}
+  if(R.watch){const g0=MEM.gs[R.a].start,pps=hn/2.5;for(const n of memSecNotes(R)){const rel=n.start-g0,yb=hn-(rel-R.watchT)*pps,yt=yb-n.dur*pps;if(yt>hn||yb<0)continue;bar(n.midi,Math.max(0,yt),Math.min(hn,yb),noteCol(n))}}
   else if(!R.done){const n=R.lvl===1?8:R.lvl===2?2:0;for(let j=0;j<n&&R.pos+j<=R.b;j++){const yb=hn-6-j*30;for(const m of MEM.gs[R.pos+j].mids)bar(m,yb-24,yb,j===0?'#7FB4F0':'#378ADD')}}
   const tot=R.b-R.a+1,at=Math.min(tot,R.pos-R.a);
   if(R.watch){if(!R.watchDone)$('#memProg').textContent='Ansehen und anhören';return}
