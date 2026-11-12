@@ -1,7 +1,7 @@
 """v4.68: Auswendig quer (753×360 wie das Handy des Nutzers): Notenbahn, Klaviatur, Rückmeldung und Knöpfe ohne Scrollen sichtbar; Noten fließen im Takt und warten am nächsten Ton"""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-SETUP=r"""()=>{const notes=[];let t=0;for(let i=0;i<20;i++){notes.push({m:64+[0,2,4,5,7][i%5],start:t,dur:i%3===0?0.9:0.3,hand:'R'});if(i%4===0)notes.push({m:48+(i%3)*2,start:t,dur:1.4,hand:'L'});t+=i%3===0?0.9:0.3}
+SETUP=r"""()=>{window.__mp||(window.__mp=memPress,memPress=function(m,src){const R=MEM.run;if(R&&!R.watch&&R.vt!=null&&R.lvl<=2&&!window.__strict)R.vt=Math.max(R.vt,MEM.gs[R.pos].start);return window.__mp(m,src)}); /* Test: wie Warten, bis der Balken unten ist */const notes=[];let t=0;for(let i=0;i<20;i++){notes.push({m:64+[0,2,4,5,7][i%5],start:t,dur:i%3===0?0.9:0.3,hand:'R'});if(i%4===0)notes.push({m:48+(i%3)*2,start:t,dur:1.4,hand:'L'});t+=i%3===0?0.9:0.3}
  const it={id:'q1',type:'midi',title:'Q',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];window.playTone=()=>{};
  openMem(it);MEM.rec.secs.forEach(r=>{r.watched=true;r.runs=1});memStart(0,false);return {vt0:MEM.run.vt,g0:MEM.gs[0].start}}"""
 FLOW=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const R=MEM.run,o={};o.a=R.vt;await w(400);o.b=R.vt;await w(1500);o.c=R.vt;o.target=MEM.gs[R.pos].start;

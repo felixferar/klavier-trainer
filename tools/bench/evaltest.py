@@ -1,7 +1,7 @@
 """v4.65 Etappe 1: Messung & Bewertung je Durchgang (Konzept v5 §2/§5) – nur Anzeige, Stufen-Logik unverändert"""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};let T=1000;performance.now=()=>T;
+JS=r"""async()=>{window.__mp||(window.__mp=memPress,memPress=function(m,src){const R=MEM.run;if(R&&!R.watch&&R.vt!=null&&R.lvl<=2&&!window.__strict)R.vt=Math.max(R.vt,MEM.gs[R.pos].start);return window.__mp(m,src)}); /* Test: wie Warten, bis der Balken unten ist */const o={};let T=1000;performance.now=()=>T;
  // 12 Anschläge rechts im Abstand 0,5 s; Anschlag 6 ist ein Akkord mit linker Hand (48+52)
  const notes=[];for(let i=0;i<12;i++){if(i===5){notes.push({m:48,start:i*0.5,dur:0.4,hand:'L'},{m:52,start:i*0.5,dur:0.4,hand:'L'})}else notes.push({m:60+(i%5)*2,start:i*0.5,dur:0.4,hand:'R'})}
  const it={id:'ev1',type:'midi',title:'Ev',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];window.playTone=()=>{};
