@@ -26,7 +26,7 @@ async def main():
         L=lambda x:len(x['set']) if ok(x) else -1
         c={'Funktion da':ok(r['s60']),
            'Etappe 1 → alle sichtbar':L(r['s35'])==r['s35']['n'],
-           'Etappe 2 → 60 %':ok(r['s60']) and L(r['s60'])==round(0.6*r['s60']['n']),
+           'Etappe 2 → 70 %':ok(r['s60']) and L(r['s60'])==round(0.7*r['s60']['n']),
            'Schritt 3 → keine':L(r['s85'])==0 and L(r['s95'])==0,
            'weniger bei mehr Sicherheit':L(r['s35'])>=L(r['s60'])>=L(r['s70'])>=L(r['s85']),
            'immer dieselben verschwinden':ok(r['s70']) and set(r['s70']['set'])<=set(r['s60']['set']),

@@ -38,12 +38,12 @@ async def main():
         import re
         sec=lambda s:[int(a)*60+int(b) for a,b in re.findall(r'(\d+):(\d\d)',s)]
         s0,s1=sec(r['sum0']),sec(r['sum1'])
-        c={'⭐ nach 5 Durchgängen mit „Fast“':r['star'] and r['runsToStar']==5,
-           'Ablauf Kennenlernen→Verblassen→Aus dem Kopf':[x[1] for x in r['seq']]==[2,2,2,3,3] and [x[2] for x in r['seq'][:3]]==[0,1,2],
+        c={'⭐ nach 6 Durchgängen mit „Fast“ (v4.82: 4 Etappen)':r['star'] and r['runsToStar']==6,
+           'Ablauf Kennenlernen→Verblassen→Aus dem Kopf':[x[1] for x in r['seq']]==[2,2,2,2,3,3] and [x[2] for x in r['seq'][:4]]==[0,1,2,3],
            'Wackelig bleibt':r['wack']==['same',2,1],'Nicht geschafft: eine Etappe zurück':r['nicht']==['back',2,1],
            'Aus dem Kopf mit Hilfe zählt nicht':r['mitHilfe'][0]=='same' and r['mitHilfe'][2]==0,
            'Auffrischen schief → Verblassen 30 %':r['review'][0]=='fail' and r['review'][1]==2 and r['review'][2]==2,
-           'Verblassen 100/60/30 %':r['frac0']==1 and r['frac1']==0.6 and r['frac2']==0.3 and 0<r['set1']<r['n'],
+           'Verblassen 100/70/40 %':r['frac0']==1 and r['frac1']==0.7 and r['frac2']==0.4 and 0<r['set1']<r['n'],
            'Titel Schritt x von 3':'Schritt 2 von 3' in r['title'] and 'Verblassen' in r['goal'],
            'Sekunden-Balken':'Du kannst' in r['sum0'] and len(s0)==2 and s0[0]==0 and len(s1)==2 and s1[0]>0 and s1[1]==s0[1],
            'alter Stand übernommen':r['mig']==[[1,0],[2,1],[2,2],[3,0]],

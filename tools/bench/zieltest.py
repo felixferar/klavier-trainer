@@ -8,7 +8,7 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};window.__instantEnd=true;
  memStart(0,false);o.goal0=$('#memGoal').textContent;
  let R=play(false);o.msg1=$('#memMsg').textContent;o.next1=$('#memNext').textContent;o.goal1=$('#memGoal').innerHTML.split('class="on"').length-1;
  R=play(true);o.cat2=R.ev.cat;o.lvlAfterHes=MEM.rec.secs[0].lvl;o.msg2=$('#memMsg').textContent;o.again2=getComputedStyle($('#memAgain')).display;
- play(false);R=play(false);o.lvlUp=MEM.rec.secs[0].lvl;o.msg3=$('#memMsg').textContent;o.next3=$('#memNext').textContent;
+ play(false);play(false);R=play(false);o.lvlUp=MEM.rec.secs[0].lvl;o.msg3=$('#memMsg').textContent;o.next3=$('#memNext').textContent;
  // gehaltene Note
  performance.now=()=>Date.now();MEM.rec.secs[0].lvl=1;memStart(0,false);R=MEM.run;R.vt=MEM.gs[R.a].start;const m0=[...MEM.gs[R.a].mids][0];KB.held.add(m0);memPress(m0,'kb');
  const strokes=[];const proto=CanvasRenderingContext2D.prototype,sr=proto.strokeRect;proto.strokeRect=function(...a){strokes.push(this.strokeStyle);return sr.apply(this,a)};memDraw();o.heldStroke=strokes.slice();
