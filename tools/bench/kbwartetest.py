@@ -2,6 +2,7 @@
 import sys,asyncio,json
 from playwright.async_api import async_playwright
 JS=r"""()=>{const o={};
+ window.nat=()=>Promise.resolve(null);kbConnectTo('41:88','GZUT-MIDI'); /* v4.75: Nutzer hat selbst „verbinden“ gedrückt */
  kbMsg({cmd:'kbState',state:'connecting',name:'GZUT-MIDI',addr:'41:88',saved:'41:88'});
  kbMsg({cmd:'kbLog',line:'Ausgang geöffnet: true'});kbMsg({cmd:'kbLog',line:'Warte auf Antwort vom Klavier …'});
  o.chip=kbInfo().label;o.big=($('#kbBig')||{textContent:''}).textContent;
