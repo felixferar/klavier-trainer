@@ -32,7 +32,7 @@ async def main(url):
            'Knopf mit Ziel (Stufe 2)':r['go1']=='Weiter: Abschnitt 1 · Verblassen',
            'Liste nicht antippbar':not r['tapRun'],
            'Liste als Weg':r['marks']==n,
-           'Lektion ohne Fachtext':'Noch 4 gute' in r['goal'] and 'Ab 85' not in r['goal'] and 'Sicherheit' not in r['goal'],
+           'Lektion ohne Fachtext':'Verblassen' in r['goal'] and 'Ab 85' not in r['goal'] and 'Sicherheit' not in r['goal'],
            'fällig':r['go2'].startswith('Auffrischen: Abschnitt 1') and 'Auffrischen' in r['here2'],
            'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await b.close()

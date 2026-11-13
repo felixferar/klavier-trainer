@@ -18,7 +18,7 @@ JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};let ton
  o.durs=secs.map(([a,b])=>+(gs[b].end-gs[a].start).toFixed(1));o.starts=secs.map(([a])=>+gs[a].start.toFixed(2));
  o.twin=MEM.twin.slice();o.sig=MEMS['tt'].sig;o.mig=MEMS['tt'].secs.map(r=>r.passed>0?'P':r.lvl+':'+(r.fe||0));
  /* Zwilling: Original sitzt → Zwilling startet bei Aus dem Kopf */
- const rs=MEM.rec.secs;const ti=MEM.twin.findIndex(x=>x>=0);o.ti=ti;if(ti>=0){const orig=MEM.twin[ti];rs.forEach((r,i)=>{if(i!==ti){r.passed=1;r.box=1;r.due=Date.now()+864e5}});rs[orig].passed=1;rs[orig].box=1;rs[ti].passed=0;rs[ti].box=0;rs[ti].lvl=1;rs[ti].runs=0;rs[ti].tw=0;
+ const rs=MEM.rec.secs;const ti=MEM.twin.findIndex(x=>x>=0);o.ti=ti;if(ti>=0){const orig=MEM.twin[ti];rs.forEach((r,i)=>{if(i!==ti){r.passed=1;r.box=1;r.due=Date.now()+864e5;r.chained=true}}); /* v4.84: schon verbunden, sonst käme zuerst „Verbinden“ */rs[orig].passed=1;rs[orig].box=1;rs[ti].passed=0;rs[ti].box=0;rs[ti].lvl=1;rs[ti].runs=0;rs[ti].tw=0;
    const nx=memPickNext(Date.now());o.twNext=nx&&nx.i===ti;o.twLvl=rs[ti].lvl;memHome();o.here=$('#memHere').textContent}
  /* Anlauf bei Abschnitt 2 */
  rs[1].watched=true;rs[1].runs=1;rs[1].lvl=1;rs[1].passed=0;rs[1].box=0;tones=[];memStart(1,false);const R=MEM.run;o.lead=(R.leadNs||[]).length;o.vt0=+(R.vt).toFixed(2);o.secStart=+gs[R.a].start.toFixed(2);

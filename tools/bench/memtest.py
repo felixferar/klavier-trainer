@@ -50,7 +50,7 @@ JS="""async()=>{window.__instantEnd=true;window.__mp||(window.__mp=memPress,memP
  openMem(it);memStart(1,false);const rr=$('#memCv').getBoundingClientRect();const exp=[...MEM.gs[MEM.run.pos].mids][0];memDraw();const k=MEM.pos[exp];
  $('#memCv').dispatchEvent(new PointerEvent('pointerdown',{clientX:rr.left+k.x+k.w/2,clientY:rr.top+MEM.hn+(k.b?MEM.kbH*0.3:MEM.kbH*0.85),bubbles:true}));o.touchPos=MEM.run.pos-MEM.run.a;
  // Verbinden: Abschnitt 2 (i=1) bis zum Bestehen spielen -> Verbinden-Knopf, Verbindungslauf
- memStop();openMem(it);MEM.rec.secs[1]={lvl:4,box:0,due:0,runs:3,passed:0};memStart(1,false);play(50);o.chainBtn=$('#memChain').style.display;$('#memChain').click();o.chainRun={a:MEM.run.a,b:MEM.run.b,chain:MEM.run.chain,lvl:MEM.run.lvl};play(60);o.chained=MEM.rec.secs[1].chained===true&&MEM.rec.secs[1].box===1;
+ memStop();openMem(it);MEM.rec.secs[1]={lvl:4,box:0,due:0,runs:3,passed:0};memStart(1,false);play(50);o.chainBtn=$('#memNext').textContent;memAutoOff();$('#memNext').click(); /* v4.84: Verbinden kommt automatisch als nächster Schritt */o.chainRun={a:MEM.run.a,b:MEM.run.b,chain:MEM.run.chain,lvl:MEM.run.lvl};play(60);o.chained=MEM.rec.secs[1].chained===true&&MEM.rec.secs[1].box===1;
  return o}"""
 async def main():
     async with async_playwright() as p:
@@ -66,6 +66,6 @@ async def main():
            'Hilfe3':(not r['hint3']['before']) and r['hint3']['after'] and r['hint3']['hints']==1 and r['hint3']['once']==1,'Hilfe4':r['hint4']==1,'kb':r['kbPos']==1,
            'faellig':('1 zum Auffrischen' in r['dueTxt']) and r['goDue'].startswith('Auffrischen: Abschnitt'),'mischen':r['mix'] and r['mixRun']['review'] and r['mixRun']['lvl']==4 and r['mixRun']['queue']==1,
            'rvfail':r['rvfail']['lvl']==2,'zurueck':r['backStops'],'touch':r['touchPos']==0,  # v4.67: Bildschirm-Tasten im Auswendig-Modus aus
-           'Verbinden':r['chainBtn']=='' and r['chainRun']=={'a':0,'b':19,'chain':True,'lvl':4} and r['chained'],'fehlerfrei':not errs}
+           'Verbinden':r['chainBtn'].startswith('Verbinden: Abschnitt 1–2') and r['chainRun']=={'a':0,'b':19,'chain':True,'lvl':4} and r['chained'],'fehlerfrei':not errs}
         print(c);ok=all(c.values());print('ERGEBNIS','OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())
