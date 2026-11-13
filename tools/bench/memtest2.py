@@ -11,7 +11,7 @@ JS="""async()=>{const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms));
  const blue=(lo,hi)=>{const cv=$('#memCv'),x=cv.getContext('2d');const d=x.getImageData(0,0,cv.width,Math.round(MEM.hn*(cv.height/cv.getBoundingClientRect().height))-2);let n=0;for(let i=0;i<d.data.length;i+=4){if(d.data[i+2]>180&&d.data[i]<140)n++}return n};
  memStart(0,false);memDraw();o.bars1=blue();
  MEM.run.lvl=2;memDraw();o.bars2=blue();
- MEM.run.lvl=3;memDraw();o.bars3=blue();
+ MEM.run.lvl=3;MEM.rec.secs[0].sk=85;delete MEM.run._fade;memDraw(); /* v4.79: bei 85 % Sicherheit sind in Stufe 3 alle Noten verblasst */ o.bars3=blue();
  // Ansehen mit Klang: neuer Abschnitt ohne watched
  memStop();MEM.rec.secs[0].watched=false;MEM.rec.secs[0].runs=0;tones=[];memStart(0,false);const R=MEM.run;o.watchMode=!!R.watch;
  R.watchStart-=1200;memTick();o.tonesEarly=tones.length;memDraw();o.watchBars=blue();
