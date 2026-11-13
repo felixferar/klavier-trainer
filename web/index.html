@@ -545,7 +545,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.77</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.78</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -875,7 +875,7 @@ function ago(ts){if(!ts)return 'noch nie geübt';const d=Math.floor((Date.now()-
 const PAL={green:{n:'Grün',l:'#63E6A0',d:'#1E9E5A'},blue:{n:'Blau',l:'#74AAFF',d:'#2F64DA'},violet:{n:'Violett',l:'#BBA0FF',d:'#7048E8'},orange:{n:'Orange',l:'#FFB467',d:'#D9731F'},pink:{n:'Rosa',l:'#FF92C9',d:'#D33C8B'},cyan:{n:'Türkis',l:'#63E3E9',d:'#14999F'},yellow:{n:'Gelb',l:'#FFE070',d:'#C29E00'}};
 const KEYSETS={88:[21,108,'A0 – C8'],76:[28,103,'E1 – G7'],73:[28,100,'E1 – E7'],61:[36,96,'C2 – C7'],49:[36,84,'C2 – C6'],37:[48,84,'C3 – C6']};
 const S=Object.assign({layout:88,sound:true,speed:1,hand:'B',other:'show',soundMine:false,swap:false,wait:false,score:true,input:'mic',sens:6,names:true,full:false,look:2.5,reps:3,autoNext:false,speedUp:false,colL:'green',colR:'blue',goal:15},load('kt_settings')||{});
-if(S.speed>1)S.speed=1;S.input='mic';S.score=false;S.soundMine=false;
+if(S.speed>1)S.speed=1;S.input='touch';S.score=false;S.soundMine=false; /* v4.78: Mikrofon-Eingabe ist entfernt – nie von selbst nach dem Mikrofon fragen */
 const saveS=()=>saveW('kt_settings',S);
 const fmtSpeed=v=>(Math.round(v*100)/100).toLocaleString('de-DE')+'×';
 const KR=()=>KEYSETS[S.layout]||KEYSETS[88];
@@ -1867,9 +1867,7 @@ function setPlaying(p){
 async function ensureInput(){
   if(!(S.wait||S.score))return;
   if(kbOn()){$('#micInfo').textContent='Eingabe über das Keyboard';return} // keyboard: every key arrives directly, no microphone needed
-  if(S.input==='mic'&&!mic&&!micFailed){try{await startMic();$('#micInfo').textContent=calCount()?`Mikrofon an · ${calCount()}/88 kalibriert`:'Mikrofon an · noch nicht kalibriert'}
-    catch(e){micFailed=true;$('#micInfo').textContent=e.message;if(S.wait)toast(e.message+' Tippe solange die Tasten auf dem Bildschirm.',5000)}}
-  else if(S.input==='midi')startMidiIn();
+  if(S.input==='midi')startMidiIn(); /* v4.78: kein Mikrofon mehr – ohne Klavier gelten die Bildschirmtasten */
 }
 function pokeUI(){$('#player').classList.remove('idle');uiT=performance.now()}
 
@@ -2535,7 +2533,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.77 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.78 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
