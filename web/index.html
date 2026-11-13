@@ -545,7 +545,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.75</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.76</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1625,6 +1625,7 @@ function detectStep(g,R,now){
 }
 let midiOn=false;
 async function startMidiIn(){
+  if(!NAT.ok&&navigator.requestMIDIAccess){midiOn=true;return kbWebStart()}
   if(midiOn)return true;
   if(!navigator.requestMIDIAccess){toast('MIDI-Keyboards gehen in diesem Browser/der App noch nicht.',4000);return false}
   try{const acc=await navigator.requestMIDIAccess();const bind=()=>{let n=0;for(const i of acc.inputs.values()){i.onmidimessage=e=>{const [s,a,v]=e.data;if((s&0xF0)===0x90&&v>0)userPress(a,false)};n++}$('#micInfo').textContent=n?`${n} MIDI-Gerät(e) verbunden`:'Kein MIDI-Gerät gefunden'};bind();acc.onstatechange=bind;midiOn=true;return true}
@@ -1639,7 +1640,7 @@ const kbOn=()=>KB.state==='on';
 const kbManual=()=>Date.now()<(KB.manualUntil||0),kbMan=()=>{KB.manualUntil=Date.now()+60000},kbBg=st=>!kbManual()&&(st==='connecting'||st==='lost'||st==='waiting');
 function kbMsg(m){
   if(m.cmd==='midi'){for(const [st,a,v] of m.e)kbEvent(st,a,v);return}
-  KB.sup=true;
+  KB.sup=true;KB.web=false; /* Meldung der Android-Hülle: deren Weg gilt */
   if(m.cmd==='kbLog'){const L=m.line;KB.step=/Warte auf Antwort/.test(L)?'Warte auf das Klavier … ist es eingeschaltet?':/koppeln/i.test(L)?'Koppeln … bitte die Anfrage von Android bestätigen.':/Direkter Bluetooth/.test(L)?'Zweiter Weg … gleich geschafft.':/Dienste/.test(L)?'Richte das Klavier ein …':/Öffne/.test(L)?'Baue die Verbindung auf …':KB.step;KB.log.push(new Date().toTimeString().slice(0,8)+' '+m.line);if(KB.log.length>20)KB.log.shift();kbUI();return}
   if(m.cmd==='kbFound'){if(!KB.found.some(f=>f.addr===m.addr))KB.found.push(m);kbUI();return}
   if(m.cmd==='kbScanDone'){KB.scanning=false;kbUI();return}
@@ -1650,6 +1651,17 @@ function kbMsg(m){
   if(m.state==='on'&&was!=='on'){if(!inPlay)toast(`Keyboard verbunden: ${KB.name}`);if(mic){try{mic.stream&&mic.stream.getTracks().forEach(t=>t.stop())}catch(e){}}if($('#kbSheet').classList.contains('on'))setTimeout(closeSheets,1800);if(song)ensureInput()}
   if(m.state==='lost'&&was==='on'&&!inPlay)toast('Klavier getrennt',2500);
   if(m.state==='btoff'&&$('#kbSheet').classList.contains('on'))nat('kbEnableBt');
+  kbUI()}
+/* v4.76: Klavier am PC (Chrome, Web MIDI, ohne Android-Hülle) – gleicher Weg wie in der Handy-App: Status, Note an/aus, Pedal */
+let kbAcc=null;
+async function kbWebStart(){if(NAT.ok||!navigator.requestMIDIAccess)return false;KB.web=true;KB.sup=true;
+  if(!kbAcc){try{kbAcc=await navigator.requestMIDIAccess();kbAcc.onstatechange=kbWebBind}catch(e){KB.state='noperm';KB.msg='Im Browser MIDI erlauben (Symbol links neben der Adresse), dann Seite neu laden.';kbUI();return false}}
+  kbWebBind();return kbOn()}
+function kbWebBind(){if(!kbAcc)return;const ins=[...kbAcc.inputs.values()].filter(i=>i.state!=='disconnected'),was=KB.state;
+  for(const i of ins)i.onmidimessage=e=>{const d=e.data;if(!d||!d.length||d[0]>=0xF0)return;kbEvent(d[0],d[1]||0,d[2]||0)};
+  KB.manualUntil=0;if(ins.length){KB.state='on';KB.name=ins[0].name||'Klavier';KB.saved=KB.name}else KB.state='off';
+  if(KB.state==='on'&&was!=='on'){try{if(song)ensureInput()}catch(e){}}
+  if(KB.state!=='on'&&was==='on')toast('Klavier getrennt',2500);
   kbUI()}
 function kbEvent(st,a,v){const hi=st&0xF0;
   if(hi===0x90||hi===0x80){a=clamp(a+KB.shift,0,127);} // keyboard transposed / octave shifted → corrected (learned automatically)
@@ -1668,6 +1680,7 @@ function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash
     toast(`Dein Keyboard schickt die Töne ${Math.abs(d)%12===0?(Math.abs(d)/12)+' Oktave'+(Math.abs(d)>12?'n':''):Math.abs(d)+' Halbtöne'} ${d>0?'zu tief':'zu hoch'} (Transponierung) – ab jetzt automatisch korrigiert.`,5000);return}
   pushPress(m);wrongFlash.set(m,now);fx.push({txt:'Falsch: '+noteName(m),r:'m',t0:now});if(fx.length>3)fx.shift()}
 function kbInfo(){const st=KB.state;
+  if(KB.web&&!kbOn())return st==='noperm'?{k:'off',label:'MIDI nicht erlaubt',short:'Nicht verbunden',sub:KB.msg,act:'Verbinden'}:{k:'none',label:'Kein Klavier verbunden',short:'Kein Klavier',sub:'Am PC per Bluetooth verbinden, dann hier tippen',act:'Prüfen'};
   if(kbOn())return {k:'on',label:'Klavier verbunden',short:'Klavier verbunden',sub:KB.name||'',act:''};
   if(kbBg(st))return {k:'off',label:'Nicht verbunden',short:'Nicht verbunden',sub:(KB.name||'Klavier')+' einschalten – verbindet sich von selbst',act:'Verbinden'};
   if(st==='connecting'||st==='scanning')return {k:'busy',label:'Verbinde …',short:'Verbinde …',sub:KB.name||'Einen Moment',act:''};
@@ -1677,8 +1690,8 @@ function kbInfo(){const st=KB.state;
   if(KB.saved)return {k:'off',label:'Klavier nicht gefunden',short:'Nicht verbunden',sub:(KB.name||'Klavier')+' einschalten, dann tippen',act:'Verbinden'};
   return {k:'none',label:'Kein Klavier verbunden',short:'Kein Klavier',sub:'Tippen zum Verbinden',act:'Verbinden'}}
 function kbChips(){const sup=KB.sup&&NAT.ok,i=kbInfo();
-  const b=$('#kbBar');if(b){b.classList.toggle('hidden',!NAT.ok||!KB.sup);b.className='kbBar '+i.k+(!NAT.ok||!KB.sup?' hidden':'');b.querySelector('b').textContent=i.label;b.querySelector('.s').textContent=i.sub;b.querySelector('.act').textContent=i.act}
-  for(const id of ['memKb','spKb']){const c=$('#'+id);if(!c)continue;c.className='kbchip '+i.k;c.style.display=(NAT.ok&&KB.sup)?'':'none';c.querySelector('.t').textContent=i.short}
+  const b=$('#kbBar');if(b){b.classList.toggle('hidden',!(NAT.ok||KB.web)||!KB.sup);b.className='kbBar '+i.k+(!(NAT.ok||KB.web)||!KB.sup?' hidden':'');b.querySelector('b').textContent=i.label;b.querySelector('.s').textContent=i.sub;b.querySelector('.act').textContent=i.act}
+  for(const id of ['memKb','spKb']){const c=$('#'+id);if(!c)continue;c.className='kbchip '+i.k;c.style.display=((NAT.ok||KB.web)&&KB.sup)?'':'none';c.querySelector('.t').textContent=i.short}
   kbHead();
   const nw=$('#kbNow');if(nw)nw.classList.toggle('hidden',!(KB.saved&&!kbOn()))}
 function kbHead(){const g=$('#kbBig');if(!g)return;
@@ -1699,7 +1712,7 @@ function kbHead(){const g=$('#kbBig');if(!g)return;
 function kbConnectTo(addr,name){kbMan();
   KB.name=name;KB.addr=addr;KB.state='connecting';KB.scanning=false;KB.step='';kbUI();nat('kbConnect',{addr,name});
   clearTimeout(KB.wd);KB.wd=setTimeout(()=>{if(KB.state==='connecting'){KB.state='fail';KB.msg='Keine Antwort. Wurde „Geräte in der Nähe“ erlaubt? Sonst unter „Erlaubnis öffnen“ erlauben.';KB.perm=true;kbUI()}},45000)}
-function kbTap(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
+function kbTap(){if(!NAT.ok){if(navigator.requestMIDIAccess)kbWebStart().then(on=>toast(on?`Klavier verbunden: ${KB.name}`:'Kein Klavier gefunden. Verbinde es am PC per Bluetooth (z. B. mit „Perfect Bluetooth MIDI“) und lade die Seite neu.',6000));return}if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
   if(!kbOn()&&KB.saved&&KB.state!=='btoff'){kbMan();nat('kbAuto')} // saved keyboard: try right away, the window shows what happens
   kbOpen()}
 function kbUI(){
@@ -1736,7 +1749,7 @@ function kbUI(){
     $('#kbLog').textContent=KB.log.length?KB.log.join('\n'):'(noch nichts)';
     $('#kbPerm').classList.add('hidden');
     $('#kbAgain').disabled=KB.scanning;$('#kbAll').disabled=KB.scanning}}
-function kbOpen(){if(!NAT.ok)return;if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
+function kbOpen(){if(!NAT.ok){if(navigator.requestMIDIAccess)kbWebStart().then(on=>toast(on?`Klavier verbunden: ${KB.name}`:'Kein Klavier gefunden. Verbinde es am PC per Bluetooth (z. B. mit „Perfect Bluetooth MIDI“) und lade die Seite neu.',6000));return}if(!KB.sup){toast('Dafür brauchst du die neue App-Version (Einstellungen → App aktualisieren).',4500);return}
   if(kbOn()){openSheet('#kbSheet');kbUI();return} // connected: just show the status
   KB.found=[];KB.scanning=true;openSheet('#kbSheet');kbUI();nat('kbScan')}
 $('#kbCardBtn').onclick=kbOpen;
@@ -2484,12 +2497,13 @@ if(NAT.ok){KTNative.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return
   nat('info').then(m=>{NAT.info=m;updVer();if(m&&m.crash){save('kt_lastcrash',m.crash);nat('crashClear');if(ghTok())ghUpload(`diag/${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}_absturz.txt`,btoa(unescape(encodeURIComponent(m.crash+'\n\n'+navigator.userAgent))),'Absturzprotokoll');setTimeout(()=>toast('Die App ist beim letzten Mal abgestürzt – das Protokoll steht unter Einstellungen → Fehlersuche.',5000),1500)}crashUI()});$('#yCap').classList.remove('hidden')}
 const OLD_APP=!NAT.ok&&/KlavierTrainerApp\//.test(navigator.userAgent);
 if(NAT.ok)setTimeout(()=>{nat('kbAuto');kbUI()},300); // reconnect the last keyboard silently
+else setTimeout(()=>{kbWebStart()},300); // v4.76: am PC Klavier über Web MIDI
 // v4.57: after the phone slept / the app was in the background, and every 30 s while a saved keyboard is not connected: try again (not while an attempt is running)
 const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&&KB.state!=='scanning'&&KB.state!=='btoff';
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.75 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.76 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
