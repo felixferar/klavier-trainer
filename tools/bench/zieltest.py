@@ -19,7 +19,7 @@ async def main():
         pg=await br.new_page(viewport={'width':753,'height':360});errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(3500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False),errs)
-        c={'Sicherheit sichtbar':'Sicherheit Stufe 1: 60 %' in r['goal0'] and 'Stufe 2' in r['goal0'] and 'noch ca. 2' in r['goal0'],
+        c={'Sicherheit sichtbar':'Sicherheit 60 %' in r['goal0'] and 'Stufe 2' in r['goal0'] and 'Noch ca. 2' in r['goal0'],
            'nach 1× sauber steigt':'76 %' in r['msg1'] and r['next1']=='Nächster Durchgang',
            'Zögern: nicht sauber, kein Aufstieg':r['cat2']!='s' and r['lvlAfterHes']==1 and r['again2']=='none',
            'Stufe 2 nach genug Sicherheit':r['lvlUp']==2,

@@ -16,7 +16,7 @@ JS="""async()=>{window.__instantEnd=true;window.__mp||(window.__mp=memPress,memP
  const rv={lvl:4,box:3,due:0,passed:1};o.apply.rvFail=[A(rv,{errors:3,review:true}),rv.box,rv.lvl,rv.due===T];const rv2={lvl:4,box:3,due:0,passed:1};o.apply.rvPass=[A(rv2,{review:true}),rv2.box,Math.round((rv2.due-T)/864e5)];
  // Ansicht
  window.openYT=()=>{};openSongMenu(it);o.btn=!$('#smMem').classList.contains('hidden');$('#smMem').click();
- o.shown=!$('#mem').classList.contains('hidden');o.secsN=MEM.secs.length;o.list=$$('#memList .li').length;o.go=$('#memGo').textContent;o.mixHidden=$('#memMix').classList.contains('hidden');
+ o.shown=!$('#mem').classList.contains('hidden');o.secsN=MEM.secs.length;o.list=$$('#memList .mk').length;o.go=$('#memGo').textContent;o.mixHidden=$('#memMix').classList.contains('hidden');
  const play=(n)=>{for(let k=0;k<n;k++){const R=MEM.run;if(!R||R.done)break;for(const m of MEM.gs[R.pos].mids)userPress(m,false)}};
  // Abschnitt 1 Stufe 1 spielen: Fehler zaehlen
  MEM.rec.secs[1].watched=true;MEM.rec.secs[2].watched=true;$('#memGo').click();o.watch1=!!MEM.run.watch;const wp=MEM.run.pos;MEM.run.watchStart-=30000;memTick();o.watchDone=!!(MEM.run.watchDone&&MEM.rec.secs[0].watched&&$('#memNext').textContent==='Jetzt spielen');$('#memNext').click();o.run1={lvl:MEM.run.lvl,a:MEM.run.a,b:MEM.run.b,title:$('#memRunT').textContent};
@@ -59,11 +59,11 @@ async def main():
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False,indent=0));print('pageerrors',errs)
         c={'gruppen':r['groups']==30,'split':r['split']==[[0,9],[10,19],[20,30]] or len(r['split'])==3,'kurzer Rest':r['splitShortTail']==[[0,7],[8,12]] and r['split12']==[[0,11]],'klein':r['splitSmall']==[[0,9]],
            'apply':r['apply']['clean1']==['clean1',1] and r['apply']['clean2']==['up',2] and r['apply']['bad1']==['same',2] and r['apply']['down']==['down',2] and r['apply']['pass']==['pass',1,1] and r['apply']['pass1']==['pass',1] and r['apply']['same']==['same',4] and r['apply']['rvFail']==['fail',1,2,True] and r['apply']['rvPass']==['pass',4,14],
-           'Knopf':r['btn'] and r['shown'] and r['secsN']==3 and r['list']==3 and r['go']=='Weiter lernen' and r['mixHidden'],
+           'Knopf':r['btn'] and r['shown'] and r['secsN']==3 and r['list']==3 and r['go'].startswith('Weiter: Abschnitt 1') and r['mixHidden'],
            'Ansehen':r['watch1'] and r['watchDone'],'Lauf1':r['run1']['lvl']==1 and r['run1']['a']==0 and r['err1']==1 and r['pos']==3,'Akkord':r['chordHalf'] and r['chordRepeatIgnored'],'fertig1':r['done1'] and r['rec1']['lvl']==1 and r['rec1']['runs']==1,
            'Stufen':r['after']['box']==1 and r['after']['passed']==1 and r['after']['dueDays']==1,'speichern':r['persist']==1,
            'Hilfe3':(not r['hint3']['before']) and r['hint3']['after'] and r['hint3']['hints']==1 and r['hint3']['once']==1,'Hilfe4':r['hint4']==1,'kb':r['kbPos']==1,
-           'faellig':('1 fällig' in r['dueTxt']) and r['goDue']=='Wiederholen','mischen':r['mix'] and r['mixRun']['review'] and r['mixRun']['lvl']==4 and r['mixRun']['queue']==1,
+           'faellig':('1 zum Wiederholen' in r['dueTxt']) and r['goDue'].startswith('Wiederholen: Abschnitt'),'mischen':r['mix'] and r['mixRun']['review'] and r['mixRun']['lvl']==4 and r['mixRun']['queue']==1,
            'rvfail':r['rvfail']['lvl']==2,'zurueck':r['backStops'],'touch':r['touchPos']==0,  # v4.67: Bildschirm-Tasten im Auswendig-Modus aus
            'Verbinden':r['chainBtn']=='' and r['chainRun']=={'a':0,'b':19,'chain':True,'lvl':4} and r['chained'],'fehlerfrei':not errs}
         print(c);ok=all(c.values());print('ERGEBNIS','OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
