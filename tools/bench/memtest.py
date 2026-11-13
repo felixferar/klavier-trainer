@@ -2,6 +2,7 @@
 import sys,asyncio,json
 from playwright.async_api import async_playwright
 JS="""async()=>{window.__instantEnd=true;window.__mp||(window.__mp=memPress,memPress=function(m,src){const R=MEM.run;if(R&&!R.watch&&R.vt!=null&&R.lvl<=2&&!window.__strict)R.vt=Math.max(R.vt,MEM.gs[R.pos].start);return window.__mp(m,src)}); /* Test: wie Warten, bis der Balken unten ist */const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms));
+ memSplit2=g=>memSplit(g); /* v4.83: dieser Test prüft den Lernablauf mit 3 festen Abschnitten – die neue Aufteilung prüft teiletest.py */
  // Song: 30 Anschlaege, nach je 10 eine Pause von 0.6 s; ein Akkord (Nr. 4: 60+64)
  const notes=[];let t=0;for(let i=0;i<30;i++){const m=60+(i%7);notes.push({m,start:t,dur:0.4,hand:'R'});if(i===3)notes.push({m:64,start:t,dur:0.4,hand:'R'});t+=0.5;if(i%10===9)t+=0.6}
  const it={id:'mt1',type:'midi',title:'Merk',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];

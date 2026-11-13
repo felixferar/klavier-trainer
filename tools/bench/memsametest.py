@@ -10,7 +10,7 @@ JS=r"""async()=>{const o={};window.playTone=(m,d,v)=>{tones.push([m,d])};let ton
  let n0=0,g0=-9;for(const x of songForItem(it).notes.slice().sort((a,b)=>a.start-b.start)){if(x.start-g0>=0.06){n0++;g0=x.start}}
  S.layout=61;
  openMem(it);o.firstGroup=[...MEM.gs[0].mids].sort((a,b)=>a-b);o.fastSplit=MEM.gs.length;
- const secs=MEM.secs.length;MEMS['s1']={sig:n0+':'+secs,secs:MEM.secs.map(()=>({lvl:3,box:0,due:0,runs:5,passed:0}))};openMem(it);o.kept=MEMS['s1'].secs[0].lvl===2&&MEMS['s1'].secs[0].fe===2; /* v4.81: alter Stand Stufe 3 → Verblassen 30 % */
+ const secs=memSplit(MEM.gs).length;MEMS['s1']={sig:n0+':'+secs,secs:memSplit(MEM.gs).map(()=>({lvl:3,box:0,due:0,runs:5,passed:0}))};openMem(it);o.kept=MEMS['s1'].secs[0].lvl===2&&MEMS['s1'].secs[0].fe===2; /* v4.81: alter Stand Stufe 3 → Verblassen 30 % */
  // gleiche Noten wie Abspielen
  openSong(songForItem(it),it.id);const play=song.notes.map(n=>n.midi).sort((a,b)=>a-b).join();back();openMem(it);const mem=MEM.song.notes.map(n=>n.midi).sort((a,b)=>a-b).join();o.sameAsPlay=play===mem;o.folded=!MEM.song.notes.some(n=>n.midi===24);
  // Anhören: echte Längen

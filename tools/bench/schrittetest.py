@@ -5,7 +5,7 @@ Ein Abschnitt braucht im guten Fall 5 Durchgänge. „Wackelig“ bleibt, „Nic
 import sys,asyncio,json
 from playwright.async_api import async_playwright
 JS=r"""async()=>{const o={};window.playTone=()=>{};window.__instantEnd=true;
- const notes=[];let t=0;for(let i=0;i<64;i++){notes.push({m:60+(i%5)*2,start:t,dur:0.4,hand:'R'});t+=0.6}
+ const notes=[];let t=0;for(let i=0;i<120;i++){notes.push({m:60+(i%5)*2,start:t,dur:0.4,hand:'R'});t+=0.6}
  const it={id:'sch',type:'midi',title:'Sch',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);
  const A=(rec,cat,extra)=>memApply(rec,Object.assign({ev:{cat,score:cat==='s'?95:cat==='f'?80:cat==='w'?55:20,hints:0},errors:0,hints:0},extra||{}),1e12);
  /* Ablauf mit lauter „Fast“ */
