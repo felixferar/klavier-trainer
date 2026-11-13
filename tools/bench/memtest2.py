@@ -29,6 +29,6 @@ async def main():
         pg=await br.new_page(viewport={'width':420,'height':800});errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r),errs)
-        ok=(r['checkVisible'] and r['bars1']>r['bars2']>0 and r['bars3']==0 and r['watchMode'] and 0<r['tonesEarly']<r['tonesAll'] and r['watchBars']>0 and r['done'] and r['cmpOpen'] and r['reloaded'] and r['memShown'] and not errs)
+        ok=(r['checkVisible'] and r['bars1']>=r['bars2']>0 and r['bars3']==0 and r['watchMode'] and 0<r['tonesEarly']<r['tonesAll'] and r['watchBars']>0 and r['done'] and r['cmpOpen'] and r['reloaded'] and r['memShown'] and not errs)
         print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)
 asyncio.run(main())

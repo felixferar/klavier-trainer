@@ -19,10 +19,10 @@ async def main():
         pg=await br.new_page(viewport={'width':753,'height':360});errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(3500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False),errs)
-        c={'Sicherheit sichtbar':'Sicherheit 60 %' in r['goal0'] and 'Stufe 2' in r['goal0'] and 'Noch ca. 2' in r['goal0'],
-           'nach 1× sauber steigt':'76 %' in r['msg1'] and r['next1']=='Nächster Durchgang',
-           'Zögern: nicht sauber, kein Aufstieg':r['cat2']!='s' and r['lvlAfterHes']==1 and r['again2']=='none',
-           'Stufe 2 nach genug Sicherheit':r['lvlUp']==2,
+        c={'Ziel sichtbar (v4.81: Schritt 1 Kennenlernen)':'Schritt 1 von 3' in r['goal0'] and 'Kennenlernen' in r['goal0'],
+           'nach 1 Durchgang kennengelernt':r['msg1'].startswith('Kennengelernt') and r['next1']=='Weiter: Verblassen',
+           'Zögern: nicht sauber, aber „Fast“ bringt weiter':r['cat2']=='f' and r['lvlAfterHes']==2 and 'mehr Noten' in r['msg2'],
+           'danach Aus dem Kopf':r['lvlUp']==3 and 'aus dem Kopf' in r['msg3'],
            'gehalten grün':'#3bb273' in [x.lower() for x in r['heldStroke']] and '#ffffff' not in [x.lower() for x in r['heldStroke']],
            'losgelassen weiß':'#ffffff' in [x.lower() for x in r['relStroke']],'keine Fehler':not errs}
         print(c);ok=all(c.values());print('OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)

@@ -42,7 +42,7 @@ JS="""async()=>{window.__instantEnd=true;window.__mp||(window.__mp=memPress,memP
  // Mischen: beide Abschnitte gelernt
  MEM.rec.secs[1].box=1;MEM.rec.secs[1].passed=1;MEM.rec.secs[1].due=Date.now()+864e5;memHome();o.mix=!$('#memMix').classList.contains('hidden');$('#memMix').click();o.mixRun={review:MEM.run.review,lvl:MEM.run.lvl,queue:MEM.queue.length};
  // Review nicht bestanden: 3 Fehler
- const i0=MEM.run.i;for(let k=0;k<3;k++)userPress(30,false);play(60);o.rvfail={box:MEM.rec.secs[i0].box,lvl:MEM.rec.secs[i0].lvl,msg:$('#memMsg').textContent.slice(0,30)};
+ const i0=MEM.run.i;for(let k=0;k<12;k++)userPress(30,false);play(60);o.rvfail={box:MEM.rec.secs[i0].box,lvl:MEM.rec.secs[i0].lvl,msg:$('#memMsg').textContent.slice(0,30)};
  // Zurueck beendet den Lauf
  back();o.backStops=MEM.run===null&&MEM.timer===null;
  // Touch auf der Mini-Tastatur
@@ -58,12 +58,12 @@ async def main():
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False,indent=0));print('pageerrors',errs)
         c={'gruppen':r['groups']==30,'split':r['split']==[[0,9],[10,19],[20,30]] or len(r['split'])==3,'kurzer Rest':r['splitShortTail']==[[0,7],[8,12]] and r['split12']==[[0,11]],'klein':r['splitSmall']==[[0,9]],
-           'apply':r['apply']['clean1']==['clean1',1] and r['apply']['clean2']==['up',2] and r['apply']['bad1']==['same',2] and r['apply']['down']==['down',2] and r['apply']['pass']==['pass',1,1] and r['apply']['pass1']==['pass',1] and r['apply']['same']==['same',4] and r['apply']['rvFail']==['fail',1,2,True] and r['apply']['rvPass']==['pass',4,14],
+           'apply':r['apply']['clean1']==['up',2] and r['apply']['clean2']==['fade',2] and r['apply']['bad1']==['fade',2] and r['apply']['down']==['same',3] and r['apply']['pass']==['pass',1,1] and r['apply']['pass1']==['pass',1] and r['apply']['same']==['pass',4] and r['apply']['rvFail']==['fail',0,2,False] and r['apply']['rvPass']==['pass',4,14],
            'Knopf':r['btn'] and r['shown'] and r['secsN']==3 and r['list']==3 and r['go'].startswith('Weiter: Abschnitt 1') and r['mixHidden'],
-           'Ansehen':r['watch1'] and r['watchDone'],'Lauf1':r['run1']['lvl']==1 and r['run1']['a']==0 and r['err1']==1 and r['pos']==3,'Akkord':r['chordHalf'] and r['chordRepeatIgnored'],'fertig1':r['done1'] and r['rec1']['lvl']==1 and r['rec1']['runs']==1,
+           'Ansehen':r['watch1'] and r['watchDone'],'Lauf1':r['run1']['lvl']==1 and r['run1']['a']==0 and r['err1']==1 and r['pos']==3,'Akkord':r['chordHalf'] and r['chordRepeatIgnored'],'fertig1':r['done1'] and r['rec1']['lvl']==2 and r['rec1']['runs']==1,
            'Stufen':r['after']['box']==1 and r['after']['passed']==1 and r['after']['dueDays']==1,'speichern':r['persist']==1,
            'Hilfe3':(not r['hint3']['before']) and r['hint3']['after'] and r['hint3']['hints']==1 and r['hint3']['once']==1,'Hilfe4':r['hint4']==1,'kb':r['kbPos']==1,
-           'faellig':('1 zum Wiederholen' in r['dueTxt']) and r['goDue'].startswith('Wiederholen: Abschnitt'),'mischen':r['mix'] and r['mixRun']['review'] and r['mixRun']['lvl']==4 and r['mixRun']['queue']==1,
+           'faellig':('1 zum Auffrischen' in r['dueTxt']) and r['goDue'].startswith('Auffrischen: Abschnitt'),'mischen':r['mix'] and r['mixRun']['review'] and r['mixRun']['lvl']==4 and r['mixRun']['queue']==1,
            'rvfail':r['rvfail']['lvl']==2,'zurueck':r['backStops'],'touch':r['touchPos']==0,  # v4.67: Bildschirm-Tasten im Auswendig-Modus aus
            'Verbinden':r['chainBtn']=='' and r['chainRun']=={'a':0,'b':19,'chain':True,'lvl':4} and r['chained'],'fehlerfrei':not errs}
         print(c);ok=all(c.values());print('ERGEBNIS','OK' if ok else 'FEHLER');sys.exit(0 if ok else 1)

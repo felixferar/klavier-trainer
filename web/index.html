@@ -336,6 +336,7 @@ body.short #onbDots{margin:8px 0}
 .kbchip i{width:10px;height:10px;border-radius:5px;background:var(--mu2)}.kbchip.on i{background:#4CC38A}
 .memEv{background:var(--s1);border-radius:14px;padding:12px 14px;margin:4px 0 12px;display:flex;flex-direction:column;gap:8px}.memEv .h{display:flex;align-items:center;gap:10px}.memEv .bd{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;color:#0E0F13}.memEv .bd.s{background:#4CC38A}.memEv .bd.f{background:#F0C04A}.memEv .bd.w{background:#E8743B}.memEv .bd.n{background:#8C8F9A}.memEv .st{display:flex;gap:3px}.memEv .st i{flex:1;height:14px;border-radius:3px;background:#4CC38A}.memEv .st i.z{background:#F0C04A}.memEv .st i.x{background:#E8743B}.memEv .lg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--mu)}.memEv .lg span:before{content:'';display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;background:var(--c)}.memEv .nums{font-size:12px;color:var(--mu);line-height:1.4}
 .memHere{background:var(--s1);border-radius:16px;padding:14px 16px;margin:4px 0 12px}.memHere .wh{font-size:19px;font-weight:800;line-height:1.25}.memHere .st{font-size:14px;margin-top:3px}.memHere .segs{margin-top:10px}.memHere .nx{font-size:14px;margin-top:8px;font-weight:600}.memHere .lb{display:flex;gap:5px;font-size:11px;color:var(--mu);margin-top:4px}.memHere .lb span{flex:1}.memHere .lb span.c{color:var(--tx);font-weight:700}.memWay{display:flex;flex-wrap:wrap;gap:6px}.memWay .mk{width:30px;height:30px;border-radius:9px;background:var(--s2);color:var(--mu);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}.memWay .mk.d{background:#3BB273;color:#0b1a12}.memWay .mk.c{background:var(--ac);color:#1a1405;outline:2px solid var(--tx);outline-offset:1px}.memWay .mk.f{background:var(--gold);color:#1a1405}
+.memSecs{font-size:13px;color:var(--mu)}.memSecs b{color:var(--tx);font-size:16px}.memSecs .skm{height:10px;background:var(--s3);border-radius:5px;margin-top:6px;overflow:hidden}.memSecs .skf{height:100%;border-radius:5px}
 .memGoal{font-size:13px;line-height:1.35;color:var(--mu);margin-top:6px}.memGoal .skm{position:relative;height:8px;background:var(--s3);border-radius:4px;margin:5px 0 5px;overflow:visible}.memGoal .skf{height:100%;border-radius:4px}.memGoal .skm span{position:absolute;top:-3px;width:2px;height:14px;background:var(--tx);opacity:.7}.memGoal em{font-style:normal;font-weight:800}.memGoal em.up{color:#3BB273}.memGoal em.dn{color:#E5484D}.memGoal .st2{font-size:12px;color:var(--mu2)}.memGoal b{color:var(--tx)}.memGoal i{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid var(--mu2);margin-right:3px;vertical-align:-1px;font-style:normal}.memGoal i.on{background:#3BB273;border-color:#3BB273}
 .tasBox{display:flex;align-items:center;gap:12px;margin:10px 0 8px}
 /* v4.80: Weiter-Knöpfe kleben unten – nach dem Durchgang nie mehr scrollen */#memResBox{position:sticky;bottom:0;z-index:3;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -12px 14px -6px var(--bg)}
@@ -546,7 +547,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.80</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.81</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -710,14 +711,14 @@ body.short #onbDots{margin:8px 0}
   <div class="scroll" style="flex:1;padding:0 16px 30px">
     <div id="memHome">
       <div style="font-weight:800;font-size:18px;margin:8px 0 2px" id="memSong"></div>
+      <div class="mu sm" id="memSum" style="margin:2px 0 10px"></div> <!-- v4.81: „Du kannst 0:24 von 2:10“ ganz oben -->
       <div id="memHere" class="memHere"></div>
       <button class="btn hidden" id="memCheck" style="width:100%;height:44px;margin-bottom:12px">Noten prüfen / korrigieren</button>
       <div style="display:flex;gap:8px;margin-bottom:6px"><button class="btn pri" id="memGo" style="flex:1.4;height:52px;font-size:16px">Weiter lernen</button><button class="btn hidden" id="memMix" style="flex:1;height:52px">Mischen</button></div>
       <div class="mu sm" style="text-align:center;margin-bottom:18px">Einfach immer auf den großen Knopf drücken – die App weiß, was als Nächstes dran ist.</div>
       <div class="lbl">Dein Weg durch den Song</div><div id="memList" class="memWay"></div>
-      <div class="mu sm" id="memSum" style="margin:8px 0 0"></div>
       <div class="lbl" style="margin-top:16px">So funktioniert's</div>
-      <div class="mu sm" style="line-height:1.5">Jeder Abschnitt hat 4 Stufen, die Hilfe wird immer weniger: 1 Mitspielen (alle Noten) · 2 nur der nächste Ton · 3 aus dem Kopf · 4 Prüfung. Je besser du spielst, desto höher die Sicherheit – ist sie hoch genug, geht es von selbst eine Stufe weiter. Nach Stufe 4 sitzt der Abschnitt und der nächste kommt.</div>
+      <div class="mu sm" style="line-height:1.5">Jeder Abschnitt hat 3 Schritte: 1 Kennenlernen (anhören, einmal mitspielen) · 2 Verblassen (mit jedem guten Durchgang verschwinden mehr Noten) · 3 Aus dem Kopf. „Fast“ reicht, um weiterzukommen – nach etwa 5 Durchgängen sitzt ein Abschnitt ⭐. Später kommt er kurz zum Auffrischen wieder.</div>
     </div>
     <div id="memRunV" class="hidden">
       <div class="mHead"><div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
@@ -1119,16 +1120,18 @@ $('#spPlay').onclick=()=>{if(SP.item)openItemPlay(SP.item)};
 $('#spCmp').onclick=()=>{if(SP.item)openCompare(SP.item)};
 $('#spMenu').onclick=()=>{if(SP.item)openSongMenu(SP.item)};
 function memKbChip(){try{kbChips()}catch(e){}}
-const MEM_SHORT=['','Mitspielen','Nächster Ton','Aus dem Kopf','Prüfung'];
-const MEM_STAGE=['','Mitspielen – alle Noten fallen','Nur der nächste Ton ist sichtbar – was danach kommt, musst du wissen','Aus dem Kopf – die Noten verschwinden nach und nach, Hilfe nur wenn du hängst','Prüfung – ganz ohne Hilfe'];
+const MEM_SHORT=['','Kennenlernen','Verblassen','Aus dem Kopf','Auffrischen'];const MEM_FADE=[1,0.6,0.3]; /* v4.81 (Konzept v6): 3 Schritte, mit jedem guten Durchgang verschwinden mehr Noten */
+const MEM_STAGE=['','Anhören und einmal mitspielen – alle Noten fallen','Mit jedem guten Durchgang verschwinden mehr Noten','Ganz aus dem Kopf – Hilfe nur, wenn du hängst','Kurz prüfen, ob es noch sitzt'];
 function memGoalUI(){const R=MEM.run,el=$('#memGoal');if(!R||!el)return;const rec=MEM.rec.secs[R.i],n=MEM.secs.length,need=2,cl=Math.min(need,rec.clean||0);
   if(R.watch){el.innerHTML='<b>Schritt 1: Anhören.</b> Danach spielst du nach.';return}
   if(R.chain){el.innerHTML=`<b>Verbinden:</b> Abschnitt ${R.i} und ${R.i+1} am Stück, ohne Hilfe.`;return}
   if(R.review){el.innerHTML='<b>Wiederholung:</b> einmal sauber aus dem Kopf.';return}
-  const sk=rec.sk==null?MEM_SK0:rec.sk,d=rec.skPrev!=null&&R.done?sk-rec.skPrev:0,meter=`<div class="skm"><div class="skf" style="width:${sk}%;background:${sk>=MEM_SKUP?'#3BB273':sk>=MEM_SKDOWN?'#F0C04A':'#E5484D'}"></div><span style="left:${MEM_SKUP}%"></span></div>`;
-  if(R.lvl<4){const k=memNeed(sk);el.innerHTML=`<b>Stufe ${R.lvl}: ${MEM_SHORT[R.lvl]}</b> · Sicherheit ${sk} %${d?` <em class="${d>0?'up':'dn'}">${d>0?'+':''}${d}</em>`:''}${meter}${sk>=MEM_SKUP?`Jetzt einmal fehlerfrei → Stufe ${R.lvl+1}`:`Noch ca. ${k===1?'1 guter Durchgang':k+' gute Durchgänge'} bis Stufe ${R.lvl+1}`}<br><span class="st2">Stufe ${R.lvl+1}: ${MEM_STAGE[R.lvl+1]}.</span>`}
-  else el.innerHTML=`<b>Stufe 4: Prüfung</b><br>Einmal fehlerfrei ohne Hilfe – dann sitzt Abschnitt ${R.i+1}`+(R.i+1<n?` – weiter mit Abschnitt ${R.i+2} von ${n}.`:' – der letzte Abschnitt!')}
-function memStagesUI(){const R=MEM.run;if(!R)return;try{memGoalUI()}catch(e){}const l=R.watch?0:R.lvl;$('#memStages').innerHTML=[1,2,3,4].map(i=>`<i class="${i<=l?'d':''}"></i>`).join('');$('#memTasti').outerHTML=tastiSVG(46).replace('<svg class="tasti"','<svg id="memTasti" class="tasti"')}
+  const L=Math.min(3,R.done?rec.lvl:R.lvl),fe=rec.fe||0,k=3-fe,dots=n=>`<div style="margin:5px 0">${[0,1,2].map(j=>`<i class="${j<n?'on':''}"></i>`).join('')}</div>`;
+  if(R.done&&(rec.passed>0||rec.box>0)){el.innerHTML=`<b>⭐ Abschnitt ${R.i+1} sitzt!</b>`;return}
+  if(L<=1)el.innerHTML='<b>Schritt 1 von 3: Kennenlernen</b><br>Einmal mitspielen – danach verschwinden die Noten nach und nach.';
+  else if(L===2)el.innerHTML=`<b>Schritt 2 von 3: Verblassen</b> · ${Math.round(MEM_FADE[Math.min(fe,2)]*100)} % der Noten sichtbar${dots(fe)}Noch ${k===1?'1 guter Durchgang':k+' gute Durchgänge'} („Fast“ reicht), dann ganz aus dem Kopf.`;
+  else el.innerHTML=`<b>Schritt 3 von 3: Aus dem Kopf</b><br>Einmal gut ohne Hilfe – dann sitzt Abschnitt ${R.i+1} ⭐`}
+function memStagesUI(){const R=MEM.run;if(!R)return;try{memGoalUI()}catch(e){}const l=R.watch?0:Math.min(3,R.lvl);$('#memStages').innerHTML=[1,2,3].map(i=>`<i class="${i<=l?'d':''}"></i>`).join('');$('#memTasti').outerHTML=tastiSVG(46).replace('<svg class="tasti"','<svg id="memTasti" class="tasti"')}
 let smItem=null;
 // --- Auswendig lernen (v4.44): sections, hint ladder (1 always shown … 4 none), spaced review. Concept + sources: project doc konzept-auswendig-lernen
 const MEM={good:new Map(),run:null,timer:null,song:null,item:null,gs:[],secs:[],rec:null,queue:[],last:null,flash:new Map(),pos:null};
@@ -1142,23 +1145,21 @@ function memSplit(gs){const out=[];let a=0;
   for(let i=0;i<gs.length;i++){const n=i-a+1,gap=i+1<gs.length?gs[i+1].start-gs[i].end:9;if(i===gs.length-1||n>=16||(n>=8&&gap>=0.3)){out.push([a,i]);a=i+1}}
   if(out.length>1){const l=out[out.length-1];if(l[1]-l[0]+1<5){out.pop();out[out.length-1][1]=l[1]}}
   return out}
-function memApply(rec,run,now){ // returns 'pass' | 'up' | 'down' | 'same' | 'fail'
-  const ev=run.ev,bad=ev?(ev.cat==='s'?0:ev.cat==='f'?(ev.falsch+ev.hints<=1?1:2):3):run.errors+run.hints;/* v4.71: die Ergebnis-Karte entscheidet (Sauber = zählt) */rec.runs=(rec.runs||0)+1;
+function memApply(rec,run,now){ /* v4.81 (Konzept v6): feste kleine Schritte – „Fast“ reicht. Returns 'pass'|'up'|'fade'|'back'|'same'|'fail' */
+  const ev=run.ev,b0=run.errors+run.hints,cat=ev?ev.cat:(b0===0?'s':b0<=2?'f':'w'),hints=ev?ev.hints:run.hints,good=cat==='s'||cat==='f';rec.runs=(rec.runs||0)+1;
   const sched=()=>{rec.box=Math.min((rec.box||0)+1,MEM_DAYS.length-1);rec.due=now+MEM_DAYS[rec.box]*864e5};
-  if(run.review){if(bad<=1){sched();return 'pass'}rec.box=Math.max(0,(rec.box||0)-2);rec.due=now;rec.lvl=2;return 'fail'}
-  if(ev&&!run.chain){const old=rec.sk==null?MEM_SK0:rec.sk;rec.skPrev=old;rec.sk=Math.round((1-MEM_SKA)*old+MEM_SKA*ev.score);rec.stRuns=(rec.stRuns||0)+1; /* v4.72: Sicherheit = gleitender Mittelwert der Punkte (neuer Durchgang zählt 40 %) */
-    if(rec.lvl>=4){if(ev.cat==='s'){sched();rec.passed=(rec.passed||0)+1;rec.sk=100;return 'pass'}if(rec.sk<MEM_SKDOWN&&rec.stRuns>=3){rec.lvl=3;rec.sk=MEM_SK0;rec.stRuns=0;return 'down'}return 'same'}
-    if(rec.sk>=MEM_SKUP&&ev.cat==='s'){rec.lvl++;rec.sk=MEM_SK0;rec.stRuns=0;rec.clean=0;return 'up'}
-    if(rec.sk<MEM_SKDOWN&&rec.stRuns>=3&&rec.lvl>1){rec.lvl--;rec.sk=MEM_SK0;rec.stRuns=0;return 'down'}
-    return rec.sk>old?'better':rec.sk<old?'worse':'same'}
-  if(rec.lvl>=4){if(bad<=1){sched();rec.passed=(rec.passed||0)+1;return 'pass'}if(bad>=3){rec.lvl=3;rec.clean=0;return 'down'}return 'same'}
-  if(bad===0){rec.clean=(rec.clean||0)+1;if(rec.clean>=2){rec.clean=0;rec.lvl++;return 'up'}return 'clean1'} // v4.54: two clean runs in a row before the help is reduced
-  rec.clean=0;if(bad>=3&&rec.lvl>1){rec.lvl--;return 'down'}
-  return 'same'}
+  if(ev&&!run.chain){const old=rec.sk==null?MEM_SK0:rec.sk;rec.skPrev=old;rec.sk=Math.round((1-MEM_SKA)*old+MEM_SKA*ev.score);rec.stRuns=(rec.stRuns||0)+1} /* Sicherheit läuft nur noch im Hintergrund mit */
+  if(run.review){if(good&&!hints){sched();return 'pass'}rec.box=0;rec.passed=0;rec.due=0;rec.lvl=2;rec.fe=2;return 'fail'}
+  if(rec.lvl<=1){rec.lvl=2;rec.fe=0;return 'up'}
+  if(rec.lvl===2){const fe=rec.fe||0;if(good){if(fe>=2){rec.lvl=3;return 'up'}rec.fe=fe+1;return 'fade'}if(cat==='n'&&fe>0){rec.fe=fe-1;return 'back'}return 'same'}
+  if(good&&!hints){sched();rec.passed=(rec.passed||0)+1;return 'pass'}
+  if(cat==='n'){rec.lvl=2;rec.fe=2;return 'back'}return 'same'}
 const memSaveAll=()=>saveW('kt_mem',MEMS);
 const MEM_SK0=60,MEM_SKA=0.4,MEM_SKUP=85,MEM_SKDOWN=45;
 function memNeed(sk){let n=0,x=sk;while(x<MEM_SKUP&&n<9){x=(1-MEM_SKA)*x+MEM_SKA*100;n++}return Math.max(1,n)} // gute Durchgänge bis zur nächsten Stufe
-function memSongPct(){const rs=MEM.rec.secs;let t=0;for(const r of rs){if(r.passed>0||r.box>0){t+=1;continue}t+=Math.min(3,(r.lvl||1)-1)/4+((r.sk==null?0:r.sk)/100)/4*((r.lvl||1)<4?1:0.5)}return Math.round(100*t/rs.length)}
+function memSongPct(){const rs=MEM.rec.secs;let t=0;for(const r of rs){if(r.passed>0||r.box>0){t+=1;continue}const L=r.lvl||1;t+=L<=1?(r.runs?0.1:0):L===2?0.25+0.2*(r.fe||0):0.85}return Math.round(100*t/rs.length)}
+function memSecs(){const gs=MEM.gs,rs=MEM.rec.secs;let known=0;MEM.secs.forEach((sc,i)=>{const r=rs[i];if(r.passed>0||r.box>0)known+=gs[sc[1]].end-gs[sc[0]].start});const total=gs[gs.length-1].end-gs[0].start;return {known:Math.min(known,total),total}} /* v4.81: „Du kannst 0:24 von 2:10“ */
+const memClock=x=>{x=Math.max(0,Math.round(x));return Math.floor(x/60)+':'+String(x%60).padStart(2,'0')};
 // --- v4.65 Etappe 1 (Konzept v5 §2+§5): jeden Durchgang messen und bewerten – NUR ANZEIGE, die Stufen-Entscheidung (memApply) bleibt unverändert
 const memG=(R,j)=>R.G[j]||(R.G[j]={first:null,last:null,ok:[],bad:[],hinted:false,paused:false,early:0});
 const MEV={early:0.2,hes:1.8,hesMin:600,chord:250,slip:80,fix:600,good:0.15,okay:0.30};
@@ -1212,28 +1213,29 @@ function memLoad(it){it=fresh(it);let s;try{s=songForItem(it)}catch(e){toast('Fe
   const secs=memSplit(gs),sig=gs.length+':'+secs.length;let rec=MEMS[it.id];
   if(rec&&rec.sig!==sig&&rec.secs&&rec.secs.length===secs.length){ // v4.66: alte Gruppierung (0,06 s) → Lernstand behalten, wenn die Abschnittszahl gleich bleibt
     let n=0,g0=-9;for(const x of s.notes.slice().sort((a,b)=>a.start-b.start)){if(x.start-g0>=0.06){n++;g0=x.start}}if(rec.sig===n+':'+secs.length){rec.sig=sig;memSaveAll()}}
-  if(!rec||rec.sig!==sig){rec=MEMS[it.id]={sig,secs:secs.map(()=>({lvl:1,box:0,due:0,runs:0,passed:0}))};memSaveAll()}
+  if(!rec||rec.sig!==sig){rec=MEMS[it.id]={sig,v6:1,secs:secs.map(()=>({lvl:1,box:0,due:0,runs:0,passed:0}))};memSaveAll()}
+  if(!rec.v6){for(const r of rec.secs){if(r.passed>0||r.box>0)continue;const L=r.lvl||1;if(L>=4)r.lvl=3;else if(L===3){r.lvl=2;r.fe=2}else if(L===2){r.lvl=2;r.fe=1}}rec.v6=1;memSaveAll()} /* v4.81: alter Lernstand → neue 3 Schritte */
   Object.assign(MEM,{item:it,song:s,gs,secs,rec,queue:[],run:null,last:null});
   let lo=127,hi=0;for(const g of gs)for(const m of g.mids){if(m<lo)lo=m;if(m>hi)hi=m}lo-=2;hi+=2;while(isBlack(lo))lo--;while(isBlack(hi))hi++;
   let tog=0,wh=()=>{let c=0;for(let m=lo;m<=hi;m++)if(!isBlack(m))c++;return c};while(wh()<15){if(tog++%2===0&&lo>21){lo--;while(isBlack(lo))lo--}else if(hi<108){hi++;while(isBlack(hi))hi++}else break}
   MEM.lo=lo;MEM.hi=hi;return true}
 const memDate=t=>new Date(t).toLocaleDateString('de-DE',{day:'numeric',month:'short'});
-function memStatus(r,now){if(r.passed>0||r.box>0){return r.due<=now?'fällig – jetzt wiederholen':'sitzt ✓'}return r.runs?`Stufe ${r.lvl} von 4 · Sicherheit ${r.sk==null?MEM_SK0:r.sk} %`:'neu'}
+function memStatus(r,now){if(r.passed>0||r.box>0){return r.due<=now?'jetzt auffrischen':'sitzt ✓'}return r.runs?`Schritt ${Math.min(3,r.lvl||1)} von 3 · ${MEM_SHORT[Math.min(3,r.lvl||1)]}`:'neu'}
 function memPickNext(now){const rs=MEM.rec.secs;let i=rs.findIndex(r=>(r.passed>0||r.box>0)&&r.due<=now);if(i>=0)return {i,review:true};
   i=rs.findIndex(r=>!(r.passed>0||r.box>0));return i>=0?{i,review:false}:null}
 function memHome(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;$('#mem').classList.remove('running');try{memKbChip()}catch(e){}$('#memHome').classList.remove('hidden');$('#memRunV').classList.add('hidden');
   const now=memNow(),rs=MEM.rec.secs,done=rs.filter(r=>r.passed>0||r.box>0).length,due=rs.filter(r=>(r.passed>0||r.box>0)&&r.due<=now).length;
   $('#memSong').textContent=MEM.item.title;$('#memCheck').classList.toggle('hidden',!cmpOK(MEM.item));
-  $('#memSum').textContent=`Song ${memSongPct()} % geschafft · ${done} von ${rs.length} Abschnitten sitzen`+(due?` · ${due} zum Wiederholen`:'');
+  {const t=memSecs(),pc=t.total?Math.round(100*t.known/t.total):0;$('#memSum').innerHTML=`<div class="memSecs"><b>Du kannst ${memClock(t.known)} von ${memClock(t.total)}</b> · ${done} von ${rs.length} Abschnitten ⭐${due?` · ${due} zum Auffrischen`:''}<div class="skm"><div class="skf" style="width:${pc}%;background:#3BB273"></div></div></div>`}
   const nx=memPickNext(now),n=rs.length;$('#memGo').disabled=!nx;
   let here;if(!nx){here='<div class="wh">Alles sitzt ✓</div><div class="st mu">Alle Abschnitte geschafft. Wiederholungen kommen von selbst.</div>';$('#memGo').textContent='Alles geschafft ✓'}
   else{const r=rs[nx.i],A=`Abschnitt ${nx.i+1} von ${n}`;
-    if(nx.review){here=`<div class="wh">${A} · Wiederholung</div><div class="st mu">Einmal sauber aus dem Kopf spielen – dann sitzt er weiter.</div>`;$('#memGo').textContent=`Wiederholen: Abschnitt ${nx.i+1}`}
+    if(nx.review){here=`<div class="wh">${A} · Auffrischen</div><div class="st mu">Einmal gut aus dem Kopf spielen – dann sitzt er weiter.</div>`;$('#memGo').textContent=`Auffrischen: Abschnitt ${nx.i+1}`}
     else if(!r.runs&&!r.watched){here=`<div class="wh">${A} · neu</div><div class="st mu">Zuerst anhören und ansehen, dann nachspielen.</div>`;$('#memGo').textContent=`Weiter: Abschnitt ${nx.i+1} · anhören`}
-    else{const L=r.lvl||1,sk=r.sk==null?MEM_SK0:r.sk,k=memNeed(sk);
-      const bars=`<div class="segs">${[1,2,3,4].map(j=>`<i class="${j<L?'d':j===L?'c':''}"></i>`).join('')}</div><div class="lb">${MEM_SHORT.slice(1).map((t,j)=>`<span class="${j+1===L?'c':''}">${t}</span>`).join('')}</div>`;
-      const todo=L<4?(sk>=MEM_SKUP?`Jetzt einmal fehlerfrei → Stufe ${L+1}`:`Noch ca. ${k===1?'1 guter Durchgang':k+' gute Durchgänge'} bis Stufe ${L+1}`):`Einmal fehlerfrei ohne Hilfe – dann sitzt Abschnitt ${nx.i+1}`;
-      here=`<div class="wh">${A} · Stufe ${L} von 4</div><div class="st mu">${MEM_SHORT[L]}: ${MEM_STAGE[L]}</div>${bars}<div class="nx">${todo}</div>`;$('#memGo').textContent=`Weiter: Abschnitt ${nx.i+1} · Stufe ${L}`}}
+    else{const L=Math.min(3,r.lvl||1),fe=r.fe||0,k=3-fe;
+      const bars=`<div class="segs">${[1,2,3].map(j=>`<i class="${j<L?'d':j===L?'c':''}"></i>`).join('')}</div><div class="lb">${MEM_SHORT.slice(1,4).map((t,j)=>`<span class="${j+1===L?'c':''}">${t}</span>`).join('')}</div>`;
+      const todo=L<=1?'Einmal mitspielen – dann geht es weiter.':L===2?`Noch ${k===1?'1 guter Durchgang':k+' gute Durchgänge'} („Fast“ reicht), dann ganz aus dem Kopf`:`Einmal gut aus dem Kopf – dann sitzt Abschnitt ${nx.i+1} ⭐`;
+      here=`<div class="wh">${A} · Schritt ${L} von 3</div><div class="st mu">${MEM_SHORT[L]}: ${MEM_STAGE[L]}</div>${bars}<div class="nx">${todo}</div>`;$('#memGo').textContent=`Weiter: Abschnitt ${nx.i+1} · ${MEM_SHORT[L]}`}}
   $('#memHere').innerHTML=here;
   $('#memMix').classList.toggle('hidden',done<2);$('#memMix').textContent='Alles mischen';
   $('#memList').innerHTML=MEM.secs.map((sc,i)=>{const r=rs[i],ok=r.passed>0||r.box>0,f=ok&&r.due<=now,c=nx&&nx.i===i;return `<span class="mk ${c?'c':f?'f':ok?'d':''}" data-i="${i}" title="Abschnitt ${i+1}">${ok&&!c&&!f?'✓':i+1}</span>`}).join('')}
@@ -1251,7 +1253,7 @@ function memStart(i,review,range,chain){const r=MEM.rec.secs[i],sc=MEM.secs[i],a
   if(!review&&!chain&&!range&&!r.runs&&!r.watched)return memWatch(i);
   const lvl=(review||chain)?4:r.lvl;MEM.run={i,a,b,pos:a,hit:new Set(),errors:0,hints:0,lvl,review:!!review,chain:!!chain,gStart:memNow(),hinted:false,done:false,kbWas:kbOn(),paused:false,pausedAt:0,G:{},touch:false,vt:MEM.gs[a].start-1.2};$('#memEv').classList.add('hidden');
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memResBox').style.display='none';$('#memStop').style.display='';
-  $('#memRunT').textContent=(chain?'Verbinden: Abschnitt '+i+' + '+(i+1):'Abschnitt '+(i+1)+' von '+MEM.secs.length)+(review?' · Wiederholung':'')+' · Stufe '+lvl+' von 4';
+  $('#memRunT').textContent=(chain?'Verbinden: Abschnitt '+i+' + '+(i+1):'Abschnitt '+(i+1)+' von '+MEM.secs.length)+(review?' · Auffrischen':lvl>=4?'':' · Schritt '+Math.min(3,lvl)+' von 3');
   try{memRange(MEM.run)}catch(e){}if(!MEM.timer)MEM.timer=setInterval(memTick,100);memStagesUI();memKbChip();memLoopOn();memTick()}
 function memRange(R){let lo=127,hi=0;for(const n of memSecNotes(R)){if(n.midi<lo)lo=n.midi;if(n.midi>hi)hi=n.midi}if(lo>hi)return;lo--;hi++;while(isBlack(lo))lo--;while(isBlack(hi))hi++;
   const wc=()=>{let c=0;for(let m=lo;m<=hi;m++)if(!isBlack(m))c++;return c};let tog=0;while(wc()<12){if(tog++%2===0&&lo>21){lo--;while(isBlack(lo))lo--}else if(hi<108){hi++;while(isBlack(hi))hi++}else break}R.lo=lo;R.hi=hi}
@@ -1269,7 +1271,7 @@ function memTick(){const R=MEM.run;if(!R)return;memKbChip();if(R.watch){memWatch
   memDraw()}
 /* v4.79: Stufe 3 – Noten verblassen nach und nach. Anteil sichtbarer Anschläge = (85 − Sicherheit) / 50: 60 % → die Hälfte, 85 % → keine.
    Feste Reihenfolge je Abschnitt (immer dieselben verschwinden zuerst), der erste Anschlag bleibt am längsten. */
-function memFadeFrac(R){if(R.lvl!==3||R.review||R.chain)return 0;const r=MEM.rec.secs[R.i],sk=r&&r.sk!=null?r.sk:MEM_SK0;return clamp((MEM_SKUP-sk)/50,0,1)}
+function memFadeFrac(R){if(R.lvl===1)return 1;if(R.lvl!==2||R.review||R.chain)return 0;const r=MEM.rec.secs[R.i];return MEM_FADE[Math.min(2,(r&&r.fe)||0)]} /* v4.81: Schritt 2 – 100 % → 60 % → 30 % sichtbar */
 function memFadeSet(R){if(R._fade)return R._fade;const f=memFadeFrac(R),n=R.b-R.a+1,k=Math.round(f*n);
   const pr=j=>j===R.a?-1:((Math.sin((j-R.a+1)*12.9898+R.i*78.233)*43758.5453)%1+1)%1;
   const ord=[];for(let j=R.a;j<=R.b;j++)ord.push(j);ord.sort((x,y)=>pr(x)-pr(y));return R._fade=new Set(ord.slice(0,k))}
@@ -1283,17 +1285,17 @@ function memDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prep
     if(lab&&y1-y0>=13&&ww>=9){const fs=Math.min(11,Math.max(7,ww*0.42));c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(0,0,0,.72)';c.fillText(NAMES[m%12],k.x+k.w/2,y1-4)}};
   for(let m=(R.lo||MEM.lo);m<=(R.hi||MEM.hi);m++){const k=MEM.pos[m];if(!k||!k.b)continue;const fs=Math.min(9,Math.max(6,k.w*0.42));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(255,255,255,.75)';c.fillText(NAMES[m%12],k.x+k.w/2,hn+kb*0.6-5)} // v4.69: auch schwarze Tasten beschriftet
   if(R.watch){const g0=MEM.gs[R.a].start,pps=hn/2.5;for(const n of memSecNotes(R)){const rel=n.start-g0,yb=hn-(rel-R.watchT)*pps,yt=yb-n.dur*pps;if(yt>hn||yb<0)continue;bar(n.midi,Math.max(0,yt),Math.min(hn,yb),noteCol(n))}}
-  else if((!R.done||R.ending)&&(R.lvl<=2||R.lvl===3&&memFadeSet(R).size>0)&&!R.done){const fade=R.lvl===3?memFadeSet(R):null,fa=fade?0.35+0.5*memFadeFrac(R):1; // v4.67: dieselbe Notenbahn wie beim Üben – echte Längen und Abstände, Handfarben; Stufe 2 zeigt nur die nächste Sekunde
+  else if((!R.done||R.ending)&&(R.lvl===1||R.lvl===2&&memFadeSet(R).size>0)&&!R.done){const ff=memFadeFrac(R),fade=R.lvl===2&&ff<1?memFadeSet(R):null,fa=fade?0.35+0.5*ff:1; // v4.67: dieselbe Notenbahn wie beim Üben – echte Längen und Abstände, Handfarben; Stufe 2 zeigt nur die nächste Sekunde
     const heldN=new Set();for(let j=Math.max(R.a,R.pos-3);j<R.pos;j++){const g=MEM.gs[j];for(const n of memSecNotes(R))if(n.start>=g.start-0.001&&n.start<=g.last+0.001&&KB.held.has(n.midi)&&n.start+n.dur>(R.vt??0)-0.05)heldN.add(n)}const held=heldN.size>0;
-    const cur=MEM.gs[Math.min(R.pos,R.b)],t0=R.vt!=null?R.vt:cur.start,pps=hn/3,lim=R.lvl===2?Math.max(1.0,cur.start-t0+1.0):9;c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
-    for(const n of memSecNotes(R)){const rel=n.start-t0;if(rel>lim||n.start+Math.max(0.12,n.dur)<t0-0.05)continue;if(R.lvl===2&&n.start>cur.last+0.001&&!heldN.has(n))continue; /* v4.72: Stufe 2 zeigt nur den nächsten Anschlag */if(fade){let gj=-1;for(let j=R.a;j<=R.b;j++){const g=MEM.gs[j];if(n.start>=g.start-0.001&&n.start<=g.last+0.001){gj=j;break}}if(!fade.has(gj)&&!heldN.has(n))continue} /* v4.79: Stufe 3 – nur die noch nicht verblassten Anschläge */c.globalAlpha=fa;const yb=hn-4-rel*pps,yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;
+    const cur=MEM.gs[Math.min(R.pos,R.b)],t0=R.vt!=null?R.vt:cur.start,pps=hn/3,lim=9;c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
+    for(const n of memSecNotes(R)){const rel=n.start-t0;if(rel>lim||n.start+Math.max(0.12,n.dur)<t0-0.05)continue;if(fade){let gj=-1;for(let j=R.a;j<=R.b;j++){const g=MEM.gs[j];if(n.start>=g.start-0.001&&n.start<=g.last+0.001){gj=j;break}}if(!fade.has(gj)&&!heldN.has(n))continue} /* v4.79: Stufe 3 – nur die noch nicht verblassten Anschläge */c.globalAlpha=fa;const yb=hn-4-rel*pps,yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;
       const now1=!R.ending&&n.start>=cur.start-0.001&&n.start<=cur.last+0.001&&(!held||cur.start-t0<=0.05),isHeld=heldN.has(n);bar(n.midi,Math.max(0,yt),yb,noteCol(n),true);
       if(now1||isHeld){const k=MEM.pos[n.midi];if(k){const ww=k.w*(k.b?0.6:0.78);c.strokeStyle=isHeld?'#3BB273':'#fff';c.lineWidth=isHeld?3:2;c.strokeRect(k.x+k.w/2-ww/2,Math.max(0,yt),ww,Math.max(4,yb-Math.max(0,yt)))}}c.globalAlpha=1}
     c.restore()}
   const tot=R.b-R.a+1,at=Math.min(tot,R.pos-R.a);
   if(R.watch){if(!R.watchDone)$('#memProg').textContent='Ansehen und anhören';return}
   $('#memProg').textContent=R.done?'Fertig':`Anschlag ${at+1} von ${tot}  ·  Fehler ${R.errors+R.hints}`;
-  if(!R.done)$('#memMsg').textContent=R.ending?'Halten … gleich geschafft.':MEM.early&&now-MEM.early<1200?'Zu früh – drück erst, wenn der Balken unten ankommt.':R.lvl===1?'Spiele die Noten, wenn der Balken unten ankommt.':R.lvl===2?'Du siehst nur den nächsten Ton – was danach kommt, musst du wissen.':hint?'Hilfe: hier sind die Tasten.':R.lvl===4?'Prüfung: spiele aus dem Gedächtnis, ohne Hilfe.':(memFadeSet(R).size?'Ein paar Noten sind schon verschwunden – je sicherer du wirst, desto weniger siehst du.':'Spiele aus dem Gedächtnis – wenn du stockst, erscheint Hilfe.')}
+  if(!R.done)$('#memMsg').textContent=R.ending?'Halten … gleich geschafft.':MEM.early&&now-MEM.early<1200?'Zu früh – drück erst, wenn der Balken unten ankommt.':R.lvl===1?'Spiele die Noten, wenn der Balken unten ankommt.':hint?'Hilfe: hier sind die Tasten.':R.lvl===2?(memFadeFrac(R)>=1?'Alle Noten sind noch da – spiel mit.':'Ein paar Noten sind schon weg – die kennst du schon.'):R.lvl===4?'Auffrischen: einmal aus dem Kopf.':'Ganz aus dem Kopf – wenn du stockst, erscheint Hilfe.'}
 function memPress(m,src){let R=MEM.run;if(!R||R.done||R.ending)return;if(R.watch){if(!R.watchDone)return;memStart(R.i,false);R=MEM.run;if(!R)return;R.vt=MEM.gs[R.pos].start}/* v4.66: nach dem Anhören startet der erste Ton direkt das Nachspielen */if(R.paused){R.gStart+=memNow()-R.pausedAt;R.paused=false;R.kbWas=false;R.hinted=false;memG(R,R.pos).paused=true}const exp=MEM.gs[R.pos].mids;
   const tp=performance.now(),G=memG(R,R.pos);if(src!=='kb')R.touch=true;
   if(exp.has(m)&&!R.hit.has(m)&&R.lvl<=2&&R.vt!=null&&(MEM.gs[R.pos].start-R.vt)/Math.max(0.3,S.speed||1)>MEV.early){G.early++;MEM.flash.set(m,tp);MEM.early=tp;memDraw();return} // v4.69: zu früh – erst drücken, wenn der Balken unten ankommt
@@ -1312,11 +1314,16 @@ function memRelease(m){const R=MEM.run;if(!R||R.done||R.watch||R.ending||R.pos>R
 function memFinish(){const R=MEM.run;R.done=true;const rec=MEM.rec.secs[R.i],now=memNow();let msg;try{R.ev=memEval(R);memEvShow(R.ev);memEvLog(R)}catch(e){console.warn(e)}
   if(R.chain){const bad=R.errors+R.hints;if(bad<=1){rec.chained=true;msg='pass'}else msg='same'}else msg=memApply(rec,R,now);
   memSaveAll();MEM.last=msg;memDraw();try{memGoalUI()}catch(e){}
-  const bad=R.errors+R.hints,nS=MEM.secs.length,txt={pass:`Abschnitt ${R.i+1} sitzt! `+(R.i+1<nS?`Weiter mit Abschnitt ${R.i+2} von ${nS}.`:'Das war der letzte Abschnitt.'),up:`Geschafft! Jetzt Stufe ${rec.lvl}: ${MEM_STAGE[rec.lvl]}.`,down:`Noch zu unsicher – zurück auf Stufe ${rec.lvl}: ${MEM_STAGE[rec.lvl]}.`,same:'Noch nicht „Sauber“ – nochmal auf derselben Stufe.',clean1:'Sauber! Noch einmal so, dann kommt die nächste Stufe.',better:`Besser! Sicherheit jetzt ${rec.sk} %.`+(rec.sk>=MEM_SKUP?' Ein „Sauber“ noch, dann nächste Stufe.':''),worse:`Etwas schwächer – Sicherheit jetzt ${rec.sk} %.`,fail:'Das saß noch nicht – wir üben den Abschnitt nochmal.'}[msg];
+  const bad=R.errors+R.hints,nS=MEM.secs.length,txt={pass:`⭐ Abschnitt ${R.i+1} sitzt! `+(R.i+1<nS?`Weiter mit Abschnitt ${R.i+2} von ${nS}.`:'Das war der letzte Abschnitt.'),
+    up:rec.lvl===2?'Kennengelernt! Ab jetzt verschwinden die Noten nach und nach.':'Alle Noten weg – jetzt einmal ganz aus dem Kopf.',
+    fade:`Gut! Es verschwinden mehr Noten – noch ${Math.round(MEM_FADE[Math.min(2,rec.fe||0)]*100)} % sichtbar.`,
+    back:'Das war noch wackelig – ein paar Noten kommen zurück.',
+    same:rec.lvl>=3?'Fast! Einmal ohne Hilfe, dann sitzt er.':'Noch wackelig – nochmal, mit „Fast“ oder „Sauber“ geht es weiter.',
+    fail:'Das saß nicht mehr – ein paar Noten kommen zurück, dann klappt es schnell wieder.'}[msg];
   if(R.chain)$('#memMsg').textContent=msg==='pass'?'Die Verbindung sitzt.':'Die Verbindung braucht noch Übung.';else $('#memMsg').textContent=txt+(bad?`  (${R.errors} falsche Tasten, ${R.hints} Hänger)`:'');
   $('#memProg').textContent='Fertig';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
   const hasNext=MEM.queue.length>0||!!memPickNext(now);$('#memNext').textContent=MEM.queue.length?'Nächster Abschnitt':hasNext?'Weiter':'Zur Übersicht';
-  $('#memAgain').textContent=MEM_AGAIN;const nx2=memPickNext(now);$('#memNext').textContent=MEM.queue.length?'Nächster Abschnitt':nx2?(nx2.i===R.i&&!nx2.review?(msg==='up'?`Weiter: Stufe ${rec.lvl}`:msg==='clean1'?'Weiter: 2. Durchgang':'Nächster Durchgang'):(nx2.review?`Wiederholen: Abschnitt ${nx2.i+1}`:`Weiter: Abschnitt ${nx2.i+1}`)):'Zur Übersicht';$('#memChain').style.display=(msg==='pass'&&!R.chain&&!R.review&&R.i>0&&!rec.chained)?'':'none';$('#memAgain').style.display=((msg==='pass'&&!R.review&&!R.chain)||(nx2&&nx2.i===R.i&&!nx2.review&&msg!=='up'))?'none':''}
+  $('#memAgain').textContent=MEM_AGAIN;const nx2=memPickNext(now);$('#memNext').textContent=MEM.queue.length?'Nächster Abschnitt':nx2?(nx2.i===R.i&&!nx2.review?(msg==='up'?`Weiter: ${MEM_SHORT[Math.min(3,rec.lvl)]}`:'Nächster Durchgang'):(nx2.review?`Auffrischen: Abschnitt ${nx2.i+1}`:`Weiter: Abschnitt ${nx2.i+1}`)):'Zur Übersicht';$('#memChain').style.display=(msg==='pass'&&!R.chain&&!R.review&&R.i>0&&!rec.chained)?'':'none';$('#memAgain').style.display=((msg==='pass'&&!R.review&&!R.chain)||(nx2&&nx2.i===R.i&&!nx2.review&&msg!=='up'))?'none':''}
 function memStop(){if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;MEM.queue=[]}
 $('#memStop').onclick=()=>{memStop();memHome()};
 $('#memNext').onclick=()=>{const R=MEM.run;if(R&&R.watch){memStart(R.i,false);return}if(MEM.queue.length){const q=MEM.queue.shift();memStart(q,true);return}
@@ -2540,7 +2547,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.80 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.81 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
