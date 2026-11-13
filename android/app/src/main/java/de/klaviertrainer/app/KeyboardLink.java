@@ -82,6 +82,11 @@ class KeyboardLink {
     private boolean openPending = false;
     private long openSince = 0;
     private int retryFails = 0;
+    // v4.74: echte Verbindung regelmäßig prüfen – vorher konnte „verbunden“ stehen bleiben, obwohl das Klavier aus war
+    private static final long ALIVE_MS = 5000;
+    private boolean linkSeen = false;   // die Prüfung hat die Verbindung schon einmal als „verbunden“ gesehen
+    private int linkMiss = 0;           // so oft hintereinander „nicht verbunden“
+    private long lastRx = 0;            // letzte Nachricht vom Klavier
     private long retryDelay() { return Math.min(60000L, RETRY_MS * (1L << Math.min(retryFails, 4))); }
     private String state = "off";
 
@@ -499,10 +504,48 @@ class KeyboardLink {
         device = null;
     }
 
-    private boolean up() { return device != null || gattUp; }
-    void report() { setState(up() ? "on" : state, null); }
+    private boolean up() {
+        if (device == null && !gattUp) return false;
+        boolean usb = curAddr != null && curAddr.startsWith("usb:");
+        return usb || bluetoothOn(); // Bluetooth am Handy aus → sicher nicht verbunden
+    }
+
+    /** null = unbekannt (Android sagt nichts), sonst ob das Klavier per Bluetooth wirklich verbunden ist */
+    private Boolean linkState() {
+        if (curAddr == null || curAddr.startsWith("usb:")) return null;
+        if (!bluetoothOn()) return false;
+        try {
+            BluetoothManager bm = (BluetoothManager) ctx.getSystemService(Context.BLUETOOTH_SERVICE);
+            if (bm == null) return null;
+            BluetoothDevice d = bt.getRemoteDevice(curAddr);
+            return bm.getConnectionState(d, android.bluetooth.BluetoothProfile.GATT) == android.bluetooth.BluetoothProfile.STATE_CONNECTED;
+        } catch (RuntimeException e) { return null; }
+    }
+
+    private final Runnable alive = new Runnable() {
+        @Override public void run() {
+            if (!"on".equals(state)) return;
+            if (!bluetoothOn()) { dbg("Prüfung: Bluetooth am Handy aus"); closeDevice(); setState("btoff", "Bluetooth ist aus."); return; }
+            if (!up()) { dbg("Prüfung: Gerät weg"); lost(); return; }
+            Boolean ls = linkState();
+            boolean recent = android.os.SystemClock.elapsedRealtime() - lastRx < 8000;
+            if (Boolean.TRUE.equals(ls) || recent) { if (Boolean.TRUE.equals(ls)) linkSeen = true; linkMiss = 0; }
+            else if (Boolean.FALSE.equals(ls) && linkSeen) {
+                linkMiss++;
+                if (linkMiss >= 2) { dbg("Prüfung: Klavier nicht mehr verbunden"); linkMiss = 0; lost(); return; }
+            }
+            h.postDelayed(this, ALIVE_MS);
+        }
+    };
+    void report() {
+        if (up()) { setState("on", null); return; }
+        if ("on".equals(state)) { closeDevice(); setState(bluetoothOn() ? "lost" : "btoff", bluetoothOn() ? "Verbindung zum Keyboard verloren – verbinde neu …" : "Bluetooth ist aus."); if (bluetoothOn() && wanted) h.postDelayed(retry, RETRY_MS); return; }
+        setState(state, null);
+    }
 
     private void setState(String s, String msg) {
+        if ("on".equals(s) && !"on".equals(state)) { linkSeen = false; linkMiss = 0; h.removeCallbacks(alive); h.postDelayed(alive, ALIVE_MS); }
+        if (!"on".equals(s)) h.removeCallbacks(alive);
         state = s;
         try {
             JSONObject o = new JSONObject().put("cmd", "kbState").put("state", s).put("name", curName == null ? "" : curName)
@@ -527,6 +570,7 @@ class KeyboardLink {
     private final MidiReceiver receiver = new MidiReceiver() {
         @Override
         public void onSend(byte[] msg, int offset, int count, long timestamp) {
+            lastRx = android.os.SystemClock.elapsedRealtime();
             JSONArray ev = new JSONArray();
             for (int i = offset; i < offset + count; i++) {
                 int b = msg[i] & 0xFF;
