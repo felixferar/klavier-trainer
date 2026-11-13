@@ -87,6 +87,13 @@ class KeyboardLink {
     private boolean linkSeen = false;   // die Prüfung hat die Verbindung schon einmal als „verbunden“ gesehen
     private int linkMiss = 0;           // so oft hintereinander „nicht verbunden“
     private long lastRx = 0;            // letzte Nachricht vom Klavier
+    // v4.75: Android meldet ein Bluetooth-MIDI-Gerät sofort als „geöffnet“, auch wenn das Klavier aus ist
+    // (Protokoll 13.11., 11:58–12:00: alle ~14 s „Ausgang geöffnet: true“ bei ausgeschaltetem Klavier).
+    // „Verbunden“ erst, wenn Android die Verbindung bestätigt oder das Klavier etwas schickt.
+    private boolean confirmed = false;
+    private long openedAt = 0;
+    private int confirmTries = 0;
+    private static final int CONFIRM_MAX = 25; // Sekunden
     private long retryDelay() { return Math.min(60000L, RETRY_MS * (1L << Math.min(retryFails, 4))); }
     private String state = "off";
 
@@ -409,7 +416,7 @@ class KeyboardLink {
     private void attach(MidiDevice dev) {
         h.removeCallbacks(connectTimeout);
         // v4.57: zwei Verbindungsversuche gleichzeitig (Suche + Auto) dürfen nicht zwei Geräte offen lassen
-        if (dev != null && up()) { try { dev.close(); } catch (Exception ignored) {} report(); return; }
+        if (dev != null && (device != null || gattUp)) { try { dev.close(); } catch (Exception ignored) {} report(); return; }
         // Android meldet ein ausgeschaltetes Bluetooth-Keyboard teils als "geöffnet", aber ohne Geräteinfo
         // (Absturz 09.11. 15:32: NullPointerException hier). Dann: schließen und still später erneut versuchen.
         if (dev == null || dev.getInfo() == null) {
@@ -428,8 +435,13 @@ class KeyboardLink {
         port.connect(receiver);
         String nm = nameOf(dev.getInfo());
         if (nm != null && !nm.isEmpty() && !nm.startsWith("MIDI")) curName = nm;
-        if (curAddr != null && !curAddr.startsWith("usb:")) prefs.edit().putString("kb_addr", curAddr).putString("kb_name", curName).apply();
-        setState("on", null);
+        if (curAddr == null || curAddr.startsWith("usb:")) { confirmed = true; setState("on", null); return; }
+        prefs.edit().putString("kb_addr", curAddr).putString("kb_name", curName).apply();
+        confirmed = false; confirmTries = 0; openedAt = android.os.SystemClock.elapsedRealtime();
+        dbg("Warte auf Antwort vom Klavier …");
+        setState("connecting", null);
+        h.removeCallbacks(confirm);
+        h.postDelayed(confirm, 1000);
     }
 
     private void failOrRetry(String msg) {
@@ -497,6 +509,8 @@ class KeyboardLink {
     }
 
     private void closeDevice() {
+        confirmed = false;
+        h.removeCallbacks(confirm);
         closeGatt();
         try { if (port != null) { port.disconnect(receiver); port.close(); } } catch (Exception ignored) {}
         try { if (device != null) device.close(); } catch (Exception ignored) {}
@@ -507,8 +521,31 @@ class KeyboardLink {
     private boolean up() {
         if (device == null && !gattUp) return false;
         boolean usb = curAddr != null && curAddr.startsWith("usb:");
-        return usb || bluetoothOn(); // Bluetooth am Handy aus → sicher nicht verbunden
+        if (usb) return true;
+        if (!gattUp && !confirmed) return false; // geöffnet, aber das Klavier hat sich noch nicht gemeldet
+        return bluetoothOn(); // Bluetooth am Handy aus → sicher nicht verbunden
     }
+
+    private final Runnable confirm = new Runnable() {
+        @Override public void run() {
+            if (device == null || confirmed) return;
+            Boolean ls = linkState();
+            if (Boolean.TRUE.equals(ls) || lastRx > openedAt) {
+                confirmed = true;
+                dbg("Klavier antwortet – verbunden");
+                setState("on", null);
+                return;
+            }
+            if (++confirmTries >= CONFIRM_MAX) {
+                dbg("Klavier antwortet nicht (ausgeschaltet?)");
+                closeDevice();
+                if (wanted) { retryFails++; setState("waiting", "Klavier nicht gefunden – ist es eingeschaltet? Ich versuche es weiter."); h.postDelayed(retry, retryDelay()); }
+                else setState("fail", "Das Klavier antwortet nicht. Ist es eingeschaltet?");
+                return;
+            }
+            h.postDelayed(this, 1000);
+        }
+    };
 
     /** null = unbekannt (Android sagt nichts), sonst ob das Klavier per Bluetooth wirklich verbunden ist */
     private Boolean linkState() {
@@ -571,6 +608,7 @@ class KeyboardLink {
         @Override
         public void onSend(byte[] msg, int offset, int count, long timestamp) {
             lastRx = android.os.SystemClock.elapsedRealtime();
+            if (!confirmed && device != null) h.post(confirm);
             JSONArray ev = new JSONArray();
             for (int i = offset; i < offset + count; i++) {
                 int b = msg[i] & 0xFF;
