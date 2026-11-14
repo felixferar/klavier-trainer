@@ -4,7 +4,7 @@ Treffer nach Zeit (±0,18 s); verpasste Töne spielt die App; Rettungsanker: hä
 Nebel wächst nur aus Erfolg; Takt sitzt nach 2× im Nebel geschafft; Fenster ganz im Nebel → Tempo 80 → 90 %; Tempo manuell einstellbar; Übersicht."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};let tones=[];window.playTone=(m)=>tones.push(m);KB.state='off';
+JS=r"""async()=>{window.FLOW_FIND=false;FL.start=0.8; /* v4.92: Nebel-Logik ohne Kennenlern-Runde prüfen */ const o={};let tones=[];window.playTone=(m)=>tones.push(m);KB.state='off';
  const LH=[47,43,50,45],SA=[74,71,69,71,74,76,74,71,69,66,69,71,74,71,69,0],SB=[66,69,71,74,76,74,71,69,71,69,66,64,66,69,71,0];
  const notes=[];let t=0;const ph=P=>{for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:t,dur:1.98,hand:'L'});for(let q=0;q<4;q++){const m=P[bar*4+q];if(m)notes.push({m,start:t+q*0.5,dur:q===2&&bar===3?0.95:0.45,hand:'R'})}t+=2}};
  for(const p of ['A','B','A','B'])ph(p==='A'?SA:SB);

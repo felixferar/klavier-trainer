@@ -4,7 +4,7 @@
 3) Mit Klavier geht es nach dem Durchgang von selbst weiter: nach 3 s oder sofort mit der nächsten Taste; „Pause“ hält an."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};window.playTone=()=>{};window.__instantEnd=true;
+JS=r"""async()=>{window.FLOW_FIND=false;FL.start=0.8; /* v4.92: Nebel-Logik ohne Kennenlern-Runde prüfen */ const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};window.playTone=()=>{};window.__instantEnd=true;
  KB.state='on';KB.name='GZUT-MIDI';
  const notes=[];let t=0;for(let i=0;i<40;i++){notes.push({m:60+(i%5)*2,start:t,dur:0.4,hand:'R'});t+=0.6}
  const it={id:'fl',type:'midi',title:'Fl',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);MEM.rec.secs.forEach(r=>{r.watched=true;r.runs=1});

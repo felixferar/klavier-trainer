@@ -5,7 +5,7 @@ höchstens ein neues Stück Nebel je Durchgang; ruhiger Bildschirm im ganz verde
 Fenster sitzt bei 100 % → Prüfung ohne Bildschirm (schwarz, keine Begleitung) → bestanden = Fenster ⭐; tiefstes A = sofort neu; alter Nebel-Stand wird übernommen."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};let tones=[];window.playTone=(m,d,v,g)=>tones.push({m,g});KB.state='off';
+JS=r"""async()=>{window.FLOW_FIND=false;FL.start=0.8; /* v4.92: Nebel-Logik ohne Kennenlern-Runde prüfen */ const o={};let tones=[];window.playTone=(m,d,v,g)=>tones.push({m,g});KB.state='off';
  const LH=[47,43,50,45],SA=[74,71,69,71,74,76,74,71,69,66,69,71,74,71,69,0],SB=[66,69,71,74,76,74,71,69,71,69,66,64,66,69,71,0];
  const notes=[];let t=0;for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:t,dur:1.98,hand:'L'});t+=2} /* Intro nur links */
  const ph=P=>{for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:t,dur:1.98,hand:'L'});for(let q=0;q<4;q++){const m=P[bar*4+q];if(m)notes.push({m,start:t+q*0.5,dur:q===2&&bar===3?0.95:0.45,hand:'R'})}t+=2}};
