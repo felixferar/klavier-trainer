@@ -29,6 +29,7 @@ Zuerst Versatz und Tempo schätzen; Videos, bei denen die MIDI erkennbar nicht p
 | sn_thefatrat_unity.mid | ShinkoNet | 5fVEh-WmQP0 |
 | avn_jim_yosef_rogue.mid | Allerlei von Nicolai | pR19Z4_jpLI |
 | pt_shaun_way_back_home.mid | Piano Tutorial | 3Sp4dW-JdJE |
-Weitere mit kostenloser MIDI (Gumroad „$0+“, Download nur mit E-Mail → der Nutzer lädt sie): Morunas – Dreaming (Visualisierung, LFWqyZbwBNE),
-FKA Twigs – Cellophane (Augusto.Music, SdijhNhiq3s), ThePianoforever's Test Piece (0iqbVD-VW4c); riiyawe (kostenlose MIDIs auf sites.google.com/view/yaronmusic).
+| augusto_fka_twigs_cellophane.mid | Augusto.Music | SdijhNhiq3s |
+| flaming_pianoforever_test_piece.mid | theflamingpiano | 0iqbVD-VW4c |
+Weitere mit kostenloser MIDI (Gumroad „$0+“, Download nur mit E-Mail → der Nutzer lädt sie): Morunas – Dreaming war doch nicht kostenlos; riiyawe (kostenlose MIDIs auf sites.google.com/view/yaronmusic).
 Die erste Runde (10 Videos oben) ist die EINSTELLMENGE.
