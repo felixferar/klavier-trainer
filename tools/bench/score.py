@@ -77,6 +77,10 @@ def score(truth, got, tols=(0.05, 0.1), one_color=None):
                 if not one_color and m: out[f'hands@{k}'] = round(sum(got[i][3] == exp[j][3] for j, i in m) / h, 4)
                 out[f'_miss@{k}'] = [exp[j][:3] for j in range(len(exp)) if j not in {a for a, _ in m}][:10]
                 out[f'_extra@{k}'] = [(got[i][0], round(got[i][1] - s, 2), round(got[i][2], 2)) for i in range(len(got)) if i not in {b for _, b in m}][:10]
+    # Zerschneiden / Verschmelzen genau zählen (nur mit Sollwert möglich):
+    # zerschnitten = eine Soll-Note, in der ≥ 2 Ist-Noten derselben Taste beginnen; verschmolzen = eine Ist-Note, in der ≥ 2 Soll-Noten beginnen
+    out['zerschnitten'] = sum(max(0, sum(1 for g in got if g[0] - oct_ == e[0] and e[1] - 0.1 <= g[1] - sh <= e[1] + e[2] - 0.08) - 1) for e in exp)
+    out['verschmolzen'] = sum(max(0, sum(1 for e in exp if g[0] - oct_ == e[0] and g[1] - sh - 0.1 <= e[1] <= g[1] - sh + g[2] - 0.08) - 1) for g in got)
     return out
 
 
