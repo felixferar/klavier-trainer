@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.00</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.01</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1490,12 +1490,12 @@ function v8Home(){try{v8LogSync()}catch(e){}const v=v8State(),now=v8Now(),C=v8Ch
   $('#memHow').innerHTML='Jeder Abschnitt geht drei Wege: <b>1. Tasten finden</b> – mit Bildschirm, das Lied wartet auf dich. <b>2. Aus dem Kopf</b> – Bildschirm dunkel, die App spielt den Anfang an; wenn du hängst, hilft sie erst übers Ohr, dann zeigt sie den Anschlag kurz. <b>3. Verbinden</b> – klappen zwei Nachbarn aus dem Kopf, spielst du sie am Stück, und der Song wächst zusammen. <b>4. Kalt wiederholen</b> – nach 10 Minuten, dann nach 1, 3, 7 und 21 Tagen; nur der erste Versuch zählt. „Gelernt“ heißt: am nächsten Tag noch gekonnt. Hängst du, hilft die App von selbst (nach 2 s Stocken oder 3 falschen Tönen); nach 6 Fehlern spielt sie den Abschnitt vor und du beginnst neu. 🎹 Tiefstes A = vorspielen + neu, das B daneben = weiß nicht weiter, jede andere Taste nach dem Versuch = weiter.';
   $('#memList').innerHTML='';$('#memSum').insertAdjacentHTML('beforeend',`<div class="v8map" style="display:flex;gap:2px;width:100%;height:22px;margin:4px 0">${v.ch.map((c,k)=>`<i data-k="${k}" title="Abschnitt ${k+1} · ${memClock(C[k].t0)}–${memClock(C[k].t1)} · Kasten ${c.box}" style="display:block;flex:${Math.max(0.6,C[k].t1-C[k].t0)} 1 0;background:${col(c)};border-radius:3px;${v.ln&&v.ln[k-1]?'margin-left:-2px;border-top-left-radius:0;border-bottom-left-radius:0;':''}${v.ln&&v.ln[k]?'border-top-right-radius:0;border-bottom-right-radius:0;':''}${p&&(p.mode==='link'?k>=p.s&&k<=p.e:k===p.k)?'outline:2px solid #F2A93B;outline-offset:1px;':''}"></i>`).join('')}</div>`+
     `<div class="v8leg st mu" style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px"><span>▮ neu</span><span style="color:#b9c7e6">▮ gefunden</span><span style="color:#5b8def">▮ aus dem Kopf (heute)</span><span style="color:#8fd6ae">▮ gelernt</span><span style="color:#3BB273">▮ sitzt</span><span style="color:#F2A93B">▢ als Nächstes</span><span>zusammenhängend = verbunden</span></div>`)}
-function v8Preview(R){const ns=R.accNs,t0=MEM.gs[R.a].start;for(const nn of ns)setTimeout(()=>{try{playTone(nn.midi,Math.max(0.15,nn.dur),0.4)}catch(e){}},Math.max(0,(nn.start-t0)*1000));return (MEM.gs[R.b].end-t0)*1000+500}
+function v8Preview(R){const ns=R.accNs,t0=MEM.gs[R.a].start;MEM.v8T=MEM.v8T||[];for(const nn of ns)MEM.v8T.push(setTimeout(()=>{try{playTone(nn.midi,Math.max(0.15,nn.dur),0.4)}catch(e){}},Math.max(0,(nn.start-t0)*1000)));return (MEM.gs[R.b].end-t0)*1000+500}
 function v8Start(k,mode,preview,sp){memAutoOff();const CC=v8Chunks(),C=sp?{a:CC[sp.s].a,b:CC[sp.e].b,t0:CC[sp.s].t0,t1:CC[sp.e].t1}:CC[k];let w=0;MEM.wins.forEach((W,i)=>{if(C.a>=W.a&&C.a<=W.b)w=i});flowFindStart(w,[MEM.gbar[C.a],MEM.gbar[C.b]],[C.a,C.b]);const R=MEM.run,gs=MEM.gs;R.span=sp||null;
   Object.assign(R,{startedAt:performance.now(),v8:true,mode,k,need:mode==='find'?FL.findNeed:V8.need,dark:mode!=='find',hints:0,hinted:{},wrongF:0,previewUntil:0,anchorUntil:0});
   const now=performance.now();if(preview)R.previewUntil=now+v8Preview(R);
   if(R.dark){$('#mem').classList.add('blind');const at=R.previewUntil?R.previewUntil-now:0;R.anchorUntil=now+at+V8.anchorMs;
-    const anchor=()=>{for(const m of gs[R.a].mids){try{playTone(m,0.6,0.45)}catch(e){}}};if(at>0)setTimeout(anchor,at);else anchor()} /* Start-Anker: erster Anschlag klingt und ist kurz zu sehen */
+    const anchor=()=>{for(const m of gs[R.a].mids){try{playTone(m,0.6,0.45)}catch(e){}}};if(at>0)(MEM.v8T=MEM.v8T||[]).push(setTimeout(anchor,at));else anchor()} /* Start-Anker: erster Anschlag klingt und ist kurz zu sehen */
   $('#memGoal').innerHTML=R.dark?'<button class="btn" id="v8Help" style="width:100%;height:44px;margin-top:6px">🤷 Weiß nicht weiter</button>':'';{const hb=$('#v8Help');if(hb)hb.onclick=()=>v8Show(MEM.run)}
   $('#memRunT').textContent=`Abschnitt ${sp?`${sp.s+1}–${sp.e+1}`:k+1} von ${CC.length} · ${memClock(C.t0)}–${memClock(C.t1)} · ${V8_MODE[mode]}`;flowDraw()}
 function v8Go(){const p=v8Pick();if(!p){memStop();memHome();return}v8Start(p.k,p.mode,false,p.mode==='link'?{s:p.s,e:p.e}:null)}
@@ -1633,7 +1633,7 @@ function memFinish(){const R=MEM.run;R.done=true;const rec=MEM.rec.secs[R.i],now
   $('#memProg').textContent='Fertig';$('#memStop').style.display='none';const rb=$('#memResBox');rb.style.display='flex';
   const hasNext=MEM.queue.length>0||!!memPickNext(now);$('#memNext').textContent=MEM.queue.length?'Nächster Abschnitt':hasNext?'Weiter':'Zur Übersicht';
   $('#memAgain').textContent=MEM_AGAIN;const nx2=memPickNext(now);$('#memNext').textContent=MEM.queue.length?'Nächster Abschnitt':nx2?(nx2.i===R.i&&!nx2.review&&!nx2.chain&&!R.chain?(msg==='up'?`Weiter: ${MEM_SHORT[Math.min(3,rec.lvl)]}`:'Nächster Durchgang'):(nx2.review?`Auffrischen: Abschnitt ${nx2.i+1}`:nx2.chain?`Verbinden: Abschnitt ${nx2.k+1}–${nx2.i+1}`:`Weiter: Abschnitt ${nx2.i+1}`)):'Zur Übersicht';$('#memChain').style.display='none';{const bh=new Set();for(const n of memSecNotes(R))bh.add(n.hand);MEM.handOffer=!R.only&&!R.chain&&!R.review&&(rec.nf||0)>=2&&bh.size>1;$('#memHandR').classList.toggle('hidden',!MEM.handOffer);$('#memHandL').classList.toggle('hidden',!MEM.handOffer);if(MEM.handOffer)$('#memMsg').textContent+=' Tipp: Übe die Stelle kurz mit einer Hand – die andere spielt die App.'}$('#memAgain').style.display=((msg==='pass'&&!R.review&&!R.chain)||(nx2&&nx2.i===R.i&&!nx2.review&&msg!=='up'))?'none':'';if(R.only){$('#memNext').textContent='Jetzt mit beiden Händen';$('#memAgain').style.display='';$('#memAgain').textContent=R.only==='R'?'Nochmal nur rechts':'Nochmal nur links'}R.doneAt=memNow();memAuto()}
-function memStop(){memAutoOff();if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;MEM.queue=[]}
+function memStop(){memAutoOff();try{(MEM.v8T||[]).forEach(clearTimeout)}catch(e){}MEM.v8T=[];if(MEM.timer){clearInterval(MEM.timer);MEM.timer=null}MEM.run=null;MEM.queue=[]}
 /* v4.82: nach dem Durchgang geht es von selbst weiter – nach 3 s oder sofort mit der nächsten Taste am Klavier. „Pause“ hält an. */
 function memAutoOff(){if(MEM.autoT){clearInterval(MEM.autoT);MEM.autoT=null}const b=$('#memHold');if(b)b.classList.add('hidden');const n=$('#memNext');if(n&&n.dataset.t){n.textContent=n.dataset.t;delete n.dataset.t}}
 function memAutoGo(){if(!MEM.autoT)return;memAutoOff();$('#memNext').click()}
@@ -2871,7 +2871,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.00 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.01 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -3718,8 +3718,15 @@ window.appBack=function(){
 /* ================= start ================= */
 // v4.55: leaving the app must neither cost mistakes nor lose edits
 document.addEventListener('visibilitychange',()=>{try{
-  if(document.visibilityState==='hidden'){if(MEM.run)MEM.hiddenAt=Date.now();try{if(CMP&&CMP.dirty)ceSave()}catch(e){}}
-  else if(MEM.hiddenAt){const d=Date.now()-MEM.hiddenAt;MEM.hiddenAt=null;const R=MEM.run;if(R){R.gStart+=d;if(R.watch)R.watchStart+=d;if(R.paused)R.pausedAt+=d}}
+  if(document.visibilityState==='hidden'){
+    /* v5.01: App im Hintergrund → Auswendig-Durchgang sofort beenden (zählt nicht), geplante Töne streichen, Ton aus. Beim Zurückkommen: Übersicht, nichts startet von selbst. */
+    if(MEM.run&&MEM.run.flow){memStop();try{if(!$('#mem').classList.contains('hidden'))memHome()}catch(e){}}
+    else if(MEM.run)MEM.hiddenAt=Date.now();
+    try{if(AC&&AC.state==='running'){AC.suspend();AC._bgSusp=true}}catch(e){}
+    try{if(CMP&&CMP.dirty)ceSave()}catch(e){}}
+  else if(AC&&AC._bgSusp){AC._bgSusp=false;try{AC.resume()}catch(e){}}
+  if(document.visibilityState!=='hidden'&&MEM.hiddenAt){
+    const d=Date.now()-MEM.hiddenAt;MEM.hiddenAt=null;const R=MEM.run;if(R){R.gStart+=d;if(R.watch)R.watchStart+=d;if(R.paused)R.pausedAt+=d}}
 }catch(e){}});
 applyDesk();renderHome();syncUI();requestAnimationFrame(tick);
 $('#onbAgain').onclick=openOnb;

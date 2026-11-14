@@ -29,7 +29,7 @@ async def main():
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(3500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False),errs)
         c={'ohne Versuch kein Upload':r['up0']==0,
-           'nach dem Versuch: Upload nach diag/learn mit Versuch, Abschnitten, Stand, Version':r['up1']==1 and r['path'].startswith('diag/learn/') and r['ent']==[['find',1,'pr']] and r['snap'] and r['ver']=='5.00',
+           'nach dem Versuch: Upload nach diag/learn mit Versuch, Abschnitten, Stand, Version':r['up1']==1 and r['path'].startswith('diag/learn/') and r['ent']==[['find',1,'pr']] and r['snap'] and bool(__import__('re').match(r'^\d+\.\d+$',r['ver'] or '')),
            'nichts Neues → kein Upload':r['up2']==1,'innerhalb von 2 min → wartet':r['up3']==1,
            'danach nur der neue Versuch':r['up4']==2 and r['ent4']==['recall'],
            'Fehlschlag → geht beim nächsten Mal mit':r['up5']==3 and r['ent5']==['recall'],
