@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.99</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.00</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1470,7 +1470,7 @@ function v8Pick(){const v=v8State(),now=v8Now();let best=-1;
 function v8LinkNext(v,now){v.ln=v.ln||[];v.lw=v.lw||[];for(let k=0;k+1<v.ch.length;k++){if(v.ch[k].box>=1&&v.ch[k+1].box>=1&&!v.ln[k]&&!((v.lw[k]||0)>now)){let s=k;while(s>0&&v.ln[s-1]&&k+1-s<3)s--;return {k,mode:'link',s,e:k+1}}}return null}
 function v8When(t){const d=t-v8Now();if(d<=0)return 'jetzt';if(d<36e5)return `in ${Math.max(1,Math.round(d/6e4))} Min.`;if(d<20*36e5)return `in ${Math.round(d/36e5)} Std.`;const days=Math.round(d/864e5);return days<=1?'morgen':`in ${days} Tagen`}
 const V8_MODE={find:'Tasten finden',recall:'aus dem Kopf',review:'kalt wiederholen',link:'verbinden'};
-function v8Home(){const v=v8State(),now=v8Now(),C=v8Chunks(),n=v.ch.length,dur=k=>C[k].t1-C[k].t0;let learned=0,solid=0,tl=0,today=0,dueN=0,minDue=Infinity;
+function v8Home(){try{v8LogSync()}catch(e){}const v=v8State(),now=v8Now(),C=v8Chunks(),n=v.ch.length,dur=k=>C[k].t1-C[k].t0;let learned=0,solid=0,tl=0,today=0,dueN=0,minDue=Infinity;
   const day=new Date(now);day.setHours(0,0,0,0);
   v.ch.forEach((c,k)=>{if(c.box>=V8.learned){learned++;tl+=dur(k)}if(c.box>=V8.solid)solid++;if(c.box>=1){if(c.due<=now)dueN++;else minDue=Math.min(minDue,c.due)}if(c.last>=+day&&c.box<V8.learned)today++});
   const total=MEM.gs[MEM.gs.length-1].end-MEM.gs[0].start,pc=total?Math.round(100*tl/total):0;
@@ -1492,14 +1492,24 @@ function v8Home(){const v=v8State(),now=v8Now(),C=v8Chunks(),n=v.ch.length,dur=k
     `<div class="v8leg st mu" style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px"><span>▮ neu</span><span style="color:#b9c7e6">▮ gefunden</span><span style="color:#5b8def">▮ aus dem Kopf (heute)</span><span style="color:#8fd6ae">▮ gelernt</span><span style="color:#3BB273">▮ sitzt</span><span style="color:#F2A93B">▢ als Nächstes</span><span>zusammenhängend = verbunden</span></div>`)}
 function v8Preview(R){const ns=R.accNs,t0=MEM.gs[R.a].start;for(const nn of ns)setTimeout(()=>{try{playTone(nn.midi,Math.max(0.15,nn.dur),0.4)}catch(e){}},Math.max(0,(nn.start-t0)*1000));return (MEM.gs[R.b].end-t0)*1000+500}
 function v8Start(k,mode,preview,sp){memAutoOff();const CC=v8Chunks(),C=sp?{a:CC[sp.s].a,b:CC[sp.e].b,t0:CC[sp.s].t0,t1:CC[sp.e].t1}:CC[k];let w=0;MEM.wins.forEach((W,i)=>{if(C.a>=W.a&&C.a<=W.b)w=i});flowFindStart(w,[MEM.gbar[C.a],MEM.gbar[C.b]],[C.a,C.b]);const R=MEM.run,gs=MEM.gs;R.span=sp||null;
-  Object.assign(R,{v8:true,mode,k,need:mode==='find'?FL.findNeed:V8.need,dark:mode!=='find',hints:0,hinted:{},wrongF:0,previewUntil:0,anchorUntil:0});
+  Object.assign(R,{startedAt:performance.now(),v8:true,mode,k,need:mode==='find'?FL.findNeed:V8.need,dark:mode!=='find',hints:0,hinted:{},wrongF:0,previewUntil:0,anchorUntil:0});
   const now=performance.now();if(preview)R.previewUntil=now+v8Preview(R);
   if(R.dark){$('#mem').classList.add('blind');const at=R.previewUntil?R.previewUntil-now:0;R.anchorUntil=now+at+V8.anchorMs;
     const anchor=()=>{for(const m of gs[R.a].mids){try{playTone(m,0.6,0.45)}catch(e){}}};if(at>0)setTimeout(anchor,at);else anchor()} /* Start-Anker: erster Anschlag klingt und ist kurz zu sehen */
   $('#memGoal').innerHTML=R.dark?'<button class="btn" id="v8Help" style="width:100%;height:44px;margin-top:6px">🤷 Weiß nicht weiter</button>':'';{const hb=$('#v8Help');if(hb)hb.onclick=()=>v8Show(MEM.run)}
   $('#memRunT').textContent=`Abschnitt ${sp?`${sp.s+1}–${sp.e+1}`:k+1} von ${CC.length} · ${memClock(C.t0)}–${memClock(C.t1)} · ${V8_MODE[mode]}`;flowDraw()}
 function v8Go(){const p=v8Pick();if(!p){memStop();memHome();return}v8Start(p.k,p.mode,false,p.mode==='link'?{s:p.s,e:p.e}:null)}
-function v8Log(R,ok,extra){try{const L=JSON.parse(localStorage.getItem('kt_memeval')||'[]');L.push(Object.assign({t:Date.now(),v8:1,mode:R.mode,k:R.k,ok:ok?1:0,hints:R.hints,wrong:R.wrongF,box:MEM.rec.v8.ch[R.k].box,waits:R.waits.map(x=>Math.round(x))},extra||{}));localStorage.setItem('kt_memeval',JSON.stringify(L.slice(-60)))}catch(e){}}
+/* v5.00: eigenes Lernprotokoll (kt_v8log, bis 300 Versuche; der alte Modus kürzt kt_memeval auf 40) – wird gebündelt in den privaten Diagnose-Speicher
+   hochgeladen (diag/learn/…json, höchstens alle 2 min, beim Zurückkommen in die Übersicht). Was nicht ankommt, geht beim nächsten Mal mit. */
+function v8Log(R,ok,extra){try{const L=load('kt_v8log')||[],gs=MEM.gs;L.push(Object.assign({t:Date.now(),song:MEM.item&&MEM.item.id,mode:R.mode,k:R.k,ok:ok?1:0,hints:R.hints,wrong:R.wrongF,box:MEM.rec.v8.ch[R.k].box,
+    n:R.b-R.a+1,t0:+gs[R.a].start.toFixed(2),t1:+gs[R.b].end.toFixed(2),dur:Math.round(performance.now()-(R.startedAt||performance.now())),waits:R.waits.map(x=>Math.round(x))},extra||{}));while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}}
+let V8LOG_BUSY=false;
+async function v8LogSync(force){if(V8LOG_BUSY||!ghTok())return;const L=load('kt_v8log')||[],sent=load('kt_v8logsent')||0,neu=L.filter(e=>e.t>sent);if(!neu.length)return;
+  if(!force&&Date.now()-(load('kt_v8logat')||0)<120e3)return;V8LOG_BUSY=true;
+  try{const it=MEM.item||{},snap=MEM.rec&&MEM.rec.v8?{song:it.id,title:it.title,videoId:it.videoId||it.fromYT,chunks:v8Chunks().map(c=>[c.a,c.b,+c.t0.toFixed(2),+c.t1.toFixed(2),c.load]),state:MEM.rec.v8}:null;
+    const body={kind:'learn',v:(document.body.innerHTML.match(/Version (\d+\.\d+)/)||[])[1]||'',ts:new Date().toISOString(),entries:neu,snap},ts=body.ts.replace(/[:.]/g,'-').slice(0,19),id=String(it.id||'song').replace(/[^\w-]/g,'_').slice(0,40);
+    const r=await ghUpload(`diag/learn/${ts}_${id}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(body)))),`Lernprotokoll ${id} (${neu.length} Versuche)`);
+    if(r&&r.ok){save('kt_v8logsent',neu[neu.length-1].t);save('kt_v8logat',Date.now())}}catch(e){}V8LOG_BUSY=false}
 function v8Finish(){const R=MEM.run,v=v8State(),c=v.ch[R.k],now=v8Now();R.done=true;R.doneAt=memNow();$('#mem').classList.remove('blind');
   const clean=R.hints===0&&R.wrongF<=V8.maxWrong;let msg;c.last=now;c.reps++;
   if(R.mode==='link'){const maxW=Math.max(V8.maxWrong,Math.round((R.b-R.a+1)*0.05)),ok=R.hints===0&&R.wrongF<=maxW;R.linkOk=ok;v.ln=v.ln||[];v.lw=v.lw||[];
@@ -2861,7 +2871,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.99 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.00 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
