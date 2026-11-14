@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.01</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.02</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -706,6 +706,7 @@ body.short #onbDots{margin:8px 0}
     <button class="btn pri big" id="spGo"></button>
     <div class="spRows">
       <div class="spRow" id="spPlay"><div class="grow"><b>Spielen</b><span>Mit allen Noten, in deinem Tempo</span></div><svg class="i"><use href="#i-chev"/></svg></div>
+      <div class="spRow" id="spOct" style="cursor:default"><div class="grow"><b>Oktave</b><span id="spOctTxt">Liegt der Song zu hoch oder zu tief? Hier verschieben.</span></div><div class="stp"><button id="spOctM" aria-label="eine Oktave tiefer">−</button><span id="spOctV">0</span><button id="spOctP" aria-label="eine Oktave höher">+</button></div></div>
       <div class="spRow hidden" id="spCmp"><div class="grow"><b>Noten prüfen und bearbeiten</b><span>Video gegen erkannte Noten, Töne ändern, teilen, ergänzen</span></div><svg class="i"><use href="#i-chev"/></svg></div>
     </div>
   </div>
@@ -1118,7 +1119,17 @@ function renderSongPage(){const it=SP.item=fresh(SP.item);if(!it)return;const in
       num.insertAdjacentHTML('beforeend',`<span class="${cur?'cur':''}">${i+1}</span>`)}}
   const go=$('#spGo');go.style.display=can?'':'none';
   if(can)go.textContent=info?(info.next==null?'Alles wiederholen':(info.due.length?`Wiederholen: Abschnitt ${info.next+1}`:`Weiter: Abschnitt ${info.next+1}`)):'Auswendig lernen starten';
-  $('#spCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT))}
+  $('#spCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));spOctUI(it)}
+/* v5.02: Oktave von Hand – für Songs, deren Oktave falsch erkannt wurde (gilt in Spielen, Üben und Auswendig; Lernstand bleibt) */
+function spOctUI(it){const ok=it&&it.type==='midi'&&!!it.data;$('#spOct').style.display=ok?'':'none';if(!ok)return;const v=(it.octShift||0)/12;
+  $('#spOctV').textContent=v>0?'+'+v:String(v);
+  $('#spOctTxt').textContent=it.octUnsure&&!it.octLearned&&it.octMark==null&&!v?'Aus dem Video geschätzt – klingt es zu hoch oder zu tief? Hier verschieben.':v?`Verschoben: ${Math.abs(v)===1?'eine Oktave':Math.abs(v)+' Oktaven'} ${v>0?'höher':'tiefer'} als erkannt`:'Liegt der Song zu hoch oder zu tief? Hier verschieben.'}
+function spOct(d){const it=fresh(SP.item);if(!it||it.type!=='midi'||!it.data)return;let s;try{s=songFromMidi(bufFromB64(it.data),it.title)}catch(e){toast('Fehler: '+e.message);return}
+  if(!s.notes.length)return;const nx=(it.octShift||0)+d;let lo=999,hi=-1;for(const n of s.notes){lo=Math.min(lo,n.midi);hi=Math.max(hi,n.midi)}
+  if(lo+nx<21||hi+nx>108){toast('Weiter geht es nicht – sonst lägen Töne außerhalb der Klaviatur.');return}
+  const old=it.octShift;it.octShift=nx;it.octLearned=true;if(!save('kt_lib',LIB)){it.octShift=old;toast('Speicher voll – nicht gespeichert');return}
+  spOctUI(it);toast(`Song eine Oktave ${d>0?'höher':'tiefer'}`)}
+$('#spOctM').onclick=e=>{e.stopPropagation();spOct(-12)};$('#spOctP').onclick=e=>{e.stopPropagation();spOct(12)};
 $('#spGo').onclick=()=>{if(SP.item)openMem(SP.item)};
 $('#spPlay').onclick=()=>{if(SP.item)openItemPlay(SP.item)};
 $('#spCmp').onclick=()=>{if(SP.item)openCompare(SP.item)};
@@ -1699,8 +1710,8 @@ function chordAlign(notes){const ns=notes.slice().sort((a,b)=>a.start-b.start||a
 function songForItem(it,buf){
   const s=songFromMidi(buf||bufFromB64(it.data),it.title);
   if(it.video){try{s.chordFix=chordAlign(s.notes)}catch(e){}const n=Math.ceil(s.duration)+1;s.measures=[];for(let i=0;i<=n;i++)s.measures.push(i);s.timeSec=true;
-    s.octUnsure=!!it.octUnsure&&!it.octLearned;s.oneColor=!!it.oneColor;
-    if(it.octShift)for(const x of s.notes)x.midi=clamp(x.midi+it.octShift,21,108)}
+    s.octUnsure=!!it.octUnsure&&!it.octLearned;s.oneColor=!!it.oneColor}
+  if(it.octShift)for(const x of s.notes)x.midi=clamp(x.midi+it.octShift,21,108); /* v5.02: Oktave von Hand (Song-Seite) gilt für jeden Song */
   return s}
 const secLbl=i=>song&&song.timeSec?fmt(song.measures[i]||0):String(i+1);
 const secEnd=i=>song&&song.timeSec?fmt(song.measures[i]||0):String(i);
@@ -1966,6 +1977,8 @@ async function startMidiIn(){
 /* ================= Keyboard über Bluetooth-MIDI ================= */
 // The keyboard reports every key directly (note, time, strength) – no microphone, no calibration, ~10–20 ms delay.
 const KB={rel:new Map(),log:[],step:'',sup:false,state:'off',name:'',addr:'',saved:'',found:[],msg:'',scanning:false,pedal:false,held:new Set(),shift:+(load('kt_kbshift')||0),cand:null,last:null};
+/* v5.02: eine automatisch gesetzte Oktav-Verschiebung des Klaviers stammt fast sicher von einem Song mit falscher Oktave → einmalig zurücksetzen */
+if(KB.shift&&KB.shift%12===0&&!load('kt_kbshift502')){KB.shift=0;save('kt_kbshift',0);KB.shiftReset502=true;setTimeout(()=>{try{toast('Die automatische Oktav-Verschiebung deines Klaviers wurde zurückgesetzt – Songs mit falscher Oktave verschiebst du jetzt auf der Song-Seite.',6000)}catch(e){}},2500)}save('kt_kbshift502',1);
 const kbOn=()=>KB.state==='on';
 /* v4.75: „Verbinde …“ nur zeigen, wenn der Nutzer selbst verbinden gedrückt hat; Versuche im Hintergrund laufen still („Nicht verbunden“) */
 const kbManual=()=>Date.now()<(KB.manualUntil||0),kbMan=()=>{KB.manualUntil=Date.now()+60000},kbBg=st=>!kbManual()&&(st==='connecting'||st==='lost'||st==='waiting');
@@ -2039,6 +2052,11 @@ function kbNoteOn(m){const now=performance.now();lastPress.set(m,now);pressFlash
   // the same distance to the wanted note three times in a row → the keyboard itself is shifted (transpose/octave): correct it once
   const ds=new Set(g.notes.filter(n=>!n.hit).map(n=>n.midi-m).filter(d=>d!==0&&Math.abs(d)<=24));
   if(KB.cand&&ds.has(KB.cand.d))KB.cand.n++;else{const d=[...ds].sort((x,y)=>Math.abs(x%12)-Math.abs(y%12)||Math.abs(x)-Math.abs(y))[0];KB.cand=d!=null?{d,n:1}:null} // prefer octave shifts
+  /* v5.02: eine ganze Oktave daneben heißt fast immer: der SONG liegt falsch (Oktave aus dem Video geschätzt) – nicht das Klavier.
+     Früher wurde dann das Klavier für alle Songs verschoben (kt_kbshift) und danach wirkten richtige Songs falsch. Jetzt: nur dieser Song, und nur wenn seine Oktave geschätzt ist; sonst ein Hinweis. */
+  if(KB.cand&&KB.cand.n>=3&&KB.cand.d%12===0){const d=KB.cand.d;KB.cand=null;pushPress(m);
+    if(song&&song.octUnsure){octApply(-d);return} /* d = Note − gespielt → der Song wandert dorthin, wo du spielst */
+    toast(`Du spielst ${Math.abs(d)===12?'eine Oktave':Math.abs(d)/12+' Oktaven'} ${d>0?'tiefer':'höher'} als die Noten. Liegt der Song falsch? Auf der Song-Seite unter „Oktave“ verschieben.`,6000);return}
   if(KB.cand&&KB.cand.n>=3){const d=KB.cand.d;KB.shift+=d;save('kt_kbshift',KB.shift);KB.cand=null;pushPress(m+d);
     toast(`Dein Keyboard schickt die Töne ${Math.abs(d)%12===0?(Math.abs(d)/12)+' Oktave'+(Math.abs(d)>12?'n':''):Math.abs(d)+' Halbtöne'} ${d>0?'zu tief':'zu hoch'} (Transponierung) – ab jetzt automatisch korrigiert.`,5000);return}
   pushPress(m);wrongFlash.set(m,now);fx.push({txt:'Falsch: '+noteName(m),r:'m',t0:now});if(fx.length>3)fx.shift()}
@@ -2871,7 +2889,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.01 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.02 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -3021,6 +3039,38 @@ function detectKeys(img,yAf){
   let rs=0;for(const [X,Y] of pts)rs+=(x0+w*X-Y)**2;const res=Math.sqrt(rs/pts.length)/w; // how well the black keys fit the pattern (fraction of a key width)
   return {x0,w,shift,W,lo,hi,xOf,octEst:whitesVisible<=48,res,nb:pts.length};
 }
+/* Oktave aus dem Bild (v5.02): viele Tutorials markieren das mittlere C – dunklere Beschriftung „C4“ (die anderen C hell) oder ein Punkt auf der Taste.
+   Gesucht wird im Beschriftungsbereich der weißen Tasten (unter den schwarzen Tasten) genau EINE C-Taste mit deutlich mehr dunkler Schrift als alle anderen.
+   Verdeckte Tasten (YouTube-Einblendungen, leuchtende Tasten) zählen nicht. → m der markierten Taste (im Notenraum von keys) oder null */
+function midCMark(img,keys,rows){
+  try{const W=img.width,H=img.height,D=img.data,L=(x,y)=>{const i=(y*W+x)*4;return 0.299*D[i]+0.587*D[i+1]+0.114*D[i+2]};
+    const wh=keys.filter(k=>!k.black);if(wh.length<8||!rows)return null;
+    const kw=(wh[wh.length-1].x-wh[0].x)*W/(wh.length-1),yA=Math.round(rows.yA*(H-1)),yB=Math.round(rows.yB*(H-1));
+    const med=v=>{const q=v.slice().sort((a,b)=>a-b);return q.length%2?q[q.length>>1]:(q[q.length/2-1]+q[q.length/2])/2};
+    const bb=[];for(const k of keys)if(k.black){const x=Math.round(k.x*(W-1));let y=yA;while(y<H-1&&L(x,y)<120)y++;bb.push(y)}
+    const yb=bb.length?med(bb):yA,wb=[];for(const k of wh){const x=Math.round(k.x*(W-1)),ref=L(x,yB);let y=yB;while(y<H-1&&L(x,y)>ref*0.6)y++;wb.push(y)}
+    const y0=Math.round(yb)+2,y1=Math.max(y0+3,Math.round(med(wb))-1),h=Math.max(1,Math.round(kw*0.32)),res=[];
+    for(const k of wh){const x=Math.round(k.x*(W-1)),v=[];for(let y=y0;y<y1&&y<H;y++)for(let xx=Math.max(0,x-h);xx<=Math.min(W-1,x+h);xx++)v.push(L(xx,y));
+      if(!v.length){res.push({m:k.m,ink:null,ref:0});continue}
+      const q=v.slice().sort((a,b)=>a-b),p=0.8*(q.length-1),ref=q[Math.floor(p)]+(q[Math.ceil(p)]-q[Math.floor(p)])*(p-Math.floor(p));
+      let s=0;for(const z of v)s+=Math.max(0,ref-z-30);res.push({m:k.m,ink:s/v.length,ref})}
+    const R=med(res.map(r=>r.ref));if(R<150)return null;for(const r of res)if(r.ref<0.85*R)r.ink=null;
+    const C=res.filter(r=>r.m%12===0&&r.ink!=null).sort((a,b)=>b.ink-a.ink),O=res.filter(r=>r.m%12!==0&&r.ink!=null).map(r=>r.ink);
+    if(C.length<2||!O.length)return null;const b=C[0].ink,s2=C[1].ink,mo=med(O);
+    return b>=1.5&&b>=2.5*s2+0.3&&b>=3*mo+0.5?C[0].m:null}catch(e){return null}}
+/* Entscheidung aus den Bildern beim Abspielen: mindestens 2 Bilder zeigen dieselbe Taste, keines widerspricht, Korrektur höchstens eine Oktave */
+function octFromMarks(votes){const v=(votes||[]).filter(x=>x!=null);if(v.length<2||v.some(x=>x!==v[0]))return {d:0,sure:false};
+  const d=60-v[0];return Math.abs(d)<=12&&d%12===0?{d,sure:true}:{d:0,sure:false}}
+const OCTM_AT=[0.2,0.4,0.6]; // Bilder für die Oktave: mitten im Song (nicht am Anfang mit Pausen-Einblendung, nicht am Ende mit Endkarte)
+function octMarkTick(vt,dur,vid){
+  try{if(!SCAN.on||!(dur>12)||SCAN.octBusy||!scanDet||!scanDet.octEst)return;const v=SCAN.octV||(SCAN.octV=[]);if(v.length>=OCTM_AT.length||vt<dur*OCTM_AT[v.length])return;
+    if(vid){v.push(midCMark(vidImage(vid,1280),SCAN.keys,scanRows));return}
+    if(typeof midBusy!=='undefined'&&midBusy)return;SCAN.octBusy=true;
+    grabVideo().then(img=>{SCAN.octBusy=false;if(SCAN.octV===v)v.push(img?midCMark(img,SCAN.keys,scanRows):null)},()=>{SCAN.octBusy=false;if(SCAN.octV===v)v.push(null)})}catch(e){SCAN.octBusy=false}}
+/* nach dem Scan: Oktave nach der Markierung im Bild verschieben (Noten, Tasten, Verschiebung der Tastatur) */
+function octFixApply(notes){const o=octFromMarks(SCAN.octV);SCAN.octFix=o;if(!o.sure||!o.d)return o;
+  if(notes.some(n=>n.m+o.d<21||n.m+o.d>108)){SCAN.octFix={d:0,sure:false};return SCAN.octFix}
+  for(const n of notes)n.m+=o.d;for(const k of SCAN.keys)k.m+=o.d;if(scanDet)scanDet.shift+=o.d;return o}
 function keyLayout(det,octave){ // → [{m,x (0..1),black}]
   const keys=[];const sh=det.shift+12*octave;
   for(let m=det.lo;m<=det.hi;m++){const mm=m+sh;if(mm<21||mm>108)continue;keys.push({m:mm,x:det.xOf(m)/det.W,black:!isWhitePC(m%12)})}
@@ -3327,7 +3377,7 @@ async function scanRun(live){
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   restColors(keys,[scanImg,...(scanFrames&&scanFrames.length?scanFrames.slice(-5):[])],scanRows); // always include the image the keyboard was found in (earlier frames may still show the intro)
-  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{octV:null,octBusy:false,octFix:null,qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
   SCAN.start=+$('#scStart').dataset.v||0;if(live){try{SCAN.start=ytp.getCurrentTime()}catch(e){}}
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{if(!live){ytp.setPlaybackRate(1);ytRate=1}if(ytAuto)ytp.mute()}catch(e){}
@@ -3348,12 +3398,13 @@ async function scanRun(live){
   SCAN.timer=setInterval(()=>{const p=full>0?Math.min(100,Math.round((SCAN.lastVt+SCAN.start-p0)/full*100)):null;if(ytAuto)convProgress(p==null?null:Math.min(99,p),`${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${scanCountTxt()}`);$('#scanTxt').textContent=`Erkenne Noten … ${p!=null?p+' % · ':''}${fmt(Math.max(0,SCAN.lastVt))}${dur>0?' / '+fmt(dur):''} · ${scanCountTxt()}`;
     try{if(ytp.getPlayerState()===0)scanStop()}catch(e){}
     diagMidTick(SCAN.lastVt,dur);
+    octMarkTick(SCAN.lastVt,dur);
     if(ytAuto&&SCAN.on&&SCAN.okT==null&&SCAN.lastVt>15&&!SCAN.fromFile)markLate()},300);
 }
 function scanStop(){
   if(!SCAN.on)return;SCAN.on=false;clearInterval(SCAN.timer);if(!SCAN.fromFile)nat('scanStop');try{ytp.pauseVideo()}catch(e){}try{FV.el&&FV.el.pause()}catch(e){}
-  $('#scanBar').classList.add('hidden');const notes=finishScan();
-  diagSave({reason:SCAN.hole?'hole':notes.length<4?'fewnotes':'done',hole:!!SCAN.hole,barDelay:SCAN.barDelay,oneColor:!!SCAN.oneColor,firstNote:SCAN.firstNote,
+  $('#scanBar').classList.add('hidden');const notes=finishScan();const ofx=octFixApply(notes);
+  diagSave({octMarks:SCAN.octV||null,octFix:ofx,reason:SCAN.hole?'hole':notes.length<4?'fewnotes':'done',hole:!!SCAN.hole,barDelay:SCAN.barDelay,oneColor:!!SCAN.oneColor,firstNote:SCAN.firstNote,
     notes:notes.map(n=>[n.m,+(+n.start).toFixed(3),+(+n.dur).toFixed(3),n.hand])});
   if(SCAN.hole&&ytAuto){ytAuto=false;convUI(false);if(SCAN.fromFile)fileAbort();showConvError('Die Umwandlung wurde unterbrochen (die App war kurz im Hintergrund oder das Video ist hängen geblieben). Es wurde nichts gespeichert – bitte nochmal starten und die App bis 100 % offen lassen.');return}
   if(notes.length<4){if(ytAuto){ytAuto=false;convUI(false);showConvError(SCAN.fromFile?'Im Video wurden kaum Noten erkannt. Ist es ein Klavier-Video mit fallenden Noten und einer Tastatur unten?':'Im Video wurden kaum Noten erkannt. Prüfe, ob der Link auf ein Klavier-Video mit fallenden Noten zeigt und der Zeitstempel nicht hinter dem Song liegt.');return}toast('Es wurden kaum Noten erkannt.',4500);return}
@@ -3370,7 +3421,7 @@ function scanSave(auto){
   const buf=writeMidi(notes);
   const it={id:'m'+Date.now(),type:'midi',title,artist:SCAN.fromFile?'Aus Video-Datei':'Aus YouTube-Video',data:b64FromBuf(buf),fromYT:ytOld&&!SCAN.fromFile?ytOld.videoId:null,
     video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m],geo:videoGeo(),q:SCAN.qMin||null},
-    octUnsure:!!(scanDet&&scanDet.octEst),oneColor:!!SCAN.oneColor};
+    octUnsure:!!(scanDet&&scanDet.octEst)&&!(SCAN.octFix&&SCAN.octFix.sure),octMark:SCAN.octFix&&SCAN.octFix.sure?SCAN.octFix.d:null,oneColor:!!SCAN.oneColor};
   let s;try{s=songForItem(it,buf)}catch(e){toast('Fehler: '+e.message);return}
   const libBak=LIB.slice();
   if(ytOld&&!SCAN.fromFile)LIB=LIB.filter(x=>x.id!==ytOld.id); // the video entry is replaced by the finished song
@@ -3551,7 +3602,7 @@ const MID_AT=[0.25,0.5,0.75]; // Diagnose: Standbilder aus der Songmitte (25/50/
 let midBusy=false;
 function diagMidTick(vt,dur){ // vt = Videozeit seit Start, dur = Länge ab Start; läuft im 300-ms-Takt des Scans, wartet nicht auf das Bild und verändert den Scan nicht
   try{if(!DIAG.on||!DIAG.meta||SCAN.fromFile||!(dur>20)||midBusy)return;
-    const got=DIAG.meta.midStills=DIAG.meta.midStills||[],n=got.length;if(n>=4)return;
+    const got=DIAG.meta.midStills=DIAG.meta.midStills||[],n=got.length;if(n>=4||SCAN.octBusy)return;
     const want=n<3?dur*MID_AT[n]:dur-5;if(vt<want)return;midBusy=true;
     grabVideo().then(img=>{midBusy=false;if(DIAG.meta&&DIAG.meta.midStills===got)got.push({t:+vt.toFixed(1),img:img?imgJpeg(img,0.6):null})},()=>{midBusy=false;if(DIAG.meta&&DIAG.meta.midStills===got)got.push({t:+vt.toFixed(1),img:null})})}catch(e){midBusy=false;try{DIAG.meta.midStills.push({t:+vt.toFixed(1),img:null})}catch(e2){}}}
 function medianImage(imgs){ // per pixel the median of several frames → briefly lit keys and short overlays disappear
@@ -3671,7 +3722,7 @@ async function fileConvert(file){
   restColors(keys,scanFrames&&scanFrames.length?scanFrames:[scanImg],scanRows);
   sv.removeAttribute('src');sv.load();sv.remove();FV.sv=null;
   // 2) play the file once from the very beginning to the end and read 3 pixel rows of every frame (the intro is recognised and ignored)
-  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{octV:null,octBusy:false,octFix:null,qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
   const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=7;const rx=rc.getContext('2d',{willReadFrequently:true});
   const ys=[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)].map(f=>Math.round(f*(vh-1)));
   let lastT=-1,minDt=1,drops=[];
@@ -3688,7 +3739,7 @@ async function fileConvert(file){
   try{await v.play()}catch(e){return fail('Das Video lässt sich nicht abspielen: '+e.message)}
   keepAwake(true);
   SCAN.timer=setInterval(()=>{if(!alive()){clearInterval(SCAN.timer);return}const p=dur>0?Math.min(99,Math.round(v.currentTime/dur*100)):null;
-    if(document.visibilityState!=='visible')return;convProgress(p,`${fmt(Math.max(0,v.currentTime))} / ${fmt(dur)} · ${scanCountTxt()}`);if(v.paused&&!v.ended&&SCAN.on)v.play().catch(()=>{})},300);
+    octMarkTick(v.currentTime,dur,v);if(document.visibilityState!=='visible')return;convProgress(p,`${fmt(Math.max(0,v.currentTime))} / ${fmt(dur)} · ${scanCountTxt()}`);if(v.paused&&!v.ended&&SCAN.on)v.play().catch(()=>{})},300);
 }
 $('#convErrOk').onclick=()=>{$('#convErr').classList.remove('on');$('#gDim').classList.remove('on')}; // the OK button had no handler: the message could not be closed
 function showConvError(msg,title){if(Q.on&&!title){Q.finish(false,msg);return} // queue: collect the problem, go on with the next video
