@@ -14,6 +14,9 @@ JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};const p
  if(fp.length){const j=JSON.parse(fp[0].c);o.path=fp[0].u.split('/contents/')[1];o.title=j.title;o.vid=j.videoId;o.flags=j.flags.map(f=>[f.T,f.video,f.near.length]);o.near0=j.flags[0].near[0]}
  /* Flagge über den Knopf → auch Foto */
  window.ytp={getCurrentTime:()=>6.5};const before=shots;$('#tlFlag').click();await w(900);o.shot=shots>before;
+ /* schon gesetzte Flaggen werden beim Öffnen nachgeschickt, aber nur einmal */
+ save('kt_flagsent',{});CMP={it:{id:'fly2',title:'Alt',videoId:'old1'},notes,off:0,dens:[1],dur:12};const o2=load('kt_cmpflags')||{};o2['fly2']=[5.0];save('kt_cmpflags',o2);
+ tlDraw();await w(2800);o.catchUp=puts.filter(p=>p.u.includes('diag/flags/')&&p.u.includes('old1')).length;CMP.flagChk=0;tlDraw();await w(2800);o.noDup=puts.filter(p=>p.u.includes('old1')).length;
  return o}"""
 async def main():
     async with async_playwright() as p:
@@ -24,6 +27,6 @@ async def main():
         c={'ohne Schlüssel nichts gesendet':r['noTok']==0,'mit Schlüssel gesendet':r['n']>=1 and r.get('path','').startswith('diag/flags/') and r['path'].endswith('_Wa8fAoJmjQA.json'),
            'Titel/Video-ID':r.get('title')=='Fly Me to the Moon' and r.get('vid')=='Wa8fAoJmjQA',
            'Song- und Videozeit + Noten rundherum':r.get('flags')==[[3.0,4.5,10],[7.4,8.9,10]] or (r.get('flags') and r['flags'][0][:2]==[3.0,4.5] and r['flags'][0][2]>0),
-           'beim Setzen auch ein Foto':r['shot'],'keine Fehler':not errs}
+           'beim Setzen auch ein Foto':r['shot'],'alte Flaggen nachgeschickt, nur einmal':r['catchUp']==1 and r['noDup']==1,'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await br.close()
 asyncio.run(main())

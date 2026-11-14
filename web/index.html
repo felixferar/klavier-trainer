@@ -2408,7 +2408,8 @@ let FLAG_T=null;
 function flagInfo(){const it=CMP.it,fl=tlFlags(),near=T=>CMP.notes.filter(n=>n.start>=T-4&&n.start<=T+4) /* Flaggen sitzen nur ungefähr */.map(n=>[n.midi,+n.start.toFixed(3),+n.dur.toFixed(3),n.hand||'']);
   return {kind:'flags',v:'4.90',ts:new Date().toISOString(),title:it.title||'',videoId:it.videoId||it.fromYT||'',itemId:it.id,off:CMP.off,notes:CMP.notes.length,flags:fl.map(T=>({T,video:+(T+CMP.off).toFixed(2),near:near(T)}))}}
 function flagSync(){if(!ghTok()||!CMP)return;clearTimeout(FLAG_T);FLAG_T=setTimeout(async()=>{try{const info=flagInfo(),ts=info.ts.replace(/[:.]/g,'-').slice(0,19),vid=(info.videoId||info.itemId||'song').toString().replace(/[^\w-]/g,'_');
-  const r=await ghUpload(`diag/flags/${ts}_${vid}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Flaggen '+vid+' ('+info.flags.length+')');if(r.ok)toast('🚩 an Claude gesendet',1500,true)}catch(e){}},2500)}
+  const r=await ghUpload(`diag/flags/${ts}_${vid}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Flaggen '+vid+' ('+info.flags.length+')');if(r.ok){toast('🚩 an Claude gesendet',1500,true);try{const o=load('kt_flagsent')||{};o[info.itemId]=JSON.stringify(info.flags.map(f=>f.T));save('kt_flagsent',o)}catch(e){}}}catch(e){}},2500)}
+function flagCatchUp(){try{if(!CMP||!ghTok())return;const fl=tlFlags();if(!fl.length)return;const o=load('kt_flagsent')||{};if(o[CMP.it.id]!==JSON.stringify(fl))flagSync()}catch(e){}} /* v4.90: schon gesetzte, noch nicht gesendete Flaggen nachschicken */
 function tlDur(){if(!CMP)return 1;if(!CMP.dur){let e=0;for(const n of CMP.notes)e=Math.max(e,n.start+n.dur);CMP.dur=Math.max(5,e+1);const b=new Array(Math.ceil(CMP.dur)+1).fill(0);for(const n of CMP.notes)b[Math.floor(n.start)]++;CMP.dens=b}return CMP.dur}
 function tlDraw(){const cv=$('#tlCv');if(!CMP||!cv)return;const dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect(),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(!w||!h)return;if(cv.width!==w)cv.width=w;if(cv.height!==h)cv.height=h;
   const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);const W=r.width,H=r.height,D=tlDur(),vt=cmpVT(),T=CMP.tlDrag!=null?CMP.tlDrag:vt-CMP.off;
@@ -2417,7 +2418,7 @@ function tlDraw(){const cv=$('#tlCv');if(!CMP||!cv)return;const dpr=window.devic
   c.fillStyle='#9AA3B2';c.font='10px sans-serif';c.textBaseline='bottom';const step=D>240?60:D>90?30:10;for(let t=0;t<=D;t+=step){const x=t/D*W;c.fillRect(x,H-12,1,4);c.fillText(Math.floor(t/60)+':'+String(t%60).padStart(2,'0'),Math.min(W-26,x+2),H-1)}
   c.fillStyle='#E24B4A';for(const f of tlFlags()){const x=f/D*W;c.fillRect(x-1.5,0,3,H-12);c.beginPath();c.arc(x,5,5,0,7);c.fill()}
   const px=Math.min(W,Math.max(0,T/D*W));c.fillStyle='#fff';c.fillRect(px-1,0,2,H-12);c.beginPath();c.arc(px,H-12,4,0,7);c.fill();
-  $('#tlT').textContent=tlFmt(T);$('#tlV').textContent='Video '+tlFmt(T+CMP.off)+' · Song '+tlFmt(D)}
+  if(!CMP.flagChk){CMP.flagChk=1;flagCatchUp()}$('#tlT').textContent=tlFmt(T);$('#tlV').textContent='Video '+tlFmt(T+CMP.off)+' · Song '+tlFmt(D)}
 (()=>{const tr=$('#tlTrack'),at=e=>{const r=tr.getBoundingClientRect();return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))*tlDur()};
   tr.addEventListener('pointerdown',e=>{if(!CMP||!ytp)return;if(CMP.calibrating){toast('Einen Moment, das Video wird vermessen …',1800);return}tr.setPointerCapture(e.pointerId);CMP.tlDrag=at(e);tlDraw()});
   tr.addEventListener('pointermove',e=>{if(CMP&&CMP.tlDrag!=null){CMP.tlDrag=at(e);tlDraw()}});
