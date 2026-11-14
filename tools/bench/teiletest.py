@@ -5,7 +5,7 @@ sitzt das Original, startet der Zwilling bei „Aus dem Kopf“; Anlauf (2 Ansch
 alter Lernstand (starre Abschnitte) wird übernommen."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};let tones=[];window.playTone=(m)=>tones.push(m);window.__instantEnd=true;
+JS=r"""async()=>{window.MEM_FLOW=false; /* v4.86: prüft den bisherigen Schritte-Modus */const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};let tones=[];window.playTone=(m)=>tones.push(m);window.__instantEnd=true;
  const LH=[47,43,50,45],SA=[74,71,69,71, 74,76,74,71, 69,66,69,71, 74,71,69,0],SB=[66,69,71,74, 76,74,71,69, 71,69,66,64, 66,69,71,0];
  const notes=[];let t=0;const phrase=(P)=>{for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:t,dur:1.98,hand:'L'});for(let q=0;q<4;q++){const m=P[bar*4+q];if(m)notes.push({m,start:t+q*0.5,dur:q===2&&bar===3?0.95:0.45,hand:'R'})}t+=2}};
  for(const part of ['A','A','B','B','A','A','B','B'])phrase(part==='A'?SA:SB);

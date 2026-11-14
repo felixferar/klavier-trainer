@@ -1,7 +1,7 @@
 """v4.73: Auswendig-Übersicht zeigt klar „wo bin ich“ – Abschnitt x von n, Stufe y von 4, was noch fehlt; ein Knopf mit Ziel; Abschnitts-Liste nur Anzeige (nicht antippbar); Lektion ohne Fachtext."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};window.playTone=()=>{};window.__instantEnd=true;
+JS=r"""async()=>{window.MEM_FLOW=false; /* v4.86: prüft den bisherigen Schritte-Modus */const o={};window.playTone=()=>{};window.__instantEnd=true;
  const notes=[];let t=0;for(let i=0;i<36;i++){notes.push({m:60+(i%5)*2,start:t,dur:.4,hand:'R'});t+=(i%12===11)?2.0:.5}
  const it={id:'hr',type:'midi',title:'H',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);
  o.n=MEM.secs.length;

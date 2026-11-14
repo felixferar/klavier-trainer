@@ -3,7 +3,7 @@
 (3) Weniger Zahlen: keine Fehlerzahl beim Spielen, Ergebnis nur Urteil + ein Satz + Farbleiste."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};let tones=[];window.playTone=(m)=>tones.push(m);window.__instantEnd=true;KB.state='off';
+JS=r"""async()=>{window.MEM_FLOW=false; /* v4.86: prüft den bisherigen Schritte-Modus */const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};let tones=[];window.playTone=(m)=>tones.push(m);window.__instantEnd=true;KB.state='off';
  const LH=[47,43,50,45],P=[[74,71,69,71,74,76,74,71,69,66,69,71,74,71,69,0],[66,69,71,74,76,74,71,69,71,69,66,64,66,69,71,0],[62,64,66,69,71,69,66,64,62,64,66,62,61,62,64,0]];
  const notes=[];let t=0;for(const P1 of P){for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:t,dur:1.98,hand:'L'});for(let q=0;q<4;q++){const m=P1[bar*4+q];if(m)notes.push({m,start:t+q*0.5,dur:q===2&&bar===3?0.95:0.45,hand:'R'})}t+=2}}
  const it={id:'kt',type:'midi',title:'Kette',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);const rs=MEM.rec.secs;o.n=MEM.secs.length;o.st=MEM.secs.map(([a,b])=>[+MEM.gs[a].start.toFixed(1),+MEM.gs[b].end.toFixed(1)]);if(o.n<3)return o;

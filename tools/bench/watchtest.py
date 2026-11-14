@@ -1,7 +1,7 @@
 """v4.66: Nach dem Anhören ist 'Jetzt spielen' sichtbar, und der erste Ton am Klavier startet das Nachspielen direkt"""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{window.__instantEnd=true;window.__mp||(window.__mp=memPress,memPress=function(m,src){const R=MEM.run;if(R&&!R.watch&&R.vt!=null&&R.lvl<=2&&!window.__strict)R.vt=Math.max(R.vt,MEM.gs[R.pos].start);return window.__mp(m,src)}); /* Test: wie Warten, bis der Balken unten ist */const notes=[];for(let i=0;i<30;i++)notes.push({m:60+(i%7)*2,start:i*0.5,dur:0.4,hand:'R'});
+JS=r"""async()=>{window.MEM_FLOW=false; /* v4.86: prüft den bisherigen Schritte-Modus */window.__instantEnd=true;window.__mp||(window.__mp=memPress,memPress=function(m,src){const R=MEM.run;if(R&&!R.watch&&R.vt!=null&&R.lvl<=2&&!window.__strict)R.vt=Math.max(R.vt,MEM.gs[R.pos].start);return window.__mp(m,src)}); /* Test: wie Warten, bis der Balken unten ist */const notes=[];for(let i=0;i<30;i++)notes.push({m:60+(i%7)*2,start:i*0.5,dur:0.4,hand:'R'});
  const it={id:'w1',type:'midi',title:'W',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];window.playTone=()=>{};
  openMem(it);$('#memGo').click();let R=MEM.run;const o={watch:!!(R&&R.watch)};
  memPress(60,'kb');o.ignoredDuringWatch=MEM.run.watch===true&&MEM.run.errors===0;

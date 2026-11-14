@@ -4,7 +4,7 @@ Ein Abschnitt braucht im guten Fall 5 Durchgänge. „Wackelig“ bleibt, „Nic
 Übersicht zeigt „Du kannst m:ss von m:ss“, der Wert wächst, wenn ein Abschnitt sitzt."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};window.playTone=()=>{};window.__instantEnd=true;
+JS=r"""async()=>{window.MEM_FLOW=false; /* v4.86: prüft den bisherigen Schritte-Modus */const o={};window.playTone=()=>{};window.__instantEnd=true;
  const notes=[];let t=0;for(let i=0;i<120;i++){notes.push({m:60+(i%5)*2,start:t,dur:0.4,hand:'R'});t+=0.6}
  const it={id:'sch',type:'midi',title:'Sch',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);
  const A=(rec,cat,extra)=>memApply(rec,Object.assign({ev:{cat,score:cat==='s'?95:cat==='f'?80:cat==='w'?55:20,hints:0},errors:0,hints:0},extra||{}),1e12);

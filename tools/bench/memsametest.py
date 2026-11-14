@@ -1,7 +1,7 @@
 """v4.66: Auswendig nutzt dieselben Noten wie Abspielen/Üben (Tastatur-Falten, Hände), Akkord-Versatz aus dem Video bleibt ein Anschlag, Anhören mit echten Tonlängen und Handfarben, Lernstand bleibt bei alter Gruppierung"""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};window.playTone=(m,d,v)=>{tones.push([m,d])};let tones=[];
+JS=r"""async()=>{window.MEM_FLOW=false; /* v4.86: prüft den bisherigen Schritte-Modus */const o={};window.playTone=(m,d,v)=>{tones.push([m,d])};let tones=[];
  // Akkord mit Video-Versatz: 54 @0, 57 @+41 ms, 61/64 @+82 ms (wie golden hour 6.595/6.636/6.677); danach Töne im Abstand 0,13 s; ein Ton außerhalb einer 61er-Tastatur (C1=24)
  const notes=[{m:54,start:1.000,dur:0.36,hand:'L'},{m:57,start:1.041,dur:0.3,hand:'R'},{m:61,start:1.082,dur:0.3,hand:'R'},{m:64,start:1.082,dur:0.3,hand:'R'}];
  let t=1.5;for(let i=0;i<20;i++){notes.push({m:60+(i%5),start:t,dur:i===3?1.2:0.12,hand:'R'});t+=0.13}notes.push({m:24,start:t+0.5,dur:0.5,hand:'L'});
