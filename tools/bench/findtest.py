@@ -4,7 +4,7 @@ weiter, bei Akkorden reichen die meisten Töne); einmal geschafft = gefunden; da
 Durchgängen, Nebel erst ab 80 %; viele Fehler → langsamer; im Fluss leuchten die nächsten sichtbaren Tasten vor; alter Stand wird übernommen."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
+JS=r"""async()=>{window.MEM_V8=false;const o={};window.playTone=()=>{};KB.state='off';
  const LH=[47,43,50,45],SA=[74,71,69,71,74,76,74,71,69,66,69,71,74,71,69,0];const notes=[];let t=0;
  for(let r=0;r<3;r++)for(let bar=0;bar<4;bar++){if(bar===0){for(const m of [48,52,55])notes.push({m,start:t,dur:1.9,hand:'L'})}else notes.push({m:LH[bar],start:t,dur:1.98,hand:'L'});
    for(let q=0;q<4;q++){const m=SA[bar*4+q];if(m)notes.push({m,start:t+q*0.5,dur:0.45,hand:'R'})}t+=2}

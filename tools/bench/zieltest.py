@@ -1,7 +1,7 @@
 """v4.71: Ziel und nächster Schritt sichtbar; Karte entscheidet (Sauber zählt, Zögern zählt mit); gehaltene Note bleibt markiert"""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{window.FLOW_FIND=false;FL.start=0.8; /* v4.92: Nebel-Logik ohne Kennenlern-Runde prüfen */ const o={};window.playTone=()=>{};window.__instantEnd=true;
+JS=r"""async()=>{window.MEM_V8=false;window.FLOW_FIND=false;FL.start=0.8; /* v4.92: Nebel-Logik ohne Kennenlern-Runde prüfen */ const o={};window.playTone=()=>{};window.__instantEnd=true;
  const notes=[];let t=0;for(let i=0;i<10;i++){notes.push({m:60+(i%5)*2,start:t,dur:.4,hand:'R'});t+=.5}
  const it={id:'zl',type:'midi',title:'Z',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);MEM.rec.secs.forEach(r=>{r.watched=true;r.runs=1});
  const play=(hes)=>{memStart(0,false);const R=MEM.run;let T=1000;performance.now=()=>T;while(!R.done){R.vt=Math.max(R.vt,MEM.gs[R.pos].start);T+=(hes&&(R.pos===R.a+3||R.pos===R.a+6))?3000:500;for(const m of MEM.gs[R.pos].mids)memPress(m,'kb')}return R};

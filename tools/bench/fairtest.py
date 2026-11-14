@@ -5,7 +5,7 @@
 (4) Anzeigen: Takt-Leiste mit Nummern, Legende (sitzt / im Nebel / noch sichtbar / diesmal gehakt), aktueller Takt markiert; Ergebnis-Text „Im Nebel geschafft … · sitzt …“."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{window.FLOW_FIND=false;FL.start=0.8; /* v4.92: Nebel-Logik ohne Kennenlern-Runde prüfen */ const o={};window.playTone=()=>{};KB.state='off';
+JS=r"""async()=>{window.MEM_V8=false;window.FLOW_FIND=false;FL.start=0.8; /* v4.92: Nebel-Logik ohne Kennenlern-Runde prüfen */ const o={};window.playTone=()=>{};KB.state='off';
  const LH=[47,43,50,45],SA=[74,71,69,71,74,76,74,71,69,66,69,71,74,71,69,0],SB=[66,69,71,74,76,74,71,69,71,69,66,64,66,69,71,0];
  const notes=[];let t=0;const ph=P=>{for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:t,dur:1.98,hand:'L'});for(let q=0;q<4;q++){const m=P[bar*4+q];if(m)notes.push({m,start:t+q*0.5,dur:q===2&&bar===3?0.95:0.45,hand:'R'})}t+=2}};
  for(const p of ['A','B','A','B'])ph(p==='A'?SA:SB);

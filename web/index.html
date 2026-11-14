@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.93</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.94</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1347,7 +1347,7 @@ function flowTempoHTML(){const fl=MEM.rec.fl,sp=Math.round(flowSpeed()*100);retu
 function flowTempoBind(el){if(!el)return;el.innerHTML=flowTempoHTML();el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const fl=MEM.rec.fl,d=+b.dataset.t;if(b.dataset.a){fl.acc=fl.acc===false;memSaveAll();flowTempoBind(el);const o=el.id==='memTempo'?$('#memTempoR'):$('#memTempo');if(o)flowTempoBind(o);return}if(d===0)fl.manual=null;else fl.manual=Math.round(clamp(flowSpeed()+d*0.1,0.5,1.3)*10)/10;memSaveAll();flowTempoBind(el);const o=el.id==='memTempo'?$('#memTempoR'):$('#memTempo');if(o)flowTempoBind(o)})}
 function flowStrip(w,res,now,leg){const W=MEM.wins[w],fl=MEM.rec.fl;let h='';for(let k=W.b0;k<=W.b1;k++){const s=fl.st[k],bad=res&&res[k]&&!res[k].ok;h+=`<i class="${s>=3?'d':s===2?'c':s===1?'h':''}${bad?' x':''}${k===now?' n':''}" title="Takt ${k-W.b0+1}">${k-W.b0+1}</i>`}
   return `<div class="flStrip">${h}</div>`+(leg?`<div class="flLeg"><span><i class="d"></i>sitzt</span><span><i class="c"></i>im Nebel</span><span><i class="h"></i>linke Hand im Nebel</span><span><i></i>sichtbar</span>${res?'<span><i class="x"></i>diesmal gehakt</span>':''}</div>`:'')}
-function flowHome(){flowPrep();const fl=MEM.rec.fl,bars=MEM.bars,wins=MEM.wins;let known=0;bars.forEach((B,k)=>{if(fl.st[k]>=3)known+=B.t1-B.t0});const total=MEM.gs[MEM.gs.length-1].end-MEM.gs[0].start,pc=total?Math.round(100*known/total):0,wd=fl.wdone.filter(Boolean).length;
+function flowHome(){if(v8On())return v8Home();flowPrep();const fl=MEM.rec.fl,bars=MEM.bars,wins=MEM.wins;let known=0;bars.forEach((B,k)=>{if(fl.st[k]>=3)known+=B.t1-B.t0});const total=MEM.gs[MEM.gs.length-1].end-MEM.gs[0].start,pc=total?Math.round(100*known/total):0,wd=fl.wdone.filter(Boolean).length;
   $('#memSum').innerHTML=`<div class="memSecs"><b>Du kannst ${memClock(known)} von ${memClock(total)}</b> · ${wd} von ${wins.length} Fenstern ⭐<div class="skm"><div class="skf" style="width:${pc}%;background:#3BB273"></div></div></div>`;
   const w=flowNextWin();$('#memGo').disabled=w<0;$('#memMix').classList.add('hidden');
   if(w<0){$('#memHere').innerHTML='<div class="wh">Alles sitzt ✓</div><div class="st mu">Der ganze Song im Nebel geschafft.</div>';$('#memGo').textContent='Alles geschafft ✓'}
@@ -1363,11 +1363,13 @@ function flowFindStart(w,fc){const W=MEM.wins[w],gs=MEM.gs,[k0,k1]=fc,a=MEM.bars
   $('#memRunT').textContent=`Fenster ${w+1} von ${MEM.wins.length} · Tasten finden`;$('#memGoal').innerHTML=flowStrip(w,null,k0,true);R.stripNow=k0;
   try{memRange(R)}catch(e){}memKbChip();memLoopOn()}
 function flowFindTick(R,dt){const gs=MEM.gs;if(R.done)return flowDraw();
+  if(R.v8){const now=performance.now();if(R.previewUntil&&now<R.previewUntil)return flowDraw();
+    if(R.dark&&R.pos<=R.b&&R.waitT0&&!R.hinted[R.pos]&&now-R.waitT0>V8.hintMs){R.hinted[R.pos]=1;R.hints++;R.hintAt=now;for(const m of gs[R.pos].mids){try{playTone(m,0.45,0.5)}catch(e){}}}} /* v4.94: Stocken > 2 s → App spielt den Anschlag an */
   if(R.pos>R.b){if(!R.endV)R.endV=Math.max(R.speed,(gs[R.b].end+0.3-R.vt)/0.8);R.vt+=dt*R.endV;if(R.vt>gs[R.b].end+0.3)return flowFinish();return flowDraw()}
   const G=gs[R.pos];R.vt=Math.min(R.vt+dt*(R.glideV||R.speed),G.start);if(R.vt>=G.start&&!R.waitT0)R.waitT0=performance.now();flowDraw()}
-function flowFindPress(R,m){const gs=MEM.gs,now=performance.now();R.lastKey=now;if(R.pos>R.b)return flowDraw();const G=gs[R.pos];
+function flowFindPress(R,m){const gs=MEM.gs,now=performance.now();if(R.v8&&R.previewUntil&&now<R.previewUntil)return;R.lastKey=now;if(R.pos>R.b)return flowDraw();const G=gs[R.pos];
   if(G.mids.has(m)){const h=R.hit[R.pos]||(R.hit[R.pos]=new Set());h.add(m);MEM.good.set(m,now);
-    if(h.size>=Math.ceil(G.mids.size*FL.findNeed)){R.waits.push(R.waitT0?now-R.waitT0:0);R.waitT0=0;R.proc[R.pos]=true;R.vt=Math.max(R.vt,G.start);R.pos++;R.mj=R.pos;const nx=gs[R.pos];R.glideV=nx&&R.pos<=R.b?Math.max(R.speed,(nx.start-R.vt)/1.0):0}} /* v4.93: gleichmäßiges Tempo; nur lange Pausen im Stück werden auf 1 s gekürzt (v4.92 war 0,35 s → wirkte mal schnell, mal langsam); Schluss in 0,8 s */
+    if(h.size>=Math.ceil(G.mids.size*(R.need||FL.findNeed))){R.waits.push(R.waitT0?now-R.waitT0:0);R.waitT0=0;R.proc[R.pos]=true;R.vt=Math.max(R.vt,G.start);R.pos++;R.mj=R.pos;const nx=gs[R.pos];R.glideV=nx&&R.pos<=R.b?Math.max(R.speed,(nx.start-R.vt)/1.0):0}} /* v4.93: gleichmäßiges Tempo; nur lange Pausen im Stück werden auf 1 s gekürzt (v4.92 war 0,35 s → wirkte mal schnell, mal langsam); Schluss in 0,8 s */
   else{MEM.flash.set(m,now);R.wrongF++}flowDraw()}
 function flowStart(w){memAutoOff();flowPrep();const W=MEM.wins[w],fl=MEM.rec.fl,gs=MEM.gs;let any=false;
   if(flowFindOn()&&!fl.exam[w]){const fc=flowFindChunk(w);if(fc)return flowFindStart(w,fc)}for(let k=W.b0;k<=W.b1;k++)if(fl.st[k]>=1)any=true;
@@ -1393,14 +1395,14 @@ function flowTick(R,dt){if(R.find)return flowFindTick(R,dt);const gs=MEM.gs;if(R
   if(R.accNs){while(R.ap<R.accNs.length&&R.accNs[R.ap].start<=ve){const q=R.ap++,n=R.accNs[q],k=R.nbar[q];if(!acc||R.blind||ve<gs[R.a].start-0.05)continue;if(!flowHid(R,k,n.hand)){R.accPlayed=(R.accPlayed||0)+1;try{playTone(n.midi,Math.max(0.15,n.dur/R.speed),0.3,flowAccGain())}catch(e){}}}}
   while(R.pos<=R.b&&R.proc[R.pos])R.pos++;
   if(R.vt>gs[R.b].end+0.4&&R.mj>R.b)return flowFinish();flowDraw()}
-function flowPress(m){let R=MEM.run;if(m===FL.restart){memAutoOff();flowStart(R.w);return} /* tiefstes A: Sofort-Neustart */
+function flowPress(m){let R=MEM.run;if(m===FL.restart&&R.v8)return v8Restart(R);if(m===FL.restart){memAutoOff();flowStart(R.w);return} /* tiefstes A: Sofort-Neustart */
   if(R.done){if(MEM.autoT&&memNow()-(R.doneAt||0)>700)memAutoGo();return}
   if(R.find)return flowFindPress(R,m);
   const gs=MEM.gs,tol=Math.max(0.1,FL.tol*R.speed),now=performance.now(),ve=R.vt-R.lat*R.speed;R.lastKey=now;if(ve<gs[R.a].start-tol)return;
   let best=-1;for(let j=Math.max(R.a,R.mj-4);j<=R.b&&gs[j].start<=ve+tol;j++){if(R.proc[j])continue;if(!gs[j].mids.has(m))continue;if(R.hit[j]&&R.hit[j].has(m))continue;if(Math.abs(gs[j].start-ve)<=tol){best=j;break}}
   if(best>=0){(R.hit[best]||(R.hit[best]=new Set())).add(m);const k=MEM.gbar[best];if(k!==R.lead&&R.res[k])R.res[k].hit++;R.devs.push((ve-gs[best].start)/R.speed);MEM.good.set(m,now)}
   else{let k=MEM.gbar[Math.min(R.b,Math.max(R.a,R.pos))];if(k!==R.lead&&R.res[k])R.res[k].wrong++;MEM.flash.set(m,now)}flowDraw()}
-function flowFinish(){const R=MEM.run,fl=MEM.rec.fl,W=MEM.wins[R.w],nb=W.b1-W.b0+1;R.done=true;R.doneAt=memNow();$('#mem').classList.remove('blind');let msg;
+function flowFinish(){if(MEM.run&&MEM.run.v8)return v8Finish();const R=MEM.run,fl=MEM.rec.fl,W=MEM.wins[R.w],nb=W.b1-W.b0+1;R.done=true;R.doneAt=memNow();$('#mem').classList.remove('blind');let msg;
   let okAll=0;if(R.find){for(let k=R.k0;k<=R.k1;k++)fl.seen[k]=1;const more=flowFindChunk(R.w);
     msg=more?`Gefunden ✓ Als Nächstes die nächsten Takte finden.`:`Alle Takte gefunden ✓ Jetzt spielst du das Fenster im Fluss mit ${Math.round(flowSpeed()*100)} % Tempo – noch ohne Nebel.`}
   else{for(let k=W.b0;k<=W.b1;k++){const r=R.res[k];r.ok=r.tot>0&&r.hit/r.tot>=0.8&&!r.resc&&r.wrong<=Math.max(1,Math.round(r.tot*0.25));if(r.ok)okAll++}
@@ -1428,9 +1430,67 @@ function flowFinish(){const R=MEM.run,fl=MEM.rec.fl,W=MEM.wins[R.w],nb=W.b1-W.b0
   $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=flowStrip(R.w,R.res,null,true);ev.classList.remove('hidden');$('#memGoal').innerHTML='';
   const nw=flowNextWin(),rb=$('#memResBox');rb.style.display='flex';$('#memNext').textContent=nw<0?'Zur Übersicht':nw===R.w?(fl.exam[R.w]?'Prüfung starten':'Nächster Durchgang'):`Weiter: Fenster ${nw+1}`;$('#memAgain').style.display='none';$('#memChain').style.display='none';
   flowTempoBind($('#memTempoR'));$('#memTempoR').classList.remove('hidden');$('#memProg').textContent='Fertig';flowDraw();memAuto()}
-function flowNext(){const w=flowNextWin();if(w<0){memStop();memHome()}else flowStart(w)}
+/* ===== v4.94: Zielbild v8 – Schritt 1: Stufe 3 „Abrufen“ (Bildschirm dunkel, ohne Tempo) + Stufe 5 „Festigen“ (Leitner-Kästen, ehrliche Anzeige) =====
+   Abschnitt = ein Takt aus flowBarsIn (vorerst). Ablauf je Abschnitt: Finden (Warte-Modus mit Bildschirm, einmal) → aus dem Kopf (dunkel; Start-Anker = erster
+   Anschlag wird angespielt und kurz gezeigt; > 2 s Stocken → App spielt den nächsten Anschlag an) → Kasten 1 (kalt wieder nach 10 min, dazwischen anderer Stoff)
+   → K2 nach ~1 Tag → K3 3 Tage → K4 7 Tage → K5 21 Tage. Kalt nicht geschafft → 1 Kasten zurück + sofort auffrischen. Nur der erste Versuch zählt.
+   Kasten = wann der Abschnitt wieder dran ist (K1 10 min · K2 ~1 Tag · K3 3 · K4 7 · K5 21 Tage). „Gelernt“ = ab K3 (Test am nächsten Tag bestanden), „sitzt“ = K5 (7-Tage-Test bestanden). Tiefstes A = Abschnitt vorspielen + neu (laufender Versuch zählt als nicht geschafft).
+   window.MEM_V8=false → alter Ablauf „Nebel im Fluss“. */
+const V8={learned:3,solid:5,need:0.75,hintMs:2000,anchorMs:1600,maxWrong:1,iv:[0,10*60e3,20*36e5,(3*24-4)*36e5,(7*24-4)*36e5,(21*24-4)*36e5]};
+const v8On=()=>window.MEM_V8!==false;
+const v8Now=()=>window.V8_NOW||Date.now();
+function v8State(){flowPrep();const n=MEM.bars.length;let v=MEM.rec.v8;
+  if(!v||v.n!==n){const fl=MEM.rec.fl||{};v=MEM.rec.v8={n,ch:MEM.bars.map((B,k)=>({box:0,due:0,st:(fl.seen&&fl.seen[k])||(fl.st&&fl.st[k]>=1)?1:0,fails:0,last:0,reps:0,relearn:0}))};memSaveAll()}return v}
+function v8Pick(){const v=v8State(),now=v8Now();let best=-1;
+  v.ch.forEach((c,k)=>{if(c.box>=1&&c.due<=now&&(best<0||c.due<v.ch[best].due))best=k});
+  if(best>=0)return {k:best,mode:v.ch[best].relearn?'recall':'review'};
+  const k=v.ch.findIndex(c=>c.box===0);return k>=0?{k,mode:v.ch[k].st>=1?'recall':'find'}:null}
+function v8When(t){const d=t-v8Now();if(d<=0)return 'jetzt';if(d<36e5)return `in ${Math.max(1,Math.round(d/6e4))} Min.`;if(d<20*36e5)return `in ${Math.round(d/36e5)} Std.`;const days=Math.round(d/864e5);return days<=1?'morgen':`in ${days} Tagen`}
+const V8_MODE={find:'Tasten finden',recall:'aus dem Kopf',review:'kalt wiederholen'};
+function v8Home(){const v=v8State(),now=v8Now(),bars=MEM.bars,n=v.ch.length,dur=k=>bars[k].t1-bars[k].t0;let learned=0,solid=0,tl=0,today=0,dueN=0,minDue=Infinity;
+  const day=new Date(now);day.setHours(0,0,0,0);
+  v.ch.forEach((c,k)=>{if(c.box>=V8.learned){learned++;tl+=dur(k)}if(c.box>=V8.solid)solid++;if(c.box>=1){if(c.due<=now)dueN++;else minDue=Math.min(minDue,c.due)}if(c.last>=+day&&c.box<V8.learned)today++});
+  const total=MEM.gs[MEM.gs.length-1].end-MEM.gs[0].start,pc=total?Math.round(100*tl/total):0;
+  $('#memSum').innerHTML=`<div class="memSecs"><b>Gelernt: ${memClock(tl)} von ${memClock(total)}</b> · ${learned} von ${n} Abschnitten haben den Test am nächsten Tag bestanden<div class="skm"><div class="skf" style="width:${pc}%;background:#3BB273"></div></div><div class="st mu">Sitzt (7-Tage-Test bestanden): ${solid} · heute geübt: ${today} · jetzt fällig: ${dueN}</div></div>`;
+  const p=v8Pick();$('#memGo').disabled=!p;$('#memMix').classList.add('hidden');$('#memTempo').classList.add('hidden');
+  if(!p){$('#memHere').innerHTML=`<div class="wh">Für jetzt alles erledigt ✓</div><div class="st mu">Nächste Wiederholung ${minDue<Infinity?v8When(minDue):'–'}. Pause gehört zum Lernen – im Schlaf wird gefestigt.</div>`;$('#memGo').textContent='Alles erledigt ✓'}
+  else{const c=v.ch[p.k],why=p.mode==='review'?`Kalt aus dem Kopf, nur der erste Versuch zählt (Kasten ${c.box}).`:p.mode==='find'?'Einmal mit Bildschirm die Tasten finden – das Lied wartet auf dich.':c.relearn?'Kurz auffrischen: aus dem Kopf, Bildschirm dunkel.':'Aus dem Kopf, Bildschirm dunkel. Die App spielt den Anfang an.';
+    $('#memHere').innerHTML=`<div class="wh">Abschnitt ${p.k+1} von ${n} · ${V8_MODE[p.mode]}</div><div class="st mu">${why}</div><div class="st mu">🎹 Tiefstes A: Abschnitt vorspielen + neu</div>`;
+    $('#memGo').textContent=p.mode==='review'?`Wiederholen: Abschnitt ${p.k+1}`:p.mode==='find'?`Weiter: Abschnitt ${p.k+1} finden`:`Weiter: Abschnitt ${p.k+1} aus dem Kopf`}
+  $('#memList').innerHTML=v.ch.map((c,k)=>`<span class="mk ${c.box>=V8.learned?'d':p&&k===p.k?'c':''}" title="Kasten ${c.box}">${k+1}</span>`).join('')}
+function v8Preview(R){const ns=R.accNs,t0=MEM.gs[R.a].start;for(const nn of ns)setTimeout(()=>{try{playTone(nn.midi,Math.max(0.15,nn.dur),0.4)}catch(e){}},Math.max(0,(nn.start-t0)*1000));return (MEM.gs[R.b].end-t0)*1000+500}
+function v8Start(k,mode,preview){memAutoOff();let w=0;MEM.wins.forEach((W,i)=>{if(k>=W.b0&&k<=W.b1)w=i});flowFindStart(w,[k,k]);const R=MEM.run,gs=MEM.gs;
+  Object.assign(R,{v8:true,mode,k,need:mode==='find'?FL.findNeed:V8.need,dark:mode!=='find',hints:0,hinted:{},wrongF:0,previewUntil:0,anchorUntil:0});
+  const now=performance.now();if(preview)R.previewUntil=now+v8Preview(R);
+  if(R.dark){$('#mem').classList.add('blind');const at=R.previewUntil?R.previewUntil-now:0;R.anchorUntil=now+at+V8.anchorMs;
+    const anchor=()=>{for(const m of gs[R.a].mids){try{playTone(m,0.6,0.45)}catch(e){}}};if(at>0)setTimeout(anchor,at);else anchor()} /* Start-Anker: erster Anschlag klingt und ist kurz zu sehen */
+  $('#memRunT').textContent=`Abschnitt ${k+1} von ${MEM.bars.length} · ${V8_MODE[mode]}`;$('#memGoal').innerHTML='';flowDraw()}
+function v8Go(){const p=v8Pick();if(!p){memStop();memHome();return}v8Start(p.k,p.mode)}
+function v8Log(R,ok,extra){try{const L=JSON.parse(localStorage.getItem('kt_memeval')||'[]');L.push(Object.assign({t:Date.now(),v8:1,mode:R.mode,k:R.k,ok:ok?1:0,hints:R.hints,wrong:R.wrongF,box:MEM.rec.v8.ch[R.k].box,waits:R.waits.map(x=>Math.round(x))},extra||{}));localStorage.setItem('kt_memeval',JSON.stringify(L.slice(-60)))}catch(e){}}
+function v8Finish(){const R=MEM.run,v=v8State(),c=v.ch[R.k],now=v8Now();R.done=true;R.doneAt=memNow();$('#mem').classList.remove('blind');
+  const clean=R.hints===0&&R.wrongF<=V8.maxWrong;let msg;c.last=now;c.reps++;
+  if(R.mode==='find'){c.st=1;msg='Gefunden ✓ Jetzt dasselbe aus dem Kopf – der Bildschirm wird dunkel.'}
+  else if(R.mode==='recall'){if(clean){if(c.box<1)c.box=1;c.relearn=0;c.fails=0;c.due=now+V8.iv[1];msg=`✓ Aus dem Kopf geschafft! Abschnitt ${R.k+1} kommt ${v8When(c.due)} kalt wieder – dazwischen lernst du etwas anderes.`}
+    else{c.fails++;if(R.hints>=2)c.st=0;msg=R.hints>=2?'Noch nicht – einmal kurz mit Bildschirm finden, dann wieder aus dem Kopf.':`Fast – ${R.hints?'einmal mit Hilfe':R.wrongF+' falsche Töne'}. Nochmal aus dem Kopf.`}}
+  else{if(clean){c.box=Math.min(5,c.box+1);c.due=now+V8.iv[c.box];msg=`✓ Kalt geschafft – Kasten ${c.box}${c.box>=V8.solid?' (sitzt)':c.box>=V8.learned?' (gelernt)':''}. Nächste Wiederholung ${v8When(c.due)}.`}
+    else{c.box=Math.max(1,c.box-1);c.relearn=1;c.due=now;msg=`Kalt noch nicht – zurück in Kasten ${c.box}. Kurz auffrischen.`}}
+  memSaveAll();v8Log(R,R.mode==='find'||clean);
+  $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=R.mode==='find'?'':`<div class="st mu">${R.hints?`👂 ${R.hints}× Hilfe übers Ohr · `:''}${R.wrongF} falsche Töne</div>`;ev.classList.remove('hidden');$('#memGoal').innerHTML='';
+  const nx=v8Pick(),rb=$('#memResBox');rb.style.display='flex';$('#memNext').textContent=nx?'Weiter':'Zur Übersicht';$('#memAgain').style.display='none';$('#memChain').style.display='none';$('#memTempoR').classList.add('hidden');
+  $('#memProg').textContent='Fertig';flowDraw();memAuto()}
+/* tiefstes A: läuft ein Versuch → zählt als nicht geschafft, Abschnitt wird vorgespielt und startet neu; nach dem Versuch → nur vorspielen */
+function v8Restart(R){if(R.done){v8Preview(R);return}const v=v8State(),c=v.ch[R.k],now=v8Now();let mode=R.mode;
+  if(R.mode==='review'){c.box=Math.max(1,c.box-1);c.relearn=1;c.due=now;c.last=now;mode='recall'}else if(R.mode==='recall')c.fails++;
+  memSaveAll();v8Log(R,false,{abort:1});v8Start(R.k,mode,true)}
+function flowNext(){if(MEM.run&&MEM.run.v8){v8Go();return}const w=flowNextWin();if(w<0){memStop();memHome()}else flowStart(w)}
 function flowDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepCv(cv);if(!p)return;const c=p.c,now=performance.now(),kb=Math.min(110,p.h*0.42),hn=p.h-kb;MEM.kbH=kb;MEM.hn=hn;c.clearRect(0,0,p.w,p.h);
   const fl=MEM.rec.fl,gs=MEM.gs,W=MEM.wins[R.w],t=R.vt,pps=hn/3,Y=s=>hn-4-(s-t)*pps;
+  /* v4.94: Stufe 3/5 – dunkel; nur der Start-Anker (erster Anschlag) ist kurz zu sehen */
+  const anch=R.dark&&!R.done&&!(R.previewUntil&&now<R.previewUntil)&&now<R.anchorUntil;
+  if(R.dark&&!R.done&&!anch){c.fillStyle='#000';c.fillRect(0,0,p.w,p.h);c.textAlign='center';c.fillStyle='rgba(255,255,255,.28)';c.font='800 18px Inter,system-ui';
+    const prev=R.previewUntil&&now<R.previewUntil;c.fillText(prev?'🔊 Hör zu …':'Aus dem Kopf – Augen aufs Klavier 🎹',p.w/2,p.h/2);
+    if(!prev&&R.hintAt&&now-R.hintAt<1500){c.font='600 13px Inter,system-ui';c.fillText('👂 Hör hin – so geht es weiter',p.w/2,p.h/2+24)}
+    $('#memProg').textContent='';$('#memMsg').textContent=prev?'Der Abschnitt wird vorgespielt.':'Aus dem Kopf – Augen aufs Klavier';return}
   if(R.blind&&!R.done){c.fillStyle='#000';c.fillRect(0,0,p.w,p.h);c.textAlign='center';c.fillStyle='rgba(255,255,255,.28)';c.font='800 18px Inter,system-ui';c.fillText(R.ck<4&&R.vt<gs[R.a].start?(['','4','3','2','1'][R.ck]||'…'):'Nur aufs Klavier schauen 🎹',p.w/2,p.h/2);
     $('#memProg').textContent='';$('#memMsg').textContent='Prüfung ohne Bildschirm';return}
   const curK=MEM.gbar[Math.min(R.b,R.pos)],calm=!R.done&&curK!=null&&curK!==R.lead&&fl.st[curK]>=2&&R.vt>=gs[R.a].start; /* ruhiger Bildschirm, solange der aktuelle Takt ganz im Nebel ist */
@@ -1446,15 +1506,16 @@ function flowDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=pre
   c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
   if(calm){c.fillStyle='rgba(8,10,14,.6)';c.fillRect(0,0,p.w,hn);c.textAlign='center';c.font='800 20px Inter,system-ui';c.fillStyle='rgba(230,236,245,.6)';c.fillText('Augen aufs Klavier 👀',p.w/2,hn*0.45);
     c.font='600 12px Inter,system-ui';c.fillStyle='rgba(230,236,245,.35)';c.fillText(R.rescAt&&now-R.rescAt<1500?'👂 Hör hin – die App spielt an, wie es weitergeht':`Takt ${curK-W.b0+1} im Nebel`,p.w/2,hn*0.45+22)}
-  else for(let k=W.b0;k<=W.b1;k++){const s=fl.st[k];if(k===R.lead||s<1)continue;const B=MEM.bars[k],yb=Y(B.t0)+2,yt=Y(B.t1)-2;if(yb<0||yt>hn)continue;
+  else if(!R.v8)for(let k=W.b0;k<=W.b1;k++){const s=fl.st[k];if(k===R.lead||s<1)continue;const B=MEM.bars[k],yb=Y(B.t0)+2,yt=Y(B.t1)-2;if(yb<0||yt>hn)continue;
     const g=c.createLinearGradient(0,yt,0,yb),al=s>=2?0.22:0.11;g.addColorStop(0,`rgba(120,140,170,${al/2})`);g.addColorStop(.5,`rgba(120,140,170,${al})`);g.addColorStop(1,`rgba(120,140,170,${al/2})`);c.fillStyle=g;c.fillRect(0,Math.max(0,yt),p.w,Math.min(hn,yb)-Math.max(0,yt));
     c.font='800 13px Inter,system-ui';c.textAlign='left';c.fillStyle='rgba(220,230,245,.55)';c.fillText(`☁ Takt ${k-W.b0+1}`+(s===1?' · linke Hand':s>=3?' ✓':''),10,Math.max(16,Math.min(hn-6,(Math.max(0,yt)+Math.min(hn,yb))/2+4)))}
-  for(let q=0;q<(R.accNs||[]).length;q++){const n=R.accNs[q],k=R.nbar[q],rel=n.start-t;if(rel>9||n.start+Math.max(0.12,n.dur)<t-0.05)continue;if(flowHid(R,k,n.hand))continue;
+  if(!anch)for(let q=0;q<(R.accNs||[]).length;q++){const n=R.accNs[q],k=R.nbar[q],rel=n.start-t;if(rel>9||n.start+Math.max(0.12,n.dur)<t-0.05)continue;if(flowHid(R,k,n.hand))continue;
     if(calm&&rel>1.2)continue; /* im ruhigen Modus kommen sichtbare Takte erst kurz vorher */
     const yb=Y(n.start),yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;let j=-1;for(let x=R.a;x<=R.b;x++){const G=gs[x];if(n.start>=G.start-0.001&&n.start<=G.last+0.001){j=x;break}}
     const hitN=j>=0&&R.hit[j]&&R.hit[j].has(n.midi),missN=j>=0&&R.proc[j]&&!hitN;c.globalAlpha=k===R.lead?0.5:1;bar(n.midi,Math.max(0,yt),yb,missN?'#6b7079':k===R.lead?'#8a8f98':noteCol(n));c.globalAlpha=1}
   c.restore();
   if(R.done)return;const nb=W.b1-W.b0+1,cur=curK;if(cur!==R.stripNow&&cur!==R.lead){R.stripNow=cur;$('#memGoal').innerHTML=flowStrip(R.w,null,cur,true)}
+  if(anch){$('#memProg').textContent='';$('#memMsg').textContent='Hier fängt der Abschnitt an …';return}
   if(R.find){$('#memProg').textContent=`Ton ${Math.min(R.b,R.pos)-R.a+1} von ${R.b-R.a+1}`;$('#memMsg').textContent=R.pos>R.b?'Geschafft ✓':'Finde die blauen Tasten – das Lied wartet auf dich.';return}
   $('#memProg').textContent=cur===R.lead?'Anlauf':`Takt ${Math.max(1,Math.min(nb,cur-W.b0+1))} von ${nb}`;
   $('#memMsg').textContent=R.ck<4&&R.vt<gs[R.a].start?['','4','3','2','1'][R.ck]||'Einzählen …':calm?'Augen aufs Klavier 👀':(R.warm?'Erst einmal mitspielen – noch ohne Nebel.':'Spiel im Takt – der Nebel verdeckt, was du schon kannst.')}
@@ -1537,7 +1598,7 @@ $('#memAgain').onclick=()=>{memAutoOff();const R=MEM.run;if(R&&R.watch){memWatch
 $('#memHandR').onclick=()=>{memAutoOff();const R=MEM.run;if(R)memStart(R.i,false,null,false,'R')};$('#memHandL').onclick=()=>{memAutoOff();const R=MEM.run;if(R)memStart(R.i,false,null,false,'L')};
 $('#memChain').onclick=()=>{memAutoOff();const R=MEM.run;if(!R)return;const prev=MEM.secs[R.i-1];memStart(R.i,false,[prev[0],MEM.secs[R.i][1]],true)};
 $('#memCheck').onclick=()=>{memStop();openCompare(MEM.item)};
-$('#memGo').onclick=()=>{if(window.MEM_FLOW!==false){const w=(flowPrep(),flowNextWin());if(w>=0)flowStart(w);return}const nx=memPickNext(memNow());if(nx)memGoTo(nx)};
+$('#memGo').onclick=()=>{if(window.MEM_FLOW!==false){if(v8On()){v8Go();return}const w=(flowPrep(),flowNextWin());if(w>=0)flowStart(w);return}const nx=memPickNext(memNow());if(nx)memGoTo(nx)};
 $('#memMix').onclick=()=>{const idx=MEM.rec.secs.map((r,i)=>(r.passed>0||r.box>0)?i:-1).filter(i=>i>=0);for(let k=idx.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[idx[k],idx[j]]=[idx[j],idx[k]]}
   if(!idx.length)return;MEM.queue=idx.slice(1);memStart(idx[0],true)};
 /* v4.73: Abschnitts-Liste ist nur Anzeige – die App wählt den nächsten Schritt (großer Knopf) */
@@ -2760,7 +2821,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.93 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.94 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
