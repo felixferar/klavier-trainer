@@ -14,7 +14,7 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
  flowTick(R,30);o.waited=Math.abs(R.vt-gs[R.a].start)<1e-6&&R.pos===R.a;flowDraw();o.pre=[...R.pre].sort().join()==[...gs[R.a].mids].sort().join();o.msg=$('#memMsg').textContent;
  const G0=gs[R.a];o.g0=G0.mids.size;memPress(30,'kb');o.wrongStay=R.pos===R.a;const ms=[...G0.mids],need=Math.ceil(ms.length*0.6);for(let q=0;q<need-1;q++)memPress(ms[q],'kb');o.oneNotEnough=R.pos===R.a;memPress(ms[need-1],'kb');o.most=R.pos===R.a+1&&need<ms.length;
  /* nach einem gefundenen Anschlag kommt der nächste schnell heran, auch bei langer Pause */
- {const nx=gs[R.pos];let tt=0;while(R.vt<nx.start-1e-6&&tt<5){flowTick(R,0.016);tt+=0.016}o.glide=tt}
+ {const nx=gs[R.pos],exp=(nx.start-R.vt)/R.speed;let tt=0;while(R.vt<nx.start-1e-6&&tt<5){flowTick(R,0.016);tt+=0.016}o.glideRatio=tt/exp}
  /* Rest des Stücks finden */
  const findAll=()=>{let R=MEM.run;let g=0;while(R.pos<=R.b&&g++<500){flowTick(R,5);for(const m of gs[R.pos].mids)memPress(m,'kb')}flowTick(R,5);flowTick(R,5)};
  findAll();o.seen1=fl.seen.slice(R.k0,R.k1+1).every(x=>x===1);o.msgF=$('#memMsg').textContent;
@@ -28,6 +28,10 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
  flowStart(0);perfect(true);o.t5=fl.tempo;
  /* Übernahme: alter Stand ohne „gefunden“ */
  delete fl.seen;fl.tempo=0.8;fl.st[W0.b0]=2;flowPrep();o.migSeen=MEM.rec.fl.seen[W0.b0]===1&&MEM.rec.fl.seen[W0.b0+1]===(fl.st[W0.b0+1]>=1?1:0);o.migT=MEM.rec.fl.tempo;
+ /* lange Pause im Stück (3 s) und langer Schlusston */
+ {const n2=[60,62,64,65].map((m,i)=>({m,start:i*0.5,dur:0.4,hand:'R'})).concat([{m:67,start:4.5,dur:0.4,hand:'R'},{m:69,start:5,dur:0.4,hand:'R'},{m:72,start:5.5,dur:3,hand:'R'}]);const it2={id:'fd2',type:'midi',title:'Pause',artist:'x',data:b64FromBuf(writeMidi(n2))};LIB.push(it2);memStop();openMem(it2);memHome();flowPrep();
+  flowStart(0);const R2=MEM.run,g2=MEM.gs;for(let j=0;j<4;j++){flowTick(R2,30);memPress([...g2[R2.pos].mids][0],'kb')}let tt=0;while(R2.vt<g2[4].start-1e-6&&tt<9){flowTick(R2,0.016);tt+=0.016}o.longGap=tt;
+  for(let j=4;j<7;j++){flowTick(R2,30);memPress([...g2[R2.pos].mids][0],'kb')}tt=0;while(!R2.done&&tt<9){flowTick(R2,0.016);tt+=0.016}o.endT=tt}
  return o}"""
 async def main():
     async with async_playwright() as p:
@@ -39,7 +43,7 @@ async def main():
            'neuer Abschnitt: Warte-Modus, kurz':r['find'] and r['chunkBars']<=3 and r['chunkDur']<=9.01 and r['spd']<=0.6,
            'Lied wartet am Anschlag':r['waited'],'nächste Tasten leuchten vor':r['pre'] and 'blauen Tasten' in r['msg'],
            'falsche Taste bringt nicht weiter':r['wrongStay'],'Akkord: die meisten Töne reichen':r['g0']>=3 and r['oneNotEnough'] and r['most'],
-           'nächster Anschlag kommt schnell (≤ 0,4 s)':r['glide']<=0.4,'einmal geschafft = gefunden':r['seen1'] and 'Gefunden' in r['msgF'],'alles gefunden → Fluss':r['allSeen'] and 'Fluss' in r['msgAll'],
+           'gleichmäßiges Tempo zwischen Anschlägen':0.9<=r['glideRatio']<=1.15,'lange Pause auf ≤ 1 s gekürzt':0.9<=r['longGap']<=1.1,'Schluss nicht im Schneckentempo':r['endT']<=0.9,'einmal geschafft = gefunden':r['seen1'] and 'Gefunden' in r['msgF'],'alles gefunden → Fluss':r['allSeen'] and 'Fluss' in r['msgAll'],
            'Fluss ab 50 %, ohne Nebel':r['flow'] and r['sp1']==0.5,'im Fluss leuchten die nächsten Tasten vor':r['preFlow'],
            'sauber → 65 %, noch kein Nebel':r['t2']==0.65 and r['fog2'] and '65 %' in r['msg2'],'sauber → 80 %, noch kein Nebel':r['t3']==0.8 and r['fog3'],
            'ab 80 % kommt der Nebel':r['sp4']==0.8 and r['fog4'],'viele Fehler → langsamer':r['t5']==0.7,
