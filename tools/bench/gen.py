@@ -56,6 +56,7 @@ first = R.choice([0.15, 0.5, 1.0, 2.0])  # first note can come right when the ke
 t = first; center_r = inr(R.randint(64, 79)); center_l = inr(R.randint(43, 55))
 if center_l >= center_r - 7: center_l = inr(center_r - 12)
 song_len = R.uniform(10, 16)
+if os.environ.get('LEN'): song_len = float(os.environ['LEN'])   # längere Songs für den YouTube-Test (Endkarten brauchen ≥ 25 s); ohne LEN unverändert
 m = center_r
 while t < song_len:
     kind = R.random()
