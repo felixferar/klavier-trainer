@@ -22,7 +22,7 @@ async def main():
         pg=await br.new_page(viewport={'width':780,'height':360});errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(3500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False),errs)
-        c={'Fortschritt im Dunkeln sichtbar':r['prog0'].startswith('0 von') and r['prog1'].startswith('1 von') and 'Augen aufs Klavier' in r['dark1'],
+        c={'v4.98: kein Fortschritt im Dunkeln (Blick bleibt am Klavier)':r['prog0']=='' and r['prog1']=='' and 'Augen aufs Klavier' in r['dark1'],
            'erst Ohr-Hilfe':r['h1']==1,
            'weiter hängen → Anschlag kurz zeigen (zählt als Hilfe)':r['h2']==2 and r['show'] and 'zählt als Hilfe' in r['msgShow'] and r['pre'],
            'nie endlos schwarz: Hilfe wiederholt sich':r['h3']==3,
