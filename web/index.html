@@ -1364,10 +1364,10 @@ function flowFindStart(w,fc){const W=MEM.wins[w],gs=MEM.gs,[k0,k1]=fc,a=MEM.bars
   try{memRange(R)}catch(e){}memKbChip();memLoopOn()}
 function flowFindTick(R,dt){const gs=MEM.gs;if(R.done)return flowDraw();
   if(R.pos>R.b){R.vt+=dt*R.speed;if(R.vt>gs[R.b].end+0.3)return flowFinish();return flowDraw()}
-  const G=gs[R.pos];R.vt=Math.min(R.vt+dt*R.speed,G.start);if(R.vt>=G.start&&!R.waitT0)R.waitT0=performance.now();flowDraw()}
+  const G=gs[R.pos];R.vt=Math.min(R.vt+dt*(R.glideV||R.speed),G.start);if(R.vt>=G.start&&!R.waitT0)R.waitT0=performance.now();flowDraw()}
 function flowFindPress(R,m){const gs=MEM.gs,now=performance.now();R.lastKey=now;if(R.pos>R.b)return flowDraw();const G=gs[R.pos];
   if(G.mids.has(m)){const h=R.hit[R.pos]||(R.hit[R.pos]=new Set());h.add(m);MEM.good.set(m,now);
-    if(h.size>=Math.ceil(G.mids.size*FL.findNeed)){R.waits.push(R.waitT0?now-R.waitT0:0);R.waitT0=0;R.proc[R.pos]=true;R.vt=Math.max(R.vt,G.start);R.pos++;R.mj=R.pos}}
+    if(h.size>=Math.ceil(G.mids.size*FL.findNeed)){R.waits.push(R.waitT0?now-R.waitT0:0);R.waitT0=0;R.proc[R.pos]=true;R.vt=Math.max(R.vt,G.start);R.pos++;R.mj=R.pos;const nx=gs[R.pos];R.glideV=nx&&R.pos<=R.b?Math.max(R.speed,(nx.start-R.vt)/0.35):0}} /* nächster Anschlag gleitet in höchstens 0,35 s heran – keine Wartezeit bei Pausen im Stück */
   else{MEM.flash.set(m,now);R.wrongF++}flowDraw()}
 function flowStart(w){memAutoOff();flowPrep();const W=MEM.wins[w],fl=MEM.rec.fl,gs=MEM.gs;let any=false;
   if(flowFindOn()&&!fl.exam[w]){const fc=flowFindChunk(w);if(fc)return flowFindStart(w,fc)}for(let k=W.b0;k<=W.b1;k++)if(fl.st[k]>=1)any=true;

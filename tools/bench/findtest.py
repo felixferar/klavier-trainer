@@ -13,6 +13,8 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
  flowStart(0);let R=MEM.run;o.find=!!R.find;o.chunkBars=R.k1-R.k0+1;o.chunkDur=MEM.bars[R.k1].t1-MEM.bars[R.k0].t0;o.spd=R.speed;
  flowTick(R,30);o.waited=Math.abs(R.vt-gs[R.a].start)<1e-6&&R.pos===R.a;flowDraw();o.pre=[...R.pre].sort().join()==[...gs[R.a].mids].sort().join();o.msg=$('#memMsg').textContent;
  const G0=gs[R.a];o.g0=G0.mids.size;memPress(30,'kb');o.wrongStay=R.pos===R.a;const ms=[...G0.mids],need=Math.ceil(ms.length*0.6);for(let q=0;q<need-1;q++)memPress(ms[q],'kb');o.oneNotEnough=R.pos===R.a;memPress(ms[need-1],'kb');o.most=R.pos===R.a+1&&need<ms.length;
+ /* nach einem gefundenen Anschlag kommt der nächste schnell heran, auch bei langer Pause */
+ {const nx=gs[R.pos];let tt=0;while(R.vt<nx.start-1e-6&&tt<5){flowTick(R,0.016);tt+=0.016}o.glide=tt}
  /* Rest des Stücks finden */
  const findAll=()=>{let R=MEM.run;let g=0;while(R.pos<=R.b&&g++<500){flowTick(R,5);for(const m of gs[R.pos].mids)memPress(m,'kb')}flowTick(R,5);flowTick(R,5)};
  findAll();o.seen1=fl.seen.slice(R.k0,R.k1+1).every(x=>x===1);o.msgF=$('#memMsg').textContent;
@@ -37,7 +39,7 @@ async def main():
            'neuer Abschnitt: Warte-Modus, kurz':r['find'] and r['chunkBars']<=3 and r['chunkDur']<=9.01 and r['spd']<=0.6,
            'Lied wartet am Anschlag':r['waited'],'nächste Tasten leuchten vor':r['pre'] and 'blauen Tasten' in r['msg'],
            'falsche Taste bringt nicht weiter':r['wrongStay'],'Akkord: die meisten Töne reichen':r['g0']>=3 and r['oneNotEnough'] and r['most'],
-           'einmal geschafft = gefunden':r['seen1'] and 'Gefunden' in r['msgF'],'alles gefunden → Fluss':r['allSeen'] and 'Fluss' in r['msgAll'],
+           'nächster Anschlag kommt schnell (≤ 0,4 s)':r['glide']<=0.4,'einmal geschafft = gefunden':r['seen1'] and 'Gefunden' in r['msgF'],'alles gefunden → Fluss':r['allSeen'] and 'Fluss' in r['msgAll'],
            'Fluss ab 50 %, ohne Nebel':r['flow'] and r['sp1']==0.5,'im Fluss leuchten die nächsten Tasten vor':r['preFlow'],
            'sauber → 65 %, noch kein Nebel':r['t2']==0.65 and r['fog2'] and '65 %' in r['msg2'],'sauber → 80 %, noch kein Nebel':r['t3']==0.8 and r['fog3'],
            'ab 80 % kommt der Nebel':r['sp4']==0.8 and r['fog4'],'viele Fehler → langsamer':r['t5']==0.7,
