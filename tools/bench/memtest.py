@@ -50,7 +50,7 @@ JS="""async()=>{window.__instantEnd=true;window.__mp||(window.__mp=memPress,memP
  openMem(it);memStart(1,false);const rr=$('#memCv').getBoundingClientRect();const exp=[...MEM.gs[MEM.run.pos].mids][0];memDraw();const k=MEM.pos[exp];
  $('#memCv').dispatchEvent(new PointerEvent('pointerdown',{clientX:rr.left+k.x+k.w/2,clientY:rr.top+MEM.hn+(k.b?MEM.kbH*0.3:MEM.kbH*0.85),bubbles:true}));o.touchPos=MEM.run.pos-MEM.run.a;
  // Verbinden: Abschnitt 2 (i=1) bis zum Bestehen spielen -> Verbinden-Knopf, Verbindungslauf
- memStop();openMem(it);MEM.rec.secs[1]={lvl:4,box:0,due:0,runs:3,passed:0};memStart(1,false);play(50);o.chainBtn=$('#memNext').textContent;memAutoOff();$('#memNext').click(); /* v4.84: Verbinden kommt automatisch als nächster Schritt */o.chainRun={a:MEM.run.a,b:MEM.run.b,chain:MEM.run.chain,lvl:MEM.run.lvl};play(60);o.chained=MEM.rec.secs[1].chained===true&&MEM.rec.secs[1].box===1;
+ memStop();openMem(it);MEM.rec.secs[0]={lvl:3,box:1,due:Date.now()+864e5,runs:6,passed:1,watched:true,chained:true};MEM.rec.secs[1]={lvl:4,box:0,due:0,runs:3,passed:0}; /* v4.85: Abschnitt 1 sitzt (eindeutiger Ausgangszustand) */memStart(1,false);play(50);o.chainBtn=$('#memNext').textContent;memAutoOff();$('#memNext').click(); /* v4.84: Verbinden kommt automatisch als nächster Schritt */o.chainRun={a:MEM.run.a,b:MEM.run.b,chain:MEM.run.chain,lvl:MEM.run.lvl};play(60);o.chained=MEM.rec.secs[1].chained===true&&MEM.rec.secs[1].box===1;
  return o}"""
 async def main():
     async with async_playwright() as p:

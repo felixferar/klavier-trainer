@@ -46,7 +46,7 @@ async def main():
            'Verblassen 100/70/40 %':r['frac0']==1 and r['frac1']==0.7 and r['frac2']==0.4 and 0<r['set1']<r['n'],
            'Titel Schritt x von 3':'Schritt 2 von 3' in r['title'] and 'Verblassen' in r['goal'],
            'Sekunden-Balken':'Du kannst' in r['sum0'] and len(s0)==2 and s0[0]==0 and len(s1)==2 and s1[0]>0 and s1[1]==s0[1],
-           'alter Stand übernommen':r['mig']==[[1,0],[2,1],[2,2],[3,0]],
+           'alter Stand: was nicht sitzt, beginnt bei Schritt 1 (v4.85)':r['mig']==[[1,0],[1,0],[1,0],[1,0]],
            'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await br.close()
 asyncio.run(main())

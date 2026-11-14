@@ -34,7 +34,7 @@ async def main():
         c={'kein Schnitt in klingende Töne':r['clean'],'Teile 6–16 s':all(6<=d<=16 for d in r['durs']),
            'Schnitte auf Phrasenanfängen (alle 8 s)':ph,'nur 2 verschiedene Teile zu lernen (Strophe, Refrain)':sum(1 for x in r['twin'] if x<0)==2,
            'Wiederholungen als Zwillinge':sum(1 for x in r['twin'] if x>=0)>=r['n']//2,
-           'Zwilling startet bei Aus dem Kopf':r.get('twNext') and r.get('twLvl')==3 and 'Kennst du schon' in r.get('here',''),
+           'Zwilling startet bei Schritt 1 (v4.85)':r.get('twNext') and r.get('twLvl')==1,
            'Anlauf: 2 Anschläge, früher Start':r['lead']>=2 and r['vt0']<r['secStart']-1,
            'Anlauf wird gespielt, zählt nicht':r['leadTones']>=2 and r['posAfterLead'],'Anlauf im Tastenbereich':r['range'],
            'neue Aufteilung gespeichert':r['sig'].startswith('p2:'),'alter Stand übernommen (Anfang sitzt)':r['mig'][0]=='P' and 'P' not in r['mig'][2:],

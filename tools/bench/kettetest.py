@@ -21,9 +21,9 @@ JS=r"""async()=>{const w=ms=>new Promise(z=>setTimeout(z,ms));const o={};let ton
  o.card=$('#memEv').textContent;o.cardNums=!!$('#memEv .nums');
  /* (2) Hände einzeln erst nach 2× Nicht geschafft */
  const r0=rs[0];r0.passed=0;r0.box=0;r0.lvl=2;r0.fe=1;r0.nf=0;KB.state='on';
- memStart(0,false);play(true);o.cat1=MEM.run.ev.cat;o.offer1=!$('#memHandR').classList.contains('hidden');
- memStart(0,false);play(true);o.offer2=!$('#memHandR').classList.contains('hidden')&&!$('#memHandL').classList.contains('hidden');o.noAuto=!MEM.autoT;o.tip=$('#memMsg').textContent.includes('einer Hand');
- const lvlB=[r0.lvl,r0.fe];$('#memHandR').click();R=MEM.run;o.only=R.only;o.titleH=$('#memRunT').textContent;tones=[];play(false);o.autoL=tones.length>0;o.handDone=R.done;o.nextH=$('#memNext').textContent;o.lvlSame=r0.lvl===lvlB[0]&&r0.fe===lvlB[1];
+ memStart(0,false);play(true);o.cat1=MEM.run.ev.cat;
+ memStart(0,false);play(true);
+ /* v4.85: Hände einzeln entfernt – prüft startetest.py */
  memStop();KB.state='off';return o}"""
 async def main():
     async with async_playwright() as p:
@@ -34,8 +34,6 @@ async def main():
         c={'3 Teile':r['n']==3,'nach Teil 2 kommt Verbinden 1–2':r['nx1'] and 'verbinden' in r['go1'],'Verbinden aus dem Kopf über beide Teile':r['chainRun'] and 'Verbinden: Abschnitt 1–2' in r['title1'],
            'gut gespielt → verbunden':r['chained1'] and 'Verbunden' in r['msg1'],'jeder 3. mit zwei Teilen davor':r['nx2'],'nach 3 Versuchen geht es weiter':r['skip'] and 'weiter' in r['msgSkip'],
            'keine Fehlerzahl beim Spielen':'Fehler' not in r['prog'],'Ergebnis ohne Zahlen':not r['cardNums'] and 'Punkte' not in r['card'],
-           '1× Nicht geschafft: noch keine Hände-Hilfe':r['cat1']=='n' and not r['offer1'],'2× Nicht geschafft: Hände einzeln angeboten':r['offer2'] and r['tip'] and r['noAuto'],
-           'nur rechte Hand – linke spielt die App':r['only']=='R' and 'nur rechte Hand' in r['titleH'] and r['autoL'] and r['handDone'],
-           'danach wieder beide Hände, Schritte unverändert':r['nextH'].startswith('Jetzt mit beiden Händen') and r['lvlSame'],'keine Fehler':not errs}
+           'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await br.close()
 asyncio.run(main())
