@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.89</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.90</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2402,7 +2402,13 @@ function cmpDraw(){const cv=$('#cmpCv'),sc=$('#cmpScene');if(!CMP||!cv||!sc)retu
 // --- v4.64: time line in the comparison view – exact position (song time and video time), notes per second, own error marks, tap/drag to jump
 const tlFmt=t=>{t=Math.max(0,t);const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1).replace('.',',')};
 const tlFlags=()=>{try{return (load('kt_cmpflags')||{})[CMP.it.id]||[]}catch(e){return []}};
-const tlSetFlags=a=>{try{const o=load('kt_cmpflags')||{};o[CMP.it.id]=a;save('kt_cmpflags',o)}catch(e){}};
+const tlSetFlags=a=>{try{const o=load('kt_cmpflags')||{};o[CMP.it.id]=a;save('kt_cmpflags',o)}catch(e){}flagSync()};
+/* v4.90: Flaggen gehen automatisch an Claude (privates Archiv) – mit Zeit im Song und im Video und den Noten rund um jede Flagge; dazu ein Bildschirmfoto der Stelle */
+let FLAG_T=null;
+function flagInfo(){const it=CMP.it,fl=tlFlags(),near=T=>CMP.notes.filter(n=>n.start>=T-4&&n.start<=T+4) /* Flaggen sitzen nur ungefähr */.map(n=>[n.midi,+n.start.toFixed(3),+n.dur.toFixed(3),n.hand||'']);
+  return {kind:'flags',v:'4.90',ts:new Date().toISOString(),title:it.title||'',videoId:it.videoId||it.fromYT||'',itemId:it.id,off:CMP.off,notes:CMP.notes.length,flags:fl.map(T=>({T,video:+(T+CMP.off).toFixed(2),near:near(T)}))}}
+function flagSync(){if(!ghTok()||!CMP)return;clearTimeout(FLAG_T);FLAG_T=setTimeout(async()=>{try{const info=flagInfo(),ts=info.ts.replace(/[:.]/g,'-').slice(0,19),vid=(info.videoId||info.itemId||'song').toString().replace(/[^\w-]/g,'_');
+  const r=await ghUpload(`diag/flags/${ts}_${vid}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Flaggen '+vid+' ('+info.flags.length+')');if(r.ok)toast('🚩 an Claude gesendet',1500,true)}catch(e){}},2500)}
 function tlDur(){if(!CMP)return 1;if(!CMP.dur){let e=0;for(const n of CMP.notes)e=Math.max(e,n.start+n.dur);CMP.dur=Math.max(5,e+1);const b=new Array(Math.ceil(CMP.dur)+1).fill(0);for(const n of CMP.notes)b[Math.floor(n.start)]++;CMP.dens=b}return CMP.dur}
 function tlDraw(){const cv=$('#tlCv');if(!CMP||!cv)return;const dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect(),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(!w||!h)return;if(cv.width!==w)cv.width=w;if(cv.height!==h)cv.height=h;
   const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);const W=r.width,H=r.height,D=tlDur(),vt=cmpVT(),T=CMP.tlDrag!=null?CMP.tlDrag:vt-CMP.off;
@@ -2418,7 +2424,7 @@ function tlDraw(){const cv=$('#tlCv');if(!CMP||!cv)return;const dpr=window.devic
   const up=e=>{if(!CMP||CMP.tlDrag==null)return;const T=CMP.tlDrag;CMP.tlDrag=null;cmpGo(T+CMP.off)};
   tr.addEventListener('pointerup',up);tr.addEventListener('pointercancel',()=>{if(CMP)CMP.tlDrag=null});
   $('#tlFlag').onclick=()=>{if(!CMP)return;const T=cmpVT()-CMP.off,a=tlFlags(),i=a.findIndex(x=>Math.abs(x-T)<0.6);
-    if(i>=0){a.splice(i,1);toast('Markierung entfernt',1200)}else{a.push(Math.round(T*10)/10);a.sort((p,q)=>p-q);toast('Fehler markiert bei '+tlFmt(T),1800)}tlSetFlags(a);tlDraw()}})();
+    if(i>=0){a.splice(i,1);toast('Markierung entfernt',1200)}else{a.push(Math.round(T*10)/10);a.sort((p,q)=>p-q);toast('Fehler markiert bei '+tlFmt(T),1800);if(ghTok())setTimeout(()=>{try{shotSend()}catch(e){}},700)}tlSetFlags(a);tlDraw()}})(); /* v4.90: beim Setzen auch ein Foto der Stelle */
 function cmpLoop(){cancelAnimationFrame(cmpRaf);const f=()=>{if(!CMP)return;try{cmpDraw()}catch(e){}try{tlDraw()}catch(e){}cmpRaf=requestAnimationFrame(f)};f()}
 const cmpVT=()=>{try{return ytp.getCurrentTime()}catch(e){return 0}};
 let CMP_MARKS=false; // v4.48: the right/wrong marks are off until the glow measurement is reliable (YouTube overlays in the paused picture fooled it)
@@ -2717,7 +2723,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.89 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.90 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
