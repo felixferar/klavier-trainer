@@ -18,3 +18,17 @@ Die Videos bleiben auf YouTube. Die App wandelt sie am Handy um, die Diagnose la
 
 Achtung beim Auswerten: Das Video kann gegenüber der MIDI verschoben, im Tempo leicht anders oder gekürzt sein (Intro/Outro).
 Zuerst Versatz und Tempo schätzen; Videos, bei denen die MIDI erkennbar nicht passt, werden aussortiert (nicht schöngerechnet).
+
+## Zweite Runde (14.11.2026) – PRÜFMENGE: an diesen Videos wird nie eingestellt, nur gemessen
+| Datei | Kanal | Video |
+|---|---|---|
+| tfrm_thefatrat_jackpot.mid | tastyFrMusic | A13Sa_bIuKY |
+| pm_bts_permission_to_dance.mid | PIANO MIDI | 7MHfb9HB3GA |
+| fmm_lost_sky_where_we_started.mid | FMM Music | Kg8zA6sM85U |
+| cp_your_name_sparkle.mid | Cosmic PIANO | AbHJ1BokCnI |
+| sn_thefatrat_unity.mid | ShinkoNet | 5fVEh-WmQP0 |
+| avn_jim_yosef_rogue.mid | Allerlei von Nicolai | pR19Z4_jpLI |
+| pt_shaun_way_back_home.mid | Piano Tutorial | 3Sp4dW-JdJE |
+Weitere mit kostenloser MIDI (Gumroad „$0+“, Download nur mit E-Mail → der Nutzer lädt sie): Morunas – Dreaming (Visualisierung, LFWqyZbwBNE),
+FKA Twigs – Cellophane (Augusto.Music, SdijhNhiq3s), ThePianoforever's Test Piece (0iqbVD-VW4c); riiyawe (kostenlose MIDIs auf sites.google.com/view/yaronmusic).
+Die erste Runde (10 Videos oben) ist die EINSTELLMENGE.
