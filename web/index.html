@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.90</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.93</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2724,7 +2724,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.90 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.93 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -2958,21 +2958,39 @@ function scanCore(px,w,n,f){
   if(odd){SCAN.normF=0;if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene===odd&&!(lastR&&lastR.to==null))SCAN.oddR.push({from:SCAN.sceneT-0.3,to:null})}
   else{SCAN.scene=0;SCAN.normF=(SCAN.normF||0)+1;if(lastR&&lastR.to==null&&SCAN.normF>=8)lastR.to=tt-8/25}
 }
+/* v4.93: a pixel that looks like a falling bar (coloured and not dark) or like bright letters */
+function barLike(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b);return mx>0.6*255||(mx>0.3*255&&(mx-mn)/mx>0.3)}
+/* v4.93: how far a run must stick out past the covered white keys to be a black key's own bar. A black key shifted INTO its white
+   neighbour (C#/F# left, D#/A# right) sticks out only a few pixels – so the limit is learned from this video's single white bars:
+   their usual overhang (median) + max(1.5 px, 5 % of a key). Until 20 such bars were seen: 8 % of a key (≥ 2 px). */
+function laneOvAdd(l,r){const H=SCAN.wov||(SCAN.wov=new Int32Array(81));for(const v of [-l,r]){const i=Math.max(0,Math.min(80,Math.round(v*2)+40));H[i]++}}
+function laneExt(ww){const H=SCAN.wov;let n=0;if(H)for(const c of H)n+=c;if(n<20)return Math.max(2,ww*0.08);let c=0,i=0;for(;i<81;i++){c+=H[i];if(c*2>=n)break}return Math.max(0,(i-40)/2)+Math.max(1.5,ww*0.05)}
+/* background of one bar row at the start of the reading. The first frame often already shows bars in this row (the song has started);
+   taking those pixels as background made the bar invisible for the whole video (its colour = 'background'). Narrow bar-like pieces
+   (up to ~3 keys: a bar or a chord of touching bars) take the nearest plain pixel of the same row instead; wide ones are a coloured background and stay. */
+function laneBgInit(px,row,w,ww){const B=new Float32Array(w*3),m=new Uint8Array(w);
+  for(let x=0;x<w;x++){const p=px(row,x);B[x*3]=p[0];B[x*3+1]=p[1];B[x*3+2]=p[2];m[x]=barLike(p[0],p[1],p[2])?1:0}
+  let x=0;while(x<w){if(!m[x]){x++;continue}let e=x;while(e<w&&m[e])e++;const l=x-1,r=e;
+    if(e-x<=ww*3.2&&(l>=0||r<w))for(let q=x;q<e;q++){const s=(l<0||(r<w&&r-q<q-l))?r:l;B[q*3]=B[s*3];B[q*3+1]=B[s*3+1];B[q*3+2]=B[s*3+2]}
+    x=e}
+  return B}
 // falling bars in one pixel row: find each coloured bar (a run of pixels) and give it to exactly one key – by its centre and width.
 // (sampling at a fixed spot fails for black keys: the bars of the two white neighbours reach almost up to it, especially in blurry videos)
 function laneBars(px,w,row,li,noBg){
   const ww=Math.max(2,(SCAN.kw||0.02)*(w-1)),keys=SCAN.keys,occ=new Array(keys.length).fill(false);
-  if(noBg){const B=new Float32Array(w*3);SCAN._zbg=B}else{SCAN.laneBg=SCAN.laneBg||[];}if(!noBg&&(!SCAN.laneBg[li]||SCAN.laneBg[li].length!==w*3)){const B=SCAN.laneBg[li]=new Float32Array(w*3);for(let x=0;x<w;x++){const p=px(row,x);B[x*3]=p[0];B[x*3+1]=p[1];B[x*3+2]=p[2]}}
-  const bg=noBg?SCAN._zbg:SCAN.laneBg[li],mask=new Uint8Array(w); // 1 = bar colour, 2 = bright and grey (letters on a bar), 0 = background
+  if(noBg){const B=new Float32Array(w*3);SCAN._zbg=B}else{SCAN.laneBg=SCAN.laneBg||[];}if(!noBg&&(!SCAN.laneBg[li]||SCAN.laneBg[li].length!==w*3)){SCAN.laneBg[li]=laneBgInit(px,row,w,ww);(SCAN.laneBgN||(SCAN.laneBgN=[]))[li]=new Uint8Array(w)}
+  const bg=noBg?SCAN._zbg:SCAN.laneBg[li],bn=noBg?new Uint8Array(w):SCAN.laneBgN[li],mask=new Uint8Array(w); // 1 = bar colour, 2 = bright and grey (letters on a bar), 0 = background
   for(let x=0;x<w;x++){const p=px(row,x),[,sa,va]=rgb2hsv(p[0],p[1],p[2]),i=x*3,dd=Math.hypot(p[0]-bg[i],p[1]-bg[i+1],p[2]-bg[i+2]);
     if(noBg){if(sa>0.3&&va>0.3)mask[x]=1;else if(va>0.6&&sa<=0.3)mask[x]=2;continue}
-    if(sa>0.3&&va>0.3&&dd>45)mask[x]=1;else if(va>0.6&&sa<=0.3&&dd>45)mask[x]=2;if(mask[x])continue;if(dd<30){bg[i]+=(p[0]-bg[i])*0.05;bg[i+1]+=(p[1]-bg[i+1])*0.05;bg[i+2]+=(p[2]-bg[i+2])*0.05}}
+    if(sa>0.3&&va>0.3&&dd>45)mask[x]=1;else if(va>0.6&&sa<=0.3&&dd>45)mask[x]=2;if(mask[x]){bn[x]=0;continue}if(dd<30){bg[i]+=(p[0]-bg[i])*0.05;bg[i+1]+=(p[1]-bg[i+1])*0.05;bg[i+2]+=(p[2]-bg[i+2])*0.05;bn[x]=0}
+    /* v4.93: the 'background' here looks like a bar (bar colour learned at the start) and the row now shows plain dark background for 4 frames → that is the real background */
+    else if(va<0.35&&barLike(bg[i],bg[i+1],bg[i+2])){if(++bn[x]>=4){bg[i]=p[0];bg[i+1]=p[1];bg[i+2]=p[2];bn[x]=0}}else bn[x]=0}
   if(!SCAN.keyPx||SCAN.keyPx.w!==w){const xs=keys.map(k=>k.x*(w-1)),bnd=[];keys.forEach((k,i)=>{if(!k.black){bnd.push(xs[i]-ww/2,xs[i]+ww/2)}});SCAN.keyPx={w,x:xs,bnd}}const kx=SCAN.keyPx.x;
   const gapMax=Math.max(2,Math.round(ww*0.65)); // bright letters inside a bar: at 1280 px a letter can be wider than 0.4 key widths
   let x=0;while(x<w){if(mask[x]!==1){x++;continue}let e=x+1,last=x;
     while(e<w){if(mask[e]===1){last=e;e++;continue}
-      if(mask[e]===2){let f=e;while(f<w&&mask[f]===2)f++;if(f<w&&mask[f]===1&&f-e<=gapMax){e=f;continue}break} // letters inside a bar
-      if(e+1<w&&mask[e+1]===1){e++;continue}
+      if(mask[e]===2){let f=e;while(f<w&&mask[f]===2)f++;if(f<w&&(mask[f]===1||(mask[f]===0&&f+1<w&&mask[f+1]===1))&&f-e<=gapMax){e=f;continue}break} /* v4.93: also when one dark pixel follows the letter */ // letters inside a bar
+      if(e+1<w&&mask[e+1]){e++;continue} /* v4.93: one dark pixel next to bar colour OR bright letters (letter inside the bar) does not split the bar */
       {let f=e;while(f<w&&mask[f]===0)f++;const hc=(e+f-1)/2;              // dark letters inside a bar: a short dark hole in the middle of a key (not at a key boundary)
         if(f<w&&mask[f]===1&&f-e<=ww*0.35&&!SCAN.keyPx.bnd.some(bx=>Math.abs(bx-hc)<ww*0.14)){const p1=px(row,e-1),p2=px(row,f);if(hueDist(rgb2hsv(p1[0],p1[1],p1[2])[0],rgb2hsv(p2[0],p2[1],p2[2])[0])<25){e=f;continue}}}
       break}
@@ -2980,10 +2998,20 @@ function laneBars(px,w,row,li,noBg){
     // which keys does this run cover? white key: its middle ±0.22 key widths; black key: ±0.2 (and not just the gap between two covered white keys)
     const inR=(c,h)=>c-h>=a-0.5&&c+h<=b+0.5,cov=[];
     for(let k=0;k<keys.length;k++){if(kx[k]<a-ww||kx[k]>b+ww)continue;if(!keys[k].black&&inR(kx[k],ww*0.22)){occ[k]=true;cov.push(k)}}
-    for(let k=0;k<keys.length;k++){if(!keys[k].black||kx[k]<a-ww*0.15||kx[k]>b+ww*0.15)continue;
-      const cen=(a+b)/2;if(!(inR(kx[k],ww*0.1)||(wid<=ww*0.9&&Math.abs(cen-kx[k])<=ww*0.22)))continue; // narrow bar roughly centred on the black key
-      const l=k-1,r=k+1;if(cov.includes(l)&&cov.includes(r))continue;
-      occ[k]=true}}
+    /* v4.93: every run belongs to its own key(s). Real black keys sit off-centre (C#/F# to the left, D#/A# to the right, up to ~0.18 key widths),
+       so a white bar alone always reaches over the centre of the black neighbour – earlier that black key got the white key's bar too
+       (its glow ghost then counted as a real note). Now: */
+    if(cov.length){ /* white bar(s): a black key only if the run clearly sticks out beyond the covered white keys on its side (its own bar beside them) */
+      const L=Math.min(...cov.map(k=>kx[k]))-ww/2,Rr=Math.max(...cov.map(k=>kx[k]))+ww/2,ext=laneExt(ww);
+      if(cov.length===1&&!noBg&&b-a+1<=ww*1.05)laneOvAdd(a-L,b-Rr); /* a single white bar: learn how far white bars reach past the key edge in this video */
+      for(let k=0;k<keys.length;k++){if(!keys[k].black||kx[k]<a-ww*0.15||kx[k]>b+ww*0.15)continue;
+        const l=k-1,r=k+1;if(cov.includes(l)&&cov.includes(r))continue;
+        if((kx[k]>Rr-ww*0.5&&b>Rr+ext)||(kx[k]<L+ww*0.5&&a<L-ext))occ[k]=true}}
+    else{ /* no white key covered: a black key's own bar – only if that black key's lane matches it clearly better than any white lane (overlap ÷ union ≥ 0.45).
+          White keys never get a run this way (as before: only via their middle) – narrow pieces at a key boundary (borders, sparkle) must not become notes. */
+      const bw=ww*0.6;let bk=-1,bi=0.45;
+      for(let k=0;k<keys.length;k++){if(kx[k]<a-ww||kx[k]>b+ww)continue;const h=keys[k].black?bw/2:ww/2,ov=Math.min(b+0.5,kx[k]+h)-Math.max(a-0.5,kx[k]-h);if(ov<=0)continue;const iou=ov/((b-a+1)+2*h-ov);if(iou>bi){bi=iou;bk=k}}
+      if(bk>=0&&keys[bk].black)occ[bk]=true}}
   // white key: also occupied if most of its middle has bar colour (letters can split the bar into pieces)
   for(let k=0;k<keys.length;k++){if(keys[k].black||occ[k])continue;const a0=Math.max(0,Math.round(kx[k]-ww*0.3)),a1=Math.min(w-1,Math.round(kx[k]+ww*0.3));let c=0;for(let x=a0;x<=a1;x++)if(mask[x])c++;if(c>=(a1-a0+1)*0.5)occ[k]=true}
   // background across the whole key (needed for a real gap between two bars)
@@ -3152,7 +3180,7 @@ async function scanRun(live){
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   restColors(keys,[scanImg,...(scanFrames&&scanFrames.length?scanFrames.slice(-5):[])],scanRows); // always include the image the keyboard was found in (earlier frames may still show the intro)
-  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
   SCAN.start=+$('#scStart').dataset.v||0;if(live){try{SCAN.start=ytp.getCurrentTime()}catch(e){}}
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{if(!live){ytp.setPlaybackRate(1);ytRate=1}if(ytAuto)ytp.mute()}catch(e){}
@@ -3496,7 +3524,7 @@ async function fileConvert(file){
   restColors(keys,scanFrames&&scanFrames.length?scanFrames:[scanImg],scanRows);
   sv.removeAttribute('src');sv.load();sv.remove();FV.sv=null;
   // 2) play the file once from the very beginning to the end and read 3 pixel rows of every frame (the intro is recognised and ignored)
-  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:true,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,start:0});
   const vw=v.videoWidth,vh=v.videoHeight,ow=Math.min(vw,1280),rc=document.createElement('canvas');rc.width=ow;rc.height=7;const rx=rc.getContext('2d',{willReadFrequently:true});
   const ys=[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)].map(f=>Math.round(f*(vh-1)));
   let lastT=-1,minDt=1,drops=[];

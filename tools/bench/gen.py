@@ -97,6 +97,43 @@ def bgimg(f):
     return img
 BG = bgimg(0)
 name = f'{out}/{seed}.mp4'
+
+# ---------- Störungen (nur mit STOER=1; eigener Zufallsgenerator → ohne STOER bleibt jedes alte Video bitgleich) ----------
+# echte YouTube-/Kanal-Einblendungen: Banner, Pause-Symbol, Wasserzeichen, Endkarte, Hand. Keine davon ist eine Note.
+STOER = os.environ.get('STOER', '0') == '1'
+R3 = random.Random(seed * 104729 + 7)
+stoer = []
+if STOER:
+    for k, pr in (('banner', 0.5), ('pause', 0.5), ('watermark', 0.4), ('endcard', 0.6), ('hand', 0.4)):
+        if R3.random() < pr: stoer.append(k)
+    if not stoer: stoer.append(R3.choice(['banner', 'pause', 'endcard']))
+    ban_c = hue_rgb(R3.random(), 0.8, 0.9); ban_h = int(H * R3.uniform(0.08, 0.16))
+    pauses = [R3.uniform(0.5, max(1.0, song_dur - 2)) for _ in range(R3.randint(1, 2))]
+    wm_x = R3.randint(80, 500); wm_y = int(kbY * R3.uniform(0.3, 0.8))
+    ec_len = min(6.0, song_dur * 0.35); ec_cols = [hue_rgb(R3.random(), 0.7, 0.85) for _ in range(3)]
+    hand_y = kbY + int(kbH * 0.25); hand_x0 = R3.uniform(0.2, 0.6) * W
+style['stoer'] = stoer
+def overlay(img, tv):
+    t = tv - intro
+    if 'banner' in stoer and 0 <= t < 3.0:
+        img[:ban_h] = ban_c; cv2.putText(img, 'PIANO TUTORIAL - EASY', (40, int(ban_h * 0.7)), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (255, 255, 255), 4)
+    if 'watermark' in stoer and 0 <= t < song_dur:
+        ov = img.copy(); cv2.putText(ov, 'SHEET MUSIC BOSS', (wm_x, wm_y), cv2.FONT_HERSHEY_SIMPLEX, 2.2, (235, 235, 235), 6)
+        img[:] = cv2.addWeighted(ov, 0.35, img, 0.65, 0)
+    if 'pause' in stoer and any(p0 <= t < p0 + 0.6 for p0 in pauses):
+        ov = img.copy(); cv2.circle(ov, (W // 2, H // 2), 60, (0, 0, 0), -1); img[:] = cv2.addWeighted(ov, 0.5, img, 0.5, 0)
+        cv2.rectangle(img, (W // 2 - 22, H // 2 - 30), (W // 2 - 8, H // 2 + 30), (250, 250, 250), -1)
+        cv2.rectangle(img, (W // 2 + 8, H // 2 - 30), (W // 2 + 22, H // 2 + 30), (250, 250, 250), -1)
+    if 'endcard' in stoer and t >= song_dur - ec_len:
+        bw, bh = int(W * 0.26), int(H * 0.26); y0 = int(H * 0.55)
+        for i, (x0, c) in enumerate(((int(W * 0.06), ec_cols[0]), (int(W * 0.68), ec_cols[1]))):
+            rs = np.random.RandomState(seed + i); thumb = (rs.rand(bh // 16, bw // 16, 3) * 255).astype(np.uint8)
+            img[y0:y0 + bh, x0:x0 + bw] = (cv2.resize(thumb, (bw, bh)) * 0.5 + np.array(c) * 0.5).astype(np.uint8)
+        cv2.circle(img, (W // 2, int(H * 0.68)), int(H * 0.09), ec_cols[2], -1)
+    if 'hand' in stoer and 0 <= t < song_dur:
+        hx = int(hand_x0 + 0.25 * W * math.sin(t * 0.7))
+        cv2.ellipse(img, (hx, hand_y), (int(W * 0.07), int(kbH * 0.35)), 0, 0, 360, (196, 158, 132), -1)
+    return img
 cmd = ['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-']
 if lowres: cmd += ['-vf', f'scale=-2:{lowres},scale={W}:{H}']
 cmd += ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', str(crf), name]
@@ -147,6 +184,7 @@ for f in range(int(total * FPS)):
             for mm in on:
                 x, w, b = pos[mm]
                 for _ in range(6): cv2.circle(img, (int(x + w / 2 + rs.randn() * ww), int(kbY + rs.randn() * kbH * 0.3)), rs.randint(1, 4), (255, 255, 230), -1)
+    if stoer: img = overlay(img, tv)
     p.stdin.write(img.tobytes())
 p.stdin.close(); p.wait()
 json.dump(dict(style=style, notes=notes, intro=intro), open(f'{out}/{seed}.json', 'w'))
