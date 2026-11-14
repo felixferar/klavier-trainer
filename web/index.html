@@ -337,7 +337,7 @@ body.short #onbDots{margin:8px 0}
 .memEv{background:var(--s1);border-radius:14px;padding:12px 14px;margin:4px 0 12px;display:flex;flex-direction:column;gap:8px}.memEv .h{display:flex;align-items:center;gap:10px}.memEv .bd{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;color:#0E0F13}.memEv .bd.s{background:#4CC38A}.memEv .bd.f{background:#F0C04A}.memEv .bd.w{background:#E8743B}.memEv .bd.n{background:#8C8F9A}.memEv .st{display:flex;gap:3px}.memEv .st i{flex:1;height:14px;border-radius:3px;background:#4CC38A}.memEv .st i.z{background:#F0C04A}.memEv .st i.x{background:#E8743B}.memEv .lg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--mu)}.memEv .lg span:before{content:'';display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;background:var(--c)}.memEv .nums{font-size:12px;color:var(--mu);line-height:1.4}
 .memHere{background:var(--s1);border-radius:16px;padding:14px 16px;margin:4px 0 12px}.memHere .wh{font-size:19px;font-weight:800;line-height:1.25}.memHere .st{font-size:14px;margin-top:3px}.memHere .segs{margin-top:10px}.memHere .nx{font-size:14px;margin-top:8px;font-weight:600}.memHere .lb{display:flex;gap:5px;font-size:11px;color:var(--mu);margin-top:4px}.memHere .lb span{flex:1}.memHere .lb span.c{color:var(--tx);font-weight:700}.memWay{display:flex;flex-wrap:wrap;gap:6px}.memWay .mk{width:30px;height:30px;border-radius:9px;background:var(--s2);color:var(--mu);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}.memWay .mk.d{background:#3BB273;color:#0b1a12}.memWay .mk.c{background:var(--ac);color:#1a1405;outline:2px solid var(--tx);outline-offset:1px}.memWay .mk.f{background:var(--gold);color:#1a1405}
 .flStrip{display:flex;gap:4px;margin:8px 0}.flStrip i,.memGoal .flStrip i,#memEv .flStrip i{flex:1;display:block;width:auto;height:14px;border:0;border-radius:4px;margin:0;background:var(--s3)}.flStrip i.c,.memGoal .flStrip i.c,#memEv .flStrip i.c{background:#5B7FA6}.flStrip i.d,.memGoal .flStrip i.d,#memEv .flStrip i.d{background:#3BB273}.flStrip i,.memGoal .flStrip i,#memEv .flStrip i{font:700 9px Inter,system-ui;color:rgba(255,255,255,.55);text-align:center;line-height:14px;font-style:normal}.flStrip i.n,.memGoal .flStrip i.n{box-shadow:0 0 0 2px #fff inset}
-.flLeg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--mu);margin:-2px 0 6px}.flLeg span{display:flex;align-items:center;gap:4px}.flLeg i{display:inline-block;width:12px;height:10px;border-radius:3px;background:var(--s3)}.flLeg i.d{background:#3BB273}.flLeg i.c{background:#5B7FA6}.flLeg i.x{outline:2px solid #E5484D;outline-offset:-2px}
+.flLeg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--mu);margin:-2px 0 6px}.flLeg span{display:flex;align-items:center;gap:4px}.flLeg i{display:inline-block;width:12px;height:10px;border-radius:3px;background:var(--s3)}.flLeg i.d{background:#3BB273}.flLeg i.c{background:#5B7FA6}.flLeg i.h,.flStrip i.h,.memGoal .flStrip i.h,#memEv .flStrip i.h{background:linear-gradient(90deg,#5B7FA6 50%,var(--s3) 50%)}#mem.blind .topbar,#mem.blind .mHead{opacity:.15}.flLeg i.x{outline:2px solid #E5484D;outline-offset:-2px}
 .flStrip i.x,#memEv .flStrip i.x{outline:2px solid #E5484D;outline-offset:-2px}
 .flTempo{display:flex;align-items:center;gap:6px;margin:8px 0;font-size:13px;color:var(--mu)}.flTempo span{flex:1}.flTempo .btn{height:34px;min-width:40px;padding:0 10px}
 .memSecs{font-size:13px;color:var(--mu)}.memSecs b{color:var(--tx);font-size:16px}.memSecs .skm{height:10px;background:var(--s3);border-radius:5px;margin-top:6px;overflow:hidden}.memSecs .skf{height:100%;border-radius:5px}
@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.88</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.89</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -722,7 +722,7 @@ body.short #onbDots{margin:8px 0}
       <div class="mu sm" style="text-align:center;margin-bottom:18px">Einfach immer auf den großen Knopf drücken – die App weiß, was als Nächstes dran ist.</div>
       <div class="lbl">Fenster im Song</div><div id="memList" class="memWay"></div>
       <div class="lbl" style="margin-top:16px">So funktioniert's</div>
-      <div class="mu sm" style="line-height:1.5">Du spielst wie beim Video – im Tempo, die Musik läuft weiter. Ganze Takte verschwinden hinter Nebel (☁). Was du im Nebel richtig spielst, bleibt im Nebel, und der Nebel wächst auf den nächsten Takt. Hängst du im Nebel, erscheinen die Noten sofort – ohne Stopp – und der Takt kommt nächstes Mal wieder. Ist ein Fenster ganz im Nebel geschafft, wird das Tempo schneller (80 → 90 → 100 %). Das Tempo kannst du auch selbst einstellen. In den sichtbaren Takten spielt die App den Song leise mit (🔈 an/aus), im Nebel ist es still.</div>
+      <div class="mu sm" style="line-height:1.5">Du spielst wie beim Video – im Tempo, die Musik läuft weiter. Ganze Takte verschwinden hinter Nebel (☁). Was du im Nebel richtig spielst, bleibt im Nebel, und der Nebel wächst auf den nächsten Takt. Hängst du im Nebel, erscheinen die Noten sofort – ohne Stopp – und der Takt kommt nächstes Mal wieder. Ist ein Fenster ganz im Nebel geschafft, wird das Tempo schneller (80 → 90 → 100 %). Bei Takten mit beiden Händen verschwindet zuerst die linke Hand, danach auch die Melodie. Ist der Takt ganz im Nebel, wird der Bildschirm ruhig – schau aufs Klavier. Hängst du, spielt die App kurz an, wie es weitergeht. Zum Schluss jedes Fensters: eine Prüfung ohne Bildschirm. Tiefstes A am Klavier = sofort neu starten. Das Tempo kannst du auch selbst einstellen. In den sichtbaren Teilen spielt die App den Song leise mit (🔈 an/aus).</div>
     </div>
     <div id="memRunV" class="hidden">
       <div class="mHead"><div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
@@ -1308,11 +1308,13 @@ function memLoop(){const R=MEM.run;if(!R||$('#mem').classList.contains('hidden')
   MEM.raf=requestAnimationFrame(memLoop)}
 /* v4.84: Hände einzeln – die andere Hand spielt die App */
 function memOnlyTick(R){const p0=R.pos;if(R.done||p0>R.b)return;const g=MEM.gs[p0];if(R.vt<g.start-0.01)return;for(const m of [...g.mids]){if(g.hands.get(m)!==R.only&&!R.hit.has(m)){try{playTone(m,0.45,0.5)}catch(e){}memPress(m,'auto');if(MEM.run!==R||R.done||R.pos!==p0)return}}}
-/* ===== v4.86: „Nebel im Fluss“ (Konzept v7) =====
-   Fließend mitspielen im Tempo; ganze Takte verschwinden hinter Nebel. Was im Nebel klappt, bleibt Nebel und der Nebel wächst; wer hängt, bekommt den Takt sofort aufgedeckt – ohne Stopp.
-   Takte = Einheiten von ≈ 3 s, geschnitten an Pausen, Phrasenenden und Akkordwechseln (nie mitten in einer Figur). Fenster = 2–3 Teile (≈ 20–30 s). */
-const FL={tol:0.18,start:0.8,okNeed:2,winMin:20,latMax:0.12,accVol:0.35}; /* v4.88: Begleitung = 35 % eines normalen App-Tons */
-const flowAccGain=()=>FL.accVol*0.75*0.8; /* v4.87: lat = gemessene Verzögerung (Bluetooth/Spieler), wird ausgeglichen */
+/* ===== v4.86–4.89: „Nebel im Fluss“ (Konzept v7) =====
+   Fließend im Tempo mitspielen; Takte verschwinden hinter Nebel – v4.89 nach Hand: erst die linke Hand (Muster), dann auch die Melodie.
+   Stufen je Takt (rec.fl.st): 0 sichtbar · 1 linke Hand im Nebel · 2 ganz im Nebel · 3 sitzt. Takte mit nur einer Hand springen von 0 direkt auf 2.
+   Pro Durchgang kommt höchstens EIN neues Stück Nebel dazu (Takt rückt 1→2 ODER ein neuer Takt kommt in den Nebel).
+   Im Nebel wird der Bildschirm ruhig („Augen aufs Klavier“); Hilfe bei Hängern über das Ohr; zum Schluss eine Prüfung ohne Bildschirm. Tiefstes A = Sofort-Neustart. */
+const FL={tol:0.18,start:0.8,okNeed:2,winMin:20,latMax:0.12,accVol:0.35,restart:21,examOk:0.85};
+const flowAccGain=()=>FL.accVol*0.75*0.8;
 function flowCutScores(gs){const n=gs.length,me=[];let m=-1;for(let i=0;i<n;i++){m=Math.max(m,gs[i].end);me.push(m)}
   const ioi=[];for(let i=0;i<n-1;i++)ioi.push(gs[i+1].start-gs[i].start);const so=ioi.slice().sort((a,b)=>a-b),med=so[so.length>>1]||0.3;const bs=new Float64Array(n);
   for(let i=0;i<n-1;i++){const sil=gs[i+1].start-me[i],r=ioi[i]/med,lh=[...gs[i+1].hands.values()].includes('L')?1:0;bs[i]=Math.max(-1,Math.min(1,sil/0.3))+(sil>=-0.06?1:0)+Math.min(2,Math.max(0,r-1))*1.5+lh*0.8}return bs}
@@ -1320,85 +1322,106 @@ function flowBarsIn(gs,a,b,bs){const n=b-a+1;if(n<=2||gs[b].end-gs[a].start<=4.5
   for(let j=1;j<=n;j++)for(let i=Math.max(0,j-40);i<j;i++){if(best[i]===Infinity)continue;const cnt=j-i,dur=gs[a+j-1].end-gs[a+i].start;if(cnt<2&&j<n)continue;if(dur>6&&cnt>2)continue;
     const d=(dur-T)/T,c=best[i]+d*d*2+(j<n?-0.6*bs[a+j-1]:0)+1;if(c<best[j]){best[j]=c;from[j]=i}}
   if(from[n]<0)return [[a,b]];const out=[];let j=n;while(j>0){const i=from[j];out.unshift([a+i,a+j-1]);j=i}return out}
-function flowPrep(){const sig=MEM.rec.sig+'|'+MEM.secs.length;if(MEM._fp===sig&&MEM.bars)return;const gs=MEM.gs,bs=flowCutScores(gs),bars=[],gbar=new Array(gs.length);
-  MEM.secs.forEach(([a,b],si)=>{for(const [x,y] of flowBarsIn(gs,a,b,bs)){const k=bars.length;bars.push({a:x,b:y,s:si,t0:gs[x].start,t1:gs[y].end});for(let j=x;j<=y;j++)gbar[j]=k}});
-  const sc=MEM.secs,wins=[];let i=0;while(i<sc.length){let j=i;while(j+1<sc.length&&j-i<2&&gs[sc[j][1]].end-gs[sc[i][0]].start<FL.winMin)j++;wins.push({b0:gbar[sc[i][0]],b1:gbar[sc[j][1]],a:sc[i][0],b:sc[j][1]});i=j+1}
-  Object.assign(MEM,{bars,gbar,wins,_fp:sig});let fl=MEM.rec.fl;
-  if(!fl||fl.n!==bars.length){fl=MEM.rec.fl={n:bars.length,tempo:FL.start,manual:null,fog:bars.map(B=>{const r=MEM.rec.secs[B.s];return r&&(r.passed>0||r.box>0)?2:0}),ok:bars.map(()=>0),wdone:[]};
-    wins.forEach((W,k)=>{let all=true;for(let q=W.b0;q<=W.b1;q++)if(fl.fog[q]<2)all=false;fl.wdone[k]=all});memSaveAll()}}
+function flowPrep(){const sig=MEM.rec.sig+'|'+MEM.secs.length;const gs=MEM.gs;
+  if(!(MEM._fp===sig&&MEM.bars)){const bs=flowCutScores(gs),bars=[],gbar=new Array(gs.length);
+    MEM.secs.forEach(([a,b],si)=>{for(const [x,y] of flowBarsIn(gs,a,b,bs)){const k=bars.length;let L=false,Rh=false;for(let j=x;j<=y;j++)for(const h of gs[j].hands.values()){if(h==='L')L=true;else Rh=true}
+      bars.push({a:x,b:y,s:si,t0:gs[x].start,t1:gs[y].end,both:L&&Rh});for(let j=x;j<=y;j++)gbar[j]=k}});
+    const sc=MEM.secs,wins=[];let i=0;while(i<sc.length){let j=i;while(j+1<sc.length&&j-i<2&&gs[sc[j][1]].end-gs[sc[i][0]].start<FL.winMin)j++;wins.push({b0:gbar[sc[i][0]],b1:gbar[sc[j][1]],a:sc[i][0],b:sc[j][1]});i=j+1}
+    Object.assign(MEM,{bars,gbar,wins,_fp:sig})}
+  const bars=MEM.bars,wins=MEM.wins;let fl=MEM.rec.fl;
+  if(!fl||fl.n!==bars.length){fl=MEM.rec.fl={n:bars.length,tempo:FL.start,manual:null,lat:0,st:bars.map(B=>{const r=MEM.rec.secs[B.s];return r&&(r.passed>0||r.box>0)?3:0}),ok:bars.map(()=>0),wdone:[],exam:[]};
+    wins.forEach((W,k)=>{let all=true;for(let q=W.b0;q<=W.b1;q++)if(fl.st[q]<3)all=false;fl.wdone[k]=all});memSaveAll()}
+  if(!fl.st){fl.st=(fl.fog||bars.map(()=>0)).map((f,k)=>f>=2?3:f===1?2:0);fl.exam=fl.exam||[];delete fl.fog;memSaveAll()} /* v4.89: alter Nebel-Stand (0/1/2) → Stufen (0/2/3) */}
 const flowSpeed=()=>{const fl=MEM.rec.fl;return fl.manual!=null?fl.manual:fl.tempo};
 const flowNextWin=()=>{const fl=MEM.rec.fl;for(let k=0;k<MEM.wins.length;k++)if(!fl.wdone[k])return k;return -1};
+/* Ist diese Note verdeckt? Stufe 1 = nur linke Hand, ab 2 = alles (Anlauf-Takt nie) */
+function flowHid(R,k,hand){if(k==null||k===R.lead)return false;if(R.blind)return true;const s=MEM.rec.fl.st[k];return s>=2||(s===1&&hand==='L')}
 function flowTempoHTML(){const fl=MEM.rec.fl,sp=Math.round(flowSpeed()*100);return `<span>Tempo <b>${sp} %</b>${fl.manual==null?' · automatisch':''}</span><button class="btn" data-t="-1">−</button><button class="btn" data-t="1">+</button>${fl.manual!=null?'<button class="btn" data-t="0">Auto</button>':''}<button class="btn" data-a="1" title="Begleitung">${fl.acc!==false?'🔈 an':'🔇 aus'}</button>`}
 function flowTempoBind(el){if(!el)return;el.innerHTML=flowTempoHTML();el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const fl=MEM.rec.fl,d=+b.dataset.t;if(b.dataset.a){fl.acc=fl.acc===false;memSaveAll();flowTempoBind(el);const o=el.id==='memTempo'?$('#memTempoR'):$('#memTempo');if(o)flowTempoBind(o);return}if(d===0)fl.manual=null;else fl.manual=Math.round(clamp(flowSpeed()+d*0.1,0.5,1.3)*10)/10;memSaveAll();flowTempoBind(el);const o=el.id==='memTempo'?$('#memTempoR'):$('#memTempo');if(o)flowTempoBind(o)})}
-function flowStrip(w,res,now,leg){const W=MEM.wins[w],fl=MEM.rec.fl;let h='';for(let k=W.b0;k<=W.b1;k++){const f=fl.fog[k],bad=res&&res[k]&&!res[k].ok;h+=`<i class="${f>=2?'d':f===1?'c':''}${bad?' x':''}${k===now?' n':''}" title="Takt ${k-W.b0+1}">${k-W.b0+1}</i>`}
-  return `<div class="flStrip">${h}</div>`+(leg?`<div class="flLeg"><span><i class="d"></i>sitzt</span><span><i class="c"></i>im Nebel</span><span><i></i>noch sichtbar</span>${res?'<span><i class="x"></i>diesmal gehakt</span>':''}</div>`:'')} /* v4.87: Nummern, Legende, aktueller Takt */
-function flowHome(){flowPrep();const fl=MEM.rec.fl,bars=MEM.bars,wins=MEM.wins;let known=0;bars.forEach((B,k)=>{if(fl.fog[k]>=2)known+=B.t1-B.t0});const total=MEM.gs[MEM.gs.length-1].end-MEM.gs[0].start,pc=total?Math.round(100*known/total):0,wd=fl.wdone.filter(Boolean).length;
+function flowStrip(w,res,now,leg){const W=MEM.wins[w],fl=MEM.rec.fl;let h='';for(let k=W.b0;k<=W.b1;k++){const s=fl.st[k],bad=res&&res[k]&&!res[k].ok;h+=`<i class="${s>=3?'d':s===2?'c':s===1?'h':''}${bad?' x':''}${k===now?' n':''}" title="Takt ${k-W.b0+1}">${k-W.b0+1}</i>`}
+  return `<div class="flStrip">${h}</div>`+(leg?`<div class="flLeg"><span><i class="d"></i>sitzt</span><span><i class="c"></i>im Nebel</span><span><i class="h"></i>linke Hand im Nebel</span><span><i></i>sichtbar</span>${res?'<span><i class="x"></i>diesmal gehakt</span>':''}</div>`:'')}
+function flowHome(){flowPrep();const fl=MEM.rec.fl,bars=MEM.bars,wins=MEM.wins;let known=0;bars.forEach((B,k)=>{if(fl.st[k]>=3)known+=B.t1-B.t0});const total=MEM.gs[MEM.gs.length-1].end-MEM.gs[0].start,pc=total?Math.round(100*known/total):0,wd=fl.wdone.filter(Boolean).length;
   $('#memSum').innerHTML=`<div class="memSecs"><b>Du kannst ${memClock(known)} von ${memClock(total)}</b> · ${wd} von ${wins.length} Fenstern ⭐<div class="skm"><div class="skf" style="width:${pc}%;background:#3BB273"></div></div></div>`;
   const w=flowNextWin();$('#memGo').disabled=w<0;$('#memMix').classList.add('hidden');
   if(w<0){$('#memHere').innerHTML='<div class="wh">Alles sitzt ✓</div><div class="st mu">Der ganze Song im Nebel geschafft.</div>';$('#memGo').textContent='Alles geschafft ✓'}
-  else{const W=wins[w],nb=W.b1-W.b0+1;let nf=0;for(let k=W.b0;k<=W.b1;k++)if(fl.fog[k]>=1)nf++;
-    $('#memHere').innerHTML=`<div class="wh">Fenster ${w+1} von ${wins.length} · ${memClock(MEM.gs[W.a].start)}–${memClock(MEM.gs[W.b].end)}</div><div class="st mu">${nf} von ${nb} Takten im Nebel</div>${flowStrip(w,null,null,true)}`;$('#memGo').textContent=`Weiter: Fenster ${w+1}`}
+  else{const W=wins[w],nb=W.b1-W.b0+1;let nf=0;for(let k=W.b0;k<=W.b1;k++)if(fl.st[k]>=2)nf++;
+    $('#memHere').innerHTML=`<div class="wh">Fenster ${w+1} von ${wins.length} · ${memClock(MEM.gs[W.a].start)}–${memClock(MEM.gs[W.b].end)}</div><div class="st mu">${fl.exam[w]?'Als Nächstes: Prüfung ohne Bildschirm':`${nf} von ${nb} Takten ganz im Nebel`}</div>${flowStrip(w,null,null,true)}`;$('#memGo').textContent=fl.exam[w]?`Prüfung: Fenster ${w+1}`:`Weiter: Fenster ${w+1}`}
   flowTempoBind($('#memTempo'));$('#memTempo').classList.remove('hidden');
   $('#memList').innerHTML=wins.map((W,k)=>`<span class="mk ${fl.wdone[k]?'d':k===w?'c':''}">${k+1}</span>`).join('')}
-function flowStart(w){memAutoOff();flowPrep();const W=MEM.wins[w],fl=MEM.rec.fl,gs=MEM.gs;let any=false;for(let k=W.b0;k<=W.b1;k++)if(fl.fog[k]>=1)any=true; /* v4.87: ohne Nebel = Aufwärmen – erst einmal mitspielen wie beim Video */
-  const lead=w>0?W.b0-1:null,a=lead!=null?MEM.bars[lead].a:W.a,b=W.b,sp=flowSpeed(),ci=0.6*sp,t0=gs[a].start;
-  MEM.run={flow:true,warm:!any,w,a,b,lead,i:MEM.bars[W.b0].s,pos:a,mj:a,hit:{},proc:{},resc:{},res:{},devs:[],lastKey:0,missRun:{},lat:fl.lat||0,speed:sp,vt:t0-4*ci-0.05,clicks:[4,3,2,1].map(k=>t0-k*ci),ck:0,done:false,ending:false,lvl:0,G:{},errors:0,hints:0,_ns:null};
-  const R=MEM.run;{const ns=memSecNotes(R).slice().sort((x,y)=>x.start-y.start);R.accNs=ns;R.ap=0;R.nbar=ns.map(n=>{for(let j=a;j<=b;j++){const G=gs[j];if(n.start>=G.start-0.001&&n.start<=G.last+0.001)return MEM.gbar[j]}return null})} /* v4.88: Begleitung */
+function flowStart(w){memAutoOff();flowPrep();const W=MEM.wins[w],fl=MEM.rec.fl,gs=MEM.gs;let any=false;for(let k=W.b0;k<=W.b1;k++)if(fl.st[k]>=1)any=true;
+  const blind=!!fl.exam[w],lead=w>0&&!blind?W.b0-1:null,a=lead!=null?MEM.bars[lead].a:W.a,b=W.b,sp=flowSpeed(),ci=0.6*sp,t0=gs[a].start;
+  MEM.run={flow:true,warm:!any&&!blind,blind,w,a,b,lead,i:MEM.bars[W.b0].s,pos:a,mj:a,hit:{},proc:{},resc:{},res:{},devs:[],lastKey:0,missRun:{},lat:fl.lat||0,speed:sp,vt:t0-4*ci-0.05,clicks:[4,3,2,1].map(k=>t0-k*ci),ck:0,done:false,ending:false,lvl:0,G:{},errors:0,hints:0,_ns:null};
+  const R=MEM.run;{const ns=memSecNotes(R).slice().sort((x,y)=>x.start-y.start);R.accNs=ns;R.ap=0;R.nbar=ns.map(n=>{for(let j=a;j<=b;j++){const G=gs[j];if(n.start>=G.start-0.001&&n.start<=G.last+0.001)return MEM.gbar[j]}return null})}
   for(let k=W.b0;k<=W.b1;k++){let tot=0;for(let j=MEM.bars[k].a;j<=MEM.bars[k].b;j++)tot+=gs[j].mids.size;R.res[k]={tot,hit:0,miss:0,wrong:0,resc:false,ok:false}}
-  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML='';
-  $('#memRunT').textContent=`Fenster ${w+1} von ${MEM.wins.length} · Tempo ${Math.round(sp*100)} %`;$('#memGoal').innerHTML=flowStrip(w,null,W.b0,true);R.stripNow=W.b0;
+  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML='';$('#mem').classList.toggle('blind',blind);
+  $('#memRunT').textContent=blind?`Prüfung ohne Bildschirm · Fenster ${w+1}`:`Fenster ${w+1} von ${MEM.wins.length} · Tempo ${Math.round(sp*100)} %`;$('#memGoal').innerHTML=blind?'':flowStrip(w,null,W.b0,true);R.stripNow=W.b0;
   try{memRange(R)}catch(e){}memKbChip();memLoopOn()}
 function flowTick(R,dt){const gs=MEM.gs;if(R.done)return flowDraw();R.vt+=dt*R.speed;
   while(R.ck<R.clicks.length&&R.vt>=R.clicks[R.ck]){R.ck++;try{playTone(R.ck===1?100:96,0.05,0.35)}catch(e){}}
-  const tol=Math.max(0.1,FL.tol*R.speed),ve=R.vt-R.lat*R.speed;
+  const tol=Math.max(0.1,FL.tol*R.speed),ve=R.vt-R.lat*R.speed,acc=MEM.rec.fl.acc!==false;
   while(R.mj<=R.b&&gs[R.mj].start+tol<ve){const j=R.mj++,h=R.hit[j]||new Set(),k=MEM.gbar[j],miss=[...gs[j].mids].filter(m=>!h.has(m));R.proc[j]=true;
-    if(miss.length){if(!(MEM.rec.fl.acc!==false&&(k===R.lead||MEM.rec.fl.fog[k]===0)))for(const m of miss){try{playTone(m,0.35,0.35)}catch(e){}}if(k!==R.lead&&R.res[k]){R.res[k].miss+=miss.length;
-      /* v4.87: Hilfe nur bei echtem Hänger – ganzer Anschlag fehlt UND (schon der vorige fehlte ODER seit 0,5 s keine Taste) – nicht bei einem einzelnen Ausrutscher */
-      const whole=miss.length===gs[j].mids.size,prevMiss=R.missRun[k]===j-1,idle=performance.now()-R.lastKey>500;if(whole)R.missRun[k]=j;
-      if(MEM.rec.fl.fog[k]>=1&&!R.resc[k]&&whole&&(prevMiss||idle)){R.resc[k]=true;R.res[k].resc=true;R.rescAt=performance.now();R.rescK=k}}}}
-  /* v4.88: leise Begleitung in den sichtbaren Takten – auf der um die gemessene Verspätung verschobenen Uhr, damit App-Ton und eigener Anschlag zusammenfallen; im Nebel still */
-  if(R.accNs){const acc=MEM.rec.fl.acc!==false;while(R.ap<R.accNs.length&&R.accNs[R.ap].start<=ve){const q=R.ap++,n=R.accNs[q],k=R.nbar[q];if(!acc||ve<gs[R.a].start-0.05)continue;if(k===R.lead||(k!=null&&MEM.rec.fl.fog[k]===0)){R.accPlayed=(R.accPlayed||0)+1;try{playTone(n.midi,Math.max(0.15,n.dur/R.speed),0.3,flowAccGain())}catch(e){}}}}
+    if(miss.length&&k!==R.lead&&R.res[k]){R.res[k].miss+=miss.length;
+      const hidMiss=miss.filter(m=>flowHid(R,k,gs[j].hands.get(m))),hidAll=[...gs[j].mids].filter(m=>flowHid(R,k,gs[j].hands.get(m)));
+      /* sichtbare verpasste Töne spielt schon die Begleitung; verdeckte nur im Nebel-Hänger (unten) */
+      if(!acc)for(const m of miss.filter(m=>!hidMiss.includes(m))){try{playTone(m,0.35,0.35)}catch(e){}}
+      /* Hänger im Nebel: alle verdeckten Töne eines Anschlags fehlen UND (schon der vorige fehlte ODER seit 0,5 s keine Taste) → Hilfe übers Ohr: die App spielt diesen und den nächsten Anschlag kurz an, nichts wird eingeblendet */
+      const whole=hidAll.length>0&&hidMiss.length===hidAll.length,prevMiss=R.missRun[k]===j-1,idle=performance.now()-R.lastKey>500;if(whole)R.missRun[k]=j;
+      if(whole&&(prevMiss||idle)){if(!R.resc[k]){R.resc[k]=true;R.res[k].resc=true}R.rescAt=performance.now();R.rescK=k;if(!R.blind){for(const m of hidMiss){try{playTone(m,0.4,0.5)}catch(e){}}const nx=gs[j+1];if(nx&&j+1<=R.b)setTimeout(()=>{for(const m of nx.mids){try{playTone(m,0.35,0.5)}catch(e){}}},Math.max(60,(nx.start-gs[j].start)/R.speed*1000*0.5))}}}}
+  /* Begleitung: sichtbare Töne leise mit, auf der um die Verspätung verschobenen Uhr */
+  if(R.accNs){while(R.ap<R.accNs.length&&R.accNs[R.ap].start<=ve){const q=R.ap++,n=R.accNs[q],k=R.nbar[q];if(!acc||R.blind||ve<gs[R.a].start-0.05)continue;if(!flowHid(R,k,n.hand)){R.accPlayed=(R.accPlayed||0)+1;try{playTone(n.midi,Math.max(0.15,n.dur/R.speed),0.3,flowAccGain())}catch(e){}}}}
   while(R.pos<=R.b&&R.proc[R.pos])R.pos++;
   if(R.vt>gs[R.b].end+0.4&&R.mj>R.b)return flowFinish();flowDraw()}
-function flowPress(m){let R=MEM.run;if(R.done){if(MEM.autoT&&memNow()-(R.doneAt||0)>700)memAutoGo();return}
-  const gs=MEM.gs,tol=Math.max(0.1,FL.tol*R.speed),now=performance.now(),ve=R.vt-R.lat*R.speed;R.lastKey=now;if(ve<gs[R.a].start-tol)return; /* Einzählen */
-  /* v4.87: der früheste noch offene Anschlag mit diesem Ton im Fenster bekommt den Ton (wie bei Rhythmus-Spielen) – nicht der zufällig nächstgelegene */
+function flowPress(m){let R=MEM.run;if(m===FL.restart){memAutoOff();flowStart(R.w);return} /* tiefstes A: Sofort-Neustart */
+  if(R.done){if(MEM.autoT&&memNow()-(R.doneAt||0)>700)memAutoGo();return}
+  const gs=MEM.gs,tol=Math.max(0.1,FL.tol*R.speed),now=performance.now(),ve=R.vt-R.lat*R.speed;R.lastKey=now;if(ve<gs[R.a].start-tol)return;
   let best=-1;for(let j=Math.max(R.a,R.mj-4);j<=R.b&&gs[j].start<=ve+tol;j++){if(R.proc[j])continue;if(!gs[j].mids.has(m))continue;if(R.hit[j]&&R.hit[j].has(m))continue;if(Math.abs(gs[j].start-ve)<=tol){best=j;break}}
   if(best>=0){(R.hit[best]||(R.hit[best]=new Set())).add(m);const k=MEM.gbar[best];if(k!==R.lead&&R.res[k])R.res[k].hit++;R.devs.push((ve-gs[best].start)/R.speed);MEM.good.set(m,now)}
   else{let k=MEM.gbar[Math.min(R.b,Math.max(R.a,R.pos))];if(k!==R.lead&&R.res[k])R.res[k].wrong++;MEM.flash.set(m,now)}flowDraw()}
-function flowFinish(){const R=MEM.run,fl=MEM.rec.fl,W=MEM.wins[R.w];R.done=true;R.doneAt=memNow();let succ=0,grew=null;const reset=new Set();
-  for(let k=W.b0;k<=W.b1;k++){const r=R.res[k];r.ok=r.tot>0&&r.hit/r.tot>=0.8&&!r.resc&&r.wrong<=Math.max(1,Math.round(r.tot*0.25));const f=fl.fog[k];
-    if(f>=1){if(r.ok){succ++;fl.ok[k]=(fl.ok[k]||0)+1;if(fl.ok[k]>=FL.okNeed)fl.fog[k]=2}else{fl.fog[k]=f>=2?1:0;fl.ok[k]=0;reset.add(k)}}}
-  let okAll=0;for(let k=W.b0;k<=W.b1;k++)if(R.res[k].ok)okAll++;const warmOk=R.warm&&okAll>=Math.ceil((W.b1-W.b0+1)*0.7);
-  if(succ>0||warmOk)for(let k=W.b0;k<=W.b1;k++)if(fl.fog[k]===0&&!reset.has(k)){ /* nicht den gerade geöffneten Takt */fl.fog[k]=1;fl.ok[k]=0;grew=k-W.b0+1;break}
-  let all=true;for(let k=W.b0;k<=W.b1;k++)if(fl.fog[k]<2)all=false;let msg;const nb=W.b1-W.b0+1;let nd=0;for(let k=W.b0;k<=W.b1;k++)if(fl.fog[k]>=2)nd++;
-  if(all){if(fl.manual==null&&fl.tempo<1){fl.tempo=Math.round(Math.min(1,fl.tempo+0.1)*10)/10;msg=`Alles im Nebel geschafft! Jetzt dasselbe mit ${Math.round(fl.tempo*100)} % Tempo.`}else{fl.wdone[R.w]=true;fl.tempo=FL.start;msg=`⭐ Fenster ${R.w+1} sitzt!`}}
-  else if(R.warm)msg=warmOk?'Gut mitgespielt! Jetzt kommt Takt 1 in den Nebel.':'Erst nochmal mitspielen – noch ohne Nebel.';
-  else{let nfog=0;for(let k=W.b0;k<=W.b1;k++)if(fl.fog[k]>=1||reset.has(k))nfog++;const ok1=succ;msg=(nfog?`Im Nebel geschafft: ${ok1} von ${nfog} Takten`:'')+(grew?` · Takt ${grew} kommt neu in den Nebel`:'')+` · sitzt: ${nd} von ${nb}`} /* v4.87: verständlicher */
-  if(R.devs.length>=6){const d=R.devs.slice().sort((x,y)=>x-y),md=d[d.length>>1];fl.lat=Math.round(clamp((fl.lat||0)+0.6*md,-FL.latMax,FL.latMax)*1000)/1000} /* v4.87: gleichbleibende Verspätung ausgleichen */
-  memSaveAll();try{const L=JSON.parse(localStorage.getItem('kt_memeval')||'[]');L.push({t:Date.now(),flow:1,lat:fl.lat,w:R.w,sp:R.speed,res:Object.fromEntries(Object.entries(R.res).map(([k,v])=>[k,[v.tot,v.hit,v.miss,v.wrong,v.resc?1:0]]))});localStorage.setItem('kt_memeval',JSON.stringify(L.slice(-40)))}catch(e){}
+function flowFinish(){const R=MEM.run,fl=MEM.rec.fl,W=MEM.wins[R.w],nb=W.b1-W.b0+1;R.done=true;R.doneAt=memNow();$('#mem').classList.remove('blind');let msg;
+  let okAll=0;for(let k=W.b0;k<=W.b1;k++){const r=R.res[k];r.ok=r.tot>0&&r.hit/r.tot>=0.8&&!r.resc&&r.wrong<=Math.max(1,Math.round(r.tot*0.25));if(r.ok)okAll++}
+  if(R.devs.length>=6){const d=R.devs.slice().sort((x,y)=>x-y),md=d[d.length>>1];fl.lat=Math.round(clamp((fl.lat||0)+0.6*md,-FL.latMax,FL.latMax)*1000)/1000}
+  if(R.blind){if(okAll>=Math.ceil(nb*FL.examOk)){fl.wdone[R.w]=true;fl.exam[R.w]=0;fl.tempo=FL.start;msg=`⭐ Prüfung bestanden – Fenster ${R.w+1} sitzt ohne Bildschirm!`}
+    else{fl.exam[R.w]=0;for(let k=W.b0;k<=W.b1;k++)if(!R.res[k].ok){fl.st[k]=2;fl.ok[k]=0}msg=`Ohne Bildschirm: ${okAll} von ${nb} Takten geschafft. Die anderen üben wir nochmal im Nebel.`}}
+  else{let advanced=null,grew=null,succ=0;const reset=new Set();
+    for(let k=W.b0;k<=W.b1;k++){const s=fl.st[k],r=R.res[k];if(s<1)continue;
+      if(r.ok){succ++;if(s===1){if(advanced==null){advanced=k;fl.st[k]=2;fl.ok[k]=0}}else if(s===2){fl.ok[k]=(fl.ok[k]||0)+1;if(fl.ok[k]>=FL.okNeed)fl.st[k]=3}}
+      else{fl.st[k]=s===3?2:s===2?(MEM.bars[k].both?1:0):0;fl.ok[k]=0;reset.add(k)}}
+    const warmOk=R.warm&&okAll>=Math.ceil(nb*0.7);
+    /* höchstens ein neues Stück Nebel je Durchgang: entweder ein Takt rückt von „linke Hand“ auf „ganz“, oder ein neuer Takt kommt dazu */
+    if(advanced==null&&(succ>0||warmOk))for(let k=W.b0;k<=W.b1;k++)if(fl.st[k]===0&&!reset.has(k)){fl.st[k]=MEM.bars[k].both?1:2;fl.ok[k]=0;grew=k;break}
+    let all=true,nd=0;for(let k=W.b0;k<=W.b1;k++){if(fl.st[k]<3)all=false;else nd++}
+    if(all){if(fl.manual==null&&fl.tempo<1){fl.tempo=Math.round(Math.min(1,fl.tempo+0.1)*10)/10;msg=`Alles im Nebel geschafft! Jetzt dasselbe mit ${Math.round(fl.tempo*100)} % Tempo.`}
+      else{fl.exam[R.w]=1;msg='Alles im Nebel geschafft! Jetzt die Abschlussprüfung ohne Bildschirm – schau nur aufs Klavier.'}}
+    else if(R.warm)msg=warmOk?`Gut mitgespielt! Jetzt kommt ${MEM.bars[grew].both?`die linke Hand von Takt ${grew-W.b0+1}`:`Takt ${grew-W.b0+1}`} in den Nebel.`:'Erst nochmal mitspielen – noch ohne Nebel.';
+    else msg=(advanced!=null?`Takt ${advanced-W.b0+1}: jetzt auch die Melodie im Nebel`:grew!=null?(MEM.bars[grew].both?`Takt ${grew-W.b0+1}: linke Hand kommt in den Nebel`:`Takt ${grew-W.b0+1} kommt in den Nebel`):succ?'Gut – nochmal so':'Die gehakten Takte kommen nochmal')+` · sitzt: ${nd} von ${nb}`}
+  memSaveAll();try{const L=JSON.parse(localStorage.getItem('kt_memeval')||'[]');L.push({t:Date.now(),flow:1,blind:R.blind?1:0,lat:fl.lat,w:R.w,sp:R.speed,res:Object.fromEntries(Object.entries(R.res).map(([k,v])=>[k,[v.tot,v.hit,v.miss,v.wrong,v.resc?1:0]]))});localStorage.setItem('kt_memeval',JSON.stringify(L.slice(-40)))}catch(e){}
   $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=flowStrip(R.w,R.res,null,true);ev.classList.remove('hidden');$('#memGoal').innerHTML='';
-  const nw=flowNextWin(),rb=$('#memResBox');rb.style.display='flex';$('#memNext').textContent=nw<0?'Zur Übersicht':nw===R.w?'Nächster Durchgang':`Weiter: Fenster ${nw+1}`;$('#memAgain').style.display='none';$('#memChain').style.display='none';
+  const nw=flowNextWin(),rb=$('#memResBox');rb.style.display='flex';$('#memNext').textContent=nw<0?'Zur Übersicht':nw===R.w?(fl.exam[R.w]?'Prüfung starten':'Nächster Durchgang'):`Weiter: Fenster ${nw+1}`;$('#memAgain').style.display='none';$('#memChain').style.display='none';
   flowTempoBind($('#memTempoR'));$('#memTempoR').classList.remove('hidden');$('#memProg').textContent='Fertig';flowDraw();memAuto()}
 function flowNext(){const w=flowNextWin();if(w<0){memStop();memHome()}else flowStart(w)}
 function flowDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepCv(cv);if(!p)return;const c=p.c,now=performance.now(),kb=Math.min(110,p.h*0.42),hn=p.h-kb;MEM.kbH=kb;MEM.hn=hn;c.clearRect(0,0,p.w,p.h);
-  const fl=MEM.rec.fl,gs=MEM.gs,W=MEM.wins[R.w];c.save();c.translate(0,hn);
-  const on=(m,t0)=>!!t0&&((KB.held.has(m)&&t0>=(KB.rel.get(m)||0))||now-Math.max(t0,KB.rel.get(m)||0)<120);
-  MEM.pos=drawKeys(c,R.lo||MEM.lo,R.hi||MEM.hi,p.w,kb,(m,b)=>{const w=MEM.flash.get(m),gd=MEM.good.get(m);if(w&&on(m,w)&&!(gd&&gd>w))return '#E5484D';if(gd&&on(m,gd))return '#3BB273';return b?'#2C2C2A':'#E8E6DF'},true);c.restore();
+  const fl=MEM.rec.fl,gs=MEM.gs,W=MEM.wins[R.w],t=R.vt,pps=hn/3,Y=s=>hn-4-(s-t)*pps;
+  if(R.blind&&!R.done){c.fillStyle='#000';c.fillRect(0,0,p.w,p.h);c.textAlign='center';c.fillStyle='rgba(255,255,255,.28)';c.font='800 18px Inter,system-ui';c.fillText(R.ck<4&&R.vt<gs[R.a].start?(['','4','3','2','1'][R.ck]||'…'):'Nur aufs Klavier schauen 🎹',p.w/2,p.h/2);
+    $('#memProg').textContent='';$('#memMsg').textContent='Prüfung ohne Bildschirm';return}
+  const curK=MEM.gbar[Math.min(R.b,R.pos)],calm=!R.done&&curK!=null&&curK!==R.lead&&fl.st[curK]>=2&&R.vt>=gs[R.a].start; /* ruhiger Bildschirm, solange der aktuelle Takt ganz im Nebel ist */
+  c.save();c.translate(0,hn);const on=(m,t0)=>!!t0&&((KB.held.has(m)&&t0>=(KB.rel.get(m)||0))||now-Math.max(t0,KB.rel.get(m)||0)<120);
+  MEM.pos=drawKeys(c,R.lo||MEM.lo,R.hi||MEM.hi,p.w,kb,(m,b)=>{if(!calm){const w=MEM.flash.get(m),gd=MEM.good.get(m);if(w&&on(m,w)&&!(gd&&gd>w))return '#E5484D';if(gd&&on(m,gd))return '#3BB273'}return b?'#2C2C2A':'#E8E6DF'},true);c.restore();
   for(let m=(R.lo||MEM.lo);m<=(R.hi||MEM.hi);m++){const k=MEM.pos[m];if(!k||!k.b)continue;const fs=Math.min(9,Math.max(6,k.w*0.42));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(255,255,255,.75)';c.fillText(NAMES[m%12],k.x+k.w/2,hn+kb*0.6-5)}
   const bar=(m,y0,y1,col)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.6:0.78);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0));if(y1-y0>=13&&ww>=9){const fs=Math.min(11,Math.max(7,ww*0.42));c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(0,0,0,.72)';c.fillText(NAMES[m%12],k.x+k.w/2,y1-4)}};
-  const t=R.vt,pps=hn/3,Y=s=>hn-4-(s-t)*pps;c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
-  const hid=k=>k!=null&&k!==R.lead&&fl.fog[k]>=1&&!R.resc[k];
-  for(let k=W.b0;k<=W.b1;k++){if(!hid(k))continue;const B=MEM.bars[k],yb=Y(B.t0)+2,yt=Y(B.t1)-2;if(yb<0||yt>hn)continue; /* Nebelband */
-    const g=c.createLinearGradient(0,yt,0,yb);g.addColorStop(0,'rgba(120,140,170,.10)');g.addColorStop(.5,'rgba(120,140,170,.22)');g.addColorStop(1,'rgba(120,140,170,.10)');c.fillStyle=g;c.fillRect(0,Math.max(0,yt),p.w,Math.min(hn,yb)-Math.max(0,yt));
-    c.font='800 13px Inter,system-ui';c.textAlign='left';c.fillStyle='rgba(220,230,245,.55)';c.fillText(`☁ Takt ${k-W.b0+1}`+(fl.fog[k]>=2?' ✓':''),10,Math.max(16,Math.min(hn-6,(Math.max(0,yt)+Math.min(hn,yb))/2+4)))}
-  for(const n of memSecNotes(R)){const rel=n.start-t;if(rel>9||n.start+Math.max(0.12,n.dur)<t-0.05)continue;let j=-1;for(let q=Math.max(R.a,R.mj-6);q<=R.b;q++){const G=gs[q];if(n.start>=G.start-0.001&&n.start<=G.last+0.001){j=q;break}if(G.start>n.start+0.01)break}
-    if(j<0){for(let q=R.a;q<=R.b;q++){const G=gs[q];if(n.start>=G.start-0.001&&n.start<=G.last+0.001){j=q;break}}}const k=j>=0?MEM.gbar[j]:null;if(hid(k))continue;
-    const yb=Y(n.start),yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;const hitN=j>=0&&R.hit[j]&&R.hit[j].has(n.midi),missN=j>=0&&R.proc[j]&&!hitN;
-    c.globalAlpha=k===R.lead?0.5:1;bar(n.midi,Math.max(0,yt),yb,missN?'#6b7079':k===R.lead?'#8a8f98':noteCol(n));c.globalAlpha=1}
+  c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
+  if(calm){c.fillStyle='rgba(8,10,14,.6)';c.fillRect(0,0,p.w,hn);c.textAlign='center';c.font='800 20px Inter,system-ui';c.fillStyle='rgba(230,236,245,.6)';c.fillText('Augen aufs Klavier 👀',p.w/2,hn*0.45);
+    c.font='600 12px Inter,system-ui';c.fillStyle='rgba(230,236,245,.35)';c.fillText(R.rescAt&&now-R.rescAt<1500?'👂 Hör hin – die App spielt an, wie es weitergeht':`Takt ${curK-W.b0+1} im Nebel`,p.w/2,hn*0.45+22)}
+  else for(let k=W.b0;k<=W.b1;k++){const s=fl.st[k];if(k===R.lead||s<1)continue;const B=MEM.bars[k],yb=Y(B.t0)+2,yt=Y(B.t1)-2;if(yb<0||yt>hn)continue;
+    const g=c.createLinearGradient(0,yt,0,yb),al=s>=2?0.22:0.11;g.addColorStop(0,`rgba(120,140,170,${al/2})`);g.addColorStop(.5,`rgba(120,140,170,${al})`);g.addColorStop(1,`rgba(120,140,170,${al/2})`);c.fillStyle=g;c.fillRect(0,Math.max(0,yt),p.w,Math.min(hn,yb)-Math.max(0,yt));
+    c.font='800 13px Inter,system-ui';c.textAlign='left';c.fillStyle='rgba(220,230,245,.55)';c.fillText(`☁ Takt ${k-W.b0+1}`+(s===1?' · linke Hand':s>=3?' ✓':''),10,Math.max(16,Math.min(hn-6,(Math.max(0,yt)+Math.min(hn,yb))/2+4)))}
+  for(let q=0;q<(R.accNs||[]).length;q++){const n=R.accNs[q],k=R.nbar[q],rel=n.start-t;if(rel>9||n.start+Math.max(0.12,n.dur)<t-0.05)continue;if(flowHid(R,k,n.hand))continue;
+    if(calm&&rel>1.2)continue; /* im ruhigen Modus kommen sichtbare Takte erst kurz vorher */
+    const yb=Y(n.start),yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0)continue;let j=-1;for(let x=R.a;x<=R.b;x++){const G=gs[x];if(n.start>=G.start-0.001&&n.start<=G.last+0.001){j=x;break}}
+    const hitN=j>=0&&R.hit[j]&&R.hit[j].has(n.midi),missN=j>=0&&R.proc[j]&&!hitN;c.globalAlpha=k===R.lead?0.5:1;bar(n.midi,Math.max(0,yt),yb,missN?'#6b7079':k===R.lead?'#8a8f98':noteCol(n));c.globalAlpha=1}
   c.restore();
-  if(R.done)return;const nb=W.b1-W.b0+1,cur=MEM.gbar[Math.min(R.b,R.pos)];if(cur!==R.stripNow&&cur!==R.lead){R.stripNow=cur;$('#memGoal').innerHTML=flowStrip(R.w,null,cur,true)}$('#memProg').textContent=cur===R.lead?'Anlauf':`Takt ${Math.max(1,Math.min(nb,cur-W.b0+1))} von ${nb}`;
-  $('#memMsg').textContent=R.ck<4&&R.vt<gs[R.a].start?['','4','3','2','1'][R.ck]||'Einzählen …':R.rescAt&&now-R.rescAt<1500?`Hilfe: Takt ${R.rescK-W.b0+1} aufgedeckt – spiel einfach weiter.`:(R.warm?'Erst einmal mitspielen – noch ohne Nebel.':'Spiel im Takt – der Nebel verdeckt, was du schon kannst.')}
+  if(R.done)return;const nb=W.b1-W.b0+1,cur=curK;if(cur!==R.stripNow&&cur!==R.lead){R.stripNow=cur;$('#memGoal').innerHTML=flowStrip(R.w,null,cur,true)}
+  $('#memProg').textContent=cur===R.lead?'Anlauf':`Takt ${Math.max(1,Math.min(nb,cur-W.b0+1))} von ${nb}`;
+  $('#memMsg').textContent=R.ck<4&&R.vt<gs[R.a].start?['','4','3','2','1'][R.ck]||'Einzählen …':calm?'Augen aufs Klavier 👀':(R.warm?'Erst einmal mitspielen – noch ohne Nebel.':'Spiel im Takt – der Nebel verdeckt, was du schon kannst.')}
 function memLoopOn(){$('#mem').classList.add('running');if(!MEM.raf){MEM.lastF=performance.now();MEM.raf=requestAnimationFrame(memLoop)}}
 const memHintOn=()=>{const R=MEM.run;if(R.lvl===1)return false;if(R.lvl===2)return R.arrAt!=null&&(memNow()-R.arrAt)/1000>=MEM_HINT[2];return (memNow()-R.gStart)/1000>=MEM_HINT[R.lvl]};
 function memTick(){const R=MEM.run;if(!R)return;memKbChip();if(R.flow)return;if(R.watch){memWatchTick(R);return}
@@ -2694,7 +2717,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.88 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.89 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

@@ -15,7 +15,7 @@ JS=r"""async()=>{const o={};let calls=[];window.playTone=(m,d,v,g)=>calls.push({
  /* Verspätung 0,1 s: der App-Ton kommt um 0,1 s × Tempo später als die Note */
  fl.lat=0.1;flowStart(0);calls=[];R=MEM.run;const n0=R.accNs.find(n=>n.start>=gs[R.a].start+0.01);sweep();const c0=calls.find(c=>c.g!=null&&c.m===n0.midi&&c.vt>=n0.start);o.delay=c0?+(c0.vt-n0.start).toFixed(3):null;o.expDelay=+(0.1*R.speed).toFixed(3);
  /* Nebel auf Takt 1+2: dort still */
- fl.lat=0;fl.fog[W0.b0]=1;fl.fog[W0.b0+1]=1;flowStart(0);calls=[];R=MEM.run;const inFog=new Set(R.accNs.filter((n,q)=>R.nbar[q]===W0.b0||R.nbar[q]===W0.b0+1));sweep();
+ fl.lat=0;fl.st[W0.b0]=2;fl.st[W0.b0+1]=2;flowStart(0);calls=[];R=MEM.run;const inFog=new Set(R.accNs.filter((n,q)=>R.nbar[q]===W0.b0||R.nbar[q]===W0.b0+1));sweep();
  o.fogAcc=calls.filter(c=>c.g!=null&&[...inFog].some(n=>n.midi===c.m&&Math.abs(c.vt-n.start)<0.05)).length;o.visAcc=calls.filter(c=>c.g!=null).length;
  /* Schalter aus */
  memHome();const b=$('#memTempo').querySelector('[data-a]');b.click();o.accOff=fl.acc===false;flowStart(0);calls=[];sweep();o.offAcc=calls.filter(c=>c.g!=null).length;

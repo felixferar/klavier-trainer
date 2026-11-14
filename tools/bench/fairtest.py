@@ -13,8 +13,8 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
  const run=(late,skip)=>{const R=MEM.run;R.vt=gs[R.a].start-0.3;for(let j=R.a;j<=R.b;j++){R.vt=gs[j].start+late*R.speed;flowTick(R,0);if(!(skip&&skip(j)))for(const m of gs[j].mids)memPress(m,'kb')}R.vt=gs[R.b].end+1;flowTick(R,0);return R};
  o.legHome=!!$('#memHere .flLeg');o.nums=$('#memHere .flStrip').textContent.startsWith('12');
  /* (3) Aufwärmen */
- flowStart(0);o.warm=MEM.run.warm;o.fogStart=fl.fog[W0.b0];o.nowMark=!!$('#memGoal .flStrip i.n');
- run(0);o.afterWarm=fl.fog[W0.b0];
+ flowStart(0);o.warm=MEM.run.warm;o.fogStart=fl.st[W0.b0];o.nowMark=!!$('#memGoal .flStrip i.n');
+ run(0);o.afterWarm=fl.st[W0.b0];
  /* (1) ein einzelner Ausrutscher in Takt 1 (Nebel) */
  const B1=MEM.bars[W0.b0];let single=-1;for(let j=B1.a;j<=B1.b;j++)if(gs[j].mids.size===1){single=j;break}
  flowStart(0);const R1=run(0,j=>j===single);o.singleResc=!!R1.resc[W0.b0];o.singleOk=R1.res[W0.b0].ok;o.okCount=fl.ok[W0.b0];o.msg=$('#memMsg').textContent;o.legRes=!!$('#memEv .flLeg');
@@ -29,9 +29,9 @@ async def main():
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(3500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False),errs)
         c={'Legende + Nummern in der Übersicht':r['legHome'] and r['nums'],'Aufwärmen ohne Nebel, aktueller Takt markiert':r['warm'] and r['fogStart']==0 and r['nowMark'],
-           'nach dem Aufwärmen Takt 1 im Nebel':r['afterWarm']==1,
-           'einzelner Ausrutscher: keine Aufdeckung, Takt geschafft':not r['singleResc'] and r['singleOk'] and r['okCount']==1,
-           'Ergebnis verständlich + Legende':'Im Nebel geschafft' in r['msg'] and 'sitzt' in r['msg'] and r['legRes'],
+           'nach dem Aufwärmen Takt 1 (linke Hand) im Nebel':r['afterWarm']==1,
+           'einzelner Ausrutscher: keine Hilfe, Takt geschafft':not r['singleResc'] and r['singleOk'],
+           'Ergebnis verständlich + Legende':'sitzt' in r['msg'] and r['legRes'],
            '0,12 s zu spät zählt':r['hit12']>=0.95 and r['lat']>0.05,'0,22 s zu spät zählt nach Ausgleich':r['hit22']>=0.95,'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await br.close()
 asyncio.run(main())
