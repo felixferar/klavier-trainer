@@ -551,7 +551,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.90</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 4.91</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -1549,9 +1549,12 @@ function chordAlign(notes){const ns=notes.slice().sort((a,b)=>a.start-b.start||a
     for(let j=i+1;j<gs.length&&gs[j][0].start-t0<=0.15;j++){const h=gs[j];if(h.length>2)continue;
       if(h.every(b=>b.start<mn-0.05&&Math.abs(b.start+b.dur-me)<=0.12&&!ms.has(b.midi))){for(const b of h){const e=b.start+b.dur;b.start=t0;b.dur=e-t0;n++}}}}
   if(n)notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);return n}
+/* v4.91: gleiche Taste zweimal hintereinander → die erste Note endet etwas früher, damit zwischen den Balken eine sichtbare Lücke ist (Video-Erkennung lässt sie oft direkt aneinanderstoßen) */
+function noteGaps(notes,gap=0.07){const by=new Map();for(const n of notes){if(!by.has(n.midi))by.set(n.midi,[]);by.get(n.midi).push(n)}let c=0;
+  for(const a of by.values()){a.sort((x,y)=>x.start-y.start);for(let i=0;i+1<a.length;i++){const p=a[i],q=a[i+1],end=p.start+p.dur;if(q.start-end<gap){const nd=q.start-gap-p.start;if(nd>=0.06&&nd<p.dur){p.dur=nd;c++}}}}return c}
 function songForItem(it,buf){
   const s=songFromMidi(buf||bufFromB64(it.data),it.title);
-  if(it.video){try{s.chordFix=chordAlign(s.notes)}catch(e){}const n=Math.ceil(s.duration)+1;s.measures=[];for(let i=0;i<=n;i++)s.measures.push(i);s.timeSec=true;
+  if(it.video){try{s.chordFix=chordAlign(s.notes)}catch(e){}try{s.gapFix=noteGaps(s.notes)}catch(e){}const n=Math.ceil(s.duration)+1;s.measures=[];for(let i=0;i<=n;i++)s.measures.push(i);s.timeSec=true;
     s.octUnsure=!!it.octUnsure&&!it.octLearned;s.oneColor=!!it.oneColor;
     if(it.octShift)for(const x of s.notes)x.midi=clamp(x.midi+it.octShift,21,108)}
   return s}
@@ -2724,7 +2727,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 4.90 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 4.91 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
