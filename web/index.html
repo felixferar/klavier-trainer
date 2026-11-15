@@ -2719,7 +2719,7 @@ function memHome(){memStop();$('#mem').classList.remove('running','blind');memKb
       review:c.box>=AW.solid?'Kurzer Check im Puls (100 %): sitzt er noch?':`Kalt im Puls (100 %), nur der erste Versuch zählt – Kasten ${c.box}.`,
       link:`Am Stück im Puls (100 %) – Abschnitt ${K}. So wächst der Song zusammen.`,
       whole:`Der ganze Song – ohne Klick, ohne Hilfe, in deinem Tempo. Die App hört nur zu. Patzer? Einfach weiterspielen. ${wd?`(${wd} von ${AW.wholeDays} Tagen ✓)`:''}`}[p.mode];
-    $('#memHere').innerHTML=`<div class="wh">${p.mode==='whole'?'Ganzer Song':`Abschnitt ${K} von ${n}`} · ${AW_MODE[p.mode]}</div><div class="st mu">${why}</div><div class="st mu">🎹 Tiefstes A: vorführen + neu · B daneben: weiß nicht weiter</div>`;
+    $('#memHere').innerHTML=`<div class="wh">${p.mode==='whole'?'Ganzer Song ohne Klick':`Abschnitt ${K} von ${n} · ${AW_MODE[p.mode]}`}</div><div class="st mu">${why}</div><div class="st mu">🎹 Tiefstes A: vorführen + neu · B daneben: weiß nicht weiter</div>`;
     $('#memGo').textContent={find:`Weiter: Abschnitt ${K} mitspielen`,fade:`Weiter: Abschnitt ${K} ausblenden`,head:`Weiter: Abschnitt ${K} aus dem Kopf`,spot:`Weiter: Problemstelle in Abschnitt ${K}`,puls:`Weiter: Abschnitt ${K} im Puls (${sp})`,review:`Wiederholen: Abschnitt ${K}`,link:`Verbinden: Abschnitt ${K}`,whole:'Ganzer Song ohne Klick'}[p.mode]}
   $('#memHere').insertAdjacentHTML('beforeend','<div style="margin-top:8px"><button class="btn" id="memReset">↺ Lernstand zurücksetzen</button></div>');
   {const b=$('#memReset');b.onclick=()=>{if(!b.dataset.sure){b.dataset.sure=1;b.textContent='Wirklich alles von vorn? Nochmal tippen';return}

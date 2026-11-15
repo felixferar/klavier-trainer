@@ -31,8 +31,8 @@ async def main():
         c={'ohne Versuch kein Upload':r['up0']==0,
            'nach dem Versuch: Upload nach diag/learn mit Versuch, Abschnitten, Stand, Version':r['up1']==1 and r['path'].startswith('diag/learn/') and r['ent']==[['find',1,'pr']] and r['snap'] and bool(__import__('re').match(r'^\d+\.\d+$',r['ver'] or '')),
            'nichts Neues → kein Upload':r['up2']==1,'innerhalb von 2 min → wartet':r['up3']==1,
-           'danach nur der neue Versuch':r['up4']==2 and r['ent4']==['head'],
-           'Fehlschlag → geht beim nächsten Mal mit':r['up5']==3 and r['ent5']==['head'],
+           'danach nur der neue Versuch':r['up4']==2 and r['ent4']==['find'],
+           'Fehlschlag → geht beim nächsten Mal mit':r['up5']==3 and r['ent5']==['find'],
            'eigenes Protokoll, unabhängig vom alten':r['logN']>=2,'ohne Schlüssel nichts':r['noTok'],'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await br.close()
 asyncio.run(main())

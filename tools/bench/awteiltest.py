@@ -1,4 +1,4 @@
-"""v5.04: Note korrigiert → nur der betroffene Abschnitt beginnt neu, der Rest behält seinen Stand (auch Verbindungen).
+"""v5.04/v5.06: Note korrigiert → nur der betroffene Abschnitt beginnt neu, der Rest behält seinen Stand (auch Verbindungen).
 Dazu: Übernahme aus dem alten v8-Lernstand (aus dem Kopf gekonnt → jetzt im Puls weiter), Zurücksetzen per Knopf (zweimal tippen).
 usage: python3 tools/bench/awteiltest.py $PWD/web/index.html"""
 import sys, asyncio, json
@@ -16,6 +16,9 @@ JS = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};const o={};
  const it2={id:'alt8',type:'midi',title:'Alt',artist:'x',data:b64FromBuf(writeMidi(mk(0)))};LIB.push(it2);save('kt_lib',LIB);openMem(it2);const n2=MEM.C.length;
  delete MEMS.alt8.v9;MEMS.alt8.v8={cv:2,n:n2,ch:MEM.C.map((c,k)=>({box:k===0?2:0,st:k<=1?1:0}))};memSaveAll();openMem(it2);const x=MEMS.alt8.v9;
  o.mig=[x.ch[0].st,x.ch[0].tp,x.ch[0].box,x.ch[1].st,x.ch[2].st];o.v8gone=!MEMS.alt8.v8;
+ /* v5.05-Stand (cv 9): aus dem Kopf gekonnt (st 2) → im Puls (st 3), gefunden (st 1) → ausblenden (st 1, Stufe 1), Kästen bleiben */
+ const ch9=MEMS.alt8.v9.ch.map((c,k)=>Object.assign({},c,{st:k===0?2:k===1?1:0,box:k===0?2:0,tp:k===0?2:0}));MEMS.alt8.v9={cv:9,n:ch9.length,ch:ch9.map(c=>{const x=Object.assign({},c);delete x.fc;delete x.fl;delete x.spot;delete x.sf;return x}),ln:[],lw:[],lat:0.05};memSaveAll();openMem(it2);
+ const y=MEMS.alt8.v9;o.mig9=[y.cv,y.ch[0].st,y.ch[0].box,y.ch[0].tp,y.ch[1].st,y.ch[1].fl,y.ch[2].st,y.lat,!!y.whole];
  /* Zurücksetzen */
  memHome();const b=$('#memReset');b.click();const after1=MEMS.alt8.v9.ch[0].st;$('#memReset').click();o.resetBtn=[after1,MEMS.alt8.v9.ch[0].st];
  return o}"""
@@ -29,8 +32,9 @@ async def main():
     c = {'Note geändert → 1–2 Abschnitte neu, Rest bleibt': 1 <= r['nReset'] <= 2 and r['kept'] == r['n'] - r['nReset'],
          'betroffener Abschnitt liegt um Takt 6 (12–14 s)': all(a <= 13.5 and b >= 12 for a, b in r['where']),
          'Verbindungen bleiben, wo beide Nachbarn unverändert sind': r['lnOk'] and r['lnKept'] >= r['n'] - 1 - 2 * r['nReset'],
-         'alter v8-Stand: aus dem Kopf gekonnt → im Puls (75 %), gefunden → aus dem Kopf': r['mig'] == [2, 0, 0, 1, 0] and r['v8gone'],
-         'Zurücksetzen erst nach zweitem Tippen': r['resetBtn'] == [2, 0],
+         'alter v8-Stand: aus dem Kopf gekonnt → im Puls (75 %), gefunden → ausblenden': r['mig'] == [3, 0, 0, 1, 0] and r['v8gone'],
+         'v5.05-Stand: aus dem Kopf → im Puls, gefunden → ausblenden Stufe 1, Kästen/Tempo/Verzögerung bleiben': r['mig9'] == [10, 3, 2, 2, 1, 0, 0, 0.05, True],
+         'Zurücksetzen erst nach zweitem Tippen': r['resetBtn'][0] != 0 and r['resetBtn'][1] == 0,
          'keine Fehler': not errs}
     print(c); print('OK' if all(c.values()) else 'FEHLER')
 asyncio.run(main())
