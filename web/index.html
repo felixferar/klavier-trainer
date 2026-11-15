@@ -4813,7 +4813,19 @@ function finishCore(raw,preview){
         const RC=[md('ch',0),md('ch',1)],RS=[md('sa',0),md('sa',1)];
         const ghost=e=>{if(e.bar||e.early||e.sa==null)return false;const k=W(e);if(!RC[k]||!RS[k])return false;if(e.sa<0.6*RS[k])return true;
           if(!(e.ch<0.6*RC[k]))return false;return ev.some(h=>h!==e&&h.m!==e.m&&Math.abs(h.m-e.m)<=2&&RC[W(h)]&&h.ch>=0.8*RC[W(h)]&&h.start<e.end&&e.start<h.end)};
-        const gone=new Set(ev.filter(ghost));if(gone.size)ev=ev.filter(e=>!gone.has(e))}}}  // also drops short bar-less notes that start together with such an overlay (e.g. the last 'B' of an end screen)
+        const gone=new Set(ev.filter(ghost));if(gone.size)ev=ev.filter(e=>!gone.has(e))}
+      /* v5.05 object over the keys: ≥ 4 bar-less notes, overlapping in time, each ≤ 3 semitones from the next, all the same colour (± 12°) = one object
+         (hand, light beam, effect) lit across neighbouring keys – real notes in a bar video come with bars. Training set (12 new hand videos): 98 of 138 ghosts gone, 0 real notes lost;
+         YouTube-Test / old Prüfstand: nothing changes; real video with filmed hands (_mwgDFm2yIU): 32 skin-coloured notes gone. */
+      {const L=ev.filter(e=>!e.bar&&!e.early&&e.hue!=null),par=L.map((_,i)=>i),fd=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i};
+        for(let a=0;a<L.length;a++)for(let b=a+1;b<L.length;b++){const A=L[a],B=L[b];if(Math.abs(A.m-B.m)<=3&&A.start<B.end&&B.start<A.end&&hueDist(A.hue,B.hue)<=12)par[fd(a)]=fd(b)}
+        const cnt=new Map();L.forEach((_,i)=>{const r=fd(i);cnt.set(r,(cnt.get(r)||0)+1)});const drop=new Set(L.filter((_,i)=>cnt.get(fd(i))>=4));if(drop.size)ev=ev.filter(e=>!drop.has(e))}
+      /* v5.05 end card: a bar-less note ≥ 2 s that lasts until the end of reading and whose colour is none of the song's colours (> 30° from every hue
+         held by ≥ 10 % of the bar notes) is a YouTube end card / overlay, not a held final chord (those come with bars or in the song's colour).
+         Training sets: 23 ghosts gone, 0 real notes lost; real runs: end card rpVvU3rN5Z8, overlay MRqlO8Bm2B0. */
+      {const hb=new Array(36).fill(0);let nb=0;for(const e of ev)if(e.bar&&e.hue!=null){hb[Math.floor(e.hue/10)%36]++;nb++}
+        const major=[];for(let k=0;k<36;k++)if(nb&&hb[k]+hb[(k+35)%36]+hb[(k+1)%36]>=0.1*nb)major.push(k*10+5);
+        if(major.length){const endT=Math.max(...ev.map(e=>e.end));ev=ev.filter(e=>e.bar||e.early||e.hue==null||e.end-e.start<2||e.end<endT-0.15||major.some(h=>hueDist(h,e.hue)<=30))}}}}  // also drops short bar-less notes that start together with such an overlay (e.g. the last 'B' of an end screen)
   // v4.64: very short notes (one video frame lit) – real when the key's own bar arrived exactly then (Golden Hour: fast F#4 in the G#/F# figure was lost)
   if(SCAN.lane&&SCAN.barDelay!=null&&raw.single&&raw.single.length){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay,add=[];
     const first=ev.length?ev[0].start:0,lastE=ev.length?Math.max(...ev.map(e=>e.end)):0;
