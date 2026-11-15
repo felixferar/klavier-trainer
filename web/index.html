@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.08</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.09</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -868,7 +868,7 @@ body.short #onbDots{margin:8px 0}
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.6.0';
+  const VERSION = '0.7.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -879,6 +879,7 @@ body.short #onbDots{margin:8px 0}
     REPEAT_MIN: 0.07,        // gleiche Taste, gleicher Finger: schneller ist unmöglich
     SAME_FINGER_MIN: 0.10,   // gleicher Finger auf andere Taste: Grundzeit …
     SAME_FINGER_PER_ST: 0.005, // … plus je Halbton
+    NO_PAUSE: 0.3,           // v0.7: Lücke zwischen Loslassen und nächstem Anschlag, ab der die Hand neu ansetzen kann
     SHIFT_MIN: 0.15,         // Lagenwechsel (Hand springt): Grundzeit …
     SHIFT_PER_ST: 0.01,      // … plus je Halbton über der bequemen Spanne
     HELD_OVERLAP: 0.15,      // vorige Note klingt mind. so lange weiter …
@@ -900,6 +901,7 @@ body.short #onbDots{margin:8px 0}
     SAME_STEP: 8.0,          // v0.5: derselbe Finger auf zwei Tasten ≤ STEP_MAX auseinander, direkt nacheinander (immer, auch nach langen Tönen).
                              // Anlass: Flaggen 15.11. (F1→E1, D1→C1, F4→A4) – Rutschen soll teurer sein als sauberes Über-/Untersetzen.
     STEP_MAX: 4,
+    REPEAT_CHANGE: 6.0,      // v0.7: Tonwiederholung mit Fingerwechsel (Flagge 15.11. F3→F2) – im Stil einfach bleibt man auf dem Finger
     LONG: 1.0,               // langer Ton (Sekunden)
     LAND_LONG: 0.5,          // Versetzen auf einen langen Ton ist etwas günstiger als mitten in der Phrase
   };
@@ -936,6 +938,7 @@ body.short #onbDots{margin:8px 0}
     // gleicher Finger
     SAME_FINGER: 4.0,        // gleicher Finger kurz hintereinander auf verschiedenen Tasten
     SAME_FINGER_PER_ST: 0.2,
+    NO_PAUSE_SAME: 25.0,     // v0.7: derselbe Finger auf zwei verschiedenen Tasten OHNE Pause (Lücke < NO_PAUSE) – praktisch verboten, jeder Abstand, jeder Stil (Flagge 15.11. A3→D3)
     REPEAT_SAME_FAST: 1.0,   // schnelle Tonwiederholung mit demselben Finger
     REPEAT_CHANGE_FAST: 0.25, // Tonwiederholung mit Fingerwechsel, schnell (sinnvoll)
     REPEAT_CHANGE_SLOW: 2.0, // Tonwiederholung mit Fingerwechsel, langsam (meist unnötig)
@@ -1061,6 +1064,7 @@ body.short #onbDots{margin:8px 0}
       if (held) return impossible('held-same', 'derselbe Finger müsste zwei Tasten gleichzeitig halten');
       const need = T.SAME_FINGER_MIN + T.SAME_FINGER_PER_ST * ad;
       if (ioi < need) return impossible('same-too-fast', `derselbe Finger schafft ${ht(ad)} nicht in ${fmt(ioi * 1000)} ms`);
+      if (b.start - (a.start + a.dur) < T.NO_PAUSE) add(K.NO_PAUSE_SAME, 'same-no-pause', `Finger ${f} müsste ohne Pause von einer Taste auf die andere – nie`);
       if (MODE.easy && ioi >= EASY.SLOW) { add(EASY.SAME_SLOW + K.SAME_FINGER_PER_ST * ad, 'same-finger', `Finger ${f} rückt in Ruhe weiter (Hand versetzen)`); if (a.inPos && b.inPos) add(K.CROSS_NEEDLESS, 'shift-needless', 'Versetzen unnötig – die Töne ringsum passen in eine Handlage'); }
       else add(K.SAME_FINGER + K.SAME_FINGER_PER_ST * ad, 'same-finger', `derselbe Finger direkt nacheinander auf zwei Tasten`);
       if (MODE.easy && ad <= EASY.STEP_MAX) add(EASY.SAME_STEP, 'same-step', `Finger ${f} spielt zwei Nachbartasten direkt nacheinander – lieber über-/untersetzen`);
@@ -1071,6 +1075,7 @@ body.short #onbDots{margin:8px 0}
     if (d === 0) {
       if (ioi < T.FAST_IOI) add(K.REPEAT_CHANGE_FAST, 'repeat-change', 'schnelle Tonwiederholung mit Fingerwechsel');
       else add(K.REPEAT_CHANGE_SLOW, 'repeat-change', 'Fingerwechsel auf derselben Taste (langsam, meist unnötig)');
+      if (MODE.easy) add(EASY.REPEAT_CHANGE, 'repeat-change-easy', 'gleiche Taste nochmal – auf demselben Finger bleiben');
       return c;
     }
 
@@ -1964,7 +1969,7 @@ body.short #onbDots{margin:8px 0}
     HOLD_BREAK: 3.0,         // gehaltener Ton müsste zu früh losgelassen werden, obwohl er sich halten ließe
     CHORD_SAME_FINGER: 1.0,  // beim Griffwechsel rückt derselbe Finger weiter (statt 4 Punkte wie in einer Melodie)
     HAND_MOVE: 0.5,          // je Halbton, den die Handlage beim Griffwechsel wandert (über 2 Halbtöne)
-    NONSTD: 2.0,             // v0.6: Griff weicht vom üblichen Griff seiner Form ab (STD_GRIPS) → einheitlicher Stil über alle Songs
+    NONSTD: 4.0,             // v0.6: Griff weicht vom üblichen Griff seiner Form ab (STD_GRIPS) → einheitlicher Stil über alle Songs
     ROLL: 30.0,              // Akkord ist für die Hand zu weit: wird gebrochen (unvermeidbar, steht in der Meldung)
   };
   const NATP = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7 };
@@ -1972,7 +1977,7 @@ body.short #onbDots{margin:8px 0}
   // Schlüssel = Abstände von unten nach oben in gespiegelter Tonhöhe (rechts = echte Tonhöhe), Wert = Finger von unten nach oben.
   // Rechts: Grundstellung 1-3-5, 1. Umkehrung 1-2-5, 2. Umkehrung 1-3-5, Oktave/Quinte/Sexte 1-5, Vierklang mit Oktave 1-2-3-5.
   // Links ergibt die Spiegelung automatisch 5-3-1, 5-3-1 (1. Umk.), 5-2-1 (2. Umk.), 5-1, 5-3-2-1 – die Tabellen passen zusammen.
-  const STD_GRIPS = { '12': '15', '7': '15', '8': '15', '9': '15', '10': '15', '11': '15',
+  const STD_GRIPS = { '5': '25', '12': '15', '7': '15', '8': '15', '9': '15', '10': '15', '11': '15',
     '3,4': '135', '4,3': '135', '3,5': '125', '4,5': '125', '5,3': '135', '5,4': '135',
     '4,3,5': '1235', '3,4,5': '1235', '5,3,4': '1235', '5,4,3': '1235' };
   const T_GROUP = 0.05;      // Anschläge so nah beieinander = ein Griff (Video-Akkorde streuen 40–80 ms)
@@ -2036,7 +2041,7 @@ body.short #onbDots{margin:8px 0}
     for (const [i, j] of pairs) {
       let v = trans(A.notes[i], B.notes[j], FA[i], FB[j], P);
       if (v === INF) { if (det) trans(A.notes[i], B.notes[j], FA[i], FB[j], P, det); return INF; }
-      if (B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // v0.6: in einen Griff hinein setzt man die Hand neu auf – Weiterrücken erlaubt; aus einem Griff heraus nicht   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
+      if (B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi && (A.k > 1 || B.start - (A.notes[i].start + A.notes[i].dur) >= T.NO_PAUSE)) v = Math.min(v, KC.CHORD_SAME_FINGER);   // v0.7: Akkord→Akkord = ganze Hand verschiebt sich (erlaubt); Einzelton→Akkord nur mit Pause   // v0.6: in einen Griff hinein setzt man die Hand neu auf – Weiterrücken erlaubt; aus einem Griff heraus nicht   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
       cs.push(v);
     }
     const pos = (G2, F2) => G2.notes.reduce((t, nt, i) => t + nt.midi - NATP[F2[i]], 0) / G2.k;
@@ -2048,6 +2053,7 @@ body.short #onbDots{margin:8px 0}
       if (FA[i] !== FB[j] || A.notes[i].midi === B.notes[j].midi) continue;
       const gap = B.start - A.notes[i].start, d = Math.abs(B.notes[j].midi - A.notes[i].midi);
       if (gap < T.SAME_FINGER_MIN + T.SAME_FINGER_PER_ST * d) { if (det) det.push({ p: INF, code: 'same-too-fast', txt: `Finger ${FA[i]} schafft den Griffwechsel nicht in ${fmt(gap * 1000)} ms` }); return INF; }
+      if ((A.k === 1 || B.k === 1) && B.start - (A.notes[i].start + A.notes[i].dur) < T.NO_PAUSE) { c += K.NO_PAUSE_SAME; if (det) det.push({ p: K.NO_PAUSE_SAME, code: 'same-no-pause', txt: `Finger ${FA[i]} müsste ohne Pause auf eine andere Taste` }); }
     }
     // gehaltene Töne aus A, die beim Anschlag von B noch klingen: Finger muss frei bleiben
     let hold = 0;
@@ -2184,12 +2190,15 @@ body.short #onbDots{margin:8px 0}
     // v0.5: Einzeltöne direkt vor/nach einem Akkord sehen in der Linie nur dessen Ankerton. Damit derselbe Finger nicht von
     // einem anderen Akkordton (z. B. Daumen oben im Akkord) auf die Nachbartaste rutscht, bekommen sie diese Kosten vorab.
     const lineExtra = {};
-    if (MODE.easy) groups.forEach((g, i) => {
+    groups.forEach((g, i) => {
       if (g.k !== 1) return;
       const b = g.notes[0], add = [0, 0, 0, 0, 0];
-      for (const j of [i - 1]) {   // v0.6: nur nach einem Akkord (aus dem Griff heraus); vor einem Akkord setzt man die Hand auf den Griff
+      for (const j of [i - 1, i + 1]) {   // v0.7: vor und nach einem Akkord
         const G = groups[j]; if (!G || G.k < 2) continue;
-        G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (dd > 0 && dd <= EASY.STEP_MAX) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
+        G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (!dd) return;
+          const [x, y] = j < i ? [c, b] : [b, c], gap = y.start - (x.start + x.dur);
+          if (gap < T.NO_PAUSE) add[chordF[j][q] - 1] += K.NO_PAUSE_SAME;
+          else if (MODE.easy && dd <= EASY.STEP_MAX && j < i) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
       }
       if (add.some(Boolean)) lineExtra[i] = add;
     });
@@ -2229,16 +2238,23 @@ body.short #onbDots{margin:8px 0}
           if (Fs[i].join('') === key) continue;
           if (groups[i].notes.some(nt => fixedBySrc[nt.src])) { ok = false; break; }
           const sh = chordShape(groups[i], F, P); if (!sh.ok) { ok = false; break; }
-          const before = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], F, P) : 0), after = (i < groups.length - 1 ? chordTrans(groups[i], F, groups[i + 1], Fs[i + 1], P) : 0);
-          const old = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], Fs[i], P) : 0) + (i < groups.length - 1 ? chordTrans(groups[i], Fs[i], groups[i + 1], Fs[i + 1], P) : 0) + chordShape(groups[i], Fs[i], P).c;
-          if (before === INF || after === INF || before + after + sh.c - old > 4) { ok = false; break; }
-          // v0.5: Angleichen darf keinen Einzelton daneben zum Rutschen zwingen (derselbe Finger auf der Nachbartaste)
-          if (MODE.easy && [i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false;   /* v0.6: nur der Einzelton NACH dem Griff */ const nb = G.notes[0], fn = fingers[nb.src];
-            return groups[i].notes.some((c, q) => F[q] === fn && c.midi !== nb.midi && Math.abs(c.midi - nb.midi) <= EASY.STEP_MAX); })) { ok = false; break; }
+          // v0.7: Fenster um den Akkord neu bewerten; Einzeltöne direkt davor/danach dürfen dafür einen anderen Finger bekommen
+          // (sonst würde die Regel „nie gleicher Finger ohne Pause“ den üblichen Griff verhindern)
+          const Fn = Fs.slice(); Fn[i] = F; const refit = {};
+          const win = (FF, a, b) => { let t = 0; for (let k = Math.max(1, a); k <= Math.min(groups.length - 1, b); k++) { const v = chordTrans(groups[k - 1], FF[k - 1], groups[k], FF[k], P); if (v === INF) return INF; t += v; } return t; };
+          for (const j of [i - 1, i + 1]) {
+            const G = groups[j]; if (!G || G.k !== 1 || fixedBySrc[G.notes[0].src]) continue;
+            let best = Fn[j][0], bc = win(Fn, j, j + 1);
+            for (let g = 1; g <= 5; g++) { const T2 = Fn.slice(); T2[j] = [g]; const v = win(T2, j, j + 1); if (v < bc - 1e-9) { bc = v; best = g; } }
+            if (best !== Fn[j][0]) { Fn[j] = [best]; refit[j] = best; }
+          }
+          const oldC = win(Fs, i - 1, i + 2), newC = win(Fn, i - 1, i + 2);
+          if (newC === INF || newC + sh.c - oldC - chordShape(groups[i], Fs[i], P).c > 4) { ok = false; break; }
+          for (const j in refit) changes.push(['single', +j, refit[j]]);
           changes.push(i);
         }
         if (!ok) continue;
-        for (const i of changes) groups[i].notes.forEach((nt, j) => { fingers[nt.src] = F[j]; });
+        for (const i of changes) { if (Array.isArray(i)) { const nt = groups[i[1]].notes[0]; fingers[nt.src] = i[2]; continue; } groups[i].notes.forEach((nt, j) => { fingers[nt.src] = F[j]; }); }
         idx.forEach(i => groups[i].notes.forEach(nt => { if (status[nt.src] === 'akkord') status[nt.src] = 'akkord-wiederholung'; }));
         chordRepeats.push({ chord: groups[idx[0]].notes.map(x => nameOf(x.o)).join('–'), times: idx.length, fingers: F.join('-') });
         done = true; break;
@@ -2937,9 +2953,11 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
   for(let m=lo;m<=hi;m++){const k=MEM.pos[m];if(!k||!k.b)continue;const fs=Math.min(9,Math.max(6,k.w*0.42));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(255,255,255,.75)';c.fillText(NAMES[m%12],k.x+k.w/2,hn+kb*0.6-5)}
   /* Fingerzahlen (Fingersatz v5.06/5.07) – Beschriftung über der Klaviatur, geklemmt an die Kante */
   const findF=!R.done&&(R.mode==='find'||R.mode==='fade'||pv); /* v5.08: Fingerzahlen, solange mit Bildschirm gelernt wird (Mitspielen, Ausblenden, Vorführen) – im Dunkeln (Anker/Hilfe) keine, wie Fingersatz v5.06 */
-  const bar=(m,y0,y1,col,nt)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.6:0.78);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0));y1=Math.min(y1,hn-2);
-    const ft=findF&&nt&&ww>=8&&fingVis(nt),nh=ww>=9&&y1-y0>=13?Math.min(11,Math.max(7,ww*0.42))+2:0,fd=ft&&drawFinger(c,nt,k.x+k.w/2,y1,y1-y0,ww,nh);
-    if(y1-y0>=13&&ww>=9&&(fd||!ft)){const fs=Math.min(11,Math.max(7,ww*0.42));c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(0,0,0,.72)';c.fillText(NAMES[m%12],k.x+k.w/2,y1-4)}};
+  const bar=(m,y0,y1,col,nt)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.6:0.78);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0));
+    /* v5.09: wie im Player – Aufteilung aus der vollen Höhe, klebt über der Tastenkante, bleibt im Balken; Fingerknopf unten, Name darüber */
+    const H0=y1-y0,fs=Math.min(11,Math.max(7,ww*0.42)),ft=findF&&nt&&ww>=8&&fingVis(nt)&&fingD(ww)>=8,fH=ft?fingD(ww)+2:0,nOn=ww>=9&&H0>=fH+fs+4,gH=fH+(nOn?fs+3:0);
+    if(!gH||H0<gH+1)return;const yl=Math.max(Math.min(y1,hn-2),y0+gH+1),used=ft?drawFinger(c,nt,k.x+k.w/2,yl,H0,ww):0;
+    if(nOn){c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(0,0,0,.72)';c.fillText(NAMES[m%12],k.x+k.w/2,yl-used-3)}};
   c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
   if(showJ!=null){for(let q=0;q<R.ns.length;q++)if(R.nj[q]===showJ){const n=R.ns[q],h=R.hit[showJ];if(h&&h.has(n.midi))continue;bar(n.midi,hn-4-Math.min(hn*0.6,Math.max(30,n.dur*hn/3)),hn-4,noteCol(n),n)}} /* nur dieser Anschlag, ruhig über den Tasten */
   else if(fall){const pps=hn/3,Y=s=>hn-4-(s-t)*pps;
@@ -3507,11 +3525,11 @@ function fingSong(s){if(!s||!s.notes||!window.Fingering||S.fingers===false)retur
 function fingFs(w){return Math.min(13,Math.max(9,w*0.5))}
 /* v5.06: "Nur Orientierung" (Standard): Zahl nur an Phrasenanfang, Kreuzen, Lagenwechsel, gleichem Finger auf neuer Taste, Akkord-Anker, Vorgaben (n.fingCue). S.fingShow='alle' = jede Note. */
 function fingVis(n){return S.fingers!==false&&!!n&&!!n.fing&&(S.fingShow!=='orient'||!!n.fingCue)} /* v5.07: Standard = jeder Ton (Wunsch des Nutzers: genau lernen); 'orient' nur per Schalter */
-function drawFinger(c,n,cx,yb,h,w,nameH){if(!fingVis(n))return false;const tag=(n.fingH&&n.fingH!==n.hand?n.fingH:'')+n.fing,fs=fingFs(w);
-  if(h<fs+4+(nameH||0))return false;
-  c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.textBaseline='alphabetic';const y=yb-3-(nameH||0)-1;
-  c.fillStyle='rgba(255,255,255,.92)';const rw=Math.max(fs*0.95,c.measureText(tag).width+5);rrect(c,cx-rw/2,y-fs,rw,fs+2,4);c.fill();c.fillStyle='rgba(7,9,13,.9)';
-  c.fillText(tag,cx,y);c.textAlign='left';return true}
+/* v5.09: Fingerzahl als runder Knopf UNTEN am Balken (Notenname steht darüber). yb = Unterkante, gibt die belegte Höhe zurück (0 = nichts gezeichnet). */
+function fingD(w){return Math.min(w-2,fingFs(w)+4)}
+function drawFinger(c,n,cx,yb,h,w){if(!fingVis(n))return 0;const fs=fingFs(w),d=fingD(w);if(d<8||h<d+3)return 0;const tag=(n.fingH&&n.fingH!==n.hand?n.fingH:'')+n.fing,cy=yb-2-d/2;
+  c.beginPath();c.arc(cx,cy,d/2,0,Math.PI*2);c.fillStyle='rgba(255,255,255,.95)';c.fill();c.lineWidth=1;c.strokeStyle='rgba(0,0,0,.28)';c.stroke();
+  c.font=`800 ${tag.length>1?fs-2:fs}px Inter,system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillStyle='rgba(7,9,13,.92)';c.fillText(tag,cx,cy+0.5);c.textBaseline='alphabetic';c.textAlign='left';return d+2}
 /* v5.03: Fingersatz-Flagge ⚑ im Player. Markiert die aktuelle Stelle (nochmal drücken in ±0,6 s = weg) und schickt sie wie die Vergleichs-Flaggen
    automatisch ins private Archiv (diag/fingerflags/…): Zeit, alle Töne ±3 s mit Hand, Finger, "offen" und der Begründung der App; dazu ein Bildschirmfoto. */
 const FF_NN=['C','Cis','D','Es','E','F','Fis','G','As','A','B','H'];let FF_T=null;
@@ -3520,7 +3538,7 @@ function ffItem(){try{return LIB.find(x=>x.id===songId)||{}}catch(e){return {}}}
 function ffInfo(){const it=ffItem(),fl=ffGet(),why=n=>{try{const r=song._fingR&&song._fingR[n.fingH];return r&&n._fk!=null?r.explain(n._fk):''}catch(e){return ''}};
   const near=T=>song.notes.filter(n=>n.start>=T-3&&n.start<=T+3).sort((a,b)=>a.start-b.start||a.midi-b.midi)
     .map(n=>({m:n.midi,name:FF_NN[n.midi%12]+(Math.floor(n.midi/12)-1),s:+n.start.toFixed(3),d:+n.dur.toFixed(3),hand:n.hand||'',fh:n.fingH||'',f:n.fing||null,open:!!n.fingOpen,why:why(n)}));
-  return {kind:'fingerflags',v:'5.07',zeigen:S.fingShow==='orient'?'orient':'alle',modul:window.Fingering?Fingering.VERSION:'',profil:'meine',stil:S.fingStyle==='lehrbuch'?'lehrbuch':'einfach',ts:new Date().toISOString(),title:song.title||it.title||'',videoId:it.videoId||it.fromYT||'',itemId:songId,
+  return {kind:'fingerflags',v:'5.09',zeigen:S.fingShow==='orient'?'orient':'alle',modul:window.Fingering?Fingering.VERSION:'',profil:'meine',stil:S.fingStyle==='lehrbuch'?'lehrbuch':'einfach',ts:new Date().toISOString(),title:song.title||it.title||'',videoId:it.videoId||it.fromYT||'',itemId:songId,
     flags:fl.map(T=>({T,near:near(T)}))}}
 function ffSync(){if(!ghTok()||!song)return;clearTimeout(FF_T);FF_T=setTimeout(async()=>{try{fingSong(song);const info=ffInfo(),ts=info.ts.replace(/[:.]/g,'-').slice(0,19),vid=(info.videoId||info.itemId||'song').toString().replace(/[^\w-]/g,'_');
   const r=await ghUpload(`diag/fingerflags/${ts}_${vid}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Fingersatz-Flaggen '+vid+' ('+info.flags.length+')');
@@ -3658,10 +3676,12 @@ function draw(waiting,now=performance.now()){
     if(k.b){ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;rrect(ctx,x,yt,w,h,r);ctx.stroke()}
     if(awaiting&&awaiting.notes.includes(n)&&!n.hit&&T>=awaiting.start-0.4){ctx.globalAlpha=1;ctx.strokeStyle='#fff';ctx.lineWidth=2;rrect(ctx,x,yt,w,h,r);ctx.stroke()}
     /* v5.06: Beschriftung an der SICHTBAREN Unterkante (über der Klaviatur-Linie hitY), Platz = sichtbare Höhe */
-    const yv=Math.min(yb,hitY-2),hv=yv-Math.max(yt,0);
-    const fOn=act&&w>=9&&fingVis(n),nfs=Math.min(15,Math.max(10,w*0.55)),both=hv>=fingFs(w)+4+nfs+4;
-    if(S.names&&w>=11&&hv>15&&act&&(!fOn||both)){ctx.globalAlpha=n.hit?0.4:1;const fs=nfs;drawNoteLabel(ctx,n.midi,x+w/2,yv-4,fs,isBlack(n.midi)?'#fff':'rgba(7,9,13,.88)',isBlack(n.midi)?'rgba(255,255,255,.6)':'rgba(7,9,13,.45)');ctx.textAlign='left'}
-    if(fOn){ctx.globalAlpha=n.hit?0.4:1;drawFinger(ctx,n,x+w/2,yv,hv,w,S.names&&w>=11&&both?nfs+2:0)} /* v5.03: zu kurz für beides → nur die Fingerzahl */
+    /* v5.09: Aufteilung aus der VOLLEN Balkenhöhe (springt nicht, wenn der Balken oben hereinkommt oder in die Klaviatur läuft);
+       Position klebt über der Klaviatur-Linie, bleibt aber im Balken (läuft mit dessen Oberkante unter die Tasten). Unten Fingerknopf, darüber der Name. */
+    const fOn=act&&w>=9&&fingVis(n)&&fingD(w)>=8,nfs=Math.min(15,Math.max(10,w*0.55)),fH=fOn?fingD(w)+2:0,nOn=S.names&&w>=11&&act&&h>=fH+nfs+4,gH=fH+(nOn?nfs+3:0);
+    if(gH&&h>=gH+1){const yl=Math.max(Math.min(yb,hitY-2),yt+gH+1);ctx.globalAlpha=n.hit?0.4:1;
+      const used=fOn?drawFinger(ctx,n,x+w/2,yl,h,w):0;
+      if(nOn)drawNoteLabel(ctx,n.midi,x+w/2,yl-used-3,nfs,isBlack(n.midi)?'#fff':'rgba(7,9,13,.88)',isBlack(n.midi)?'rgba(255,255,255,.6)':'rgba(7,9,13,.45)');ctx.textAlign='left'}
     ctx.globalAlpha=1;
   }
   ctx.restore();
@@ -4253,7 +4273,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.08 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.09 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

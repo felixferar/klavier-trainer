@@ -1,6 +1,6 @@
 """v5.03: Fingersatz in der App.
 usage: python3 tools/bench/fingertest.py [APP.html]   (Standard: web/index.html)
- 1. Seite lädt ohne pageerror; eingebettetes Modul = tools/fingering/fingering.js (Version 0.6.0).
+ 1. Seite lädt ohne pageerror; eingebettetes Modul = tools/fingering/fingering.js (Version 0.7.0).
  2. Song mit Händen: rechts C-Dur-Tonleiter → 1 2 3 1 2 3 4 5, links Akkord C3-E3-G3 → 5 3 1 (tief→hoch).
  3. Einfarbiger Song (alle Töne "R", Bass tief): Bass bekommt die linke Hand (fingH = L), Melodie rechts.
  4. Abspielen zeichnet mit Fingerzahlen ohne Fehler; Schalter "Fingersatz" aus → keine Rechnung, kein Fehler.
@@ -49,15 +49,15 @@ JS_ORIENT = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Orient',artist:'x
 JS_EDGE = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Kante',artist:'x',data:b64FromBuf(writeMidi(ns))});
  const it=mk([{m:69,start:0,dur:2.0,hand:'R'},{m:71,start:2.2,dur:0.5,hand:'R'}],'ed');LIB.push(it);const s=songForItem(it);openSong(s,it.id);
  S.names=true;S.fingShow='alle';const log=[];const dF=drawFinger,dN=drawNoteLabel;
- drawFinger=function(c,n,cx,yb,h,w,nameH){const r=dF.apply(this,arguments);if(r){const fs=fingFs(w),y=yb-3-(nameH||0)-1;log.push({k:'F',top:y-fs,bot:y+2})}return r};
- drawNoteLabel=function(c,m,x,y,fs){log.push({k:'N',top:y-fs*0.8,bot:y+fs*0.25});return dN.apply(this,arguments)};
- const out=[];for(const T of [-0.5,0,0.5,1.2]){log.length=0;t=T;draw();out.push({T,hitY,H,items:log.slice()})}
+ drawFinger=function(c,n,cx,yb,h,w){const r=dF.apply(this,arguments);if(r){log.push({k:'F',top:yb-r,bot:yb-2})}return r};
+ drawNoteLabel=function(c,m,x,y,fs){log.push({k:'N',top:y-fs*0.8,bot:y+1})   /* Notennamen haben keine Unterlängen (C…H, Cis, Es) */;return dN.apply(this,arguments)};
+ const out=[];for(const T of [-S.look+0.25,-S.look+0.6,-0.5,0,0.5,1.2]){log.length=0;t=T;draw();out.push({T,hitY,H,items:log.slice()})}
  drawFinger=dF;drawNoteLabel=dN;delete S.fingShow;return out}"""
 JS_FLOW = r"""()=>{let cnt=0;const dF=drawFinger;drawFinger=function(){const r=dF.apply(this,arguments);if(r)cnt++;return r};
  const LH=[48,43,45,41],notes=[];let tt=0;for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:tt,dur:1.9,hand:'L'});[72,74,76,77].forEach((m,q)=>notes.push({m:m+(bar%2?-5:0),start:tt+q*0.5,dur:0.45,hand:'R'}));tt+=2}
  const it={id:'fl',type:'midi',title:'Fluss',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB.push(it);localStorage.removeItem('kt_mem');
  openMem(it);const o={};awStart({k:0,mode:'find'});let R=MEM.run;o.mode1=R.mode;R.vt=MEM.gs[R.a].start-0.2;cnt=0;awDraw();o.find=cnt;o.st1=R.drawState;
- S.fingShow='alle';const ys=[];const dF2=drawFinger;drawFinger=function(c,n,cx,yb,h,w,nameH){const r=dF2.apply(this,arguments);if(r)ys.push(yb-3-(nameH||0)-1+2);return r};
+ S.fingShow='alle';const ys=[];const dF2=drawFinger;drawFinger=function(c,n,cx,yb,h,w){const r=dF2.apply(this,arguments);if(r&&yb-r<MEM.hn-r)ys.push(yb-2);return r};
  R.vt=MEM.gs[R.a].start+0.3;awDraw();o.awBottom=ys.length?Math.max(...ys):null;o.awHn=MEM.hn;drawFinger=dF2;delete S.fingShow;
  awStart({k:0,mode:'head'});R=MEM.run;o.mode2=R.mode;o.dark=!!R.dark;cnt=0;awDraw();o.recall=cnt;o.st2=R.drawState;
  R.anchor=false;R.show=R.pos;cnt=0;awDraw();o.hint=cnt;o.st3=R.drawState;drawFinger=dF;try{memStop()}catch(e){}return o}"""
@@ -90,13 +90,18 @@ async def main():
             for a in F_:
                 for b in N_:
                     if a['bot'] > b['top'] + 0.5 and b['bot'] > a['top'] + 0.5: edge_ok = False
+        offs = []
+        for fr in ed:
+            it = fr['items']; prs = [(it[k], it[k + 1]) for k in range(len(it) - 1) if it[k]['k'] == 'F' and it[k + 1]['k'] == 'N']
+            offs.append([round(b['top'] - a['top'], 1) for a, b in prs])
+        springt_ok = all(o for o in offs) and len({x for o in offs for x in o}) == 1   # in jedem Bild Knopf + Name, immer gleicher Abstand
         print('Kante:', json.dumps([(fr['T'], round(fr['hitY']), [(x['k'], round(x['top']), round(x['bot'])) for x in fr['items']]) for fr in ed]))
         fw = await pg.evaluate(JS_FLOW); print('Auswendig:', fw)
         m = await pg.evaluate(JS_MEM); await pg.wait_for_timeout(800)
         m2 = await pg.evaluate(JS_MEM2)
         inline = r.pop('inline'); body = re.sub(r'^/\* FINGERING-BEGIN[^\n]*\n', '', inline); body = re.sub(r'\n/\* FINGERING-END \*/$', '', body)
         checks = {
-            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.6.0',
+            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.7.0',
             'rechts_tonleiter_12312345': r['rh'] == '12312345', 'links_akkord_531': r['lh'] == '531' and r['lhH'] == 'LLL',
             'einfarbig_bass_links': r['bassH'] == 'L' and r['melH'] == 'R', 'schalter_aus': r['offNoCalc'],
             'flagge_rot': f1['red'] != '', 'flagge_upload': f2['n'] == 1 and (f2['path'] or '').startswith('diag/fingerflags/') and fi.get('kind') == 'fingerflags',
@@ -105,6 +110,7 @@ async def main():
             'stil_standard_einfach': st['def'] == 'einfach' and all(st['einfach'][k] != st['einfach'][k - 1] for k in range(1, len(st['einfach']))),   # kein Rutschen (gleicher Finger auf Nachbartasten) 'stil_lehrbuch_anders': st['lehrbuch'] != st['einfach'],
             'standard_jeder_ton': orr['std'] == 5, 'orientierung_nur_erste': orr['orient'] == 1 and orr['alle'] == 5,
             'kante_ueber_klaviatur_kein_ueberlappen': edge_ok and any(fr['items'] for fr in ed),
+            'beschriftung_springt_nicht': springt_ok,
             'auswendig_finden_zeigt_zahlen': fw['mode1'] == 'find' and fw['find'] >= 1,
             'auswendig_aus_dem_kopf_keine_zahlen': fw['mode2'] == 'head' and fw['dark'] and fw['recall'] == 0 and fw['hint'] == 0,
             'auswendig_zahl_ueber_klaviatur': fw['awBottom'] is not None and fw['awBottom'] <= fw['awHn'],

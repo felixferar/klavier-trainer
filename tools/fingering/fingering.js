@@ -20,7 +20,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.6.0';
+  const VERSION = '0.7.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -31,6 +31,7 @@
     REPEAT_MIN: 0.07,        // gleiche Taste, gleicher Finger: schneller ist unmöglich
     SAME_FINGER_MIN: 0.10,   // gleicher Finger auf andere Taste: Grundzeit …
     SAME_FINGER_PER_ST: 0.005, // … plus je Halbton
+    NO_PAUSE: 0.3,           // v0.7: Lücke zwischen Loslassen und nächstem Anschlag, ab der die Hand neu ansetzen kann
     SHIFT_MIN: 0.15,         // Lagenwechsel (Hand springt): Grundzeit …
     SHIFT_PER_ST: 0.01,      // … plus je Halbton über der bequemen Spanne
     HELD_OVERLAP: 0.15,      // vorige Note klingt mind. so lange weiter …
@@ -52,6 +53,7 @@
     SAME_STEP: 8.0,          // v0.5: derselbe Finger auf zwei Tasten ≤ STEP_MAX auseinander, direkt nacheinander (immer, auch nach langen Tönen).
                              // Anlass: Flaggen 15.11. (F1→E1, D1→C1, F4→A4) – Rutschen soll teurer sein als sauberes Über-/Untersetzen.
     STEP_MAX: 4,
+    REPEAT_CHANGE: 6.0,      // v0.7: Tonwiederholung mit Fingerwechsel (Flagge 15.11. F3→F2) – im Stil einfach bleibt man auf dem Finger
     LONG: 1.0,               // langer Ton (Sekunden)
     LAND_LONG: 0.5,          // Versetzen auf einen langen Ton ist etwas günstiger als mitten in der Phrase
   };
@@ -88,6 +90,7 @@
     // gleicher Finger
     SAME_FINGER: 4.0,        // gleicher Finger kurz hintereinander auf verschiedenen Tasten
     SAME_FINGER_PER_ST: 0.2,
+    NO_PAUSE_SAME: 25.0,     // v0.7: derselbe Finger auf zwei verschiedenen Tasten OHNE Pause (Lücke < NO_PAUSE) – praktisch verboten, jeder Abstand, jeder Stil (Flagge 15.11. A3→D3)
     REPEAT_SAME_FAST: 1.0,   // schnelle Tonwiederholung mit demselben Finger
     REPEAT_CHANGE_FAST: 0.25, // Tonwiederholung mit Fingerwechsel, schnell (sinnvoll)
     REPEAT_CHANGE_SLOW: 2.0, // Tonwiederholung mit Fingerwechsel, langsam (meist unnötig)
@@ -213,6 +216,7 @@
       if (held) return impossible('held-same', 'derselbe Finger müsste zwei Tasten gleichzeitig halten');
       const need = T.SAME_FINGER_MIN + T.SAME_FINGER_PER_ST * ad;
       if (ioi < need) return impossible('same-too-fast', `derselbe Finger schafft ${ht(ad)} nicht in ${fmt(ioi * 1000)} ms`);
+      if (b.start - (a.start + a.dur) < T.NO_PAUSE) add(K.NO_PAUSE_SAME, 'same-no-pause', `Finger ${f} müsste ohne Pause von einer Taste auf die andere – nie`);
       if (MODE.easy && ioi >= EASY.SLOW) { add(EASY.SAME_SLOW + K.SAME_FINGER_PER_ST * ad, 'same-finger', `Finger ${f} rückt in Ruhe weiter (Hand versetzen)`); if (a.inPos && b.inPos) add(K.CROSS_NEEDLESS, 'shift-needless', 'Versetzen unnötig – die Töne ringsum passen in eine Handlage'); }
       else add(K.SAME_FINGER + K.SAME_FINGER_PER_ST * ad, 'same-finger', `derselbe Finger direkt nacheinander auf zwei Tasten`);
       if (MODE.easy && ad <= EASY.STEP_MAX) add(EASY.SAME_STEP, 'same-step', `Finger ${f} spielt zwei Nachbartasten direkt nacheinander – lieber über-/untersetzen`);
@@ -223,6 +227,7 @@
     if (d === 0) {
       if (ioi < T.FAST_IOI) add(K.REPEAT_CHANGE_FAST, 'repeat-change', 'schnelle Tonwiederholung mit Fingerwechsel');
       else add(K.REPEAT_CHANGE_SLOW, 'repeat-change', 'Fingerwechsel auf derselben Taste (langsam, meist unnötig)');
+      if (MODE.easy) add(EASY.REPEAT_CHANGE, 'repeat-change-easy', 'gleiche Taste nochmal – auf demselben Finger bleiben');
       return c;
     }
 
@@ -1116,7 +1121,7 @@
     HOLD_BREAK: 3.0,         // gehaltener Ton müsste zu früh losgelassen werden, obwohl er sich halten ließe
     CHORD_SAME_FINGER: 1.0,  // beim Griffwechsel rückt derselbe Finger weiter (statt 4 Punkte wie in einer Melodie)
     HAND_MOVE: 0.5,          // je Halbton, den die Handlage beim Griffwechsel wandert (über 2 Halbtöne)
-    NONSTD: 2.0,             // v0.6: Griff weicht vom üblichen Griff seiner Form ab (STD_GRIPS) → einheitlicher Stil über alle Songs
+    NONSTD: 4.0,             // v0.6: Griff weicht vom üblichen Griff seiner Form ab (STD_GRIPS) → einheitlicher Stil über alle Songs
     ROLL: 30.0,              // Akkord ist für die Hand zu weit: wird gebrochen (unvermeidbar, steht in der Meldung)
   };
   const NATP = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7 };
@@ -1124,7 +1129,7 @@
   // Schlüssel = Abstände von unten nach oben in gespiegelter Tonhöhe (rechts = echte Tonhöhe), Wert = Finger von unten nach oben.
   // Rechts: Grundstellung 1-3-5, 1. Umkehrung 1-2-5, 2. Umkehrung 1-3-5, Oktave/Quinte/Sexte 1-5, Vierklang mit Oktave 1-2-3-5.
   // Links ergibt die Spiegelung automatisch 5-3-1, 5-3-1 (1. Umk.), 5-2-1 (2. Umk.), 5-1, 5-3-2-1 – die Tabellen passen zusammen.
-  const STD_GRIPS = { '12': '15', '7': '15', '8': '15', '9': '15', '10': '15', '11': '15',
+  const STD_GRIPS = { '5': '25', '12': '15', '7': '15', '8': '15', '9': '15', '10': '15', '11': '15',
     '3,4': '135', '4,3': '135', '3,5': '125', '4,5': '125', '5,3': '135', '5,4': '135',
     '4,3,5': '1235', '3,4,5': '1235', '5,3,4': '1235', '5,4,3': '1235' };
   const T_GROUP = 0.05;      // Anschläge so nah beieinander = ein Griff (Video-Akkorde streuen 40–80 ms)
@@ -1188,7 +1193,7 @@
     for (const [i, j] of pairs) {
       let v = trans(A.notes[i], B.notes[j], FA[i], FB[j], P);
       if (v === INF) { if (det) trans(A.notes[i], B.notes[j], FA[i], FB[j], P, det); return INF; }
-      if (B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // v0.6: in einen Griff hinein setzt man die Hand neu auf – Weiterrücken erlaubt; aus einem Griff heraus nicht   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
+      if (B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi && (A.k > 1 || B.start - (A.notes[i].start + A.notes[i].dur) >= T.NO_PAUSE)) v = Math.min(v, KC.CHORD_SAME_FINGER);   // v0.7: Akkord→Akkord = ganze Hand verschiebt sich (erlaubt); Einzelton→Akkord nur mit Pause   // v0.6: in einen Griff hinein setzt man die Hand neu auf – Weiterrücken erlaubt; aus einem Griff heraus nicht   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
       cs.push(v);
     }
     const pos = (G2, F2) => G2.notes.reduce((t, nt, i) => t + nt.midi - NATP[F2[i]], 0) / G2.k;
@@ -1200,6 +1205,7 @@
       if (FA[i] !== FB[j] || A.notes[i].midi === B.notes[j].midi) continue;
       const gap = B.start - A.notes[i].start, d = Math.abs(B.notes[j].midi - A.notes[i].midi);
       if (gap < T.SAME_FINGER_MIN + T.SAME_FINGER_PER_ST * d) { if (det) det.push({ p: INF, code: 'same-too-fast', txt: `Finger ${FA[i]} schafft den Griffwechsel nicht in ${fmt(gap * 1000)} ms` }); return INF; }
+      if ((A.k === 1 || B.k === 1) && B.start - (A.notes[i].start + A.notes[i].dur) < T.NO_PAUSE) { c += K.NO_PAUSE_SAME; if (det) det.push({ p: K.NO_PAUSE_SAME, code: 'same-no-pause', txt: `Finger ${FA[i]} müsste ohne Pause auf eine andere Taste` }); }
     }
     // gehaltene Töne aus A, die beim Anschlag von B noch klingen: Finger muss frei bleiben
     let hold = 0;
@@ -1336,12 +1342,15 @@
     // v0.5: Einzeltöne direkt vor/nach einem Akkord sehen in der Linie nur dessen Ankerton. Damit derselbe Finger nicht von
     // einem anderen Akkordton (z. B. Daumen oben im Akkord) auf die Nachbartaste rutscht, bekommen sie diese Kosten vorab.
     const lineExtra = {};
-    if (MODE.easy) groups.forEach((g, i) => {
+    groups.forEach((g, i) => {
       if (g.k !== 1) return;
       const b = g.notes[0], add = [0, 0, 0, 0, 0];
-      for (const j of [i - 1]) {   // v0.6: nur nach einem Akkord (aus dem Griff heraus); vor einem Akkord setzt man die Hand auf den Griff
+      for (const j of [i - 1, i + 1]) {   // v0.7: vor und nach einem Akkord
         const G = groups[j]; if (!G || G.k < 2) continue;
-        G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (dd > 0 && dd <= EASY.STEP_MAX) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
+        G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (!dd) return;
+          const [x, y] = j < i ? [c, b] : [b, c], gap = y.start - (x.start + x.dur);
+          if (gap < T.NO_PAUSE) add[chordF[j][q] - 1] += K.NO_PAUSE_SAME;
+          else if (MODE.easy && dd <= EASY.STEP_MAX && j < i) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
       }
       if (add.some(Boolean)) lineExtra[i] = add;
     });
@@ -1381,16 +1390,23 @@
           if (Fs[i].join('') === key) continue;
           if (groups[i].notes.some(nt => fixedBySrc[nt.src])) { ok = false; break; }
           const sh = chordShape(groups[i], F, P); if (!sh.ok) { ok = false; break; }
-          const before = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], F, P) : 0), after = (i < groups.length - 1 ? chordTrans(groups[i], F, groups[i + 1], Fs[i + 1], P) : 0);
-          const old = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], Fs[i], P) : 0) + (i < groups.length - 1 ? chordTrans(groups[i], Fs[i], groups[i + 1], Fs[i + 1], P) : 0) + chordShape(groups[i], Fs[i], P).c;
-          if (before === INF || after === INF || before + after + sh.c - old > 4) { ok = false; break; }
-          // v0.5: Angleichen darf keinen Einzelton daneben zum Rutschen zwingen (derselbe Finger auf der Nachbartaste)
-          if (MODE.easy && [i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false;   /* v0.6: nur der Einzelton NACH dem Griff */ const nb = G.notes[0], fn = fingers[nb.src];
-            return groups[i].notes.some((c, q) => F[q] === fn && c.midi !== nb.midi && Math.abs(c.midi - nb.midi) <= EASY.STEP_MAX); })) { ok = false; break; }
+          // v0.7: Fenster um den Akkord neu bewerten; Einzeltöne direkt davor/danach dürfen dafür einen anderen Finger bekommen
+          // (sonst würde die Regel „nie gleicher Finger ohne Pause“ den üblichen Griff verhindern)
+          const Fn = Fs.slice(); Fn[i] = F; const refit = {};
+          const win = (FF, a, b) => { let t = 0; for (let k = Math.max(1, a); k <= Math.min(groups.length - 1, b); k++) { const v = chordTrans(groups[k - 1], FF[k - 1], groups[k], FF[k], P); if (v === INF) return INF; t += v; } return t; };
+          for (const j of [i - 1, i + 1]) {
+            const G = groups[j]; if (!G || G.k !== 1 || fixedBySrc[G.notes[0].src]) continue;
+            let best = Fn[j][0], bc = win(Fn, j, j + 1);
+            for (let g = 1; g <= 5; g++) { const T2 = Fn.slice(); T2[j] = [g]; const v = win(T2, j, j + 1); if (v < bc - 1e-9) { bc = v; best = g; } }
+            if (best !== Fn[j][0]) { Fn[j] = [best]; refit[j] = best; }
+          }
+          const oldC = win(Fs, i - 1, i + 2), newC = win(Fn, i - 1, i + 2);
+          if (newC === INF || newC + sh.c - oldC - chordShape(groups[i], Fs[i], P).c > 4) { ok = false; break; }
+          for (const j in refit) changes.push(['single', +j, refit[j]]);
           changes.push(i);
         }
         if (!ok) continue;
-        for (const i of changes) groups[i].notes.forEach((nt, j) => { fingers[nt.src] = F[j]; });
+        for (const i of changes) { if (Array.isArray(i)) { const nt = groups[i[1]].notes[0]; fingers[nt.src] = i[2]; continue; } groups[i].notes.forEach((nt, j) => { fingers[nt.src] = F[j]; }); }
         idx.forEach(i => groups[i].notes.forEach(nt => { if (status[nt.src] === 'akkord') status[nt.src] = 'akkord-wiederholung'; }));
         chordRepeats.push({ chord: groups[idx[0]].notes.map(x => nameOf(x.o)).join('–'), times: idx.length, fingers: F.join('-') });
         done = true; break;

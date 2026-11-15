@@ -28,5 +28,21 @@ check('Fly: spielbar (beide Stile)', !r.violations.length && !F.computeHand(R, {
 // 6) "Nur Orientierung": deutlich weniger Zahlen, und keine Zahl innerhalb einer ruhigen Handlage
 { const vis = r.cue.filter(Boolean).length; check('Fly: Orientierungs-Zahlen höchstens 35 % der Töne', vis <= 0.35 * R.length, `${vis}/${R.length}`);
   const i = find(['A', 'G', 'F', 'E', 'D', 'E', 'F', 'A'])[0]; check('Fly: in der Handlage A-G-F-E-D-E-F-A nur die erste Zahl (falls nötig)', r.cue.slice(i + 1, i + 8).every(c => !c), JSON.stringify(r.cue.slice(i, i + 8))); }
+// 7) Flaggen v5.07 (21,9 / 34,1): nie derselbe Finger auf zwei verschiedenen Tasten ohne Pause (beide Hände, auch Einzelton↔Akkord;
+//    Akkord→Akkord = Hand verschiebt sich, erlaubt), und Tonwiederholung auf demselben Finger (nicht F3 F2)
+for (const H of ['R', 'L']) {
+  const S = m.notes.filter(x => x[3] === H).map(x => ({ midi: x[0], start: x[1], dur: x[2] })), rr = F.computeHand(S, { hand: H, style: 'einfach' });
+  const o = S.map((x, i) => i).sort((a, b) => S[a].start - S[b].start || S[a].midi - S[b].midi), grp = [];
+  for (const i of o) { const g = grp[grp.length - 1]; if (g && S[i].start - S[g[0]].start < 0.05) g.push(i); else grp.push([i]); }
+  const same = [], rep = [];
+  for (let q = 1; q < grp.length; q++) {
+    for (const a of grp[q - 1]) for (const b of grp[q]) { if (grp[q - 1].length > 1 && grp[q].length > 1) continue;
+      if (S[a].midi !== S[b].midi && rr.fingers[a] === rr.fingers[b] && S[b].start - (S[a].start + S[a].dur) < 0.3) same.push(NN[S[a].midi % 12] + rr.fingers[a] + '→' + NN[S[b].midi % 12] + rr.fingers[b] + '@' + S[b].start.toFixed(1)); }
+    if (grp[q - 1].length === 1 && grp[q].length === 1 && S[grp[q - 1][0]].midi === S[grp[q][0]].midi && rr.fingers[grp[q - 1][0]] !== rr.fingers[grp[q][0]]) rep.push(NN[S[grp[q][0]].midi % 12] + '@' + S[grp[q][0]].start.toFixed(1));
+  }
+  check(`Fly ${H}: nie gleicher Finger auf zwei Tasten ohne Pause`, !same.length, same.join(' '));
+  check(`Fly ${H}: Tonwiederholung immer auf demselben Finger`, !rep.length, rep.join(' '));
+}
+{ const i = find(['C', 'D', 'F', 'F', 'A'])[0]; check('Fly: C-D-F-F-A → F und F mit demselben Finger', r.fingers[i + 2] === r.fingers[i + 3], fs(i, 5)); }
 console.log(`\n${ok} OK, ${bad} fehlgeschlagen`);
 process.exitCode = bad ? 1 : 0;
