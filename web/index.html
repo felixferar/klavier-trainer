@@ -4508,6 +4508,8 @@ function scanFrame(msg){
   if(!SCAN.on||!SCAN.keys)return;
   const raw=atob(msg.d),w=msg.w,n=msg.n;const px=(r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]};
   let vt=0,st=-2;try{st=ytp.getPlayerState?ytp.getPlayerState():-2;vt=ytp.getCurrentTime()}catch(e){}
+  if(SCAN.natArgs&&!SCAN.slow){const d=performance.now()-msg.t;if(SCAN.lagMin==null||d<SCAN.lagMin)SCAN.lagMin=d; /* clocks differ by a constant: d−min = how late this frame is processed */
+    if(d-SCAN.lagMin>250){if(++SCAN.lagN>=10){SCAN.slow=true;try{Promise.resolve(nat('scanStart',{...SCAN.natArgs,interval:40},'scanStarted')).catch(()=>{})}catch(e){}}}else SCAN.lagN=0}
   if(st!==1&&st!==-2&&!SCAN.test){SCAN.vtMap.length=0;diagFrame(raw,msg.t,vt,st,NaN);return} // buffering/loading: forget the time map, or the first frames after it are extrapolated across the stall and look like a jump (= 'hole')
   // video time for this frame (smoothed): native time → video time
   SCAN.vtMap.push([msg.t,vt]);if(SCAN.vtMap.length>40)SCAN.vtMap.shift();
@@ -4750,7 +4752,8 @@ function finishCore(raw,preview){
       if(bi>=0&&ln.offs[bi]!=null){const len=ln.offs[bi]-ln.ons[bi],kd=e.end-e.start;if(len>0.05&&len<kd-0.06&&len>=kd*0.5)e.end=e.start+len}}} // never cut a note to a fraction (letters can hide a bar for a moment)
   if(!preview)ev=earlyFromBars(ev);
   // notes struck together (chord): their onsets differ only by a frame or two (glow fading in) → same start
-  {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.085)e.start=g0;else g0=e.start}}
+  /* v5.05: 0.085 → 0.06 s – a melody note 60–100 ms before a chord pulled the whole chord onto itself (≈ 80 ms too early). YouTube-Test F1@50 0.910 → 0.957, F1@100 0.976 → 0.987; Prüfstand unchanged or better. Chords split by 2 phone frames are re-joined on loading (chordAlign ≤ 0.15 s). */
+  {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.06)e.start=g0;else g0=e.start}}
   // hands by colour: two hue clusters, the lower-pitched one = left hand
   const hs=ev.filter(e=>e.hue!=null);let c1=hs.length?hs[0].hue:0,c2=(c1+180)%360;if(hs.length){let far=0;for(const e of hs){const d=hueDist(e.hue,c1);if(d>far){far=d;c2=e.hue}}}
   if(hs.length>=4){for(let it=0;it<12;it++){const A=[],B=[];for(const e of hs){(hueDist(e.hue,c1)<=hueDist(e.hue,c2)?A:B).push(e.hue)}if(A.length)c1=circMean(A);if(B.length)c2=circMean(B)}}
@@ -4824,11 +4827,14 @@ async function scanRun(live){
   // so hardly any note passes while the app still checks the keyboard – and those few are read in slow motion
   const prep=live&&ytAuto;if(prep){try{ytp.setPlaybackRate(0.25);ytRate=0.25}catch(e){}convProgress(null,'Tastatur wird geprüft …')}
   const box=$('#ytBox').getBoundingClientRect();scanBox={x:box.left,y:box.top,w:box.width,h:box.height};
-  const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:Math.max(480,Math.min(1280,Math.round(box.width*(devicePixelRatio||1)))),interval:40},'scanStarted');
+  /* v5.05: a picture every 22 ms instead of 40 ms (phone reached exactly 24.5/s, never less – headroom). Simulated on the Prüfstand: notes within ±50 ms 97.6 % → 98.9 %.
+     If the app cannot keep up (frames arrive > 0.25 s late, 10× in a row), scanFrame switches back to 40 ms. */
+  SCAN.natArgs={x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:Math.max(480,Math.min(1280,Math.round(box.width*(devicePixelRatio||1)))),interval:22};SCAN.lagMin=null;SCAN.lagN=0;SCAN.slow=false;
+  const r=await nat('scanStart',SCAN.natArgs,'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
   diagStart({w:r.w,n:7,box:{x:box.left,y:box.top,w:box.width,h:box.height},rowsSent:[scanRows.yA,scanRows.yB,scanRows.yC,...laneHigh(scanRows,scanDet,scanImg)],
     scanRows,scanDet,keys:SCAN.keys.map(k=>({...k,rest:k.rest&&k.rest.slice()})),kw:SCAN.kw,start:SCAN.start,live:!!live,
-    searchStills:(scanFrames||[]).slice(-16).map(f=>({t:f.t,img:imgJpeg(f,0.6)}))});
+    searchStills:(scanFrames||[]).slice(-16).map(f=>({t:f.t,t0:f.t0,img:imgJpeg(f,0.6)}))});
   if(prep){const t0=performance.now(); // until the keyboard looks normal (≥ ~1.2 s, lets the resting colours settle); at most 7 s
     while(ytAuto&&SCAN.on&&performance.now()-t0<7000&&(SCAN.okT==null||SCAN.frames<30))await sleep(100);
     try{ytp.setPlaybackRate(1)}catch(e){}ytRate=1;SCAN.vtMap=[];if(!ytAuto||!SCAN.on)return;convProgress(null,'Noten werden gelesen …')}
@@ -4858,7 +4864,7 @@ function scanSave(auto){
   const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
   const buf=writeMidi(notes);
   const it={id:'m'+Date.now(),type:'midi',title,artist:SCAN.fromFile?'Aus Video-Datei':'Aus YouTube-Video',data:b64FromBuf(buf),fromYT:ytOld&&!SCAN.fromFile?ytOld.videoId:null,
-    video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m],geo:videoGeo(),q:SCAN.qMin||null},
+    video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m],geo:videoGeo(),q:SCAN.qMin||null,slow:!!SCAN.slow},
     octUnsure:!!(scanDet&&scanDet.octEst)&&!(SCAN.octFix&&SCAN.octFix.sure),octMark:SCAN.octFix&&SCAN.octFix.sure?SCAN.octFix.d:null,oneColor:!!SCAN.oneColor};
   let s;try{s=songForItem(it,buf)}catch(e){toast('Fehler: '+e.message);return}
   const libBak=LIB.slice();
@@ -5097,7 +5103,7 @@ async function autoConvert(it){
     convProgress(dur>st?Math.max(0,Math.min(99,Math.round((ct-st)/(dur-st)*100))):null,'Suche die Tastatur …');
     let ps=-1;try{ps=ytp.getPlayerState()}catch(e){}
     if(ps!==1){await sleep(300);continue} // ad, buffering or paused: wait
-    let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;if(f)f.t=gt;
+    let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;let gt2=gt;try{gt2=ytp.getCurrentTime()}catch(e){}if(f){f.t=gt2>=gt&&gt2-gt<0.5?gt2:gt;f.t0=gt} /* v5.05: the picture shows the video at the END of the grab (half speed, grab takes ~0.1 s): time read before the grab made the first notes ~0.1 s too early */
     if(f){if(isBlackImg(f)){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
     let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];best=pickKb(cand.map(tryKeyboard))}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
