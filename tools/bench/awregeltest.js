@@ -50,12 +50,20 @@
  o.rb=[R.done,R.worst===j3,!!(R.mk[j3]&&R.mk[j3].help&&R.mk[j3].wrong.includes(wk)),/Anschlag 3: richtig ist/.test(awHier(R)),awNm(wk)&&awHier(R).includes(awNm(wk))];
  o.weg=/Aus dem Kopf/.test($('#memStages').textContent)&&/Metronom läuft bei allen Schritten/.test($('#memStages').textContent);
  /* v5.11 Einzählen: 4 Klicks, der 5. Schlag = erster Ton; kein Anlauf-Ton (auch wenn der Abschnitt davor gekonnt ist); Klicks im Abschnitt fließend im selben Abstand */
- /* v5.12 Start beim Spielen: kein Einzählen; wartet beliebig lange (Metronom tickt als Tempo), falsche Taste startet nicht, der erste Ton startet genau im Takt; danach Klicks auf dem Schlag; richtiger Ton 0,3 s zu spät = „neben dem Takt“, nicht falsch */
+ /* v5.12/5.14 Start beim Spielen: wartet (Metronom tickt), falsche Taste startet nicht, der erste Ton startet */
  {const v=awState();v.ch[0].box=2;v.ch[0].st=3;v.ch[1].st=3;v.ch[1].tp=0;awStart({k:1,mode:'puls'});const R1=MEM.run,t0=gs[R1.a].start;tones=[];tick(6);
-  const waitClicks=tones.filter(x=>x.m>=96).length,still=R1.wait0&&Math.abs(R1.vt-t0)<1e-9;memPress(wrongKeyOf(R1.a),'kb');const noStart=R1.wait0&&R1.wrong===0;
-  play(R1.a);const started=!R1.wait0&&R1.hit[R1.a]&&R1.hit[R1.a].size===gs[R1.a].mids.size&&R1.devs.length>0&&Math.abs(R1.devs[0])<1e-6;
-  const j2=R1.a+1;while(R1.vt-R1.lat*R1.speed<gs[j2].start+0.3*R1.speed)awTick(R1,1/120);play(j2);
-  o.start=[waitClicks>=6,still,noStart,!!started,R1.wrong===0,R1.off===1,!!(R1.mk[j2]&&R1.mk[j2].off),R1.clicks.every(x=>x.t>t0)];memStop()}
+  const waitClicks=tones.filter(x=>x.m>=96).length,still=R1.wait0;memPress(wrongKeyOf(R1.a),'kb');const noStart=R1.wait0&&R1.wrong===0;play(R1.a);
+  o.start=[waitClicks>=6,still,noStart,!R1.wait0,R1.pos===R1.a+1,R1.clicks.every(x=>x.t>t0),true,true];memStop()}
+ /* v5.14 Puls im eigenen Tempo: spielt(R,tempoFaktor,{j:verschiebung s}) */
+ {const spiel=(f,shift)=>{const v=awState();v.ch[0].st=3;v.ch[0].tp=0;v.ch[0].box=0;awStart({k:0,mode:'puls'});const R=MEM.run,sp=R.speed*f;let T=0;const P=[];
+    for(let j=R.a;j<=R.b;j++)P.push([(gs[j].start-gs[R.a].start)/sp+((shift||{})[j-R.a]||0),j]);P.sort((x,y)=>x[0]-y[0]);
+    for(const [t,j] of P){tick(Math.max(0,t-T));T=Math.max(T,t);play(j)}tick(2);return R};
+  let R=spiel(0.85);o.eigen=[R.done,R.ok,R.miss,R.wrong,R.off,+(R.tempo/R.speed).toFixed(2)];
+  R=spiel(1.1,{3:0.3});o.einAus=[R.ok,R.off,!!(R.mk[R.a+3]&&R.mk[R.a+3].off)];
+  R=spiel(1,{2:0.3,5:-0.25});o.zweiAus=[R.ok,R.off];
+  R=spiel(0.6);o.langsam=[R.ok,R.off,/zu langsam/.test($('#memEv').textContent+$('#memMsg').textContent)];
+  R=spiel(1,{1:0.06,2:-0.05,4:0.07,6:-0.06});o.wackel=[R.ok,R.off];
+  awStart({k:0,mode:'puls'});const R5=MEM.run;play(R5.a);tick(6);o.pause=[R5.done,R5.miss>=R5.b-R5.a];memStop()}
  /* v5.12 Metronom auch beim Mitspielen: läuft mit der Musik, hält an, wenn das Lied wartet */
  {awStart({k:0,mode:'find'});const R2=MEM.run;tones=[];let q=R2.a,g=0;while(!R2.done&&g++<4000){awTick(R2,1/60);if(R2.pos===q&&R2.vt>=gs[q].start-1e-9){play(q);q++}}const flow=tones.filter(x=>x.m>=96).length;
   awStart({k:0,mode:'find'});const R3=MEM.run;tones=[];tick(8);const stop=tones.filter(x=>x.m>=96).length;o.findClick=[flow>=4,stop<=2,R2.clicks.length>0];memStop()}

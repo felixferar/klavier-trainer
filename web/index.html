@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.13</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.14</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2801,7 +2801,7 @@ function memHome(){memStop();$('#mem').classList.remove('running','blind');memKb
       fade:`Noten verschwinden nach und nach (Stufe ${c.fl+1} von 3): ${['jede dritte ist weg','nur noch jede dritte ist zu sehen','nur noch der Anfang ist zu sehen'][c.fl]}. Fehlt dir eine, greif einfach – sie erscheint.`,
       head:c.relearn?'Kurz auffrischen: aus dem Kopf, Bildschirm dunkel, ohne Uhr.':'Aus dem Kopf, Bildschirm dunkel, ohne Uhr. Greifst du daneben, erscheint der richtige Ton – und es geht dort weiter.',
       spot:'Nur die Stelle, an der es gehakt hat – aus dem Kopf. Danach wieder der ganze Abschnitt.',
-      puls:`Im Puls: dunkel, mit Metronom, ${sp}. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Takt. Patzer? Weiterspielen.`,
+      puls:`Im Puls: dunkel, mit Metronom, ${sp}. Es steht „Start“ – mit deinem ersten Ton geht es los. Bewertet wird, ob du gleichmäßig spielst (im Verhältnis zu deinem Tempo, mindestens 80 % vom Ziel). Patzer? Weiterspielen.`,
       review:c.box>=AW.solid?'Kurzer Check im Puls (100 %): sitzt er noch?':`Kalt im Puls (100 %), nur der erste Versuch zählt – Kasten ${c.box}.`,
       link:`Am Stück im Puls (100 %) – Abschnitt ${K}. So wächst der Song zusammen.`,
       whole:`Der ganze Song – ohne Klick, ohne Hilfe, in deinem Tempo. Die App hört nur zu. Patzer? Einfach weiterspielen. ${wd?`(${wd} von ${AW.wholeDays} Tagen ✓)`:''}`}[p.mode];
@@ -2862,12 +2862,9 @@ function awTick(R,dt){R.clock+=dt;const gs=MEM.gs;
     if(R.pos>R.b){if(R.endT==null)R.endT=Math.min(2.5,Math.max(0.3,(gs[R.b].end-gs[R.b].start)/R.speed));R.vt+=dt*R.speed;awClickUpTo(R);R.endT-=dt;if(R.endT<=0)awFinish();return} /* bis der letzte Ton zu Ende ist */
     const G=gs[R.pos];R.vt=R.mode!=='whole'?Math.min(R.vt+dt*(R.glideV||R.speed),G.start):G.start;awClickUpTo(R);if(R.vt>=G.start-1e-9&&R.waitT0==null)R.waitT0=R.clock;return}
   if(R.wait0){if(R.beat.ok){R.wt+=dt*R.speed;if(R.wt>=R.beat.p){R.wt-=R.beat.p;try{playClick()}catch(e){}}}return} /* „Start“: wartet auf deinen ersten Ton, das Metronom gibt schon das Tempo */
-  R.vt+=dt*R.speed;awClickUpTo(R);
-  const tol=Math.max(0.1,AW.tol*R.speed),ve=R.vt-R.lat*R.speed;
-  const wide=Math.max(tol,AW.offWin*R.speed);
-  while(R.mj<=R.b&&gs[R.mj].start+wide<ve){const j=R.mj++,h=R.hit[j];R.proc[j]=true;if(!h||h.size<Math.ceil(gs[j].mids.size*AW.need)){R.miss++;awMk(R,j).miss=1}else (R.recent=(R.recent||[]).filter(x=>R.clock-x.at<=0.5)).push({j,at:R.clock})}
-  while(R.pos<=R.b&&R.proc[R.pos])R.pos++;
-  if(R.mj>R.b&&R.vt>gs[R.b].end+0.4)awFinish()}
+  R.vt+=dt*R.speed;awClickUpTo(R); /* das Metronom läuft im Ziel-Tempo weiter – Orientierung, nicht Richter */
+  if(R.pos>R.b){if(R.endT==null)R.endT=0.6;R.endT-=dt;if(R.endT<=0)awFinish();return}
+  if(R.clock-R.lastKey>5){for(let j=R.pos;j<=R.b;j++){R.miss++;awMk(R,j).miss=1}R.pos=R.b+1;R.stall=1;awFinish()}} /* 5 s nichts gespielt → Durchgang endet, der Rest zählt als nicht gespielt */
 
 /* --- Tasten --- */
 function memPress(m,src){const R=MEM.run;if(!R)return;const now=performance.now();
@@ -2889,18 +2886,21 @@ function memPress(m,src){const R=MEM.run;if(!R)return;const now=performance.now(
     if(R.anchor||R.show!=null)return; /* beim Suchen der gezeigten Taste zählt danebengreifen nicht */
     R.wrong++;awWrong(R,R.pos,m);awShow(R);return} /* aus dem Kopf: falscher Ton → der richtige erscheint sofort, es geht dort weiter */
   if(R.wait0){if(!gs[R.a].mids.has(m)){MEM.flash.set(m,now);return} /* vor dem Start zählt nur der erste Ton – er startet den Durchgang (danebengreifen zählt nicht) */
-    R.wait0=false;R.vt=gs[R.a].start+R.lat*R.speed;R.clock0=R.clock}
-  const tol=Math.max(0.1,AW.tol*R.speed),wide=Math.max(tol,AW.offWin*R.speed),ve=R.vt-R.lat*R.speed;
-  /* v5.12: der richtige Ton zählt nie als „falsch“. Im Takt (±0,18 s) = getroffen; daneben, aber nah dran (±0,45 s) = getroffen, „neben dem Takt“ (zu früh/zu spät, im Rückblick gelb). Falsch ist nur eine falsche Taste. */
-  let best=-1,bd=1e9;for(let j=Math.max(R.a,R.mj-4);j<=R.b&&gs[j].start<=ve+wide;j++){if(R.proc[j]||!gs[j].mids.has(m)||(R.hit[j]&&R.hit[j].has(m)))continue;const d=Math.abs(gs[j].start-ve);if(d<=tol&&(bd>tol||d<bd)){bd=d;best=j}else if(d<=wide&&best<0){bd=d;best=j}} /* im Takt hat Vorrang, sonst der früheste noch offene (wiederholte Töne) */
-  if(best>=0){(R.hit[best]||(R.hit[best]=new Set())).add(m);const dv=(ve-gs[best].start)/R.speed,k=awMk(R,best);if(bd<=tol)R.devs.push(dv);else if(!k.off){k.off=1;R.off++}if(k.dev==null||Math.abs(dv)>Math.abs(k.dev))k.dev=dv;MEM.good.set(m,now)}
-  else{if(R.recent&&R.recent.some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m))){MEM.good.set(m,now);return} /* nachgegriffener Akkordton */
-    MEM.flash.set(m,now);R.wrong++;let jn=R.a,dd=1e9;for(let j=R.a;j<=R.b;j++){const d=Math.abs(gs[j].start-ve);if(d<dd){dd=d;jn=j}}awWrong(R,jn,m)}}
+    R.wait0=false;R.vt=gs[R.a].start}
+  /* v5.14: Im Puls folgt die App dir (wie beim ganzen Song) – kein „verpasst“, nur weil du langsamer oder schneller bist als der Klick.
+     Bewertet wird danach, ob die Abstände im Verhältnis stimmen (dein eigenes Tempo, streng aber machbar) – siehe awPulse. */
+  if(R.pos>R.b){if((R.recent||[]).some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m)))MEM.good.set(m,now);return}
+  const G=gs[R.pos],nx0=gs[R.pos+1]||null;
+  if(G.mids.has(m)){if(R.ht[R.pos]==null)R.ht[R.pos]=R.clock;(R.hit[R.pos]||(R.hit[R.pos]=new Set())).add(m);MEM.good.set(m,now);awAdvance(R);return}
+  if(nx0&&R.pos<R.b&&nx0.start-G.start<=0.16&&nx0.mids.has(m)){(R.hit[R.pos+1]||(R.hit[R.pos+1]=new Set())).add(m);MEM.good.set(m,now);return}
+  if((R.recent||[]).some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m))){MEM.good.set(m,now);return}
+  for(let j=R.pos+1;j<=Math.min(R.b,R.pos+2);j++)if(gs[j].mids.has(m)){R.miss+=j-R.pos;for(let q=R.pos;q<j;q++){awMk(R,q).miss=1;R.proc[q]=true}R.pos=j;R.ht[j]=R.clock;(R.hit[j]=new Set()).add(m);MEM.good.set(m,now);awAdvance(R);return}
+  MEM.flash.set(m,now);R.wrong++;awWrong(R,R.pos,m)}
 function memRelease(m){} /* Loslassen wird nicht bewertet */
 /* Warte-Modus: Anschlag geschafft (genug Töne) → weiter; schon vorgegriffene Töne des nächsten Anschlags zählen mit */
 function awAdvance(R){const gs=MEM.gs,nd=R.mode==='find'||R.mode==='fade'?AW.needFind:AW.need;while(R.pos<=R.b){const G=gs[R.pos],h=R.hit[R.pos];if(!h||h.size<Math.ceil(G.mids.size*nd))return;
   const wt=R.waitT0!=null?R.clock-R.waitT0:0;R.waits.push(wt);if(wt>2&&R.mode!=='find'&&R.pos>R.a)awMk(R,R.pos).slow=wt;R.waitT0=null;R.proc[R.pos]=true;if(R.ht[R.pos]==null)R.ht[R.pos]=R.clock;(R.recent=(R.recent||[]).filter(x=>R.clock-x.at<=0.5)).push({j:R.pos,at:R.clock});R.anchor=false;if(R.show===R.pos)R.show=null;
-  R.vt=Math.max(R.vt,G.start);R.pos++;const nx=gs[R.pos];R.glideV=nx&&R.pos<=R.b&&!R.clicks.length?Math.max(R.speed,(nx.start-R.vt)/1.0):0}}
+  if(!R.timed)R.vt=Math.max(R.vt,G.start);R.pos++;const nx=gs[R.pos];R.glideV=nx&&R.pos<=R.b&&!R.clicks.length?Math.max(R.speed,(nx.start-R.vt)/1.0):0}}
 
 /* --- v5.09: Weg sichtbar machen – wo stehe ich, was kommt (Töne erst ohne Uhr, dann der Takt) --- */
 function awWeg(R,c){if(R.mode==='link')return `<div class="st mu" style="font-size:11px;margin:4px 0">Verbinden: die Kette wächst bis zum ganzen Song</div>`;
@@ -2912,11 +2912,11 @@ function awWeg(R,c){if(R.mode==='link')return `<div class="st mu" style="font-si
 const awMk=(R,j)=>R.mk[j]||(R.mk[j]={});
 function awWrong(R,j,m){const k=awMk(R,j);(k.wrong=k.wrong||[]);if(!k.wrong.includes(m))k.wrong.push(m)}
 const awNm=m=>NAMES[m%12]+(Math.floor(m/12)-1);
-function awBad(k){if(!k)return 0;return (k.miss?3:0)+(k.help?3:0)+(k.cue?2:0)+(k.wrong?2*k.wrong.length:0)+(k.slow?1:0)+(k.dev!=null&&Math.abs(k.dev)>0.09?1:0)+(k.slip?1:0)}
+function awBad(k){if(!k)return 0;return (k.miss?3:0)+(k.help?3:0)+(k.cue?2:0)+(k.wrong?2*k.wrong.length:0)+(k.slow?1:0)+(k.off||(k.dev!=null&&Math.abs(k.dev)>0.09)?1:0)+(k.slip?1:0)}
 function awWorst(R){let best=-1,bv=0;for(let j=R.a;j<=R.b;j++){const v=awBad(R.mk[j]);if(v>bv){bv=v;best=j}}return best}
 function awHier(R){const gs=MEM.gs,j=awWorst(R);if(j<0)return R.mode==='find'?'':'✓ Kein Fehler – alles sauber.';const k=R.mk[j],ms=[...gs[j].mids].sort((x,y)=>x-y).map(awNm).join(' + '),t=[];
   if(k.miss&&!k.off)t.push(R.mode==='whole'?'ausgelassen':'nicht gespielt');if(k.help)t.push('Hilfe gebraucht');if(k.cue)t.push('Note gebraucht');if(k.wrong)t.push('du hast '+k.wrong.map(awNm).join(', ')+' gespielt');
-  if(k.slow)t.push(`${k.slow.toFixed(0)} s gezögert`);if(k.dev!=null&&Math.abs(k.dev)>0.09)t.push(k.dev>0?`${Math.round(k.dev*1000)} ms zu spät`:`${Math.round(-k.dev*1000)} ms zu früh`);if(k.slip)t.push('aus dem Takt');
+  if(k.slow)t.push(`${k.slow.toFixed(0)} s gezögert`);if(k.dev!=null&&(k.off||Math.abs(k.dev)>0.09))t.push(k.dev>0?`${Math.round(k.dev*1000)} ms zu spät`:`${Math.round(-k.dev*1000)} ms zu früh`);if(k.slip)t.push('aus dem Takt');
   const nB=Object.keys(R.mk).filter(x=>awBad(R.mk[x])>0).length;
   return `👉 Anschlag ${j-R.a+1}: richtig ist ${ms}${t.length?' – '+t.join(', '):''}.${nB>1?` (${nB} Stellen markiert)`:''}`}
 /* --- Ganzer Song: Rhythmus relativ zu deinem eigenen Tempo (kein Klick). Abweichung eines Abstands > Faktor 1,67 oder Hänger > 3 s = Rhythmus-Patzer --- */
@@ -2924,10 +2924,19 @@ function awRhythm(R){const gs=MEM.gs,rs=[],pairs=[];for(let j=R.a;j<R.b;j++){con
   if(rs.length<3)return {tempo:1,slips:0};const so=rs.slice().sort((x,y)=>x-y),med=so[so.length>>1];let slips=0;
   for(const [d,e,j] of pairs){const q=(d/e)/med;if(q>1.67||q<0.6||(d>3&&e<1.5)){slips++;awMk(R,j).slip=1}}return {tempo:1/med,slips}}
 
+/* --- v5.14: Puls – Rhythmus im Verhältnis zu DEINEM Tempo. Gerade durch deine Anschläge (Zeit = A + B · Notenzeit), Tempo = 1/B.
+   Streng, aber machbar: jeder Anschlag darf höchstens 15 % des Abstands zum vorigen (mind. 80 ms, höchstens 160 ms) von der Geraden abweichen,
+   sonst „ungleichmäßig“ (gelb im Rückblick). Bestanden mit höchstens 15 % ungleichmäßigen Anschlägen und mindestens 80 % vom Ziel-Tempo. --- */
+function awPulse(R){const gs=MEM.gs,P=[];for(let j=R.a;j<=R.b;j++)if(R.ht[j]!=null)P.push([gs[j].start,R.ht[j],j]);R.off=0;
+  if(P.length<3)return {tempo:R.speed,off:0};const n=P.length,ms=P.reduce((a,x)=>a+x[0],0)/n,mt=P.reduce((a,x)=>a+x[1],0)/n;let sxy=0,sxx=0;for(const [x,y] of P){sxy+=(x-ms)*(y-mt);sxx+=(x-ms)**2}
+  const B=sxx>0?sxy/sxx:1/R.speed,A=mt-B*ms;
+  for(let i=0;i<n;i++){const [x,y,j]=P[i],r=y-(A+B*x),io=i>0?(x-P[i-1][0])*B:i+1<n?(P[i+1][0]-x)*B:0.5,tol=Math.min(0.16,Math.max(0.08,0.15*io));
+    if(Math.abs(r)>tol){const k=awMk(R,j);k.off=1;k.dev=r;R.off++}}
+  return {tempo:B>0?1/B:R.speed,off:R.off}}
 /* --- Ende eines Durchgangs: Stufen, Kästen, ganzer Song --- */
-function awFehler(R){const t=[];if(R.miss)t.push(`${R.miss} ${R.miss===1?'Anschlag':'Anschläge'} ${R.mode==='whole'?'ausgelassen':'nicht gespielt'}`);if(R.off)t.push(`${R.off} ${R.off===1?'Anschlag':'Anschläge'} neben dem Takt (zu früh/zu spät)`);if(R.wrong)t.push(`${R.wrong} falsche${R.wrong===1?'r Ton':' Töne'}`);if(R.hints)t.push(R.hints===1?'einmal mit Hilfe':R.hints+'× mit Hilfe');if(R.cues)t.push(R.cues===1?'eine Note gebraucht':R.cues+' Noten gebraucht');if(R.slips)t.push(`${R.slips} Rhythmus-Hänger`);return t.join(', ')||'knapp'}
+function awFehler(R){const t=[];if(R.miss)t.push(`${R.miss} ${R.miss===1?'Anschlag':'Anschläge'} ${R.mode==='whole'?'ausgelassen':'nicht gespielt'}`);if(R.off)t.push(`${R.off} ${R.off===1?'Anschlag':'Anschläge'} ungleichmäßig (zu früh/zu spät im Verhältnis zu deinem Tempo)`);if(R.timed&&R.tempo&&R.tempo<R.speed*0.8)t.push(`zu langsam: dein Tempo ${awPct(R.tempo)}, Ziel ${awPct(R.speed)} (mind. ${awPct(R.speed*0.8)})`);if(R.stall)t.push('5 s Pause – da ging es nicht weiter');if(R.wrong)t.push(`${R.wrong} falsche${R.wrong===1?'r Ton':' Töne'}`);if(R.hints)t.push(R.hints===1?'einmal mit Hilfe':R.hints+'× mit Hilfe');if(R.cues)t.push(R.cues===1?'eine Note gebraucht':R.cues+' Noten gebraucht');if(R.slips)t.push(`${R.slips} Rhythmus-Hänger`);return t.join(', ')||'knapp'}
 function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C;R.done=true;R.doneClock=R.clock;$('#mem').classList.remove('blind');
-  const n=R.b-R.a+1,offOk=(R.off||0)<=Math.max(1,Math.round(n*0.15));let ok,msg;c.last=now;c.reps++;R.worst=awWorst(R);
+  const n=R.b-R.a+1;if(R.timed){const pr=awPulse(R);R.tempo=pr.tempo}const offOk=(R.off||0)<=Math.max(1,Math.round(n*0.15)),tempoOk=!R.timed||R.tempo>=R.speed*0.8;let ok,msg;c.last=now;c.reps++;R.worst=awWorst(R);
   if(R.timed&&R.devs.length>=6){const d=R.devs.slice().sort((x,y)=>x-y),md=d[d.length>>1];v.lat=Math.round(clamp((v.lat||0)+0.3*md,-AW.latMax,AW.latMax)*1000)/1000} /* Bluetooth-Verzögerung lernen (geglättet) */
   if(R.mode==='find'){ok=R.wrong<=AW.findWrong;c.fc=ok?(c.fc||0)+1:0;
     if(c.fc>=AW.findGood){c.st=1;c.fl=0;c.fc=0;msg='✓ Sitzt mit Bildschirm! Jetzt verschwinden nach und nach Noten.'}
@@ -2943,16 +2952,16 @@ function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C
       if(R.hints>=AW.headBack&&!c.relearn){c.st=1;c.fl=1;msg=`Da hat noch viel gefehlt (${R.hints}× Hilfe) – zurück zum Ausblenden, mit ein paar Noten zur Orientierung.`}
       else{const C0=C[R.k],p0=Math.min(...R.helpAt),p1=Math.max(...R.helpAt);c.spot=[Math.max(C0.a,p0-1),Math.min(C0.b,Math.max(p1+2,p0+2))];c.sf=0;
         msg=`Fast – ${awFehler(R)}. Jetzt kurz nur die Stelle, an der es gehakt hat (Anschlag ${p0-C0.a+1}), dann wieder alles.`}}}
-  else if(R.mode==='puls'){ok=R.miss<=AW.maxMiss&&R.wrong<=AW.maxWrong&&offOk;
+  else if(R.mode==='puls'){ok=R.miss<=AW.maxMiss&&R.wrong<=AW.maxWrong&&offOk&&tempoOk;
     if(ok){if(c.relearn===2){c.relearn=0;c.due=now+AW.iv[1];msg=`✓ Im Puls wieder da – Abschnitt ${R.k+1} kommt ${awWhen(c.due)} kalt wieder.`}
       else if(c.tp<AW.tempi.length-1){c.tp++;msg=`✓ Im Puls bei ${awPct(R.speed)}! Als Nächstes ${awPct(AW.tempi[c.tp])}.`}
       else{c.box=1;c.due=now+AW.iv[1];msg=`✓ Sitzt im Tempo! Abschnitt ${R.k+1} kommt ${awWhen(c.due)} kalt wieder (Kasten 1) – dazwischen lernst du etwas anderes.`}}
     else{c.fails++;msg=`Noch nicht im Puls – ${awFehler(R)}. Nochmal bei ${awPct(R.speed)}.`}}
-  else if(R.mode==='review'){ok=R.miss<=AW.maxMiss&&R.wrong<=AW.maxWrong&&offOk;
+  else if(R.mode==='review'){ok=R.miss<=AW.maxMiss&&R.wrong<=AW.maxWrong&&offOk&&tempoOk;
     if(ok){const was=c.box;c.box=Math.min(AW.solid,c.box+1);c.due=now+AW.iv[c.box];
       msg=c.box===2?'✓ Kalt geschafft – Kasten 2. Morgen nochmal, dann ist er gelernt.':c.box===3?'✓ Gelernt! Kasten 3 – in 3 Tagen nochmal, dann sitzt er.':was<AW.solid?'⭐ Sitzt! Ab jetzt alle 14 Tage ein kurzer Check.':'✓ Sitzt weiter. Nächster Check in 14 Tagen.'}
     else{c.box=Math.max(1,c.box-1);c.relearn=1;c.due=now;c.fails++;msg=`Kalt noch nicht – ${awFehler(R)}. Kurz auffrischen: einmal aus dem Kopf, dann im Puls.`}}
-  else if(R.mode==='link'){const maxW=Math.max(AW.maxWrong,Math.round(n*0.05));ok=R.miss<=Math.max(AW.maxMiss,Math.round(n*0.05))&&R.wrong<=maxW&&(R.off||0)<=Math.max(2,Math.round(n*0.15));
+  else if(R.mode==='link'){const maxW=Math.max(AW.maxWrong,Math.round(n*0.05));ok=R.miss<=Math.max(AW.maxMiss,Math.round(n*0.05))&&R.wrong<=maxW&&(R.off||0)<=Math.max(2,Math.round(n*0.15))&&tempoOk;
     if(ok){v.ln[R.k]=1;msg=`✓ Verbunden: Abschnitt ${R.span.s+1}–${R.span.e+1} am Stück im Puls!${awWholeOpen(v)?' Jetzt kommt der ganze Song ohne Klick.':''}`}else{v.lw[R.k]=now+AW.linkWait;msg=`Noch nicht ganz am Stück – ${awFehler(R)}. Kommt in ein paar Minuten nochmal, dazwischen etwas anderes.`}}
   else{ /* ganzer Song ohne Klick */
     const rh=awRhythm(R),lim=Math.max(2,Math.round(n*0.03));R.slips=rh.slips;R.tempo=rh.tempo;const W=v.whole;W.n=(W.n||0)+1;
@@ -2963,7 +2972,7 @@ function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C
       const bad=new Set();for(const j of (R.skipAt||[]))bad.add(C.findIndex(x=>j>=x.a&&j<=x.b));for(const k of bad)if(k>=0&&v.ch[k].box>=1){v.ch[k].due=Math.min(v.ch[k].due,now)}
       msg=`Noch nicht ganz – ${awFehler(R)}. ${bad.size?'Die Stellen mit Patzern übst du gleich einzeln, dann':'In ein paar Minuten'} nochmal der ganze Song.`}}
   R.ok=ok;memSaveAll();awLog(R,ok);
-  $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=R.mode==='find'?(awWorst(R)>=0?`<div class="st" id="memHier">${awHier(R)}</div>`:''):`<div class="st" id="memHier" style="margin-bottom:4px;font-weight:700">${awHier(R)}</div><div class="st mu">${R.hints?`👀 ${R.hints}× Hilfe · `:''}${R.cues?`👀 ${R.cues} Noten gebraucht · `:''}${R.timed||R.mode==='whole'?`${R.miss} ${R.mode==='whole'?'ausgelassen':'verpasst'} · `:''}${R.wrong} falsche Töne${R.mode==='whole'?` · ${R.slips} Rhythmus-Hänger · Tempo ${awPct(R.tempo)}`:''}</div>${awWorst(R)>=0?'<div class="st mu" style="font-size:11px">Im Bild: <span style="color:#3BB273">▮ richtig</span> · <span style="color:#F2A93B">▮ Hilfe/Note gebraucht</span> · <span style="color:#E5C34B">▮ gezögert/zu spät/zu früh</span> · <span style="color:#8a8f99">▮ nicht gespielt</span> · <span style="color:#E5484D">▮ falsche Taste</span></div>':''}`;ev.classList.remove('hidden');$('#memGoal').innerHTML='';
+  $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=R.mode==='find'?(awWorst(R)>=0?`<div class="st" id="memHier">${awHier(R)}</div>`:''):`<div class="st" id="memHier" style="margin-bottom:4px;font-weight:700">${awHier(R)}</div><div class="st mu">${R.hints?`👀 ${R.hints}× Hilfe · `:''}${R.cues?`👀 ${R.cues} Noten gebraucht · `:''}${R.timed||R.mode==='whole'?`${R.miss} ${R.mode==='whole'?'ausgelassen':'nicht gespielt'} · `:''}${R.wrong} falsche Töne${R.mode==='whole'?` · ${R.slips} Rhythmus-Hänger · Tempo ${awPct(R.tempo)}`:''}${R.timed?` · ${R.off||0} ungleichmäßig · dein Tempo ${awPct(R.tempo)} (Ziel ${awPct(R.speed)})`:''}</div>${awWorst(R)>=0?'<div class="st mu" style="font-size:11px">Im Bild: <span style="color:#3BB273">▮ richtig</span> · <span style="color:#F2A93B">▮ Hilfe/Note gebraucht</span> · <span style="color:#E5C34B">▮ gezögert/zu spät/zu früh</span> · <span style="color:#8a8f99">▮ nicht gespielt</span> · <span style="color:#E5484D">▮ falsche Taste</span></div>':''}`;ev.classList.remove('hidden');$('#memGoal').innerHTML='';
   const nx=awPick();$('#memResBox').style.display='flex';$('#memNext').textContent=nx?'Weiter':'Zur Übersicht';$('#memProg').textContent='Fertig';awDraw();memAuto()}
 
 /* --- Zeichnen --- */
@@ -2974,7 +2983,7 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
     let t;if(R.timed&&R.wait0){c.fillStyle='rgba(59,178,115,.95)';c.font='800 56px Inter,system-ui';c.fillText('Start',p.w/2,p.h/2+8);c.font='700 14px Inter,system-ui';c.fillStyle='rgba(255,255,255,.6)';c.fillText('spiel los, wenn du bereit bist – mit deinem ersten Ton geht es los',p.w/2,p.h/2+38);t=null}
     else t=R.mode==='whole'?'Ganzer Song – ohne App 🎹':R.timed?'Im Puls – Augen aufs Klavier 🎹':'Aus dem Kopf – nimm dir Zeit 🎹';
     if(t)c.fillText(t,p.w/2,p.h/2);
-    msg(R.mode==='whole'?'Spiel in deinem Tempo. Patzer? Einfach weiterspielen – die App hört nur zu.':R.timed?(R.wait0?(R.beat&&R.beat.ok?'Start: Fang an, wann du willst – mit deinem ersten Ton läuft es los. Das Metronom zeigt dir schon das Tempo.':'Start: Fang an, wann du willst – mit deinem ersten Ton läuft es los (kein Metronom: das Tempo im Video schwankt).'):R.beat&&R.beat.ok?'Spiel im Takt mit dem Metronom. Patzer? Weiterspielen.':'Spiel im Tempo wie beim Mitspielen weiter. Patzer? Weiterspielen.'):'Es läuft keine Uhr. Greifst du daneben, erscheint der richtige Ton.',R.mode==='whole'?`${Math.min(R.pos,R.b+1)-R.a} von ${R.b-R.a+1}`:'');return}
+    msg(R.mode==='whole'?'Spiel in deinem Tempo. Patzer? Einfach weiterspielen – die App hört nur zu.':R.timed?(R.wait0?(R.beat&&R.beat.ok?'Start: Fang an, wann du willst – mit deinem ersten Ton läuft es los. Das Metronom zeigt dir schon das Tempo.':'Start: Fang an, wann du willst – mit deinem ersten Ton läuft es los (kein Metronom: das Tempo im Video schwankt).'):R.beat&&R.beat.ok?'Spiel gleichmäßig – das Metronom hilft dir. Bewertet wird, ob die Abstände stimmen. Patzer? Weiterspielen.':'Spiel gleichmäßig weiter – bewertet wird, ob die Abstände stimmen. Patzer? Weiterspielen.'):'Es läuft keine Uhr. Greifst du daneben, erscheint der richtige Ton.',R.mode==='whole'?`${Math.min(R.pos,R.b+1)-R.a} von ${R.b-R.a+1}`:'');return}
   if(R.done&&!pv)return awReview(R,c,p,kb,hn);
   const lo=R.lo,hi=R.hi,pre=new Set(),t=pv?R.pv.t:R.vt,fall=pv||R.mode==='find'||R.mode==='fade';
   const tj=showJ!=null?showJ:!pv&&(R.mode==='find'||R.mode==='fade')&&!R.done&&R.pos<=R.b&&!awHidden(R,R.pos)?R.pos:null;
@@ -3014,7 +3023,7 @@ function awReview(R,c,p,kb,hn){const gs=MEM.gs,w=R.worst!=null?R.worst:awWorst(R
   c.save();c.translate(0,hn);MEM.pos=drawKeys(c,lo,hi,p.w,kb,(m,b)=>bad.has(m)?(b?'#9b2c2f':'#F4A3A5'):good.has(m)?(b?'#2F6FB0':'#A9D4FF'):(b?'#2C2C2A':'#E8E6DF'),true);c.restore();
   for(let m=lo;m<=hi;m++){const k=MEM.pos[m];if(!k||k.b)continue;const fs=Math.min(11,Math.max(7,k.w*0.45));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle=good.has(m)||bad.has(m)?'rgba(10,20,40,.95)':'rgba(40,40,40,.55)';c.fillText(NAMES[m%12]+(m%12===0?Math.floor(m/12)-1:''),k.x+k.w/2,hn+kb-6)}
   c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
-  const col=j=>{const k=R.mk[j];if(!k)return '#3BB273';if(k.miss&&!k.off)return '#8a8f99';if(k.help||k.cue)return '#F2A93B';if(k.wrong&&R.mode!=='find')return '#F2A93B';if(k.slow||k.slip||(k.dev!=null&&Math.abs(k.dev)>0.09))return '#E5C34B';return '#3BB273'};
+  const col=j=>{const k=R.mk[j];if(!k)return '#3BB273';if(k.miss&&!k.off)return '#8a8f99';if(k.help||k.cue)return '#F2A93B';if(k.wrong&&R.mode!=='find')return '#F2A93B';if(k.slow||k.slip||k.off||(k.dev!=null&&Math.abs(k.dev)>0.09))return '#E5C34B';return '#3BB273'};
   let bx0=1e9,bx1=-1,by0=1e9,by1=-1;
   for(let q=0;q<R.ns.length;q++){const n=R.ns[q],j=R.nj[q],K=MEM.pos[n.midi];if(!K||n.start>t1||n.start+n.dur<t0)continue;const ww=K.w*(K.b?0.6:0.78),x=K.x+K.w/2-ww/2,yb=Y(n.start),yt=Math.max(4,Y(n.start+Math.max(0.1,n.dur)));
     c.fillStyle=col(j);c.globalAlpha=w>=0&&j!==w?0.75:1;c.fillRect(x,yt,ww,Math.max(5,yb-yt));c.globalAlpha=1;
@@ -3048,7 +3057,7 @@ $('#smMem').onclick=()=>{if(smItem)openMem(smItem)};
 /* --- Lernprotokoll (v5.00): jeder Versuch in kt_v8log (bis 300), gebündelt nach diag/learn hochgeladen (höchstens alle 2 min, beim Zurückkommen in die Übersicht) --- */
 function awLog(R,ok,extra){try{const L=load('kt_v8log')||[],gs=MEM.gs,c=MEM.rec.v9.ch[R.k];L.push(Object.assign({t:Date.now(),v:10,song:MEM.item&&MEM.item.id,mode:R.mode,k:R.k,ok:ok?1:0,hints:R.hints,cues:R.cues,wrong:R.wrong,miss:R.miss,sp:R.speed,
     st:c.st,fc:c.fc,fl:R.mode==='fade'?R.fl:undefined,tp:c.tp,box:c.box,n:R.b-R.a+1,a:R.a,b:R.b,t0:+gs[R.a].start.toFixed(2),t1:+gs[R.b].end.toFixed(2),dur:Math.round(R.clock*1000),waits:R.waits.map(x=>Math.round(x*1000)),lat:R.lat,
-    helpAt:R.helpAt.length?R.helpAt.map(j=>j-R.a):undefined,slips:R.slips,tempo:R.tempo?+R.tempo.toFixed(2):undefined},R.span?{span:[R.span.s,R.span.e]}:{},extra||{}));
+    helpAt:R.helpAt.length?R.helpAt.map(j=>j-R.a):undefined,slips:R.slips,off:R.off,ht:R.timed||R.mode==='whole'?Object.keys(R.ht).map(j=>[j-R.a,Math.round(R.ht[j]*1000)]):undefined,tempo:R.tempo?+R.tempo.toFixed(2):undefined},R.span?{span:[R.span.s,R.span.e]}:{},extra||{}));
   while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}}
 let V8LOG_BUSY=false;
 async function awLogSync(force){if(V8LOG_BUSY||!ghTok())return;const L=load('kt_v8log')||[],sent=load('kt_v8logsent')||0,neu=L.filter(e=>e.t>sent);if(!neu.length)return;
@@ -4327,7 +4336,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.13 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.14 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
