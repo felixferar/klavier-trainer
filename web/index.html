@@ -564,6 +564,7 @@ body.short #onbDots{margin:8px 0}
   <div class="ptop ovl">
     <button class="ib" id="pBack"><svg class="i"><use href="#i-back"/></svg></button>
     <div class="grow"><div class="ttl"><span class="modechip" id="modeChip"></span><span id="pTitle"></span></div><div class="meta" id="pMeta"></div></div>
+    <button class="ib" id="pFlag" title="Komischen Fingersatz markieren – geht an Claude" style="font-size:20px;font-weight:800">⚑</button>
     <button class="ib" id="pSet"><svg class="i"><use href="#i-gear"/></svg></button>
   </div>
   <div id="score" class="hidden"><span class="chip" id="scAcc">–</span></div>
@@ -3605,7 +3606,7 @@ const useMic=()=>S.input==='mic'&&mic&&!micFailed&&!kbOn();
 const listening=()=>S.wait||(S.score&&(kbOn()||(!S.sound&&useMic())));
 
 function openSong(s,id,resume){
-  song=s;songId=id;applySwap();t=-1.5;loop=null;playing=false;sessionTime=0;
+  song=s;songId=id;applySwap();setTimeout(ffCatchUp,3000);t=-1.5;loop=null;playing=false;sessionTime=0;
   $('#pTitle').textContent=s.title;
   const st=songStat(id);st.sessions++;stDirty=true;
   calcRange();buildGroups();newPass();
@@ -3626,7 +3627,7 @@ function fingSong(s){if(!s||!s.notes||!window.Fingering||S.fingers===false)retur
     const hands=one&&hi-lo>14?Fingering.assignHands(ns.map(n=>({midi:n.midi,start:n.start,dur:n.dur}))):ns.map(n=>n.hand==='L'?'L':'R');
     for(const H of ['L','R']){const idx=[];ns.forEach((n,i)=>{if(hands[i]===H)idx.push(i)});if(!idx.length)continue;
       const r=Fingering.computeHand(idx.map(i=>({midi:ns[i].midi,start:ns[i].start,dur:ns[i].dur})),{hand:H,profile:Fingering.PROFILES.meine});
-      idx.forEach((i,k)=>{ns[i].fing=r.fingers[k];ns[i].fingH=H;ns[i].fingOpen=!!r.open[k]})}
+      idx.forEach((i,k)=>{ns[i].fing=r.fingers[k];ns[i].fingH=H;ns[i].fingOpen=!!r.open[k];ns[i]._fk=k});(s._fingR=s._fingR||{})[H]=r}
     s.fingOk=true}catch(e){s.fingOk=false;console.warn('Fingersatz',e)}}
 /* Fingerzahl unten im Balken (dort, wo der Ton gleich ankommt), über dem Notennamen. Andere Hand als die Balkenfarbe → "L2"/"R2".
    nameH = Höhe, die der Notenname unten braucht (0 = kein Name). Rückgabe true = gezeichnet. */
@@ -3636,6 +3637,21 @@ function drawFinger(c,n,cx,yb,h,w,nameH){if(S.fingers===false||!n||!n.fing)retur
   c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.textBaseline='alphabetic';const y=yb-3-(nameH||0)-1;
   c.fillStyle='rgba(255,255,255,.92)';const rw=Math.max(fs*0.95,c.measureText(tag).width+5);rrect(c,cx-rw/2,y-fs,rw,fs+2,4);c.fill();c.fillStyle='rgba(7,9,13,.9)';
   c.fillText(tag,cx,y);c.textAlign='left';return true}
+/* v5.03: Fingersatz-Flagge ⚑ im Player. Markiert die aktuelle Stelle (nochmal drücken in ±0,6 s = weg) und schickt sie wie die Vergleichs-Flaggen
+   automatisch ins private Archiv (diag/fingerflags/…): Zeit, alle Töne ±3 s mit Hand, Finger, "offen" und der Begründung der App; dazu ein Bildschirmfoto. */
+const FF_NN=['C','Cis','D','Es','E','F','Fis','G','As','A','B','H'];let FF_T=null;
+const ffAll=()=>load('kt_fingflags')||{},ffGet=()=>{try{return ffAll()[songId]||[]}catch(e){return []}};
+function ffItem(){try{return LIB.find(x=>x.id===songId)||{}}catch(e){return {}}}
+function ffInfo(){const it=ffItem(),fl=ffGet(),why=n=>{try{const r=song._fingR&&song._fingR[n.fingH];return r&&n._fk!=null?r.explain(n._fk):''}catch(e){return ''}};
+  const near=T=>song.notes.filter(n=>n.start>=T-3&&n.start<=T+3).sort((a,b)=>a.start-b.start||a.midi-b.midi)
+    .map(n=>({m:n.midi,name:FF_NN[n.midi%12]+(Math.floor(n.midi/12)-1),s:+n.start.toFixed(3),d:+n.dur.toFixed(3),hand:n.hand||'',fh:n.fingH||'',f:n.fing||null,open:!!n.fingOpen,why:why(n)}));
+  return {kind:'fingerflags',v:'5.03',modul:window.Fingering?Fingering.VERSION:'',profil:'meine',ts:new Date().toISOString(),title:song.title||it.title||'',videoId:it.videoId||it.fromYT||'',itemId:songId,
+    flags:fl.map(T=>({T,near:near(T)}))}}
+function ffSync(){if(!ghTok()||!song)return;clearTimeout(FF_T);FF_T=setTimeout(async()=>{try{fingSong(song);const info=ffInfo(),ts=info.ts.replace(/[:.]/g,'-').slice(0,19),vid=(info.videoId||info.itemId||'song').toString().replace(/[^\w-]/g,'_');
+  const r=await ghUpload(`diag/fingerflags/${ts}_${vid}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Fingersatz-Flaggen '+vid+' ('+info.flags.length+')');
+  if(r.ok){toast('⚑ an Claude gesendet',1500,true);try{const o=load('kt_fingflagsent')||{};o[info.itemId]=JSON.stringify(info.flags.map(f=>f.T));save('kt_fingflagsent',o)}catch(e){}}}catch(e){}},2500)}
+function ffCatchUp(){try{if(!song||!ghTok())return;const fl=ffGet();if(!fl.length)return;const o=load('kt_fingflagsent')||{};if(o[songId]!==JSON.stringify(fl))ffSync()}catch(e){}} /* noch nicht gesendete Flaggen nachschicken */
+function ffNear(){const T=t;return ffGet().some(x=>Math.abs(x-T)<0.6)}
 function calcRange(){
   const [KL,KH]=KR();if(S.full){keyLo=KL;keyHi=KH;return}
   let lo=127,hi=0;for(const n of song.notes){if(n.midi<lo)lo=n.midi;if(n.midi>hi)hi=n.midi}
@@ -3739,7 +3755,7 @@ function layoutKeys(){
   if(kbH!==lastKbH||W!==lastW){lastKbH=kbH;lastW=W;$('#hint').style.bottom=(kbH+44)+'px'}
 }
 function draw(waiting,now=performance.now()){
-  if(!song||!W)return;fingSong(song);
+  if(!song||!W)return;fingSong(song);{const fb=$('#pFlag');if(fb){fb.style.display=S.fingers===false?'none':'';fb.style.color=ffNear()?'#E24B4A':''}}
   const aw0=waiting||(listening()?groups[gi]:null);const T=(aw0&&S.wait&&t>aw0.start&&!aw0.notes.every(n=>n.hit))?aw0.start:t;
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#100E0B';ctx.fillRect(0,0,W,H);layoutKeys();
   const look=S.look,pps=hitY/look; // window in song-seconds → at 0.5× the notes fall half as fast
@@ -3845,6 +3861,9 @@ for(const b of $$('#handSeg button'))b.onclick=()=>setHand(b.dataset.h);
 for(const b of $$('#modeSeg button'))b.onclick=()=>setMode(b.dataset.m==='learn');
 for(const b of $$('#modeModal [data-pick]'))b.onclick=()=>{$('#modeModal').classList.remove('on');$('#pDim').classList.remove('on');const l=b.dataset.pick==='learn';if(songId){songStat(songId).mode=l?'learn':'play';stDirty=true}if(S.wait!==l)setMode(l);else{syncUI();if(l)ensureInput()}};
 function setMode(learn){if(songId){songStat(songId).mode=learn?'learn':'play';stDirty=true}if(S.wait===learn)return;S.wait=learn;resetPointers(t);newPass();syncUI();pokeUI();if(learn)ensureInput()}
+$('#pFlag').onclick=()=>{if(!song)return;const T=Math.max(0,t),a=ffGet(),i=a.findIndex(x=>Math.abs(x-T)<0.6);
+  if(i>=0){a.splice(i,1);toast('Markierung entfernt',1200)}else{a.push(Math.round(T*10)/10);a.sort((p,q)=>p-q);toast(ghTok()?'⚑ Stelle markiert – geht gleich an Claude':'⚑ Stelle markiert – wird gesendet, sobald ein Diagnose-Schlüssel eingetragen ist',2200);if(ghTok())setTimeout(()=>{try{shotSend()}catch(e){}},700)}
+  try{const o=ffAll();o[songId]=a;save('kt_fingflags',o)}catch(e){}ffSync();try{draw()}catch(e){}};
 $('#pSet').onclick=()=>{openSheet('#setSheet','#pDim');pokeUI()};
 $('#pDim').onclick=()=>{if($('#modeModal').classList.contains('on'))return;closeSheets()};
 $('#pSound').onclick=()=>{S.sound=!S.sound;audio();if(S.sound)loadSamples();syncUI();pokeUI();toast(S.sound?'Klavierklang an':'Klavierklang aus',1200)};

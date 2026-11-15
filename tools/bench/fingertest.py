@@ -5,6 +5,7 @@ usage: python3 tools/bench/fingertest.py [APP.html]   (Standard: web/index.html)
  3. Einfarbiger Song (alle Töne "R", Bass tief): Bass bekommt die linke Hand (fingH = L), Melodie rechts.
  4. Abspielen zeichnet mit Fingerzahlen ohne Fehler; Schalter "Fingersatz" aus → keine Rechnung, kein Fehler.
  5. Auswendig öffnen (gleiche Noten) ohne Fehler; Fingerzahlen an MEM.song nach einem Bild.
+ 6. Fingersatz-Flagge ⚑: markiert die Stelle, Upload nach diag/fingerflags/ mit Tönen ±3 s, Finger, Hand, Begründung; nochmal drücken = weg.
 Bildschirmfoto: /tmp/fingertest.png
 """
 import sys, os, asyncio, json, re
@@ -30,6 +31,10 @@ JS = r"""()=>{const o={};
  S.fingers=false;s2._fingKey=null;draw();o.offNoCalc=s2._fingKey===null;S.fingers=true;
  openSong(s,it.id);t=0.5;draw();
  return o}"""
+JS_FLAG1 = r"""()=>{window.__up=[];save('kt_ghtok','test');ghUpload=async(p,b)=>{window.__up.push([p,b]);return {ok:true}};shotSend=async()=>{};
+ const it=LIB[0];openSong(songForItem(it),it.id);t=1.0;draw();document.getElementById('pFlag').click();return {red:document.getElementById('pFlag').style.color}}"""
+JS_FLAG2 = r"""()=>{const u=window.__up[window.__up.length-1];const o={n:window.__up.length,path:u&&u[0],info:u&&u[1]};
+ document.getElementById('pFlag').click();o.after=(load('kt_fingflags')||{})[songId].length;return o}"""
 JS_MEM = r"""()=>{const it=LIB[0];let ok=true;try{openMem(it)}catch(e){ok=String(e)}return {ok}}"""
 JS_MEM2 = r"""()=>{let e=null;try{memStart(0)}catch(x){e=String(x)}try{memDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
 
@@ -40,6 +45,11 @@ async def main():
         await pg.goto('file://' + APPF); await pg.wait_for_timeout(1500)
         r = await pg.evaluate(JS); await pg.wait_for_timeout(300)
         await pg.screenshot(path='/tmp/fingertest.png')
+        f1 = await pg.evaluate(JS_FLAG1); await pg.wait_for_timeout(7000)  # Nachsende-Prüfung beim Öffnen verschiebt den Upload um bis zu 3 s
+        f2 = await pg.evaluate(JS_FLAG2)
+        import base64
+        fi = json.loads(base64.b64decode(f2['info']).decode('utf-8')) if f2['info'] else {}; fl = (fi.get('flags') or [{}])[0]; nr = fl.get('near') or []
+        print('Flagge:', f2['path'], json.dumps(nr[:2], ensure_ascii=False))
         m = await pg.evaluate(JS_MEM); await pg.wait_for_timeout(800)
         m2 = await pg.evaluate(JS_MEM2)
         inline = r.pop('inline'); body = re.sub(r'^/\* FINGERING-BEGIN[^\n]*\n', '', inline); body = re.sub(r'\n/\* FINGERING-END \*/$', '', body)
@@ -47,6 +57,9 @@ async def main():
             'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.3.0',
             'rechts_tonleiter_12312345': r['rh'] == '12312345', 'links_akkord_531': r['lh'] == '531' and r['lhH'] == 'LLL',
             'einfarbig_bass_links': r['bassH'] == 'L' and r['melH'] == 'R', 'schalter_aus': r['offNoCalc'],
+            'flagge_rot': f1['red'] != '', 'flagge_upload': f2['n'] == 1 and (f2['path'] or '').startswith('diag/fingerflags/') and fi.get('kind') == 'fingerflags',
+            'flagge_inhalt': fl.get('T') == 1.0 and len(nr) >= 5 and all(x['f'] in (1, 2, 3, 4, 5) and x['fh'] in ('L', 'R') and x['why'] for x in nr),
+            'flagge_weg': f2['after'] == 0,
             'auswendig_ok': m['ok'] is True, 'auswendig_finger': m2['memFing'] and not m2['err'], 'keine_pageerror': not errs,
         }
         print(json.dumps(r)); print('pageerrors', errs)
