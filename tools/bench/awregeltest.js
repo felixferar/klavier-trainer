@@ -1,4 +1,4 @@
-()=>{window.AW_NOLOOP=true;let tones=[];window.playTone=(m,d,v,g)=>tones.push({m,g});window.toast=()=>{};KB.state='off';const o={};
+()=>{window.AW_NOLOOP=true;let tones=[];window.playTone=(m,d,v,g)=>tones.push({m,g});window.playClick=a=>tones.push({m:96,click:1});window.toast=()=>{};KB.state='off';const o={};
  let timers=0;const sT=window.setTimeout,sI=window.setInterval;window.setTimeout=(f,t)=>{timers++;return sT(f,t)};window.setInterval=(f,t)=>{timers++;return sI(f,t)};
  const notes=[];let t=0;for(let bar=0;bar<8;bar++){notes.push({m:48,start:t,dur:1.9,hand:'L'});for(let q=0;q<4;q++)notes.push({m:60+((bar+q)%5)*2,start:t+q*0.5,dur:0.45,hand:'R'});t+=2}
  notes.push({m:54,start:4.0,dur:0.4,hand:'L'},{m:57,start:4.0,dur:0.4,hand:'L'},{m:66,start:4.118,dur:0.3,hand:'R'});
@@ -59,4 +59,6 @@
  /* v5.12 Metronom auch beim Mitspielen: läuft mit der Musik, hält an, wenn das Lied wartet */
  {awStart({k:0,mode:'find'});const R2=MEM.run;tones=[];let q=R2.a,g=0;while(!R2.done&&g++<4000){awTick(R2,1/60);if(R2.pos===q&&R2.vt>=gs[q].start-1e-9){play(q);q++}}const flow=tones.filter(x=>x.m>=96).length;
   awStart({k:0,mode:'find'});const R3=MEM.run;tones=[];tick(8);const stop=tones.filter(x=>x.m>=96).length;o.findClick=[flow>=4,stop<=2,R2.clicks.length>0];memStop()}
+ /* v5.13 Klick ist ein eigener Klick-Ton, kein Klavierton mehr */
+ {awStart({k:0,mode:'puls'});const R4=MEM.run;tones=[];tick(3);o.klick=[tones.length>0&&tones.every(x=>x.click===1)];memStop()}
  o.timers=timers;return o}

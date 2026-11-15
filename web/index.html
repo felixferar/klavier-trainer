@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.12</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.13</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2494,6 +2494,14 @@ function playTone(m,dur=0.5,vel=0.8,gain){ /* v4.88: gain = feste Lautstärke (B
   if(best!==null){const t=ac.currentTime,src=ac.createBufferSource(),g=ac.createGain();src.buffer=SAMP.buf[best];src.playbackRate.value=Math.pow(2,(m-best)/12);
     g.gain.value=gain!=null?gain:0.75*Math.max(0.3,vel);src.connect(g);g.connect(master);src.start(t);const end=t+Math.max(0.35,dur);g.gain.setTargetAtTime(0,end,0.35);src.stop(end+2.5);return}
   playSynth(m,dur,vel)}
+/* v5.13: echter Metronom-Klick (Holzblock): kurzes Rauschen durch einen Bandpass + kurzer hoher Ton, ~40 ms, laut, eigener Weg an der Klavier-Lautstärke vorbei.
+   Bis v5.12 war der Klick ein hoher Klavierton (C7, klang nach, leise) – der Nutzer: „hört sich komisch an, zu leise“. */
+let CLICK=null;
+function playClick(acc){const ac=audio();if(!ac)return;const t=ac.currentTime+0.005;
+  if(!CLICK){const n=Math.floor(ac.sampleRate*0.04),b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(n*0.15));CLICK=b}
+  const out=ac.createGain();out.gain.value=acc?1.8:1.5;out.connect(ac.destination);
+  const src=ac.createBufferSource();src.buffer=CLICK;const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=acc?2600:2000;bp.Q.value=3;src.connect(bp);bp.connect(out);src.start(t);
+  const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=acc?1500:1100;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.6,t+0.002);g.gain.exponentialRampToValueAtTime(0.0001,t+0.035);o.connect(g);g.connect(out);o.start(t);o.stop(t+0.05)}
 function playSynth(m,dur=0.5,vel=0.8){
   const ac=audio();if(!ac)return;const t=ac.currentTime,f=mtof(m);
   const g=ac.createGain();g.connect(master);const o1=ac.createOscillator(),o2=ac.createOscillator(),g2=ac.createGain();
@@ -2793,7 +2801,7 @@ function memHome(){memStop();$('#mem').classList.remove('running','blind');memKb
       fade:`Noten verschwinden nach und nach (Stufe ${c.fl+1} von 3): ${['jede dritte ist weg','nur noch jede dritte ist zu sehen','nur noch der Anfang ist zu sehen'][c.fl]}. Fehlt dir eine, greif einfach – sie erscheint.`,
       head:c.relearn?'Kurz auffrischen: aus dem Kopf, Bildschirm dunkel, ohne Uhr.':'Aus dem Kopf, Bildschirm dunkel, ohne Uhr. Greifst du daneben, erscheint der richtige Ton – und es geht dort weiter.',
       spot:'Nur die Stelle, an der es gehakt hat – aus dem Kopf. Danach wieder der ganze Abschnitt.',
-      puls:`Im Puls: dunkel, mit Metronom, ${sp}. Erst wird eingezählt, dann spielst du im Takt. Patzer? Weiterspielen.`,
+      puls:`Im Puls: dunkel, mit Metronom, ${sp}. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Takt. Patzer? Weiterspielen.`,
       review:c.box>=AW.solid?'Kurzer Check im Puls (100 %): sitzt er noch?':`Kalt im Puls (100 %), nur der erste Versuch zählt – Kasten ${c.box}.`,
       link:`Am Stück im Puls (100 %) – Abschnitt ${K}. So wächst der Song zusammen.`,
       whole:`Der ganze Song – ohne Klick, ohne Hilfe, in deinem Tempo. Die App hört nur zu. Patzer? Einfach weiterspielen. ${wd?`(${wd} von ${AW.wholeDays} Tagen ✓)`:''}`}[p.mode];
@@ -2831,7 +2839,7 @@ function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch
 function awClicks(R,v,p){const gs=MEM.gs,bt=awBeat(),bp=bt.p,t0=gs[R.a].start;R.acc=[];R.clicks=[];
   if(bt.ok){let x=bt.ph+Math.ceil((t0+0.02-bt.ph)/bp)*bp;for(;x<=gs[R.b].end+1e-6;x+=bp)R.clicks.push({t:x})}
   if(R.timed){R.vt=t0;R.wait0=true;R.wt=0}R.ck=0;R.ap=0;R.beat=bt}
-function awClickUpTo(R){let k=null;while(R.ck<R.clicks.length&&R.vt>=R.clicks[R.ck].t)k=R.clicks[R.ck++];if(k)try{playTone(96,0.05,0.25)}catch(e){}} /* höchstens ein Klick je Bild (springt das Lied vor, kein Klick-Gewitter) */
+function awClickUpTo(R){let k=null;while(R.ck<R.clicks.length&&R.vt>=R.clicks[R.ck].t)k=R.clicks[R.ck++];if(k)try{playClick()}catch(e){}} /* höchstens ein Klick je Bild (springt das Lied vor, kein Klick-Gewitter) */
 /* Vorführen: die Noten des Abschnitts fallen sichtbar, die Tasten leuchten – OHNE Ton (v5.06). Danach startet der Durchgang neu. */
 function awDemo(R){const gs=MEM.gs,b=R.mode==='whole'?Math.min(R.b,MEM.C[0].b):R.b;R.pv={t:gs[R.a].start-1.2*AW.demoSpeed,end:gs[b].end+0.3}}
 /* Hilfe: aus dem Kopf / Problemstelle → der aktuelle Anschlag bleibt sichtbar, bis er gespielt ist; Ausblenden → die versteckte Note erscheint */
@@ -2853,7 +2861,7 @@ function awTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   if(!R.timed){ /* mitspielen / ausblenden / aus dem Kopf / Problemstelle / ganzer Song: das Lied wartet bzw. folgt dir – keine Zeit-Hilfe */
     if(R.pos>R.b){if(R.endT==null)R.endT=Math.min(2.5,Math.max(0.3,(gs[R.b].end-gs[R.b].start)/R.speed));R.vt+=dt*R.speed;awClickUpTo(R);R.endT-=dt;if(R.endT<=0)awFinish();return} /* bis der letzte Ton zu Ende ist */
     const G=gs[R.pos];R.vt=R.mode!=='whole'?Math.min(R.vt+dt*(R.glideV||R.speed),G.start):G.start;awClickUpTo(R);if(R.vt>=G.start-1e-9&&R.waitT0==null)R.waitT0=R.clock;return}
-  if(R.wait0){if(R.beat.ok){R.wt+=dt*R.speed;if(R.wt>=R.beat.p){R.wt-=R.beat.p;try{playTone(96,0.05,0.25)}catch(e){}}}return} /* „Start“: wartet auf deinen ersten Ton, das Metronom gibt schon das Tempo */
+  if(R.wait0){if(R.beat.ok){R.wt+=dt*R.speed;if(R.wt>=R.beat.p){R.wt-=R.beat.p;try{playClick()}catch(e){}}}return} /* „Start“: wartet auf deinen ersten Ton, das Metronom gibt schon das Tempo */
   R.vt+=dt*R.speed;awClickUpTo(R);
   const tol=Math.max(0.1,AW.tol*R.speed),ve=R.vt-R.lat*R.speed;
   const wide=Math.max(tol,AW.offWin*R.speed);
@@ -4319,7 +4327,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.12 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.13 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

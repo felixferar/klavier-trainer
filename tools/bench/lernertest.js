@@ -2,7 +2,7 @@ async([seed,maxMiss,stp])=>{if(maxMiss!=null)AW.maxMiss=maxMiss;if(stp)window.AW
  let S0=seed>>>0;const rnd=()=>{S0|=0;S0=S0+0x6D2B79F5|0;let t=Math.imul(S0^S0>>>15,1|S0);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
  const out={viol:[],stats:{att:{},abort:0,askHelp:0,autoHelp:0,longThink:0,searchWhileShown:0,relearn:0,links:0,stuck:0,reveals:0,demoTones:0},days:[]};
  const V=(k,msg)=>{if(out.viol.length<30)out.viol.push(k+': '+msg)};
- window.AW_NOLOOP=true;let tones=[];window.playTone=(m,d,v,g)=>tones.push(m);window.toast=()=>{};KB.state='off';
+ window.AW_NOLOOP=true;let tones=[];window.playTone=(m,d,v,g)=>tones.push(m);window.playClick=()=>tones.push(96);window.toast=()=>{};KB.state='off';
  const LH=[[36,43],[41,48],[43,50],[36,43],[45,52],[41,48],[43,50],[36,43]],MEL=[[64,67,72,67],[65,69,72,69],[67,71,74,71],[64,67,72,0],[69,72,76,72],[65,69,72,69],[67,71,74,77],[72,67,64,0]];
  const notes=[];let t=0;for(let r=0;r<2;r++)for(let bar=0;bar<8;bar++){for(const m of LH[bar])notes.push({m,start:t,dur:1.9,hand:'L'});const M=MEL[bar];for(let q=0;q<4;q++){const m=M[q]+(r&&q===3&&M[q]?2:0);if(M[q])notes.push({m,start:t+q*0.5,dur:0.45,hand:'R'})}t+=2}
  const it={id:'lerner',type:'midi',title:'Lerner-Song',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);

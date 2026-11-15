@@ -48,6 +48,7 @@ async def main():
          'Weg-Anzeige beim Spielen (erst Töne ohne Uhr, dann Takt)': r['weg'],
          'Start beim Spielen: wartet (Metronom tickt), falsche Taste startet nicht, erster Ton = Start im Takt, zu später richtiger Ton = neben dem Takt statt falsch': r['start'] == [True] * 8,
          'Metronom beim Mitspielen: tickt mit der Musik, schweigt wenn das Lied wartet': r['findClick'] == [True, True, True],
+         'Metronom ist ein echter Klick (kein Klavierton)': r['klick'] == [True],
          'keine Zeitgeber im Lernablauf': r['timers'] == 0,
          'keine Fehler': not errs}
     for k, v in c.items():
