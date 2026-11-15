@@ -2813,7 +2813,7 @@ const awWaitMode=m=>m==='find'||m==='fade'||m==='head'||m==='spot';
 function awHidden(R,j){if(R.mode!=='fade'||j<=R.a||R.rev.has(j))return false;const i=j-R.a;return R.fl===0?i%3===2:R.fl===1?i%3!==0:true}
 function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch[p.k],mode=p.mode;
   const span=mode==='link'?{s:p.s,e:p.e}:null,a=mode==='whole'?0:span?C[span.s].a:mode==='spot'&&c.spot?c.spot[0]:C[p.k].a,b=mode==='whole'?gs.length-1:span?C[span.e].b:mode==='spot'&&c.spot?c.spot[1]:C[p.k].b;
-  const timed=mode==='puls'||mode==='review'||mode==='link',speed=mode==='find'||mode==='fade'?AW.findSpeed:mode==='puls'&&c.relearn!==2?AW.tempi[c.tp]:1;
+  const timed=mode==='puls'||mode==='review'||mode==='link',speed=mode==='find'||mode==='fade'||mode==='head'||mode==='spot'?AW.findSpeed:mode==='puls'&&c.relearn!==2?AW.tempi[c.tp]:1; /* v5.12: Metronom hörbar → Tempo steigt nur: 60 % (Mitspielen, Ausblenden, Kopf) → 75 → 90 → 100 % */
   const ns=awSecNotes(a,b).slice().sort((x,y)=>x.start-y.start);
   const R=MEM.run={k:p.k,mode,span,a,b,ns,nj:ns.map(n=>{for(let j=a;j<=b;j++)if(n.start>=gs[j].start-0.001&&n.start<=gs[j].last+0.001)return j;return -1}),timed,dark:!(mode==='find'||mode==='fade'),speed,
     pos:a,hit:{},proc:{},wrong:0,hints:0,cues:0,miss:0,devs:[],waits:[],waitT0:null,clock:0,lastKey:0,anchor:mode==='head'||mode==='spot',show:null,helpAt:[],rev:new Set(),fl:c.fl||0,
