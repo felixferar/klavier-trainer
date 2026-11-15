@@ -54,6 +54,14 @@ Modul `fingering.js` **v0.3.0**, App **v5.03** (Branch `v5.03-fingersatz`, Commi
 - **Offen aus dem letzten Blindtest:** schnelle Tonwiederholung in Paaren (H H A A G G, der Prüfer rutscht mit einem Finger nach). Unverändert.
 - **Neuer Blindtest** mit frischen Stellen (beide Hände, Akkorde) steht noch aus.
 
+## Nachtrag 15.11.: Fingersatz-Flagge ⚑ (Commit bf89ee0)
+
+- Neuer Knopf **⚑** oben im Player (Abspielen/Üben), neben dem Zahnrad. Er markiert die aktuelle Stelle. Nochmal drücken innerhalb von ±0,6 s entfernt die Markierung. Steht man auf einer markierten Stelle, ist der Knopf rot. Ist „Fingersatz“ aus, ist auch der Knopf weg.
+- Die Stelle geht automatisch wie die Vergleichs-Flaggen ins private Archiv `felixferar/klavier-diagnose`, Ordner **`diag/fingerflags/`**. Gesendet werden Song, Zeit, alle Töne ±3 s mit Name, Hand (Farbe und Fingersatz-Hand), Finger, „offen“ und die Begründung der App. Dazu kommt ein Bildschirmfoto. Ohne Diagnose-Schlüssel bleibt die Flagge gespeichert und wird beim nächsten Öffnen des Songs nachgeschickt.
+- Test: `fingertest` prüft Setzen, Upload, Inhalt und Entfernen, alles grün.
+- Zum Auswerten: Archiv klonen, `diag/fingerflags/*.json` lesen. Das sind die frischen Stellen für den nächsten Blindtest.
+- Hinweis: `memtest` ist wackelig beim Punkt „Verbinden“. Das passiert auch auf `main` v5.02 (dort 4 von 4 Mal) und hängt nicht mit dem Fingersatz zusammen.
+
 ## Am Handy testen (nach „veröffentlichen“)
 
 1. App schließen und öffnen, unter Einstellungen „Version 5.03“ prüfen.
@@ -61,3 +69,4 @@ Modul `fingering.js` **v0.3.0**, App **v5.03** (Branch `v5.03-fingersatz`, Commi
 3. Einen einfarbigen Video-Song öffnen: Tiefe Töne haben „L…“-Zahlen.
 4. Im Schnellmenü „Fingersatz“ ausschalten, die Zahlen verschwinden.
 5. Auswendig, Stufe 1: Auch hier stehen die Fingerzahlen auf den Balken.
+6. Bei einem komischen Fingersatz anhalten und **⚑** drücken. Die Meldung „⚑ an Claude gesendet“ muss kommen.
