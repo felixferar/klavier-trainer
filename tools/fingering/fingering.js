@@ -20,7 +20,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.4.0';
+  const VERSION = '0.5.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -48,9 +48,12 @@
     SLOW: 1.2,              // ab diesem Anschlagsabstand (= nach einem langen Ton) ist Zeit, die Hand in Ruhe zu versetzen
     SHIFT_SLOW: 2.0,         // Lagenwechsel mit Zeit (statt 4)
     SAME_SLOW: 2.0,          // gleicher Finger rückt auf die Nachbartaste, mit Zeit (statt 4)
-    CROSS_SLOW: 3.0,
+    CROSS_SLOW: 3.0,         // Unter-/Übersetzen, obwohl Zeit zum Versetzen wäre: zusätzlich
+    SAME_STEP: 8.0,          // v0.5: derselbe Finger auf zwei Tasten ≤ STEP_MAX auseinander, direkt nacheinander (immer, auch nach langen Tönen).
+                             // Anlass: Flaggen 15.11. (F1→E1, D1→C1, F4→A4) – Rutschen soll teurer sein als sauberes Über-/Untersetzen.
+    STEP_MAX: 4,
     LONG: 1.0,               // langer Ton (Sekunden)
-    LAND_LONG: 0.5,          // Versetzen auf einen langen Ton ist etwas günstiger als mitten in der Phrase         // Unter-/Übersetzen, obwohl Zeit zum Versetzen wäre: zusätzlich
+    LAND_LONG: 0.5,          // Versetzen auf einen langen Ton ist etwas günstiger als mitten in der Phrase
   };
   const MODE = { easy: false };
 
@@ -212,6 +215,7 @@
       if (ioi < need) return impossible('same-too-fast', `derselbe Finger schafft ${ht(ad)} nicht in ${fmt(ioi * 1000)} ms`);
       if (MODE.easy && ioi >= EASY.SLOW) { add(EASY.SAME_SLOW + K.SAME_FINGER_PER_ST * ad, 'same-finger', `Finger ${f} rückt in Ruhe weiter (Hand versetzen)`); if (a.inPos && b.inPos) add(K.CROSS_NEEDLESS, 'shift-needless', 'Versetzen unnötig – die Töne ringsum passen in eine Handlage'); }
       else add(K.SAME_FINGER + K.SAME_FINGER_PER_ST * ad, 'same-finger', `derselbe Finger direkt nacheinander auf zwei Tasten`);
+      if (MODE.easy && ad <= EASY.STEP_MAX) add(EASY.SAME_STEP, 'same-step', `Finger ${f} spielt zwei Nachbartasten direkt nacheinander – lieber über-/untersetzen`);
       if (MODE.easy && b.dur >= EASY.LONG) add(-EASY.LAND_LONG, 'land-long', 'rückt auf einen langen Ton – danach hat die Hand Ruhe');
       if (ioi < 2 * need) add(K.MOVE_FAST, 'move-fast', 'wenig Zeit für den Sprung');
       return c;
@@ -973,6 +977,10 @@
       if (k === undefined || !(f >= 1 && f <= 5)) continue;
       mask[k] = bit(f); fixedMask[k] = 1; status[k] = opts._anchorsAreChords ? 'akkord' : 'fest';
     }
+    if (opts._extra) for (const key of Object.keys(opts._extra)) {   // intern (computeHand): Zusatzkosten je Finger, z. B. Nachbar-Akkord
+      const k = M.pos[+key]; if (k === undefined) continue;
+      opts._extra[key].forEach((v, f) => { extra[k * 5 + f] += v; });
+    }
     const patterns = opts.patterns === false ? [] : applyPatterns(M, mask, extra, status, info, fixedMask);
     const rep = opts.repeats === false ? { groups: [], openG: new Array(n).fill(null) } : applyRepeats(M, mask, extra, status, info, fixedMask);
     const V = viterbi(M, mask, extra);
@@ -1170,7 +1178,7 @@
     for (const [i, j] of pairs) {
       let v = trans(A.notes[i], B.notes[j], FA[i], FB[j], P);
       if (v === INF) { if (det) trans(A.notes[i], B.notes[j], FA[i], FB[j], P, det); return INF; }
-      if (FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // Griffwechsel: Finger rückt mit der Hand weiter
+      if (A.k > 1 && B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
       cs.push(v);
     }
     const pos = (G2, F2) => G2.notes.reduce((t, nt, i) => t + nt.midi - NATP[F2[i]], 0) / G2.k;
@@ -1260,6 +1268,31 @@
     return out;
   }
 
+  // Orientierungs-Marken (v0.5): An welchen Tönen braucht man die Fingerzahl wirklich?
+  // Erster Ton / Phrasenanfang, Kreuzen, Lagenwechsel (Daumenlage midi−NATP wandert > 2 Halbtöne), derselbe Finger auf
+  // neuer Taste, Fingerwechsel auf derselben Taste, Akkord-Ankerton (rechts oben, links unten), deine Vorgaben.
+  // Innerhalb einer Handlage (z. B. 1-2-3-4-5 nebeneinander) bleibt der Balken ohne Zahl.
+  function cueFlags(notesIn, fingers, hand, fixedBySrc) {
+    const groups = groupNotes(makeNotes(notesIn, hand)), cue = new Array(notesIn.length).fill('');
+    groups.forEach((g, gi) => {
+      g.notes.forEach(nt => { if (fixedBySrc && fixedBySrc[nt.src]) cue[nt.src] = 'vorgabe'; });
+      if (g.k > 1) { const a = g.notes[g.k - 1]; if (!cue[a.src]) cue[a.src] = 'akkord'; return; }
+      const b = g.notes[0];
+      if (cue[b.src]) return;
+      if (gi === 0) { cue[b.src] = 'anfang'; return; }
+      const pg = groups[gi - 1];
+      const last = pg.notes.reduce((x, y) => (y.start + y.dur > x.start + x.dur ? y : x));
+      if (isPhraseBreak(last, b)) { cue[b.src] = 'phrase'; return; }
+      const a = pg.notes.reduce((x, y) => (Math.abs(y.midi - b.midi) < Math.abs(x.midi - b.midi) ? y : x));
+      const f = fingers[a.src], gF = fingers[b.src], d = b.midi - a.midi;
+      if (d === 0) { if (f !== gF) cue[b.src] = 'wechsel'; return; }
+      if (f === gF) { cue[b.src] = 'gleicher-finger'; return; }
+      if ((gF - f) * d < 0) { cue[b.src] = 'kreuzen'; return; }
+      if (Math.abs((b.midi - NATP[gF]) - (a.midi - NATP[f])) > 2) cue[b.src] = 'lage';
+    });
+    return cue;
+  }
+
   /**
    * computeHand(notes, opts) – Fingersatz für alle Töne EINER Hand, auch mit Akkorden.
    *  opts.hand: 'R' | 'L', opts.profile, opts.fixed: { notenIndex: finger }, opts.patterns, opts.repeats
@@ -1272,7 +1305,9 @@
     const notes = makeNotes(notesIn, hand), groups = groupNotes(notes);
     if (groups.every(g => g.k === 1)) {
       const r = computeFingering(notesIn, Object.assign({}, opts, { hand }));
-      r.chords = []; r.rolled = []; r.chordRepeats = []; return r;
+      r.chords = []; r.rolled = []; r.chordRepeats = [];
+      const fx = {}; for (const k of Object.keys(opts.fixed || {})) fx[+k] = +opts.fixed[k];
+      r.cue = cueFlags(notesIn, r.fingers, hand, fx); return r;
     }
     const fixed = opts.fixed || {}, fixedBySrc = {};
     for (const k of Object.keys(fixed)) fixedBySrc[+k] = +fixed[k];
@@ -1288,7 +1323,19 @@
       if (g.k > 1) anchor[line.length - 1] = chordF[i][g.k - 1];
       else if (fixedBySrc[nt.src]) anchor[line.length - 1] = fixedBySrc[nt.src];
     });
-    const lr = computeFingering(line, Object.assign({}, opts, { hand, fixed: anchor, _anchorsAreChords: true }));
+    // v0.5: Einzeltöne direkt vor/nach einem Akkord sehen in der Linie nur dessen Ankerton. Damit derselbe Finger nicht von
+    // einem anderen Akkordton (z. B. Daumen oben im Akkord) auf die Nachbartaste rutscht, bekommen sie diese Kosten vorab.
+    const lineExtra = {};
+    if (MODE.easy) groups.forEach((g, i) => {
+      if (g.k !== 1) return;
+      const b = g.notes[0], add = [0, 0, 0, 0, 0];
+      for (const j of [i - 1, i + 1]) {
+        const G = groups[j]; if (!G || G.k < 2) continue;
+        G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (dd > 0 && dd <= EASY.STEP_MAX) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
+      }
+      if (add.some(Boolean)) lineExtra[i] = add;
+    });
+    const lr = computeFingering(line, Object.assign({}, opts, { hand, fixed: anchor, _anchorsAreChords: true, _extra: lineExtra }));
     const fingers = new Array(notesIn.length), status = new Array(notesIn.length), open = new Array(notesIn.length).fill(false), alt = new Array(notesIn.length).fill(null);
     const lineOf = new Array(notesIn.length);
     groups.forEach((g, i) => {
@@ -1327,6 +1374,9 @@
           const before = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], F, P) : 0), after = (i < groups.length - 1 ? chordTrans(groups[i], F, groups[i + 1], Fs[i + 1], P) : 0);
           const old = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], Fs[i], P) : 0) + (i < groups.length - 1 ? chordTrans(groups[i], Fs[i], groups[i + 1], Fs[i + 1], P) : 0) + chordShape(groups[i], Fs[i], P).c;
           if (before === INF || after === INF || before + after + sh.c - old > 4) { ok = false; break; }
+          // v0.5: Angleichen darf keinen Einzelton daneben zum Rutschen zwingen (derselbe Finger auf der Nachbartaste)
+          if (MODE.easy && [i - 1, i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false; const nb = G.notes[0], fn = fingers[nb.src];
+            return groups[i].notes.some((c, q) => F[q] === fn && c.midi !== nb.midi && Math.abs(c.midi - nb.midi) <= EASY.STEP_MAX); })) { ok = false; break; }
           changes.push(i);
         }
         if (!ok) continue;
@@ -1348,6 +1398,7 @@
       releaseHints: lr.releaseHints.map(i => groups[lineSrc[i]].notes[groups[lineSrc[i]].k - 1].src),
       totalCost: S.total,
     };
+    result.cue = cueFlags(notesIn, fingers, hand, fixedBySrc);
     result.explain = srcIndex => {
       const li = lineOf[srcIndex]; if (li === undefined) return '';
       const g = groups[li];

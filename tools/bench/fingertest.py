@@ -1,11 +1,14 @@
 """v5.03: Fingersatz in der App.
 usage: python3 tools/bench/fingertest.py [APP.html]   (Standard: web/index.html)
- 1. Seite lädt ohne pageerror; eingebettetes Modul = tools/fingering/fingering.js (Version 0.4.0).
+ 1. Seite lädt ohne pageerror; eingebettetes Modul = tools/fingering/fingering.js (Version 0.5.0).
  2. Song mit Händen: rechts C-Dur-Tonleiter → 1 2 3 1 2 3 4 5, links Akkord C3-E3-G3 → 5 3 1 (tief→hoch).
  3. Einfarbiger Song (alle Töne "R", Bass tief): Bass bekommt die linke Hand (fingH = L), Melodie rechts.
  4. Abspielen zeichnet mit Fingerzahlen ohne Fehler; Schalter "Fingersatz" aus → keine Rechnung, kein Fehler.
  5. Auswendig öffnen (gleiche Noten) ohne Fehler; Fingerzahlen an MEM.song nach einem Bild.
- 7. Stil: Standard "einfach"; Schalter "Lehrbuch" rechnet neu (Melodie A-G-F-E langsam + langes E → einfach 3-2-1-1, Lehrbuch 3-2-1-3).
+ 7. Stil: Standard "einfach"; Schalter "Lehrbuch" rechnet neu (C-H-A-G-F-E langsam + langes E → einfach ohne Rutschen, z. B. 3-2-1-3-2-1; Lehrbuch anders).
+ 8. v5.06 "Nur Orientierung" (Standard): Fünftonlage C-D-E-F-G → nur 1 Zahl; Schalter "jeder Ton" → 5.
+ 9. v5.06 Klaviatur-Linie: Balken steht auf der Linie (Üben wartet) → Fingerschild und Notenname ganz über hitY, kein Überlappen.
+10. v5.06 Auswendig (awDraw): "Finden" zeigt Orientierungs-Zahlen, "aus dem Kopf" keine (auch nicht bei Start-Anker/Hilfe im Dunkeln).
  6. Fingersatz-Flagge ⚑: markiert die Stelle, Upload nach diag/fingerflags/ mit Tönen ±3 s, Finger, Hand, Begründung; nochmal drücken = weg.
 Bildschirmfoto: /tmp/fingertest.png
 """
@@ -40,6 +43,24 @@ JS_STYLE = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Stil',artist:'x',d
  const mel=[72,71,69,67,65,64].map((m,i)=>({m,start:i*0.65,dur:i===5?2.6:0.6,hand:'R'}));const it=mk(mel,'st');LIB.push(it);const s=songForItem(it);
  const o={def:S.fingStyle||'einfach'};openSong(s,it.id);draw();o.einfach=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');
  S.fingStyle='lehrbuch';draw();o.lehrbuch=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');S.fingStyle='einfach';draw();return o}"""
+JS_ORIENT = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Orient',artist:'x',data:b64FromBuf(writeMidi(ns))});
+ const it=mk([60,62,64,65,67].map((m,i)=>({m,start:i*0.4,dur:0.35,hand:'R'})),'or');LIB.push(it);const s=songForItem(it);openSong(s,it.id);S.fingShow='orient';draw();
+ const o={orient:s.notes.filter(fingVis).length,cues:s.notes.map(n=>n.fingCue||'-').join(',')};S.fingShow='alle';o.alle=s.notes.filter(fingVis).length;S.fingShow='orient';return o}"""
+JS_EDGE = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Kante',artist:'x',data:b64FromBuf(writeMidi(ns))});
+ const it=mk([{m:69,start:0,dur:2.0,hand:'R'},{m:71,start:2.2,dur:0.5,hand:'R'}],'ed');LIB.push(it);const s=songForItem(it);openSong(s,it.id);
+ S.names=true;S.fingShow='alle';const log=[];const dF=drawFinger,dN=drawNoteLabel;
+ drawFinger=function(c,n,cx,yb,h,w,nameH){const r=dF.apply(this,arguments);if(r){const fs=fingFs(w),y=yb-3-(nameH||0)-1;log.push({k:'F',top:y-fs,bot:y+2})}return r};
+ drawNoteLabel=function(c,m,x,y,fs){log.push({k:'N',top:y-fs*0.8,bot:y+fs*0.25});return dN.apply(this,arguments)};
+ const out=[];for(const T of [-0.5,0,0.5,1.2]){log.length=0;t=T;draw();out.push({T,hitY,H,items:log.slice()})}
+ drawFinger=dF;drawNoteLabel=dN;S.fingShow='orient';return out}"""
+JS_FLOW = r"""()=>{let cnt=0;const dF=drawFinger;drawFinger=function(){const r=dF.apply(this,arguments);if(r)cnt++;return r};
+ const LH=[48,43,45,41],notes=[];let tt=0;for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:tt,dur:1.9,hand:'L'});[72,74,76,77].forEach((m,q)=>notes.push({m:m+(bar%2?-5:0),start:tt+q*0.5,dur:0.45,hand:'R'}));tt+=2}
+ const it={id:'fl',type:'midi',title:'Fluss',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB.push(it);localStorage.removeItem('kt_mem');
+ openMem(it);const o={};awStart({k:0,mode:'find'});let R=MEM.run;o.mode1=R.mode;R.vt=MEM.gs[R.a].start-0.2;cnt=0;awDraw();o.find=cnt;o.st1=R.drawState;
+ S.fingShow='alle';const ys=[];const dF2=drawFinger;drawFinger=function(c,n,cx,yb,h,w,nameH){const r=dF2.apply(this,arguments);if(r)ys.push(yb-3-(nameH||0)-1+2);return r};
+ R.vt=MEM.gs[R.a].start+0.3;awDraw();o.awBottom=ys.length?Math.max(...ys):null;o.awHn=MEM.hn;drawFinger=dF2;S.fingShow='orient';
+ awStart({k:0,mode:'head'});R=MEM.run;o.mode2=R.mode;o.dark=!!R.dark;cnt=0;awDraw();o.recall=cnt;o.st2=R.drawState;
+ R.anchor=false;R.show=R.pos;cnt=0;awDraw();o.hint=cnt;o.st3=R.drawState;drawFinger=dF;try{memStop()}catch(e){}return o}"""
 JS_MEM = r"""()=>{const it=LIB[0];let ok=true;try{openMem(it)}catch(e){ok=String(e)}return {ok}}"""
 JS_MEM2 = r"""()=>{let e=null;try{awStart({k:0,mode:'find'})}catch(x){e=String(x)}try{awDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
 
@@ -56,17 +77,37 @@ async def main():
         fi = json.loads(base64.b64decode(f2['info']).decode('utf-8')) if f2['info'] else {}; fl = (fi.get('flags') or [{}])[0]; nr = fl.get('near') or []
         print('Flagge:', f2['path'], json.dumps(nr[:2], ensure_ascii=False))
         st = await pg.evaluate(JS_STYLE); print('Stil:', st)
+        orr = await pg.evaluate(JS_ORIENT); print('Orientierung:', orr)
+        ed = await pg.evaluate(JS_EDGE)
+        await pg.screenshot(path='/tmp/fingertest_kante.png')
+        edge_ok = True
+        for fr in ed:
+            hy = fr['hitY']; F_ = [x for x in fr['items'] if x['k'] == 'F']; N_ = [x for x in fr['items'] if x['k'] == 'N']
+            fr['items'] = [x for x in fr['items'] if not (x['k'] == 'N' and x['top'] > fr['H'] - 30)]   # Tastenbeschriftung der Klaviatur selbst
+            F_ = [x for x in fr['items'] if x['k'] == 'F']; N_ = [x for x in fr['items'] if x['k'] == 'N']
+            for x in fr['items']:
+                if x['bot'] > hy + 0.5: edge_ok = False
+            for a in F_:
+                for b in N_:
+                    if a['bot'] > b['top'] + 0.5 and b['bot'] > a['top'] + 0.5: edge_ok = False
+        print('Kante:', json.dumps([(fr['T'], round(fr['hitY']), [(x['k'], round(x['top']), round(x['bot'])) for x in fr['items']]) for fr in ed]))
+        fw = await pg.evaluate(JS_FLOW); print('Auswendig:', fw)
         m = await pg.evaluate(JS_MEM); await pg.wait_for_timeout(800)
         m2 = await pg.evaluate(JS_MEM2)
         inline = r.pop('inline'); body = re.sub(r'^/\* FINGERING-BEGIN[^\n]*\n', '', inline); body = re.sub(r'\n/\* FINGERING-END \*/$', '', body)
         checks = {
-            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.4.0',
+            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.5.0',
             'rechts_tonleiter_12312345': r['rh'] == '12312345', 'links_akkord_531': r['lh'] == '531' and r['lhH'] == 'LLL',
             'einfarbig_bass_links': r['bassH'] == 'L' and r['melH'] == 'R', 'schalter_aus': r['offNoCalc'],
             'flagge_rot': f1['red'] != '', 'flagge_upload': f2['n'] == 1 and (f2['path'] or '').startswith('diag/fingerflags/') and fi.get('kind') == 'fingerflags',
             'flagge_inhalt': fl.get('T') == 1.0 and len(nr) >= 5 and all(x['f'] in (1, 2, 3, 4, 5) and x['fh'] in ('L', 'R') and x['why'] for x in nr),
             'flagge_weg': f2['after'] == 0,
-            'stil_standard_einfach': st['def'] == 'einfach' and st['einfach'].endswith('11'), 'stil_lehrbuch_anders': st['lehrbuch'] != st['einfach'],
+            'stil_standard_einfach': st['def'] == 'einfach' and all(st['einfach'][k] != st['einfach'][k - 1] for k in range(1, len(st['einfach']))),   # kein Rutschen (gleicher Finger auf Nachbartasten) 'stil_lehrbuch_anders': st['lehrbuch'] != st['einfach'],
+            'orientierung_nur_erste': orr['orient'] == 1 and orr['alle'] == 5,
+            'kante_ueber_klaviatur_kein_ueberlappen': edge_ok and any(fr['items'] for fr in ed),
+            'auswendig_finden_zeigt_zahlen': fw['mode1'] == 'find' and fw['find'] >= 1,
+            'auswendig_aus_dem_kopf_keine_zahlen': fw['mode2'] == 'head' and fw['dark'] and fw['recall'] == 0 and fw['hint'] == 0,
+            'auswendig_zahl_ueber_klaviatur': fw['awBottom'] is not None and fw['awBottom'] <= fw['awHn'],
             'auswendig_ok': m['ok'] is True, 'auswendig_finger': m2['memFing'] and not m2['err'], 'keine_pageerror': not errs,
         }
         print(json.dumps(r)); print('pageerrors', errs)

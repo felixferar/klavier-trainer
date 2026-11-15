@@ -536,6 +536,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Notennamen auf den Balken</b><small>Deutsch: B = Ton zwischen A und H</small></div><input type="checkbox" class="sw" id="names2"></div>
       <div class="li"><div class="grow"><b>Fingersatz auf den Balken</b><small>1 = Daumen … 5 = kleiner Finger, rechts und links</small></div><input type="checkbox" class="sw" id="fing2"></div>
       <div class="li"><div class="grow"><b>Lehrbuch-Fingersatz</b><small>Aus = einfach: Hand in Ruhe versetzen statt Daumen untersetzen (nur schnelle Läufe wie im Buch)</small></div><input type="checkbox" class="sw" id="fingBook"></div>
+      <div class="li"><div class="grow"><b>Fingerzahl auf jedem Ton</b><small>Aus = nur Orientierung: Zahl nur dort, wo die Hand neu greift (Phrasenanfang, Untersetzen, Lagenwechsel, Akkord)</small></div><input type="checkbox" class="sw" id="fingAll"></div>
       <div class="li"><div class="grow"><b>Ganze Tastatur zeigen</b><small>Sonst nur der Bereich, den der Song braucht</small></div><input type="checkbox" class="sw" id="full2"></div>
     </div>
     <div class="lbl">Daten</div>
@@ -553,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.05</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.06</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -867,7 +868,7 @@ body.short #onbDots{margin:8px 0}
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.4.0';
+  const VERSION = '0.5.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -895,9 +896,12 @@ body.short #onbDots{margin:8px 0}
     SLOW: 1.2,              // ab diesem Anschlagsabstand (= nach einem langen Ton) ist Zeit, die Hand in Ruhe zu versetzen
     SHIFT_SLOW: 2.0,         // Lagenwechsel mit Zeit (statt 4)
     SAME_SLOW: 2.0,          // gleicher Finger rückt auf die Nachbartaste, mit Zeit (statt 4)
-    CROSS_SLOW: 3.0,
+    CROSS_SLOW: 3.0,         // Unter-/Übersetzen, obwohl Zeit zum Versetzen wäre: zusätzlich
+    SAME_STEP: 8.0,          // v0.5: derselbe Finger auf zwei Tasten ≤ STEP_MAX auseinander, direkt nacheinander (immer, auch nach langen Tönen).
+                             // Anlass: Flaggen 15.11. (F1→E1, D1→C1, F4→A4) – Rutschen soll teurer sein als sauberes Über-/Untersetzen.
+    STEP_MAX: 4,
     LONG: 1.0,               // langer Ton (Sekunden)
-    LAND_LONG: 0.5,          // Versetzen auf einen langen Ton ist etwas günstiger als mitten in der Phrase         // Unter-/Übersetzen, obwohl Zeit zum Versetzen wäre: zusätzlich
+    LAND_LONG: 0.5,          // Versetzen auf einen langen Ton ist etwas günstiger als mitten in der Phrase
   };
   const MODE = { easy: false };
 
@@ -1059,6 +1063,7 @@ body.short #onbDots{margin:8px 0}
       if (ioi < need) return impossible('same-too-fast', `derselbe Finger schafft ${ht(ad)} nicht in ${fmt(ioi * 1000)} ms`);
       if (MODE.easy && ioi >= EASY.SLOW) { add(EASY.SAME_SLOW + K.SAME_FINGER_PER_ST * ad, 'same-finger', `Finger ${f} rückt in Ruhe weiter (Hand versetzen)`); if (a.inPos && b.inPos) add(K.CROSS_NEEDLESS, 'shift-needless', 'Versetzen unnötig – die Töne ringsum passen in eine Handlage'); }
       else add(K.SAME_FINGER + K.SAME_FINGER_PER_ST * ad, 'same-finger', `derselbe Finger direkt nacheinander auf zwei Tasten`);
+      if (MODE.easy && ad <= EASY.STEP_MAX) add(EASY.SAME_STEP, 'same-step', `Finger ${f} spielt zwei Nachbartasten direkt nacheinander – lieber über-/untersetzen`);
       if (MODE.easy && b.dur >= EASY.LONG) add(-EASY.LAND_LONG, 'land-long', 'rückt auf einen langen Ton – danach hat die Hand Ruhe');
       if (ioi < 2 * need) add(K.MOVE_FAST, 'move-fast', 'wenig Zeit für den Sprung');
       return c;
@@ -1820,6 +1825,10 @@ body.short #onbDots{margin:8px 0}
       if (k === undefined || !(f >= 1 && f <= 5)) continue;
       mask[k] = bit(f); fixedMask[k] = 1; status[k] = opts._anchorsAreChords ? 'akkord' : 'fest';
     }
+    if (opts._extra) for (const key of Object.keys(opts._extra)) {   // intern (computeHand): Zusatzkosten je Finger, z. B. Nachbar-Akkord
+      const k = M.pos[+key]; if (k === undefined) continue;
+      opts._extra[key].forEach((v, f) => { extra[k * 5 + f] += v; });
+    }
     const patterns = opts.patterns === false ? [] : applyPatterns(M, mask, extra, status, info, fixedMask);
     const rep = opts.repeats === false ? { groups: [], openG: new Array(n).fill(null) } : applyRepeats(M, mask, extra, status, info, fixedMask);
     const V = viterbi(M, mask, extra);
@@ -2017,7 +2026,7 @@ body.short #onbDots{margin:8px 0}
     for (const [i, j] of pairs) {
       let v = trans(A.notes[i], B.notes[j], FA[i], FB[j], P);
       if (v === INF) { if (det) trans(A.notes[i], B.notes[j], FA[i], FB[j], P, det); return INF; }
-      if (FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // Griffwechsel: Finger rückt mit der Hand weiter
+      if (A.k > 1 && B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
       cs.push(v);
     }
     const pos = (G2, F2) => G2.notes.reduce((t, nt, i) => t + nt.midi - NATP[F2[i]], 0) / G2.k;
@@ -2107,6 +2116,31 @@ body.short #onbDots{margin:8px 0}
     return out;
   }
 
+  // Orientierungs-Marken (v0.5): An welchen Tönen braucht man die Fingerzahl wirklich?
+  // Erster Ton / Phrasenanfang, Kreuzen, Lagenwechsel (Daumenlage midi−NATP wandert > 2 Halbtöne), derselbe Finger auf
+  // neuer Taste, Fingerwechsel auf derselben Taste, Akkord-Ankerton (rechts oben, links unten), deine Vorgaben.
+  // Innerhalb einer Handlage (z. B. 1-2-3-4-5 nebeneinander) bleibt der Balken ohne Zahl.
+  function cueFlags(notesIn, fingers, hand, fixedBySrc) {
+    const groups = groupNotes(makeNotes(notesIn, hand)), cue = new Array(notesIn.length).fill('');
+    groups.forEach((g, gi) => {
+      g.notes.forEach(nt => { if (fixedBySrc && fixedBySrc[nt.src]) cue[nt.src] = 'vorgabe'; });
+      if (g.k > 1) { const a = g.notes[g.k - 1]; if (!cue[a.src]) cue[a.src] = 'akkord'; return; }
+      const b = g.notes[0];
+      if (cue[b.src]) return;
+      if (gi === 0) { cue[b.src] = 'anfang'; return; }
+      const pg = groups[gi - 1];
+      const last = pg.notes.reduce((x, y) => (y.start + y.dur > x.start + x.dur ? y : x));
+      if (isPhraseBreak(last, b)) { cue[b.src] = 'phrase'; return; }
+      const a = pg.notes.reduce((x, y) => (Math.abs(y.midi - b.midi) < Math.abs(x.midi - b.midi) ? y : x));
+      const f = fingers[a.src], gF = fingers[b.src], d = b.midi - a.midi;
+      if (d === 0) { if (f !== gF) cue[b.src] = 'wechsel'; return; }
+      if (f === gF) { cue[b.src] = 'gleicher-finger'; return; }
+      if ((gF - f) * d < 0) { cue[b.src] = 'kreuzen'; return; }
+      if (Math.abs((b.midi - NATP[gF]) - (a.midi - NATP[f])) > 2) cue[b.src] = 'lage';
+    });
+    return cue;
+  }
+
   /**
    * computeHand(notes, opts) – Fingersatz für alle Töne EINER Hand, auch mit Akkorden.
    *  opts.hand: 'R' | 'L', opts.profile, opts.fixed: { notenIndex: finger }, opts.patterns, opts.repeats
@@ -2119,7 +2153,9 @@ body.short #onbDots{margin:8px 0}
     const notes = makeNotes(notesIn, hand), groups = groupNotes(notes);
     if (groups.every(g => g.k === 1)) {
       const r = computeFingering(notesIn, Object.assign({}, opts, { hand }));
-      r.chords = []; r.rolled = []; r.chordRepeats = []; return r;
+      r.chords = []; r.rolled = []; r.chordRepeats = [];
+      const fx = {}; for (const k of Object.keys(opts.fixed || {})) fx[+k] = +opts.fixed[k];
+      r.cue = cueFlags(notesIn, r.fingers, hand, fx); return r;
     }
     const fixed = opts.fixed || {}, fixedBySrc = {};
     for (const k of Object.keys(fixed)) fixedBySrc[+k] = +fixed[k];
@@ -2135,7 +2171,19 @@ body.short #onbDots{margin:8px 0}
       if (g.k > 1) anchor[line.length - 1] = chordF[i][g.k - 1];
       else if (fixedBySrc[nt.src]) anchor[line.length - 1] = fixedBySrc[nt.src];
     });
-    const lr = computeFingering(line, Object.assign({}, opts, { hand, fixed: anchor, _anchorsAreChords: true }));
+    // v0.5: Einzeltöne direkt vor/nach einem Akkord sehen in der Linie nur dessen Ankerton. Damit derselbe Finger nicht von
+    // einem anderen Akkordton (z. B. Daumen oben im Akkord) auf die Nachbartaste rutscht, bekommen sie diese Kosten vorab.
+    const lineExtra = {};
+    if (MODE.easy) groups.forEach((g, i) => {
+      if (g.k !== 1) return;
+      const b = g.notes[0], add = [0, 0, 0, 0, 0];
+      for (const j of [i - 1, i + 1]) {
+        const G = groups[j]; if (!G || G.k < 2) continue;
+        G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (dd > 0 && dd <= EASY.STEP_MAX) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
+      }
+      if (add.some(Boolean)) lineExtra[i] = add;
+    });
+    const lr = computeFingering(line, Object.assign({}, opts, { hand, fixed: anchor, _anchorsAreChords: true, _extra: lineExtra }));
     const fingers = new Array(notesIn.length), status = new Array(notesIn.length), open = new Array(notesIn.length).fill(false), alt = new Array(notesIn.length).fill(null);
     const lineOf = new Array(notesIn.length);
     groups.forEach((g, i) => {
@@ -2174,6 +2222,9 @@ body.short #onbDots{margin:8px 0}
           const before = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], F, P) : 0), after = (i < groups.length - 1 ? chordTrans(groups[i], F, groups[i + 1], Fs[i + 1], P) : 0);
           const old = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], Fs[i], P) : 0) + (i < groups.length - 1 ? chordTrans(groups[i], Fs[i], groups[i + 1], Fs[i + 1], P) : 0) + chordShape(groups[i], Fs[i], P).c;
           if (before === INF || after === INF || before + after + sh.c - old > 4) { ok = false; break; }
+          // v0.5: Angleichen darf keinen Einzelton daneben zum Rutschen zwingen (derselbe Finger auf der Nachbartaste)
+          if (MODE.easy && [i - 1, i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false; const nb = G.notes[0], fn = fingers[nb.src];
+            return groups[i].notes.some((c, q) => F[q] === fn && c.midi !== nb.midi && Math.abs(c.midi - nb.midi) <= EASY.STEP_MAX); })) { ok = false; break; }
           changes.push(i);
         }
         if (!ok) continue;
@@ -2195,6 +2246,7 @@ body.short #onbDots{margin:8px 0}
       releaseHints: lr.releaseHints.map(i => groups[lineSrc[i]].notes[groups[lineSrc[i]].k - 1].src),
       totalCost: S.total,
     };
+    result.cue = cueFlags(notesIn, fingers, hand, fixedBySrc);
     result.explain = srcIndex => {
       const li = lineOf[srcIndex]; if (li === undefined) return '';
       const g = groups[li];
@@ -2813,9 +2865,11 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
   MEM.pos=drawKeys(c,lo,hi,p.w,kb,(m,b)=>{const w=MEM.flash.get(m),gd=MEM.good.get(m);if(w&&on(m,w)&&!(gd&&gd>w))return '#E5484D';if(gd&&on(m,gd))return '#3BB273';if(pre.has(m))return b?'#2F6FB0':'#A9D4FF';return b?'#2C2C2A':'#E8E6DF'},true);c.restore();
   if(tj!=null)for(let m=lo;m<=hi;m++){const k=MEM.pos[m];if(!k||k.b)continue;const fs=Math.min(11,Math.max(7,k.w*0.45));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle=pre.has(m)?'rgba(10,40,80,.95)':'rgba(40,40,40,.55)';c.fillText(NAMES[m%12]+(m%12===0?Math.floor(m/12)-1:''),k.x+k.w/2,hn+kb-6)}
   for(let m=lo;m<=hi;m++){const k=MEM.pos[m];if(!k||!k.b)continue;const fs=Math.min(9,Math.max(6,k.w*0.42));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(255,255,255,.75)';c.fillText(NAMES[m%12],k.x+k.w/2,hn+kb*0.6-5)}
-  const bar=(m,y0,y1,col,nt)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.6:0.78);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0));
-    const nh=ww>=9?Math.min(11,Math.max(7,ww*0.42))+2:0,fd=nt&&ww>=8&&drawFinger(c,nt,k.x+k.w/2,y1,y1-y0,ww,nh);
-    if(y1-y0>=13&&ww>=9&&(fd||!(nt&&nt.fing&&S.fingers!==false))){const fs=Math.min(11,Math.max(7,ww*0.42));c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(0,0,0,.72)';c.fillText(NAMES[m%12],k.x+k.w/2,y1-4)}};
+  /* v5.06: Fingerzahlen nur im Schritt "Finden" (nicht "aus dem Kopf", nicht Anker/Hilfe im Dunkeln), nur Orientierungs-Zahlen; Beschriftung über der Klaviatur */
+  const findF=R.mode==='find'&&!R.done;
+  const bar=(m,y0,y1,col,nt)=>{const k=MEM.pos[m];if(!k)return;const ww=k.w*(k.b?0.6:0.78);c.fillStyle=col;c.fillRect(k.x+k.w/2-ww/2,y0,ww,Math.max(4,y1-y0));y1=Math.min(y1,hn-2);
+    const ft=findF&&nt&&ww>=8&&fingVis(nt),nh=ww>=9&&y1-y0>=13?Math.min(11,Math.max(7,ww*0.42))+2:0,fd=ft&&drawFinger(c,nt,k.x+k.w/2,y1,y1-y0,ww,nh);
+    if(y1-y0>=13&&ww>=9&&(fd||!ft)){const fs=Math.min(11,Math.max(7,ww*0.42));c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(0,0,0,.72)';c.fillText(NAMES[m%12],k.x+k.w/2,y1-4)}};
   c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
   if(showJ!=null){for(let q=0;q<R.ns.length;q++)if(R.nj[q]===showJ){const n=R.ns[q],h=R.hit[showJ];if(h&&h.has(n.midi))continue;bar(n.midi,hn-4-Math.min(hn*0.6,Math.max(30,n.dur*hn/3)),hn-4,noteCol(n),n)}} /* nur dieser Anschlag, ruhig über den Tasten */
   else if(R.mode==='find'){const t=R.vt,pps=hn/3,Y=s=>hn-4-(s-t)*pps;
@@ -3371,12 +3425,14 @@ function fingSong(s){if(!s||!s.notes||!window.Fingering||S.fingers===false)retur
     const hands=one&&hi-lo>14?Fingering.assignHands(ns.map(n=>({midi:n.midi,start:n.start,dur:n.dur}))):ns.map(n=>n.hand==='L'?'L':'R');
     for(const H of ['L','R']){const idx=[];ns.forEach((n,i)=>{if(hands[i]===H)idx.push(i)});if(!idx.length)continue;
       const r=Fingering.computeHand(idx.map(i=>({midi:ns[i].midi,start:ns[i].start,dur:ns[i].dur})),{hand:H,profile:Fingering.PROFILES.meine,style:S.fingStyle==='lehrbuch'?'lehrbuch':'einfach'});
-      idx.forEach((i,k)=>{ns[i].fing=r.fingers[k];ns[i].fingH=H;ns[i].fingOpen=!!r.open[k];ns[i]._fk=k});(s._fingR=s._fingR||{})[H]=r}
+      idx.forEach((i,k)=>{ns[i].fing=r.fingers[k];ns[i].fingH=H;ns[i].fingOpen=!!r.open[k];ns[i].fingCue=(r.cue&&r.cue[k])||'';ns[i]._fk=k});(s._fingR=s._fingR||{})[H]=r}
     s.fingOk=true}catch(e){s.fingOk=false;console.warn('Fingersatz',e)}}
 /* Fingerzahl unten im Balken (dort, wo der Ton gleich ankommt), über dem Notennamen. Andere Hand als die Balkenfarbe → "L2"/"R2".
    nameH = Höhe, die der Notenname unten braucht (0 = kein Name). Rückgabe true = gezeichnet. */
 function fingFs(w){return Math.min(13,Math.max(9,w*0.5))}
-function drawFinger(c,n,cx,yb,h,w,nameH){if(S.fingers===false||!n||!n.fing)return false;const tag=(n.fingH&&n.fingH!==n.hand?n.fingH:'')+n.fing,fs=fingFs(w);
+/* v5.06: "Nur Orientierung" (Standard): Zahl nur an Phrasenanfang, Kreuzen, Lagenwechsel, gleichem Finger auf neuer Taste, Akkord-Anker, Vorgaben (n.fingCue). S.fingShow='alle' = jede Note. */
+function fingVis(n){return S.fingers!==false&&!!n&&!!n.fing&&(S.fingShow==='alle'||!!n.fingCue)}
+function drawFinger(c,n,cx,yb,h,w,nameH){if(!fingVis(n))return false;const tag=(n.fingH&&n.fingH!==n.hand?n.fingH:'')+n.fing,fs=fingFs(w);
   if(h<fs+4+(nameH||0))return false;
   c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.textBaseline='alphabetic';const y=yb-3-(nameH||0)-1;
   c.fillStyle='rgba(255,255,255,.92)';const rw=Math.max(fs*0.95,c.measureText(tag).width+5);rrect(c,cx-rw/2,y-fs,rw,fs+2,4);c.fill();c.fillStyle='rgba(7,9,13,.9)';
@@ -3389,7 +3445,7 @@ function ffItem(){try{return LIB.find(x=>x.id===songId)||{}}catch(e){return {}}}
 function ffInfo(){const it=ffItem(),fl=ffGet(),why=n=>{try{const r=song._fingR&&song._fingR[n.fingH];return r&&n._fk!=null?r.explain(n._fk):''}catch(e){return ''}};
   const near=T=>song.notes.filter(n=>n.start>=T-3&&n.start<=T+3).sort((a,b)=>a.start-b.start||a.midi-b.midi)
     .map(n=>({m:n.midi,name:FF_NN[n.midi%12]+(Math.floor(n.midi/12)-1),s:+n.start.toFixed(3),d:+n.dur.toFixed(3),hand:n.hand||'',fh:n.fingH||'',f:n.fing||null,open:!!n.fingOpen,why:why(n)}));
-  return {kind:'fingerflags',v:'5.04',modul:window.Fingering?Fingering.VERSION:'',profil:'meine',stil:S.fingStyle==='lehrbuch'?'lehrbuch':'einfach',ts:new Date().toISOString(),title:song.title||it.title||'',videoId:it.videoId||it.fromYT||'',itemId:songId,
+  return {kind:'fingerflags',v:'5.06',zeigen:S.fingShow==='alle'?'alle':'orient',modul:window.Fingering?Fingering.VERSION:'',profil:'meine',stil:S.fingStyle==='lehrbuch'?'lehrbuch':'einfach',ts:new Date().toISOString(),title:song.title||it.title||'',videoId:it.videoId||it.fromYT||'',itemId:songId,
     flags:fl.map(T=>({T,near:near(T)}))}}
 function ffSync(){if(!ghTok()||!song)return;clearTimeout(FF_T);FF_T=setTimeout(async()=>{try{fingSong(song);const info=ffInfo(),ts=info.ts.replace(/[:.]/g,'-').slice(0,19),vid=(info.videoId||info.itemId||'song').toString().replace(/[^\w-]/g,'_');
   const r=await ghUpload(`diag/fingerflags/${ts}_${vid}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Fingersatz-Flaggen '+vid+' ('+info.flags.length+')');
@@ -3526,9 +3582,11 @@ function draw(waiting,now=performance.now()){
     if(act&&h>8){ctx.fillStyle='rgba(255,255,255,.22)';rrect(ctx,x+2,yt+2,w-4,Math.min(3,h/4),2);ctx.fill()}
     if(k.b){ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;rrect(ctx,x,yt,w,h,r);ctx.stroke()}
     if(awaiting&&awaiting.notes.includes(n)&&!n.hit&&T>=awaiting.start-0.4){ctx.globalAlpha=1;ctx.strokeStyle='#fff';ctx.lineWidth=2;rrect(ctx,x,yt,w,h,r);ctx.stroke()}
-    const fOn=act&&w>=9&&S.fingers!==false&&n.fing,nfs=Math.min(15,Math.max(10,w*0.55)),both=h>=fingFs(w)+4+nfs+4;
-    if(S.names&&w>=11&&h>15&&act&&(!fOn||both)){ctx.globalAlpha=n.hit?0.4:1;const fs=nfs;drawNoteLabel(ctx,n.midi,x+w/2,yb-4,fs,isBlack(n.midi)?'#fff':'rgba(7,9,13,.88)',isBlack(n.midi)?'rgba(255,255,255,.6)':'rgba(7,9,13,.45)');ctx.textAlign='left'}
-    if(fOn){ctx.globalAlpha=n.hit?0.4:1;drawFinger(ctx,n,x+w/2,yb,h,w,S.names&&w>=11&&both?nfs+2:0)} /* v5.03: zu kurz für beides → nur die Fingerzahl */
+    /* v5.06: Beschriftung an der SICHTBAREN Unterkante (über der Klaviatur-Linie hitY), Platz = sichtbare Höhe */
+    const yv=Math.min(yb,hitY-2),hv=yv-Math.max(yt,0);
+    const fOn=act&&w>=9&&fingVis(n),nfs=Math.min(15,Math.max(10,w*0.55)),both=hv>=fingFs(w)+4+nfs+4;
+    if(S.names&&w>=11&&hv>15&&act&&(!fOn||both)){ctx.globalAlpha=n.hit?0.4:1;const fs=nfs;drawNoteLabel(ctx,n.midi,x+w/2,yv-4,fs,isBlack(n.midi)?'#fff':'rgba(7,9,13,.88)',isBlack(n.midi)?'rgba(255,255,255,.6)':'rgba(7,9,13,.45)');ctx.textAlign='left'}
+    if(fOn){ctx.globalAlpha=n.hit?0.4:1;drawFinger(ctx,n,x+w/2,yv,hv,w,S.names&&w>=11&&both?nfs+2:0)} /* v5.03: zu kurz für beides → nur die Fingerzahl */
     ctx.globalAlpha=1;
   }
   ctx.restore();
@@ -4061,7 +4119,7 @@ function renderSettings(){
   for(const side of ['L','R']){const el=$('#col'+side);el.innerHTML='';
     for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(S['col'+side]===k?' on':'');b.title=p.n;b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.d}"></i>`;
       b.onclick=()=>{S['col'+side]=k;saveS();renderSettings()};el.appendChild(b)}}
-  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#fing2').checked=S.fingers!==false;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#full2').checked=S.full;
+  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#fing2').checked=S.fingers!==false;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#fingAll').checked=S.fingShow==='alle';$('#full2').checked=S.full;
   $('#calStat2').textContent=calCount()>=NK()?`Alle ${NK()} Tasten kalibriert ✓`:`${calCount()} von ${NK()} Tasten kalibriert`;
   for(const b of $$('#laySet button'))b.classList.toggle('on',+b.dataset.l===S.layout);
 }
@@ -4075,6 +4133,7 @@ $('#sens2').oninput=e=>{S.sens=+e.target.value;saveS()};
 $('#names2').onchange=e=>{S.names=e.target.checked;saveS()};
 $('#fing2').onchange=e=>{S.fingers=e.target.checked;saveS()};
 $('#fingBook').onchange=e=>{S.fingStyle=e.target.checked?'lehrbuch':'einfach';saveS()};
+$('#fingAll').onchange=e=>{S.fingShow=e.target.checked?'alle':'orient';saveS()};
 $('#full2').onchange=e=>{S.full=e.target.checked;saveS()};
 let micT2=false;
 $('#micTest2').onclick=async()=>{if(micT2){micT2=false;$('#micTest2').textContent='Test';$('#micInfo2').textContent='Zeigt den Ton, den die App gerade hört';return}
@@ -4119,7 +4178,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.05 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.06 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -4358,6 +4417,7 @@ function scanCore(px,w,n,f){
       else if(ln.on&&SCAN.laneBgc&&SCAN.laneBgc[k]<2){} // no bar, but no background either (letters inside a pill fill the rows): the bar goes on
       else{ln.cnt=0;ln.offF=(ln.offF||0)+1;if(ln.offF===1)ln.offT=tt; // a single frame without bar (letters inside a pill passing the rows) does not end the bar
         if(!ln.on||ln.offF>=2){if(ln.on){if(ln.seen)ln.offs[ln.offs.length-1]=ln.offT;else if(ln.pre)ln.pre.off=ln.offT}ln.on=false;ln.seen=true}}}
+    {SCAN.flog=SCAN.flog||SCAN.keys.map(()=>[]);const ln0=SCAN.lane[k];SCAN.flog[k].push([tt,sat*val,0,0,dist,h,pressed?1:0,ln0&&ln0.on?1:0,(laneOcc&&laneOcc[k])?1:0,SCAN.laneBgc?SCAN.laneBgc[k]:-1,sat,val,r,g,b])}
     const st=SCAN.state[k];
     if(pressed){
       // repeated note: between two strikes the key looks EXACTLY like at rest for a single frame (~40 ms) → a new note, not a flicker
@@ -4459,7 +4519,7 @@ function earlyFromBars(ev){
     for(let k=0;k<K;k++){const cx=Math.round(SCAN.keys[k].x*(W-1));let y=y0;
       while(y>=1){if(!occ[y][k]){y--;continue}const yb=y,hs=[];while(y>=1&&occ[y][k]){const i=(y*W+cx)*4;hs.push(rgb2hsv(D[i],D[i+1],D[i+2])[0]);y--}const ya=y+1;
         if(yb-ya>=3&&yb<y0-1){const on=im.t+(yT-yb)/pps,off=im.t+(yT-ya)/pps;let cc=0;for(let yy=ya;yy<=yb;yy++){let r=0,g=0,b=0;for(let dx=-1;dx<=1;dx++){const i=(yy*W+Math.min(W-1,Math.max(0,cx+dx)))*4;r+=D[i];g+=D[i+1];b+=D[i+2]}const q=rgb2hsv(r/3,g/3,b/3);if(q[1]>0.3&&q[2]>0.3)cc++}
-          cand.push({yb,m:SCAN.keys[k].m,start:on-SCAN.start,end:off-SCAN.start,hue:circMean(hs),cf:cc/(yb-ya+1)})}}}
+          (SCAN.dbgFound=SCAN.dbgFound||[]).push({t:im.t,m:SCAN.keys[k].m,ya:ya,yb:yb,h:circMean(hs),sp:Math.max(...hs.map(q=>hueDist(q,circMean(hs)))),x:k});cand.push({yb,m:SCAN.keys[k].m,start:on-SCAN.start,end:off-SCAN.start,hue:circMean(hs),cf:cc/(yb-ya+1)})}}}
     // more than 10 'bars' ending on the same pixel row (±2) is a wide banner / line of text, not notes (two hands press at most 10 keys)
     for(const c of cand)if(cand.filter(o=>Math.abs(o.yb-c.yb)<=2).length<=10)found.push(c)} // a bar already touching the keys does not tell when it arrived
   // the same bar in several images → one note (average); only notes that began before the reading started
@@ -4467,6 +4527,7 @@ function earlyFromBars(ev){
   for(const f of found){const g=notes.find(n=>n.m===f.m&&Math.abs(n.start-f.start)<0.15);if(g){g.n++;g.ss+=f.start;g.ee+=f.end;g.start=g.ss/g.n;g.end=g.ee/g.n;g.cf=Math.max(g.cf,f.cf)}else notes.push({...f,n:1,ss:f.start,ee:f.end})}
   const hv=ev.filter(e=>e.hue!=null).map(e=>e.hue); // a bar whose colour is none of the song's colours is no note (white player icon / title letters in the only still that shows the keyboard)
   const early=notes.filter(n=>n.start+SCAN.start<readFrom-0.04&&n.cf>=0.3&&(fr.length<2||n.n>=Math.max(2,Math.ceil(fr.length/5))||(n.n>=2&&n.end-n.start>=0.2))&&(hv.length<4||n.hue==null||hv.some(h=>hueDist(h,n.hue)<=45))); // a real bar falls and shows up in several stills at a consistent time – a static title/sparkle does notif(!early.length)return ev;
+  (SCAN.dbgEarly=SCAN.dbgEarly||[]).push(...early.map(n=>({m:n.m,s:n.start,e:n.end,n:n.n,cf:n.cf,h:n.hue,nst:fr.length})));
   const out=ev.slice();
   for(const n of early){const same=out.find(e=>e.m===n.m&&e.start<=readFrom-SCAN.start+0.1&&e.end>=n.start-0.1&&e.start>=n.start-0.15); // the key was still lit when reading began → correct its start
     if(same){same.start=n.start;if(n.hue!=null&&same.hue==null)same.hue=n.hue}
@@ -4516,7 +4577,7 @@ function finishCore(raw,preview){
       // E: a key lit as strongly as the neighbour AND as strongly as the bar-confirmed notes of its kind (white/black) is a real strike whose bar was missed – glow only tints (measured: real ≥ 0.86 / 0.75, glow ≤ 0.66 / 0.59)
       const chRef=[0,1].map(bl=>{const a=ev.filter(e=>e.bar&&e.ch>0&&!isWhitePC(e.m%12)===!!bl).map(e=>e.ch).sort((p,q)=>p-q);return a.length?a[a.length>>1]:null});
       const full=(e,f)=>e.ch>0&&f.ch>0&&e.ch>=0.7*f.ch&&chRef[isWhitePC(e.m%12)?0:1]!=null&&e.ch>=0.7*chRef[isWhitePC(e.m%12)?0:1];
-      ev=ev.filter(e=>e.bar||!ev.some(f=>f!==e&&f.bar&&Math.abs(f.m-e.m)<=2&&Math.abs(f.start-e.start)<0.15&&!full(e,f))&&e.end-e.start>=0.06);
+      SCAN.preGhost=ev.slice();ev=ev.filter(e=>e.bar||!ev.some(f=>f!==e&&f.bar&&Math.abs(f.m-e.m)<=2&&Math.abs(f.start-e.start)<0.15&&!full(e,f))&&e.end-e.start>=0.06);
       // a long lit key without any falling bar (> 8 s) is an overlay / end screen / lit-up logo, not a note (measured: no bar-less note > 4.2 s in 20 recordings)
       // overlay / end screen: ≥3 such keys lit at the same moment (a screen lighting up many keys) or a key that is almost colourless (dark tint); one or two held bass notes whose bar was missed stay
       {const lg=ev.filter(e=>!e.bar&&e.end-e.start>8),T=lg.filter(e=>lg.filter(o=>Math.abs(o.start-e.start)<0.3).length>=3||!(e.ch>=0.15)).map(e=>e.start);
