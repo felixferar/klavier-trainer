@@ -1,4 +1,4 @@
-"""v5.04: Regeln des neuen Auswendig-Modus einzeln (ersetzt die Tests der alten Modi Stufen/Nebel/v8).
+"""v5.04/v5.05 (1 verpasster Anschlag erlaubt): Regeln des neuen Auswendig-Modus einzeln (ersetzt die Tests der alten Modi Stufen/Nebel/v8).
 Finden · Aus dem Kopf (Anker bis gespielt, keine Zeit-Hilfe, Hilfe auf Wunsch / nach 3 Fehlern bis gespielt, Suchen zählt nicht, 2 Hilfen → Finden, 6 Fehler → vorspielen + neu,
 tiefstes A) · Vorgriff (versetzt erkannter Akkordton) · Ende erst nach dem letzten Ton · Im Puls (Einzählen, Metronom, Anlauf, 75 → 90 → 100 %, verpasst = nochmal)
 · Kästen (10 min → morgen → 3 Tage → 14 Tage, gelernt/sitzt, Fehlschlag → Kasten zurück + auffrischen) · Verbinden · Taste nach dem Versuch = weiter
@@ -33,8 +33,8 @@ JS = r"""()=>{window.AW_NOLOOP=true;let tones=[];window.playTone=(m,d,v,g)=>tone
  const cnt=R.clicks.filter(x=>x.cnt).length,inPlay=R.clicks.filter(x=>!x.cnt).length;o.clicks=[cnt,inPlay,+(R.beat.p).toFixed(2),R.beat.ok];
  const pulse=(R,skip,lat)=>{let q=R.a,g=0;while(!R.done&&g++<20000&&MEM.run===R){awTick(R,1/120);while(q<=R.b&&R.vt>=gs[q].start+(lat||0.03)*R.speed){if(!(skip&&skip.includes(q)))play(q);q++}}return R};
  tones=[];pulse(R);o.pulsTones=tones.filter(x=>x.m>=96).length;o.puls1=[R.ok,ch(0).tp];
- awNext();R=MEM.run;o.p5=[R.mode,Math.round(R.speed*100)];pulse(R,[R.a+2]);o.pulsMiss=[R.ok,R.miss,ch(0).tp,ch(0).box];
- awNext();pulse(MEM.run);awNext();R=MEM.run;o.p6=Math.round(R.speed*100);pulse(R);o.box1=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/6e4)];
+ awNext();R=MEM.run;o.p5=[R.mode,Math.round(R.speed*100)];pulse(R,[R.a+2,R.a+4]);o.pulsMiss=[R.ok,R.miss,ch(0).tp,ch(0).box];
+ awNext();R=MEM.run;pulse(R,[R.a+3]);o.oneMiss=[R.ok,R.miss,ch(0).tp];awNext();R=MEM.run;o.p6=Math.round(R.speed*100);pulse(R);o.box1=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/6e4)];
  /* Abschnitt 2 dazwischen: Finden, Kopf, Puls – mit Anlauf (Abschnitt 1 klingt leise) */
  awNext();R=MEM.run;o.p7=[R.mode,R.k];runWait();awNext();runWait();awNext();R=MEM.run;o.lead=R.acc.length>0&&R.acc.every(n=>n.start<gs[R.a].start);tones=[];pulse(R);o.leadSoft=tones.some(x=>x.g===AW.accGain);
  awNext();pulse(MEM.run);awNext();pulse(MEM.run);o.k1box=ch(1).box;
@@ -86,7 +86,8 @@ async def main():
          'sauber aus dem Kopf → im Puls': r['p3'] == 'head' and r['headOk'] == [True, 2] and r['p4'] == ['puls', 75],
          'Puls: 4 Klicks Einzählen + Metronom auf dem Schlag (0,5 s)': r['clicks'][0] == 4 and r['clicks'][1] >= 6 and abs(r['clicks'][2] - 0.5) < 0.02 and r['clicks'][3] and r['pulsTones'] >= 10,
          'Puls 75 % geschafft → 90 %': r['puls1'] == [True, 1] and r['p5'] == ['puls', 90],
-         'Puls: verpasster Anschlag → nochmal im selben Tempo': r['pulsMiss'][0] is False and r['pulsMiss'][1] >= 1 and r['pulsMiss'][2:] == [1, 0],
+         'Puls: 2 verpasste Anschläge → nochmal im selben Tempo': r['pulsMiss'][0] is False and r['pulsMiss'][1] >= 2 and r['pulsMiss'][2:] == [1, 0],
+         'Puls: 1 verpasster Anschlag ist erlaubt (v5.05) → nächstes Tempo': r['oneMiss'] == [True, 1, 2],
          '100 % geschafft → Kasten 1, kalt in 10 min': r['p6'] == 100 and r['box1'] == [1, 10],
          'nächster Abschnitt mit leisem Anlauf vom gekonnten davor': r['p7'] == ['find', 1] and r['lead'] and r['leadSoft'] and r['k1box'] == 1,
          'Verbinden im Puls 100 %': r['link'] == ['link', 0, 1] and r['linkSp'] == 100 and r['linkOk'] == [True, True],

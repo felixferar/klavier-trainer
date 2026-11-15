@@ -553,7 +553,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.04</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.05</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2613,7 +2613,7 @@ $('#spMenu').onclick=()=>{if(SP.item)openSongMenu(SP.item)};
    Sitzungen und Tage ohne Warten durchspielen kann (window.AW_NOW = Datum, window.AW_NOLOOP = keine Bildschleife). */
 let smItem=null;
 const AW={restart:21,helpKey:22,wrongShow:3,wrongAbort:6,maxWrong:1,needFind:0.6,need:0.75,findSpeed:0.6,tempi:[0.75,0.9,1],tol:0.18,latMax:0.12,linkMax:4,
-  iv:[0,10*60e3,20*36e5,(3*24-4)*36e5,(14*24-4)*36e5],learned:3,solid:4,linkWait:3*60e3,accGain:0.2,maxMiss:0}; /* maxMiss: verpasste Anschläge, die im Puls/beim Wiederholen noch als geschafft gelten */
+  iv:[0,10*60e3,20*36e5,(3*24-4)*36e5,(14*24-4)*36e5],learned:3,solid:4,linkWait:3*60e3,accGain:0.2,maxMiss:1}; /* v5.05: Nutzer 15.11. – 1 verpasster Anschlag ist im Puls/beim Wiederholen/Verbinden erlaubt */ /* maxMiss: verpasste Anschläge, die im Puls/beim Wiederholen noch als geschafft gelten */
 const AW_MODE={find:'Tasten finden',head:'aus dem Kopf',puls:'im Puls',review:'kalt wiederholen',link:'verbinden'};
 const MEM={good:new Map(),flash:new Map(),run:null,song:null,item:null,gs:[],C:[],rec:null,pos:null,raf:0,beat:null};
 let MEMS=load('kt_mem')||{};
@@ -4119,7 +4119,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.04 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.05 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
