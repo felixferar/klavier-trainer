@@ -24,7 +24,7 @@ JS = r"""()=>{const o={};
  const scale=[60,62,64,65,67,69,71,72].map((m,i)=>({m,start:i*0.25,dur:0.22,hand:'R'}));
  const chord=[48,52,55].map(m=>({m,start:3,dur:1,hand:'L'}));
  const it=mk(scale.concat(chord),'f1');LIB=[it];
- const s=songForItem(it);openSong(s,it.id);S.fingers=true;draw();
+ const s=songForItem(it);openSong(s,it.id);delete S.fingers;s._fingKey=null;draw();o.stdAus=!s._fingKey&&!s.notes.some(fingVis)&&document.getElementById('pFlag').style.display==='none';S.fingers=true;draw();
  const R=s.notes.filter(n=>n.hand==='R').sort((a,b)=>a.start-b.start),L=s.notes.filter(n=>n.hand==='L').sort((a,b)=>a.midi-b.midi);
  o.rh=R.map(n=>n.fing).join('');o.lh=L.map(n=>n.fing).join('');o.lhH=L.map(n=>n.fingH).join('');
  // einfarbig: alle "R", Bass tief
@@ -35,25 +35,25 @@ JS = r"""()=>{const o={};
  S.fingers=false;s2._fingKey=null;draw();o.offNoCalc=s2._fingKey===null;S.fingers=true;
  openSong(s,it.id);t=0.5;draw();
  return o}"""
-JS_FLAG1 = r"""()=>{window.__up=[];save('kt_ghtok','test');ghUpload=async(p,b)=>{window.__up.push([p,b]);return {ok:true}};shotSend=async()=>{};
+JS_FLAG1 = r"""()=>{S.fingers=true;window.__up=[];save('kt_ghtok','test');ghUpload=async(p,b)=>{window.__up.push([p,b]);return {ok:true}};shotSend=async()=>{};
  const it=LIB[0];openSong(songForItem(it),it.id);t=1.0;draw();document.getElementById('pFlag').click();return {red:document.getElementById('pFlag').style.color}}"""
 JS_FLAG2 = r"""()=>{const u=window.__up[window.__up.length-1];const o={n:window.__up.length,path:u&&u[0],info:u&&u[1]};
  document.getElementById('pFlag').click();o.after=(load('kt_fingflags')||{})[songId].length;return o}"""
-JS_STYLE = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Stil',artist:'x',data:b64FromBuf(writeMidi(ns))});
+JS_STYLE = r"""()=>{S.fingers=true;const mk=(ns,id)=>({id,type:'midi',title:'Stil',artist:'x',data:b64FromBuf(writeMidi(ns))});
  const mel=[72,71,69,67,65,64].map((m,i)=>({m,start:i*0.65,dur:i===5?2.6:0.6,hand:'R'}));const it=mk(mel,'st');LIB.push(it);const s=songForItem(it);
  const o={def:S.fingStyle||'einfach'};openSong(s,it.id);draw();o.einfach=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');
  S.fingStyle='lehrbuch';draw();o.lehrbuch=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');S.fingStyle='einfach';draw();return o}"""
-JS_ORIENT = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Orient',artist:'x',data:b64FromBuf(writeMidi(ns))});
+JS_ORIENT = r"""()=>{S.fingers=true;const mk=(ns,id)=>({id,type:'midi',title:'Orient',artist:'x',data:b64FromBuf(writeMidi(ns))});
  const it=mk([60,62,64,65,67].map((m,i)=>({m,start:i*0.4,dur:0.35,hand:'R'})),'or');LIB.push(it);const s=songForItem(it);openSong(s,it.id);delete S.fingShow;draw();const std=s.notes.filter(fingVis).length;S.fingShow='orient';draw();
  const o={orient:s.notes.filter(fingVis).length,cues:s.notes.map(n=>n.fingCue||'-').join(',')};S.fingShow='alle';o.alle=s.notes.filter(fingVis).length;o.std=std;delete S.fingShow;return o}"""
-JS_EDGE = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Kante',artist:'x',data:b64FromBuf(writeMidi(ns))});
+JS_EDGE = r"""()=>{S.fingers=true;const mk=(ns,id)=>({id,type:'midi',title:'Kante',artist:'x',data:b64FromBuf(writeMidi(ns))});
  const it=mk([{m:69,start:0,dur:2.0,hand:'R'},{m:71,start:2.2,dur:0.5,hand:'R'}],'ed');LIB.push(it);const s=songForItem(it);openSong(s,it.id);
  S.names=true;S.fingShow='alle';const log=[];const dF=drawFinger,dN=drawNoteLabel;
  drawFinger=function(c,n,cx,yb,h,w){const r=dF.apply(this,arguments);if(r){log.push({k:'F',top:yb-r,bot:yb-2})}return r};
  drawNoteLabel=function(c,m,x,y,fs){log.push({k:'N',top:y-fs*0.8,bot:y+1})   /* Notennamen haben keine Unterlängen (C…H, Cis, Es) */;return dN.apply(this,arguments)};
  const out=[];for(const T of [-S.look+0.25,-S.look+0.6,-0.5,0,0.5,1.2]){log.length=0;t=T;draw();out.push({T,hitY,H,items:log.slice()})}
  drawFinger=dF;drawNoteLabel=dN;delete S.fingShow;return out}"""
-JS_FLOW = r"""()=>{let cnt=0;const dF=drawFinger;drawFinger=function(){const r=dF.apply(this,arguments);if(r)cnt++;return r};
+JS_FLOW = r"""()=>{S.fingers=true;let cnt=0;const dF=drawFinger;drawFinger=function(){const r=dF.apply(this,arguments);if(r)cnt++;return r};
  const LH=[48,43,45,41],notes=[];let tt=0;for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:tt,dur:1.9,hand:'L'});[72,74,76,77].forEach((m,q)=>notes.push({m:m+(bar%2?-5:0),start:tt+q*0.5,dur:0.45,hand:'R'}));tt+=2}
  const it={id:'fl',type:'midi',title:'Fluss',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB.push(it);localStorage.removeItem('kt_mem');
  openMem(it);const o={};awStart({k:0,mode:'find'});let R=MEM.run;o.mode1=R.mode;R.vt=MEM.gs[R.a].start-0.2;cnt=0;awDraw();o.find=cnt;o.st1=R.drawState;
@@ -62,7 +62,7 @@ JS_FLOW = r"""()=>{let cnt=0;const dF=drawFinger;drawFinger=function(){const r=d
  awStart({k:0,mode:'head'});R=MEM.run;o.mode2=R.mode;o.dark=!!R.dark;cnt=0;awDraw();o.recall=cnt;o.st2=R.drawState;
  R.anchor=false;R.show=R.pos;cnt=0;awDraw();o.hint=cnt;o.st3=R.drawState;drawFinger=dF;try{memStop()}catch(e){}return o}"""
 JS_MEM = r"""()=>{const it=LIB[0];let ok=true;try{openMem(it)}catch(e){ok=String(e)}return {ok}}"""
-JS_MEM2 = r"""()=>{let e=null;try{awStart({k:0,mode:'find'})}catch(x){e=String(x)}try{awDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
+JS_MEM2 = r"""()=>{S.fingers=true;let e=null;try{awStart({k:0,mode:'find'})}catch(x){e=String(x)}try{awDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
 
 async def main():
     async with async_playwright() as p:

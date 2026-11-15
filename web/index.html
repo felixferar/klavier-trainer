@@ -534,7 +534,7 @@ body.short #onbDots{margin:8px 0}
     <div class="lbl">Anzeige</div>
     <div class="list">
       <div class="li"><div class="grow"><b>Notennamen auf den Balken</b><small>Deutsch: B = Ton zwischen A und H</small></div><input type="checkbox" class="sw" id="names2"></div>
-      <div class="li"><div class="grow"><b>Fingersatz auf den Balken</b><small>1 = Daumen … 5 = kleiner Finger, rechts und links</small></div><input type="checkbox" class="sw" id="fing2"></div>
+      <div class="li"><div class="grow"><b>Fingersatz auf den Balken</b><small>Standard aus. Einschalten, wenn du an einer Stelle hängst: 1 = Daumen … 5 = kleiner Finger</small></div><input type="checkbox" class="sw" id="fing2"></div>
       <div class="li"><div class="grow"><b>Lehrbuch-Fingersatz</b><small>Aus = einfach: Hand in Ruhe versetzen statt Daumen untersetzen (nur schnelle Läufe wie im Buch)</small></div><input type="checkbox" class="sw" id="fingBook"></div>
       <div class="li"><div class="grow"><b>Fingerzahl auf jedem Ton</b><small>Standard an. Aus = nur Orientierung: Zahl nur dort, wo die Hand neu greift (Phrasenanfang, Untersetzen, Lagenwechsel, Akkord-Ankerton)</small></div><input type="checkbox" class="sw" id="fingAll"></div>
       <div class="li"><div class="grow"><b>Ganze Tastatur zeigen</b><small>Sonst nur der Bereich, den der Song braucht</small></div><input type="checkbox" class="sw" id="full2"></div>
@@ -3513,7 +3513,7 @@ function applySwap(){for(const n of song.notes){n.hand=S.swap?(n.hand0==='R'?'L'
 /* v5.03: Fingersatz (tools/fingering/fingering.js, eingebettet). v5.04: Stil 'einfach' Standard (S.fingStyle), Lehrbuch per Schalter. Rechnet einmal je Song/Hände/Oktave, Ergebnis an den Noten: n.fing (1–5), n.fingH (Hand), n.fingOpen.
    Haben alle Töne dieselbe Hand (einfarbiges Video), teilt die Fingersatz-Hand-Zuordnung die Töne selbst auf. */
 function fingKey(s){let h=s.notes.length+(S.fingStyle==='lehrbuch'?7:0);for(const n of s.notes)h=(h*31+n.midi*7+(n.hand==='L'?3:1)+Math.round(n.start*20))%1000000007;return h}
-function fingSong(s){if(!s||!s.notes||!window.Fingering||S.fingers===false)return;const key=fingKey(s);if(s._fingKey===key)return;s._fingKey=key;
+function fingSong(s){if(!s||!s.notes||!window.Fingering||S.fingers!==true)return;const key=fingKey(s);if(s._fingKey===key)return;s._fingKey=key;
   try{const ns=s.notes,one=ns.every(n=>n.hand===ns[0].hand),lo=Math.min(...ns.map(n=>n.midi)),hi=Math.max(...ns.map(n=>n.midi));
     const hands=one&&hi-lo>14?Fingering.assignHands(ns.map(n=>({midi:n.midi,start:n.start,dur:n.dur}))):ns.map(n=>n.hand==='L'?'L':'R');
     for(const H of ['L','R']){const idx=[];ns.forEach((n,i)=>{if(hands[i]===H)idx.push(i)});if(!idx.length)continue;
@@ -3524,7 +3524,7 @@ function fingSong(s){if(!s||!s.notes||!window.Fingering||S.fingers===false)retur
    nameH = Höhe, die der Notenname unten braucht (0 = kein Name). Rückgabe true = gezeichnet. */
 function fingFs(w){return Math.min(13,Math.max(9,w*0.5))}
 /* v5.06: "Nur Orientierung" (Standard): Zahl nur an Phrasenanfang, Kreuzen, Lagenwechsel, gleichem Finger auf neuer Taste, Akkord-Anker, Vorgaben (n.fingCue). S.fingShow='alle' = jede Note. */
-function fingVis(n){return S.fingers!==false&&!!n&&!!n.fing&&(S.fingShow!=='orient'||!!n.fingCue)} /* v5.07: Standard = jeder Ton (Wunsch des Nutzers: genau lernen); 'orient' nur per Schalter */
+/* v5.09: Fingersatz standardmäßig AUS (Wunsch des Nutzers 15.11.: bei Bedarf einschalten) */ function fingVis(n){return S.fingers===true&&!!n&&!!n.fing&&(S.fingShow!=='orient'||!!n.fingCue)} /* v5.07: Standard = jeder Ton (Wunsch des Nutzers: genau lernen); 'orient' nur per Schalter */
 /* v5.09: Fingerzahl als runder Knopf UNTEN am Balken (Notenname steht darüber). yb = Unterkante, gibt die belegte Höhe zurück (0 = nichts gezeichnet). */
 function fingD(w){return Math.min(w-2,fingFs(w)+4)}
 function drawFinger(c,n,cx,yb,h,w){if(!fingVis(n))return 0;const fs=fingFs(w),d=fingD(w);if(d<8||h<d+3)return 0;const tag=(n.fingH&&n.fingH!==n.hand?n.fingH:'')+n.fing,cy=yb-2-d/2;
@@ -3648,7 +3648,7 @@ function layoutKeys(){
   if(kbH!==lastKbH||W!==lastW){lastKbH=kbH;lastW=W;$('#hint').style.bottom=(kbH+44)+'px'}
 }
 function draw(waiting,now=performance.now()){
-  if(!song||!W)return;fingSong(song);{const fb=$('#pFlag');if(fb){fb.style.display=S.fingers===false?'none':'';fb.style.color=ffNear()?'#E24B4A':''}}
+  if(!song||!W)return;fingSong(song);{const fb=$('#pFlag');if(fb){fb.style.display=S.fingers!==true?'none':'';fb.style.color=ffNear()?'#E24B4A':''}}
   const aw0=waiting||(listening()?groups[gi]:null);const T=(aw0&&S.wait&&t>aw0.start&&!aw0.notes.every(n=>n.hit))?aw0.start:t;
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#100E0B';ctx.fillRect(0,0,W,H);layoutKeys();
   const look=S.look,pps=hitY/look; // window in song-seconds → at 0.5× the notes fall half as fast
@@ -3741,7 +3741,7 @@ function syncUI(){
   for(const b of $$('#modeSeg button'))b.classList.toggle('on',(b.dataset.m==='learn')===S.wait);
   $('#modeChip').className='modechip '+(S.wait?'learn':'play');$('#modeChip').textContent=S.wait?'Üben':'Abspielen';$('#pSound').classList.toggle('hidden',S.wait);$('#pSound').classList.toggle('on',S.sound);$('#pSoundI').innerHTML=`<use href="#i-${S.sound?'vol':'mute'}"/>`;$('#pLoop').classList.toggle('on',!!loop);$('#pLoopT').textContent=loop?`${loop.am+1}–${loop.bm}`:'Abschnitt';
   $('#otherSel').value=S.other;$('#soundMine').checked=S.soundMine;$('#swapH').checked=S.swap;$('#waitChk').checked=S.wait;$('#scoreChk').checked=S.score;$('#inputSel').value=S.input;$('#sensR').value=S.sens;
-  $('#namesChk').checked=S.names;$('#fingChk').checked=S.fingers!==false;$('#fullChk').checked=S.full;$('#lookR').value=S.look;
+  $('#namesChk').checked=S.names;$('#fingChk').checked=S.fingers===true;$('#fullChk').checked=S.full;$('#lookR').value=S.look;
   $('#autoNext').checked=S.autoNext;$('#speedUp').checked=S.speedUp;$('#stReps').textContent=S.reps||'∞';
   const pg=$('#progLoop');if(loop&&song){pg.classList.remove('hidden');pg.style.left=(loop.a/song.duration*100)+'%';pg.style.width=((loop.b-loop.a)/song.duration*100)+'%'}else pg.classList.add('hidden');
   updScore();saveS();
@@ -4214,7 +4214,7 @@ function renderSettings(){
   for(const side of ['L','R']){const el=$('#col'+side);el.innerHTML='';
     for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(S['col'+side]===k?' on':'');b.title=p.n;b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.d}"></i>`;
       b.onclick=()=>{S['col'+side]=k;saveS();renderSettings()};el.appendChild(b)}}
-  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#fing2').checked=S.fingers!==false;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#fingAll').checked=S.fingShow!=='orient';$('#full2').checked=S.full;
+  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#fing2').checked=S.fingers===true;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#fingAll').checked=S.fingShow!=='orient';$('#full2').checked=S.full;
   $('#calStat2').textContent=calCount()>=NK()?`Alle ${NK()} Tasten kalibriert ✓`:`${calCount()} von ${NK()} Tasten kalibriert`;
   for(const b of $$('#laySet button'))b.classList.toggle('on',+b.dataset.l===S.layout);
 }
