@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.11</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.12</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -4315,7 +4315,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.11 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.12 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -4721,7 +4721,7 @@ function finishCore(raw,preview){
       // overlay / end screen: ≥3 such keys lit at the same moment (a screen lighting up many keys) or a key that is almost colourless (dark tint); one or two held bass notes whose bar was missed stay
       {const lg=ev.filter(e=>!e.bar&&e.end-e.start>8),T=lg.filter(e=>lg.filter(o=>Math.abs(o.start-e.start)<0.3).length>=3||!(e.ch>=0.15)).map(e=>e.start);
         ev=ev.filter(e=>e.bar||!T.some(t=>Math.abs(t-e.start)<0.3))}
-      /* v5.03 bar as evidence: a note WITHOUT its own bar must look like a real lit key of this song (compared with the bar-confirmed notes of the same kind, white/black):
+      /* v5.12 bar as evidence: a note WITHOUT its own bar must look like a real lit key of this song (compared with the bar-confirmed notes of the same kind, white/black):
          – pale (saturation < 0.6×): a hand/arm/object over the keys tints them skin-coloured or grey, a lit key keeps the note colour → drop;
          – dim (sat×val < 0.6×) AND a key ≤ 2 semitones away is lit strongly (≥ 0.8×) at the same time: light spilling over from the neighbour → drop.
          Dim but saturated notes WITHOUT such a neighbour stay (some videos light black keys only darkly).
@@ -4731,13 +4731,13 @@ function finishCore(raw,preview){
         const ghost=e=>{if(e.bar||e.early||e.sa==null)return false;const k=W(e);if(!RC[k]||!RS[k])return false;if(e.sa<0.6*RS[k])return true;
           if(!(e.ch<0.6*RC[k]))return false;return ev.some(h=>h!==e&&h.m!==e.m&&Math.abs(h.m-e.m)<=2&&RC[W(h)]&&h.ch>=0.8*RC[W(h)]&&h.start<e.end&&e.start<h.end)};
         const gone=new Set(ev.filter(ghost));if(gone.size)ev=ev.filter(e=>!gone.has(e))}
-      /* v5.05 object over the keys: ≥ 4 bar-less notes, overlapping in time, each ≤ 3 semitones from the next, all the same colour (± 12°) = one object
+      /* v5.12 object over the keys: ≥ 4 bar-less notes, overlapping in time, each ≤ 3 semitones from the next, all the same colour (± 12°) = one object
          (hand, light beam, effect) lit across neighbouring keys – real notes in a bar video come with bars. Training set (12 new hand videos): 98 of 138 ghosts gone, 0 real notes lost;
          YouTube-Test / old Prüfstand: nothing changes; real video with filmed hands (_mwgDFm2yIU): 32 skin-coloured notes gone. */
       {const L=ev.filter(e=>!e.bar&&!e.early&&e.hue!=null),par=L.map((_,i)=>i),fd=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i};
         for(let a=0;a<L.length;a++)for(let b=a+1;b<L.length;b++){const A=L[a],B=L[b];if(Math.abs(A.m-B.m)<=3&&A.start<B.end&&B.start<A.end&&hueDist(A.hue,B.hue)<=12)par[fd(a)]=fd(b)}
         const cnt=new Map();L.forEach((_,i)=>{const r=fd(i);cnt.set(r,(cnt.get(r)||0)+1)});const drop=new Set(L.filter((_,i)=>cnt.get(fd(i))>=4));if(drop.size)ev=ev.filter(e=>!drop.has(e))}
-      /* v5.05 end card: a bar-less note ≥ 2 s that lasts until the end of reading and whose colour is none of the song's colours (> 30° from every hue
+      /* v5.12 end card: a bar-less note ≥ 2 s that lasts until the end of reading and whose colour is none of the song's colours (> 30° from every hue
          held by ≥ 10 % of the bar notes) is a YouTube end card / overlay, not a held final chord (those come with bars or in the song's colour).
          Training sets: 23 ghosts gone, 0 real notes lost; real runs: end card rpVvU3rN5Z8, overlay MRqlO8Bm2B0. */
       {const hb=new Array(36).fill(0);let nb=0;for(const e of ev)if(e.bar&&e.hue!=null){hb[Math.floor(e.hue/10)%36]++;nb++}
@@ -4764,7 +4764,7 @@ function finishCore(raw,preview){
       if(bi>=0&&ln.offs[bi]!=null){const len=ln.offs[bi]-ln.ons[bi],kd=e.end-e.start;if(len>0.05&&len<kd-0.06&&len>=kd*0.5)e.end=e.start+len}}} // never cut a note to a fraction (letters can hide a bar for a moment)
   if(!preview)ev=earlyFromBars(ev);
   // notes struck together (chord): their onsets differ only by a frame or two (glow fading in) → same start
-  /* v5.05: 0.085 → 0.06 s – a melody note 60–100 ms before a chord pulled the whole chord onto itself (≈ 80 ms too early). YouTube-Test F1@50 0.910 → 0.957, F1@100 0.976 → 0.987; Prüfstand unchanged or better. Chords split by 2 phone frames are re-joined on loading (chordAlign ≤ 0.15 s). */
+  /* v5.12: 0.085 → 0.06 s – a melody note 60–100 ms before a chord pulled the whole chord onto itself (≈ 80 ms too early). YouTube-Test F1@50 0.910 → 0.957, F1@100 0.976 → 0.987; Prüfstand unchanged or better. Chords split by 2 phone frames are re-joined on loading (chordAlign ≤ 0.15 s). */
   {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.06)e.start=g0;else g0=e.start}}
   // hands by colour: two hue clusters, the lower-pitched one = left hand
   const hs=ev.filter(e=>e.hue!=null);let c1=hs.length?hs[0].hue:0,c2=(c1+180)%360;if(hs.length){let far=0;for(const e of hs){const d=hueDist(e.hue,c1);if(d>far){far=d;c2=e.hue}}}
@@ -4839,7 +4839,7 @@ async function scanRun(live){
   // so hardly any note passes while the app still checks the keyboard – and those few are read in slow motion
   const prep=live&&ytAuto;if(prep){try{ytp.setPlaybackRate(0.25);ytRate=0.25}catch(e){}convProgress(null,'Tastatur wird geprüft …')}
   const box=$('#ytBox').getBoundingClientRect();scanBox={x:box.left,y:box.top,w:box.width,h:box.height};
-  /* v5.05: a picture every 22 ms instead of 40 ms (phone reached exactly 24.5/s, never less – headroom). Simulated on the Prüfstand: notes within ±50 ms 97.6 % → 98.9 %.
+  /* v5.12: a picture every 22 ms instead of 40 ms (phone reached exactly 24.5/s, never less – headroom). Simulated on the Prüfstand: notes within ±50 ms 97.6 % → 98.9 %.
      If the app cannot keep up (frames arrive > 0.25 s late, 10× in a row), scanFrame switches back to 40 ms. */
   SCAN.natArgs={x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:Math.max(480,Math.min(1280,Math.round(box.width*(devicePixelRatio||1)))),interval:22};SCAN.lagMin=null;SCAN.lagN=0;SCAN.slow=false;
   const r=await nat('scanStart',SCAN.natArgs,'scanStarted');
@@ -5115,7 +5115,7 @@ async function autoConvert(it){
     convProgress(dur>st?Math.max(0,Math.min(99,Math.round((ct-st)/(dur-st)*100))):null,'Suche die Tastatur …');
     let ps=-1;try{ps=ytp.getPlayerState()}catch(e){}
     if(ps!==1){await sleep(300);continue} // ad, buffering or paused: wait
-    let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;let gt2=gt;try{gt2=ytp.getCurrentTime()}catch(e){}if(f){f.t=gt2>=gt&&gt2-gt<0.5?gt2:gt;f.t0=gt} /* v5.05: the picture shows the video at the END of the grab (half speed, grab takes ~0.1 s): time read before the grab made the first notes ~0.1 s too early */
+    let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;let gt2=gt;try{gt2=ytp.getCurrentTime()}catch(e){}if(f){f.t=gt2>=gt&&gt2-gt<0.5?gt2:gt;f.t0=gt} /* v5.12: the picture shows the video at the END of the grab (half speed, grab takes ~0.1 s): time read before the grab made the first notes ~0.1 s too early */
     if(f){if(isBlackImg(f)){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
     let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];best=pickKb(cand.map(tryKeyboard))}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
