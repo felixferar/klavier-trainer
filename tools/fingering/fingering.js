@@ -20,7 +20,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.5.0';
+  const VERSION = '0.6.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -1116,9 +1116,17 @@
     HOLD_BREAK: 3.0,         // gehaltener Ton müsste zu früh losgelassen werden, obwohl er sich halten ließe
     CHORD_SAME_FINGER: 1.0,  // beim Griffwechsel rückt derselbe Finger weiter (statt 4 Punkte wie in einer Melodie)
     HAND_MOVE: 0.5,          // je Halbton, den die Handlage beim Griffwechsel wandert (über 2 Halbtöne)
+    NONSTD: 2.0,             // v0.6: Griff weicht vom üblichen Griff seiner Form ab (STD_GRIPS) → einheitlicher Stil über alle Songs
     ROLL: 30.0,              // Akkord ist für die Hand zu weit: wird gebrochen (unvermeidbar, steht in der Meldung)
   };
   const NATP = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7 };
+  // v0.6: Übliche Griffe je Akkordform, damit dieselbe Form in jedem Song gleich gegriffen wird.
+  // Schlüssel = Abstände von unten nach oben in gespiegelter Tonhöhe (rechts = echte Tonhöhe), Wert = Finger von unten nach oben.
+  // Rechts: Grundstellung 1-3-5, 1. Umkehrung 1-2-5, 2. Umkehrung 1-3-5, Oktave/Quinte/Sexte 1-5, Vierklang mit Oktave 1-2-3-5.
+  // Links ergibt die Spiegelung automatisch 5-3-1, 5-3-1 (1. Umk.), 5-2-1 (2. Umk.), 5-1, 5-3-2-1 – die Tabellen passen zusammen.
+  const STD_GRIPS = { '12': '15', '7': '15', '8': '15', '9': '15', '10': '15', '11': '15',
+    '3,4': '135', '4,3': '135', '3,5': '125', '4,5': '125', '5,3': '135', '5,4': '135',
+    '4,3,5': '1235', '3,4,5': '1235', '5,3,4': '1235', '5,4,3': '1235' };
   const T_GROUP = 0.05;      // Anschläge so nah beieinander = ein Griff (Video-Akkorde streuen 40–80 ms)
 
   function makeNotes(notesIn, hand) {
@@ -1149,6 +1157,8 @@
     let c = 0, ok = true;
     const add = (p, code, txt) => { c += p; if (det) det.push({ p, code, txt }); };
     const ns = g.notes;
+    const std = STD_GRIPS[ns.slice(1).map((x, i) => x.midi - ns[i].midi).join(',')];
+    if (std && F.join('') !== std) add(KC.NONSTD, 'nonstd', `üblicher Griff für diese Akkordform wäre ${std.split('').join('-')}`);
     for (let i = 0; i < ns.length; i++) {
       c += nodeCost(ns[i], F[i], det);
       for (let j = i + 1; j < ns.length; j++) {
@@ -1178,7 +1188,7 @@
     for (const [i, j] of pairs) {
       let v = trans(A.notes[i], B.notes[j], FA[i], FB[j], P);
       if (v === INF) { if (det) trans(A.notes[i], B.notes[j], FA[i], FB[j], P, det); return INF; }
-      if (A.k > 1 && B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
+      if (B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // v0.6: in einen Griff hinein setzt man die Hand neu auf – Weiterrücken erlaubt; aus einem Griff heraus nicht   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
       cs.push(v);
     }
     const pos = (G2, F2) => G2.notes.reduce((t, nt, i) => t + nt.midi - NATP[F2[i]], 0) / G2.k;
@@ -1329,7 +1339,7 @@
     if (MODE.easy) groups.forEach((g, i) => {
       if (g.k !== 1) return;
       const b = g.notes[0], add = [0, 0, 0, 0, 0];
-      for (const j of [i - 1, i + 1]) {
+      for (const j of [i - 1]) {   // v0.6: nur nach einem Akkord (aus dem Griff heraus); vor einem Akkord setzt man die Hand auf den Griff
         const G = groups[j]; if (!G || G.k < 2) continue;
         G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (dd > 0 && dd <= EASY.STEP_MAX) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
       }
@@ -1375,7 +1385,7 @@
           const old = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], Fs[i], P) : 0) + (i < groups.length - 1 ? chordTrans(groups[i], Fs[i], groups[i + 1], Fs[i + 1], P) : 0) + chordShape(groups[i], Fs[i], P).c;
           if (before === INF || after === INF || before + after + sh.c - old > 4) { ok = false; break; }
           // v0.5: Angleichen darf keinen Einzelton daneben zum Rutschen zwingen (derselbe Finger auf der Nachbartaste)
-          if (MODE.easy && [i - 1, i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false; const nb = G.notes[0], fn = fingers[nb.src];
+          if (MODE.easy && [i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false;   /* v0.6: nur der Einzelton NACH dem Griff */ const nb = G.notes[0], fn = fingers[nb.src];
             return groups[i].notes.some((c, q) => F[q] === fn && c.midi !== nb.midi && Math.abs(c.midi - nb.midi) <= EASY.STEP_MAX); })) { ok = false; break; }
           changes.push(i);
         }

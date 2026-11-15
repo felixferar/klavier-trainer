@@ -536,7 +536,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Notennamen auf den Balken</b><small>Deutsch: B = Ton zwischen A und H</small></div><input type="checkbox" class="sw" id="names2"></div>
       <div class="li"><div class="grow"><b>Fingersatz auf den Balken</b><small>1 = Daumen … 5 = kleiner Finger, rechts und links</small></div><input type="checkbox" class="sw" id="fing2"></div>
       <div class="li"><div class="grow"><b>Lehrbuch-Fingersatz</b><small>Aus = einfach: Hand in Ruhe versetzen statt Daumen untersetzen (nur schnelle Läufe wie im Buch)</small></div><input type="checkbox" class="sw" id="fingBook"></div>
-      <div class="li"><div class="grow"><b>Fingerzahl auf jedem Ton</b><small>Aus = nur Orientierung: Zahl nur dort, wo die Hand neu greift (Phrasenanfang, Untersetzen, Lagenwechsel, Akkord)</small></div><input type="checkbox" class="sw" id="fingAll"></div>
+      <div class="li"><div class="grow"><b>Fingerzahl auf jedem Ton</b><small>Standard an. Aus = nur Orientierung: Zahl nur dort, wo die Hand neu greift (Phrasenanfang, Untersetzen, Lagenwechsel, Akkord-Ankerton)</small></div><input type="checkbox" class="sw" id="fingAll"></div>
       <div class="li"><div class="grow"><b>Ganze Tastatur zeigen</b><small>Sonst nur der Bereich, den der Song braucht</small></div><input type="checkbox" class="sw" id="full2"></div>
     </div>
     <div class="lbl">Daten</div>
@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.06</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.07</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -868,7 +868,7 @@ body.short #onbDots{margin:8px 0}
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.5.0';
+  const VERSION = '0.6.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -1964,9 +1964,17 @@ body.short #onbDots{margin:8px 0}
     HOLD_BREAK: 3.0,         // gehaltener Ton müsste zu früh losgelassen werden, obwohl er sich halten ließe
     CHORD_SAME_FINGER: 1.0,  // beim Griffwechsel rückt derselbe Finger weiter (statt 4 Punkte wie in einer Melodie)
     HAND_MOVE: 0.5,          // je Halbton, den die Handlage beim Griffwechsel wandert (über 2 Halbtöne)
+    NONSTD: 2.0,             // v0.6: Griff weicht vom üblichen Griff seiner Form ab (STD_GRIPS) → einheitlicher Stil über alle Songs
     ROLL: 30.0,              // Akkord ist für die Hand zu weit: wird gebrochen (unvermeidbar, steht in der Meldung)
   };
   const NATP = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7 };
+  // v0.6: Übliche Griffe je Akkordform, damit dieselbe Form in jedem Song gleich gegriffen wird.
+  // Schlüssel = Abstände von unten nach oben in gespiegelter Tonhöhe (rechts = echte Tonhöhe), Wert = Finger von unten nach oben.
+  // Rechts: Grundstellung 1-3-5, 1. Umkehrung 1-2-5, 2. Umkehrung 1-3-5, Oktave/Quinte/Sexte 1-5, Vierklang mit Oktave 1-2-3-5.
+  // Links ergibt die Spiegelung automatisch 5-3-1, 5-3-1 (1. Umk.), 5-2-1 (2. Umk.), 5-1, 5-3-2-1 – die Tabellen passen zusammen.
+  const STD_GRIPS = { '12': '15', '7': '15', '8': '15', '9': '15', '10': '15', '11': '15',
+    '3,4': '135', '4,3': '135', '3,5': '125', '4,5': '125', '5,3': '135', '5,4': '135',
+    '4,3,5': '1235', '3,4,5': '1235', '5,3,4': '1235', '5,4,3': '1235' };
   const T_GROUP = 0.05;      // Anschläge so nah beieinander = ein Griff (Video-Akkorde streuen 40–80 ms)
 
   function makeNotes(notesIn, hand) {
@@ -1997,6 +2005,8 @@ body.short #onbDots{margin:8px 0}
     let c = 0, ok = true;
     const add = (p, code, txt) => { c += p; if (det) det.push({ p, code, txt }); };
     const ns = g.notes;
+    const std = STD_GRIPS[ns.slice(1).map((x, i) => x.midi - ns[i].midi).join(',')];
+    if (std && F.join('') !== std) add(KC.NONSTD, 'nonstd', `üblicher Griff für diese Akkordform wäre ${std.split('').join('-')}`);
     for (let i = 0; i < ns.length; i++) {
       c += nodeCost(ns[i], F[i], det);
       for (let j = i + 1; j < ns.length; j++) {
@@ -2026,7 +2036,7 @@ body.short #onbDots{margin:8px 0}
     for (const [i, j] of pairs) {
       let v = trans(A.notes[i], B.notes[j], FA[i], FB[j], P);
       if (v === INF) { if (det) trans(A.notes[i], B.notes[j], FA[i], FB[j], P, det); return INF; }
-      if (A.k > 1 && B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
+      if (B.k > 1 && FA[i] === FB[j] && A.notes[i].midi !== B.notes[j].midi) v = Math.min(v, KC.CHORD_SAME_FINGER);   // v0.6: in einen Griff hinein setzt man die Hand neu auf – Weiterrücken erlaubt; aus einem Griff heraus nicht   // Griffwechsel Akkord→Akkord: Finger rückt mit der Hand weiter (v0.5: nicht bei Einzelton davor/danach)
       cs.push(v);
     }
     const pos = (G2, F2) => G2.notes.reduce((t, nt, i) => t + nt.midi - NATP[F2[i]], 0) / G2.k;
@@ -2177,7 +2187,7 @@ body.short #onbDots{margin:8px 0}
     if (MODE.easy) groups.forEach((g, i) => {
       if (g.k !== 1) return;
       const b = g.notes[0], add = [0, 0, 0, 0, 0];
-      for (const j of [i - 1, i + 1]) {
+      for (const j of [i - 1]) {   // v0.6: nur nach einem Akkord (aus dem Griff heraus); vor einem Akkord setzt man die Hand auf den Griff
         const G = groups[j]; if (!G || G.k < 2) continue;
         G.notes.forEach((c, q) => { const dd = Math.abs(c.midi - b.midi); if (dd > 0 && dd <= EASY.STEP_MAX) add[chordF[j][q] - 1] += EASY.SAME_STEP + K.SAME_FINGER; });
       }
@@ -2223,7 +2233,7 @@ body.short #onbDots{margin:8px 0}
           const old = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], Fs[i], P) : 0) + (i < groups.length - 1 ? chordTrans(groups[i], Fs[i], groups[i + 1], Fs[i + 1], P) : 0) + chordShape(groups[i], Fs[i], P).c;
           if (before === INF || after === INF || before + after + sh.c - old > 4) { ok = false; break; }
           // v0.5: Angleichen darf keinen Einzelton daneben zum Rutschen zwingen (derselbe Finger auf der Nachbartaste)
-          if (MODE.easy && [i - 1, i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false; const nb = G.notes[0], fn = fingers[nb.src];
+          if (MODE.easy && [i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false;   /* v0.6: nur der Einzelton NACH dem Griff */ const nb = G.notes[0], fn = fingers[nb.src];
             return groups[i].notes.some((c, q) => F[q] === fn && c.midi !== nb.midi && Math.abs(c.midi - nb.midi) <= EASY.STEP_MAX); })) { ok = false; break; }
           changes.push(i);
         }
@@ -3431,7 +3441,7 @@ function fingSong(s){if(!s||!s.notes||!window.Fingering||S.fingers===false)retur
    nameH = Höhe, die der Notenname unten braucht (0 = kein Name). Rückgabe true = gezeichnet. */
 function fingFs(w){return Math.min(13,Math.max(9,w*0.5))}
 /* v5.06: "Nur Orientierung" (Standard): Zahl nur an Phrasenanfang, Kreuzen, Lagenwechsel, gleichem Finger auf neuer Taste, Akkord-Anker, Vorgaben (n.fingCue). S.fingShow='alle' = jede Note. */
-function fingVis(n){return S.fingers!==false&&!!n&&!!n.fing&&(S.fingShow==='alle'||!!n.fingCue)}
+function fingVis(n){return S.fingers!==false&&!!n&&!!n.fing&&(S.fingShow!=='orient'||!!n.fingCue)} /* v5.07: Standard = jeder Ton (Wunsch des Nutzers: genau lernen); 'orient' nur per Schalter */
 function drawFinger(c,n,cx,yb,h,w,nameH){if(!fingVis(n))return false;const tag=(n.fingH&&n.fingH!==n.hand?n.fingH:'')+n.fing,fs=fingFs(w);
   if(h<fs+4+(nameH||0))return false;
   c.font=`800 ${fs}px Inter,system-ui`;c.textAlign='center';c.textBaseline='alphabetic';const y=yb-3-(nameH||0)-1;
@@ -3445,7 +3455,7 @@ function ffItem(){try{return LIB.find(x=>x.id===songId)||{}}catch(e){return {}}}
 function ffInfo(){const it=ffItem(),fl=ffGet(),why=n=>{try{const r=song._fingR&&song._fingR[n.fingH];return r&&n._fk!=null?r.explain(n._fk):''}catch(e){return ''}};
   const near=T=>song.notes.filter(n=>n.start>=T-3&&n.start<=T+3).sort((a,b)=>a.start-b.start||a.midi-b.midi)
     .map(n=>({m:n.midi,name:FF_NN[n.midi%12]+(Math.floor(n.midi/12)-1),s:+n.start.toFixed(3),d:+n.dur.toFixed(3),hand:n.hand||'',fh:n.fingH||'',f:n.fing||null,open:!!n.fingOpen,why:why(n)}));
-  return {kind:'fingerflags',v:'5.06',zeigen:S.fingShow==='alle'?'alle':'orient',modul:window.Fingering?Fingering.VERSION:'',profil:'meine',stil:S.fingStyle==='lehrbuch'?'lehrbuch':'einfach',ts:new Date().toISOString(),title:song.title||it.title||'',videoId:it.videoId||it.fromYT||'',itemId:songId,
+  return {kind:'fingerflags',v:'5.07',zeigen:S.fingShow==='orient'?'orient':'alle',modul:window.Fingering?Fingering.VERSION:'',profil:'meine',stil:S.fingStyle==='lehrbuch'?'lehrbuch':'einfach',ts:new Date().toISOString(),title:song.title||it.title||'',videoId:it.videoId||it.fromYT||'',itemId:songId,
     flags:fl.map(T=>({T,near:near(T)}))}}
 function ffSync(){if(!ghTok()||!song)return;clearTimeout(FF_T);FF_T=setTimeout(async()=>{try{fingSong(song);const info=ffInfo(),ts=info.ts.replace(/[:.]/g,'-').slice(0,19),vid=(info.videoId||info.itemId||'song').toString().replace(/[^\w-]/g,'_');
   const r=await ghUpload(`diag/fingerflags/${ts}_${vid}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Fingersatz-Flaggen '+vid+' ('+info.flags.length+')');
@@ -4119,7 +4129,7 @@ function renderSettings(){
   for(const side of ['L','R']){const el=$('#col'+side);el.innerHTML='';
     for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(S['col'+side]===k?' on':'');b.title=p.n;b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.d}"></i>`;
       b.onclick=()=>{S['col'+side]=k;saveS();renderSettings()};el.appendChild(b)}}
-  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#fing2').checked=S.fingers!==false;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#fingAll').checked=S.fingShow==='alle';$('#full2').checked=S.full;
+  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#fing2').checked=S.fingers!==false;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#fingAll').checked=S.fingShow!=='orient';$('#full2').checked=S.full;
   $('#calStat2').textContent=calCount()>=NK()?`Alle ${NK()} Tasten kalibriert ✓`:`${calCount()} von ${NK()} Tasten kalibriert`;
   for(const b of $$('#laySet button'))b.classList.toggle('on',+b.dataset.l===S.layout);
 }
@@ -4178,7 +4188,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.06 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.07 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
