@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.09</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.10</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2817,9 +2817,10 @@ function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch
   const ns=awSecNotes(a,b).slice().sort((x,y)=>x.start-y.start);
   const R=MEM.run={k:p.k,mode,span,a,b,ns,nj:ns.map(n=>{for(let j=a;j<=b;j++)if(n.start>=gs[j].start-0.001&&n.start<=gs[j].last+0.001)return j;return -1}),timed,dark:!(mode==='find'||mode==='fade'),speed,
     pos:a,hit:{},proc:{},wrong:0,hints:0,cues:0,miss:0,devs:[],waits:[],waitT0:null,clock:0,lastKey:0,anchor:mode==='head'||mode==='spot',show:null,helpAt:[],rev:new Set(),fl:c.fl||0,
-    pv:null,done:false,endT:null,ht:{},vt:gs[a].start-1.2*speed,clicks:[],ck:0,mj:a,acc:[],ap:0,lat:v.lat||0,glideV:0,kb0:kbOn()};
+    pv:null,done:false,endT:null,ht:{},mk:{},vt:gs[a].start-1.2*speed,clicks:[],ck:0,mj:a,acc:[],ap:0,lat:v.lat||0,glideV:0,kb0:kbOn()};
   if(timed)awClicks(R,v,p);
-  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML='';$('#mem').classList.toggle('blind',R.dark);
+  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML=awWeg(R,c);$('#memStages').style.display='block';$('#mem').classList.toggle('blind',R.dark);
+  if(mode==='puls'&&!c.pi){c.pi=1;memSaveAll();try{toast(R.beat&&R.beat.ok?'Neu: Jetzt kommt das Metronom dazu – 4 Klicks zum Einzählen, dann im Takt mitspielen.':'Neu: Jetzt kommt der Takt dazu – 4 Klicks zum Einzählen, dann im Tempo weiter (das Tempo im Video schwankt, deshalb klickt es danach nicht mit).',5000)}catch(e){}}
   $('#memRunT').textContent=mode==='whole'?`Ganzer Song · ${memClock(gs[a].start)}–${memClock(gs[b].end)} · ohne Klick`:`Abschnitt ${span?`${span.s+1}–${span.e+1}`:p.k+1} von ${C.length} · ${memClock(gs[a].start)}–${memClock(gs[b].end)} · ${AW_MODE[mode]}${mode==='fade'?` (Stufe ${R.fl+1}/3)`:''}${timed?' · '+awPct(speed):''}`;
   $('#memGoal').innerHTML=mode==='head'||mode==='spot'?'<button class="btn" id="memHelp" style="width:100%;height:44px;margin-top:6px">🤷 Weiß nicht weiter</button>':mode==='fade'?'<button class="btn" id="memHelp" style="width:100%;height:44px;margin-top:6px">👀 Zeig mir den Ton</button>':'';
   {const hb=$('#memHelp');if(hb)hb.onclick=()=>{const R=MEM.run;if(R)awShow(R)}}
@@ -2833,8 +2834,8 @@ function awClicks(R,v,p){const gs=MEM.gs,C=MEM.C,bt=awBeat(),bp=bt.p,t0=gs[R.a].
 function awDemo(R){const gs=MEM.gs,b=R.mode==='whole'?Math.min(R.b,MEM.C[0].b):R.b;R.pv={t:gs[R.a].start-1.2*AW.demoSpeed,end:gs[b].end+0.3}}
 /* Hilfe: aus dem Kopf / Problemstelle → der aktuelle Anschlag bleibt sichtbar, bis er gespielt ist; Ausblenden → die versteckte Note erscheint */
 function awShow(R){if(!R||R.done||R.pv||R.pos>R.b)return;
-  if(R.mode==='fade'){if(awHidden(R,R.pos)){R.rev.add(R.pos);R.cues++}awDraw();return}
-  if((R.mode!=='head'&&R.mode!=='spot')||R.show!=null)return;R.hints++;R.show=R.pos;R.anchor=false;if(!R.helpAt.includes(R.pos))R.helpAt.push(R.pos);awDraw()}
+  if(R.mode==='fade'){if(awHidden(R,R.pos)){R.rev.add(R.pos);R.cues++;awMk(R,R.pos).cue=1}awDraw();return}
+  if((R.mode!=='head'&&R.mode!=='spot')||R.show!=null)return;R.hints++;awMk(R,R.pos).help=1;R.show=R.pos;R.anchor=false;if(!R.helpAt.includes(R.pos))R.helpAt.push(R.pos);awDraw()}
 function awNext(){const p=awPick();if(!p){memStop();memHome();return}awStart(p)}
 /* tiefstes A: läuft ein Versuch → vorführen (ohne Ton) und neu; nach dem Versuch → nur vorführen */
 function awRestart(R,why){if(R.done){awDemo(R);return}const v=awState(),c=v.ch[R.k],now=memNow();let mode=R.mode;
@@ -2854,7 +2855,7 @@ function awTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   while(R.ck<R.clicks.length&&R.vt>=R.clicks[R.ck].t){const k=R.clicks[R.ck++];try{playTone(k.acc?100:96,0.05,k.cnt?0.35:0.22)}catch(e){}}
   const tol=Math.max(0.1,AW.tol*R.speed),ve=R.vt-R.lat*R.speed;
   while(R.ap<R.acc.length&&R.acc[R.ap].start<=ve){const n=R.acc[R.ap++];try{playTone(n.midi,Math.max(0.15,n.dur/R.speed),0.3,AW.accGain)}catch(e){}}
-  while(R.mj<=R.b&&gs[R.mj].start+tol<ve){const j=R.mj++,h=R.hit[j];R.proc[j]=true;if(!h||h.size<Math.ceil(gs[j].mids.size*AW.need))R.miss++}
+  while(R.mj<=R.b&&gs[R.mj].start+tol<ve){const j=R.mj++,h=R.hit[j];R.proc[j]=true;if(!h||h.size<Math.ceil(gs[j].mids.size*AW.need)){R.miss++;awMk(R,j).miss=1}}
   while(R.pos<=R.b&&R.proc[R.pos])R.pos++;
   if(R.mj>R.b&&R.vt>gs[R.b].end+0.4)awFinish()}
 
@@ -2870,32 +2871,49 @@ function memPress(m,src){const R=MEM.run;if(!R)return;const now=performance.now(
     if(nx0&&nx0.start-G.start<=0.16&&nx0.mids.has(m)){if(R.pos<R.b)(R.hit[R.pos+1]||(R.hit[R.pos+1]=new Set())).add(m);MEM.good.set(m,now);return} /* Vorgriff (v4.70): leicht versetzt erkannter Akkordton (≤ 0,16 s) zählt als mitgespielt, auch über die Abschnittsgrenze */
     if((R.recent||[]).some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m))){MEM.good.set(m,now);return} /* v5.04: letzter Ton eines Akkords nach dem Weiterspringen – kein Fehler */
     if(R.mode==='whole'){ /* ganzer Song: die App folgt dir – spielst du schon weiter, werden ausgelassene Anschläge übersprungen */
-      for(let j=R.pos+1;j<=Math.min(R.b,R.pos+3);j++)if(gs[j].mids.has(m)){R.miss+=j-R.pos;R.skipAt=(R.skipAt||[]).concat([R.pos]);R.pos=j;R.waitT0=null;R.ht[j]=R.clock;(R.hit[j]=new Set()).add(m);MEM.good.set(m,now);awAdvance(R);return}
-      MEM.flash.set(m,now);R.wrong++;return}
+      for(let j=R.pos+1;j<=Math.min(R.b,R.pos+3);j++)if(gs[j].mids.has(m)){R.miss+=j-R.pos;for(let q=R.pos;q<j;q++)awMk(R,q).miss=1;R.skipAt=(R.skipAt||[]).concat([R.pos]);R.pos=j;R.waitT0=null;R.ht[j]=R.clock;(R.hit[j]=new Set()).add(m);MEM.good.set(m,now);awAdvance(R);return}
+      MEM.flash.set(m,now);R.wrong++;awWrong(R,R.pos,m);return}
     MEM.flash.set(m,now);
-    if(R.mode==='find'){R.wrong++;return} /* zählt nur fürs „fast fehlerfrei“ */
-    if(R.mode==='fade'){if(awHidden(R,R.pos)){R.rev.add(R.pos);R.cues++}else R.wrong++;return} /* versteckte Note fehlt → sie erscheint */
+    if(R.mode==='find'){R.wrong++;awWrong(R,R.pos,m);return} /* zählt nur fürs „fast fehlerfrei“ */
+    if(R.mode==='fade'){if(awHidden(R,R.pos)){R.rev.add(R.pos);R.cues++;awMk(R,R.pos).cue=1}else{R.wrong++;awWrong(R,R.pos,m)}return} /* versteckte Note fehlt → sie erscheint */
     if(R.anchor||R.show!=null)return; /* beim Suchen der gezeigten Taste zählt danebengreifen nicht */
-    R.wrong++;awShow(R);return} /* aus dem Kopf: falscher Ton → der richtige erscheint sofort, es geht dort weiter */
+    R.wrong++;awWrong(R,R.pos,m);awShow(R);return} /* aus dem Kopf: falscher Ton → der richtige erscheint sofort, es geht dort weiter */
   const tol=Math.max(0.1,AW.tol*R.speed),ve=R.vt-R.lat*R.speed;if(ve<gs[R.a].start-tol){MEM.flash.set(m,now);return} /* beim Einzählen/Anlauf zählt nichts */
   let best=-1;for(let j=Math.max(R.a,R.mj-4);j<=R.b&&gs[j].start<=ve+tol;j++){if(R.proc[j]||!gs[j].mids.has(m)||(R.hit[j]&&R.hit[j].has(m)))continue;if(Math.abs(gs[j].start-ve)<=tol){best=j;break}}
-  if(best>=0){(R.hit[best]||(R.hit[best]=new Set())).add(m);R.devs.push((ve-gs[best].start)/R.speed);MEM.good.set(m,now)}
-  else{MEM.flash.set(m,now);R.wrong++;if(R.wrong>=AW.wrongAbort)awRestart(R,'many')}}
+  if(best>=0){(R.hit[best]||(R.hit[best]=new Set())).add(m);const dv=(ve-gs[best].start)/R.speed;R.devs.push(dv);const k=awMk(R,best);if(k.dev==null||Math.abs(dv)>Math.abs(k.dev))k.dev=dv;MEM.good.set(m,now)}
+  else{MEM.flash.set(m,now);R.wrong++;let jn=R.a,bd=1e9;for(let j=R.a;j<=R.b;j++){const d=Math.abs(gs[j].start-ve);if(d<bd){bd=d;jn=j}}if(gs[jn].mids.has(m)){const k=awMk(R,jn);k.dev=(ve-gs[jn].start)/R.speed;k.off=1}else awWrong(R,jn,m);if(R.wrong>=AW.wrongAbort)awRestart(R,'many')}}
 function memRelease(m){} /* Loslassen wird nicht bewertet */
 /* Warte-Modus: Anschlag geschafft (genug Töne) → weiter; schon vorgegriffene Töne des nächsten Anschlags zählen mit */
 function awAdvance(R){const gs=MEM.gs,nd=R.mode==='find'||R.mode==='fade'?AW.needFind:AW.need;while(R.pos<=R.b){const G=gs[R.pos],h=R.hit[R.pos];if(!h||h.size<Math.ceil(G.mids.size*nd))return;
-  R.waits.push(R.waitT0!=null?R.clock-R.waitT0:0);R.waitT0=null;R.proc[R.pos]=true;if(R.ht[R.pos]==null)R.ht[R.pos]=R.clock;(R.recent=(R.recent||[]).filter(x=>R.clock-x.at<=0.5)).push({j:R.pos,at:R.clock});R.anchor=false;if(R.show===R.pos)R.show=null;
+  const wt=R.waitT0!=null?R.clock-R.waitT0:0;R.waits.push(wt);if(wt>2&&R.mode!=='find'&&R.pos>R.a)awMk(R,R.pos).slow=wt;R.waitT0=null;R.proc[R.pos]=true;if(R.ht[R.pos]==null)R.ht[R.pos]=R.clock;(R.recent=(R.recent||[]).filter(x=>R.clock-x.at<=0.5)).push({j:R.pos,at:R.clock});R.anchor=false;if(R.show===R.pos)R.show=null;
   R.vt=Math.max(R.vt,G.start);R.pos++;const nx=gs[R.pos];R.glideV=nx&&R.pos<=R.b?Math.max(R.speed,(nx.start-R.vt)/1.0):0}}
 
+/* --- v5.09: Weg sichtbar machen – wo stehe ich, was kommt (Töne erst ohne Uhr, dann der Takt) --- */
+function awWeg(R,c){if(R.mode==='link')return `<div class="st mu" style="font-size:11px;margin:4px 0">Verbinden: die Kette wächst bis zum ganzen Song</div>`;
+  if(R.mode==='whole')return `<div class="st mu" style="font-size:11px;margin:4px 0">Letzter Schritt: der ganze Song ohne Klick</div>`;
+  const cur=R.mode==='find'?0:R.mode==='fade'?1:R.mode==='head'||R.mode==='spot'?2:R.mode==='puls'?3:4;
+  const st=[`Mitspielen${cur===0?` ${c.fc||0}/2`:''}`,`Ausblenden${cur===1?` ${R.fl+1}/3`:''}`,R.mode==='spot'?'Problemstelle':'Aus dem Kopf',`Im Puls${cur===3?' '+awPct(R.speed):''} 🥁`,'Wiederholen 🥁'];
+  return `<div class="st" style="font-size:11px;margin:4px 0;line-height:1.6">${st.map((x,i)=>i===cur?`<b style="color:#F2A93B">${x}</b>`:i<cur?`<span class="mu">✓ ${x}</span>`:`<span class="mu">${x}</span>`).join(' <span class="mu">›</span> ')}</div><div class="st mu" style="font-size:10px">erst die Töne ohne Uhr, dann der Takt 🥁</div>`}
+/* --- v5.09: Merken je Anschlag, wo es hakt (für den Rückblick nach dem Durchgang) --- */
+const awMk=(R,j)=>R.mk[j]||(R.mk[j]={});
+function awWrong(R,j,m){const k=awMk(R,j);(k.wrong=k.wrong||[]);if(!k.wrong.includes(m))k.wrong.push(m)}
+const awNm=m=>NAMES[m%12]+(Math.floor(m/12)-1);
+function awBad(k){if(!k)return 0;return (k.miss?3:0)+(k.help?3:0)+(k.cue?2:0)+(k.wrong?2*k.wrong.length:0)+(k.slow?1:0)+(k.dev!=null&&Math.abs(k.dev)>0.09?1:0)+(k.slip?1:0)}
+function awWorst(R){let best=-1,bv=0;for(let j=R.a;j<=R.b;j++){const v=awBad(R.mk[j]);if(v>bv){bv=v;best=j}}return best}
+function awHier(R){const gs=MEM.gs,j=awWorst(R);if(j<0)return R.mode==='find'?'':'✓ Kein Fehler – alles sauber.';const k=R.mk[j],ms=[...gs[j].mids].sort((x,y)=>x-y).map(awNm).join(' + '),t=[];
+  if(k.miss&&!k.off)t.push(R.mode==='whole'?'ausgelassen':'nicht gespielt');if(k.help)t.push('Hilfe gebraucht');if(k.cue)t.push('Note gebraucht');if(k.wrong)t.push('du hast '+k.wrong.map(awNm).join(', ')+' gespielt');
+  if(k.slow)t.push(`${k.slow.toFixed(0)} s gezögert`);if(k.dev!=null&&Math.abs(k.dev)>0.09)t.push(k.dev>0?`${Math.round(k.dev*1000)} ms zu spät`:`${Math.round(-k.dev*1000)} ms zu früh`);if(k.slip)t.push('aus dem Takt');
+  const nB=Object.keys(R.mk).filter(x=>awBad(R.mk[x])>0).length;
+  return `👉 Anschlag ${j-R.a+1}: richtig ist ${ms}${t.length?' – '+t.join(', '):''}.${nB>1?` (${nB} Stellen markiert)`:''}`}
 /* --- Ganzer Song: Rhythmus relativ zu deinem eigenen Tempo (kein Klick). Abweichung eines Abstands > Faktor 1,67 oder Hänger > 3 s = Rhythmus-Patzer --- */
-function awRhythm(R){const gs=MEM.gs,rs=[],pairs=[];for(let j=R.a;j<R.b;j++){const t1=R.ht[j],t2=R.ht[j+1],e=gs[j+1].start-gs[j].start;if(t1==null||t2==null||e<0.1)continue;pairs.push([t2-t1,e]);rs.push((t2-t1)/e)}
+function awRhythm(R){const gs=MEM.gs,rs=[],pairs=[];for(let j=R.a;j<R.b;j++){const t1=R.ht[j],t2=R.ht[j+1],e=gs[j+1].start-gs[j].start;if(t1==null||t2==null||e<0.1)continue;pairs.push([t2-t1,e,j+1]);rs.push((t2-t1)/e)}
   if(rs.length<3)return {tempo:1,slips:0};const so=rs.slice().sort((x,y)=>x-y),med=so[so.length>>1];let slips=0;
-  for(const [d,e] of pairs){const q=(d/e)/med;if(q>1.67||q<0.6||(d>3&&e<1.5))slips++}return {tempo:1/med,slips}}
+  for(const [d,e,j] of pairs){const q=(d/e)/med;if(q>1.67||q<0.6||(d>3&&e<1.5)){slips++;awMk(R,j).slip=1}}return {tempo:1/med,slips}}
 
 /* --- Ende eines Durchgangs: Stufen, Kästen, ganzer Song --- */
 function awFehler(R){const t=[];if(R.miss)t.push(`${R.miss} ${R.miss===1?'Anschlag':'Anschläge'} ${R.mode==='whole'?'ausgelassen':'verpasst oder zu spät'}`);if(R.wrong)t.push(`${R.wrong} falsche${R.wrong===1?'r Ton':' Töne'}`);if(R.hints)t.push(R.hints===1?'einmal mit Hilfe':R.hints+'× mit Hilfe');if(R.cues)t.push(R.cues===1?'eine Note gebraucht':R.cues+' Noten gebraucht');if(R.slips)t.push(`${R.slips} Rhythmus-Hänger`);return t.join(', ')||'knapp'}
 function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C;R.done=true;R.doneClock=R.clock;$('#mem').classList.remove('blind');
-  const n=R.b-R.a+1;let ok,msg;c.last=now;c.reps++;
+  const n=R.b-R.a+1;let ok,msg;c.last=now;c.reps++;R.worst=awWorst(R);
   if(R.timed&&R.devs.length>=6){const d=R.devs.slice().sort((x,y)=>x-y),md=d[d.length>>1];v.lat=Math.round(clamp((v.lat||0)+0.3*md,-AW.latMax,AW.latMax)*1000)/1000} /* Bluetooth-Verzögerung lernen (geglättet) */
   if(R.mode==='find'){ok=R.wrong<=AW.findWrong;c.fc=ok?(c.fc||0)+1:0;
     if(c.fc>=AW.findGood){c.st=1;c.fl=0;c.fc=0;msg='✓ Sitzt mit Bildschirm! Jetzt verschwinden nach und nach Noten.'}
@@ -2931,7 +2949,7 @@ function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C
       const bad=new Set();for(const j of (R.skipAt||[]))bad.add(C.findIndex(x=>j>=x.a&&j<=x.b));for(const k of bad)if(k>=0&&v.ch[k].box>=1){v.ch[k].due=Math.min(v.ch[k].due,now)}
       msg=`Noch nicht ganz – ${awFehler(R)}. ${bad.size?'Die Stellen mit Patzern übst du gleich einzeln, dann':'In ein paar Minuten'} nochmal der ganze Song.`}}
   R.ok=ok;memSaveAll();awLog(R,ok);
-  $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=R.mode==='find'?'':`<div class="st mu">${R.hints?`👀 ${R.hints}× Hilfe · `:''}${R.cues?`👀 ${R.cues} Noten gebraucht · `:''}${R.timed||R.mode==='whole'?`${R.miss} ${R.mode==='whole'?'ausgelassen':'verpasst'} · `:''}${R.wrong} falsche Töne${R.mode==='whole'?` · ${R.slips} Rhythmus-Hänger · Tempo ${awPct(R.tempo)}`:''}</div>`;ev.classList.remove('hidden');$('#memGoal').innerHTML='';
+  $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=R.mode==='find'?(awWorst(R)>=0?`<div class="st" id="memHier">${awHier(R)}</div>`:''):`<div class="st" id="memHier" style="margin-bottom:4px;font-weight:700">${awHier(R)}</div><div class="st mu">${R.hints?`👀 ${R.hints}× Hilfe · `:''}${R.cues?`👀 ${R.cues} Noten gebraucht · `:''}${R.timed||R.mode==='whole'?`${R.miss} ${R.mode==='whole'?'ausgelassen':'verpasst'} · `:''}${R.wrong} falsche Töne${R.mode==='whole'?` · ${R.slips} Rhythmus-Hänger · Tempo ${awPct(R.tempo)}`:''}</div>${awWorst(R)>=0?'<div class="st mu" style="font-size:11px">Im Bild: <span style="color:#3BB273">▮ richtig</span> · <span style="color:#F2A93B">▮ Hilfe/Note gebraucht</span> · <span style="color:#E5C34B">▮ gezögert/zu spät/zu früh</span> · <span style="color:#8a8f99">▮ nicht gespielt</span> · <span style="color:#E5484D">▮ falsche Taste</span></div>':''}`;ev.classList.remove('hidden');$('#memGoal').innerHTML='';
   const nx=awPick();$('#memResBox').style.display='flex';$('#memNext').textContent=nx?'Weiter':'Zur Übersicht';$('#memProg').textContent='Fertig';awDraw();memAuto()}
 
 /* --- Zeichnen --- */
@@ -2941,7 +2959,8 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
   if(R.dark&&!R.done&&!pv&&showJ==null){c.fillStyle='#000';c.fillRect(0,0,p.w,p.h);c.textAlign='center';c.fillStyle='rgba(255,255,255,.3)';c.font='800 18px Inter,system-ui';
     let t;if(R.timed&&R.vt<gs[R.a].start-0.05){const k=R.clicks.filter(x=>x.cnt&&x.t<=R.vt).length;t=k?String(k):'…'}else t=R.mode==='whole'?'Ganzer Song – ohne App 🎹':R.timed?'Im Puls – Augen aufs Klavier 🎹':'Aus dem Kopf – nimm dir Zeit 🎹';
     c.fillText(t,p.w/2,p.h/2);
-    msg(R.mode==='whole'?'Spiel in deinem Tempo. Patzer? Einfach weiterspielen – die App hört nur zu.':R.timed?(R.vt<gs[R.a].start-0.05?'Einzählen …':'Spiel im Takt mit dem Klick. Patzer? Weiterspielen.'):'Es läuft keine Uhr. Greifst du daneben, erscheint der richtige Ton.',R.mode==='whole'?`${Math.min(R.pos,R.b+1)-R.a} von ${R.b-R.a+1}`:'');return}
+    msg(R.mode==='whole'?'Spiel in deinem Tempo. Patzer? Einfach weiterspielen – die App hört nur zu.':R.timed?(R.vt<gs[R.a].start-0.05?'Einzählen …':R.beat&&R.beat.ok?'Spiel im Takt mit dem Klick. Patzer? Weiterspielen.':'Spiel im Tempo vom Einzählen weiter (kein Klick: das Tempo im Video schwankt). Patzer? Weiterspielen.'):'Es läuft keine Uhr. Greifst du daneben, erscheint der richtige Ton.',R.mode==='whole'?`${Math.min(R.pos,R.b+1)-R.a} von ${R.b-R.a+1}`:'');return}
+  if(R.done&&!pv)return awReview(R,c,p,kb,hn);
   const lo=R.lo,hi=R.hi,pre=new Set(),t=pv?R.pv.t:R.vt,fall=pv||R.mode==='find'||R.mode==='fade';
   const tj=showJ!=null?showJ:!pv&&(R.mode==='find'||R.mode==='fade')&&!R.done&&R.pos<=R.b&&!awHidden(R,R.pos)?R.pos:null;
   if(tj!=null&&tj<=R.b){const h=R.hit[tj];for(const m of gs[tj].mids)if(!h||!h.has(m))pre.add(m)}
@@ -2970,6 +2989,26 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
   else if(R.mode==='fade')msg(R.pos>R.b?'Geschafft ✓':awHidden(R,R.pos)?'Diese Note ist versteckt – spiel sie aus dem Kopf. Fehlt sie dir, greif einfach: dann erscheint sie.':'Spiel die blauen Tasten – manche Noten sind versteckt.',`Stufe ${R.fl+1} von 3 · Anschlag ${Math.min(R.b,R.pos)-R.a+1} von ${R.b-R.a+1}`);
   else msg(R.anchor?(R.mode==='spot'?'Hier geht die Stelle los – spiel den Anschlag. Dann wird es dunkel.':'Hier fängt der Abschnitt an – spiel den ersten Anschlag. Dann wird es dunkel.'):'So geht es weiter – spiel den Anschlag. Danebengreifen zählt jetzt nicht.')}
 
+/* --- v5.09: Rückblick nach dem Durchgang – der Abschnitt steht als Balken über der Klaviatur (unten = Anfang, oben = Ende), jeder Ton eingefärbt:
+   grün richtig · orange Hilfe/Note gebraucht · gelb gezögert/zu spät/zu früh/aus dem Takt · grau nicht gespielt · rote Marke = falsche Taste. Die schlimmste Stelle ist umrandet,
+   ihre richtigen Tasten leuchten blau, die falschen rot. Lange Stücke (> 9 s): Ausschnitt um die schlimmste Stelle. --- */
+function awReview(R,c,p,kb,hn){const gs=MEM.gs,w=R.worst!=null?R.worst:awWorst(R);let t0=gs[R.a].start,t1=Math.max(gs[R.b].end,t0+1);
+  if(t1-t0>9){const tw=gs[w>=0?w:R.a].start;t0=Math.max(t0,tw-3);t1=Math.min(t1,t0+8)}
+  const Y=s=>hn-6-(s-t0)/(t1-t0)*(hn-14),wk=w>=0?R.mk[w]:null,good=new Set(w>=0?[...gs[w].mids]:[]),bad=new Set(wk&&wk.wrong?wk.wrong:[]);
+  let lo=R.lo,hi=R.hi;for(const k of Object.values(R.mk))for(const m of (k.wrong||[])){if(m<lo&&m>=R.lo-7)lo=m;if(m>hi&&m<=R.hi+7)hi=m}while(isBlack(lo))lo--;while(isBlack(hi))hi++;
+  c.save();c.translate(0,hn);MEM.pos=drawKeys(c,lo,hi,p.w,kb,(m,b)=>bad.has(m)?(b?'#9b2c2f':'#F4A3A5'):good.has(m)?(b?'#2F6FB0':'#A9D4FF'):(b?'#2C2C2A':'#E8E6DF'),true);c.restore();
+  for(let m=lo;m<=hi;m++){const k=MEM.pos[m];if(!k||k.b)continue;const fs=Math.min(11,Math.max(7,k.w*0.45));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle=good.has(m)||bad.has(m)?'rgba(10,20,40,.95)':'rgba(40,40,40,.55)';c.fillText(NAMES[m%12]+(m%12===0?Math.floor(m/12)-1:''),k.x+k.w/2,hn+kb-6)}
+  c.save();c.beginPath();c.rect(0,0,p.w,hn);c.clip();
+  const col=j=>{const k=R.mk[j];if(!k)return '#3BB273';if(k.miss&&!k.off)return '#8a8f99';if(k.help||k.cue)return '#F2A93B';if(k.wrong&&R.mode!=='find')return '#F2A93B';if(k.slow||k.slip||(k.dev!=null&&Math.abs(k.dev)>0.09))return '#E5C34B';return '#3BB273'};
+  let bx0=1e9,bx1=-1,by0=1e9,by1=-1;
+  for(let q=0;q<R.ns.length;q++){const n=R.ns[q],j=R.nj[q],K=MEM.pos[n.midi];if(!K||n.start>t1||n.start+n.dur<t0)continue;const ww=K.w*(K.b?0.6:0.78),x=K.x+K.w/2-ww/2,yb=Y(n.start),yt=Math.max(4,Y(n.start+Math.max(0.1,n.dur)));
+    c.fillStyle=col(j);c.globalAlpha=w>=0&&j!==w?0.75:1;c.fillRect(x,yt,ww,Math.max(5,yb-yt));c.globalAlpha=1;
+    if(j===w){bx0=Math.min(bx0,x);bx1=Math.max(bx1,x+ww);by0=Math.min(by0,yt);by1=Math.max(by1,yb)}}
+  for(let j=R.a;j<=R.b;j++){const k=R.mk[j];if(!k||!k.wrong||gs[j].start>t1||gs[j].start<t0-0.01)continue;const yb=Y(gs[j].start);
+    for(const m of k.wrong){const K=MEM.pos[m];if(!K)continue;const ww=K.w*(K.b?0.6:0.78),x=K.x+K.w/2-ww/2;c.fillStyle='#E5484D';c.fillRect(x,yb-9,ww,9);c.fillStyle='#fff';c.font='800 9px Inter,system-ui';c.textAlign='center';c.fillText('✗',K.x+K.w/2,yb-1);
+      if(j===w){bx0=Math.min(bx0,x);bx1=Math.max(bx1,x+ww);by0=Math.min(by0,yb-9);by1=Math.max(by1,yb)}}}
+  if(bx1>0){c.strokeStyle='#fff';c.lineWidth=2;c.setLineDash([4,3]);c.strokeRect(bx0-4,by0-4,bx1-bx0+8,by1-by0+8);c.setLineDash([]);c.fillStyle='#fff';c.font='800 11px Inter,system-ui';c.textAlign=bx0>40?'right':'left';c.fillText(`Anschlag ${w-R.a+1}`,bx0>40?bx0-8:bx1+8,(by0+by1)/2+4)}
+  c.restore()}
 /* --- Bildschleife, Stopp, automatisch weiter --- */
 function memLoop(){const R=MEM.run;if(!R||$('#mem').classList.contains('hidden')){MEM.raf=0;return}
   const now=performance.now(),dt=Math.min(0.1,(now-(MEM.lastF||now))/1000);MEM.lastF=now;awTick(R,dt);if(MEM.run===R)awDraw();MEM.raf=requestAnimationFrame(memLoop)}
@@ -4273,7 +4312,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.09 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.10 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

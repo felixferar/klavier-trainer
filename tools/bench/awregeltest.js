@@ -45,4 +45,8 @@
  memPress(66,'kb');for(const m of gs[jj].mids)memPress(m,'kb');o.vorgriff=[R.wrong,R.pos>jj+1];
  awStart({k:kV,mode:'head'});R=MEM.run;while(R.pos<jj)play(R.pos);const ks=[...gs[jj].mids];for(const m of ks)memPress(m,'kb');o.chord4=R.wrong;tick(1.2);memPress(ks[3],'kb');o.chord4late=R.wrong;
  awStart({k:0,mode:'head'});R=MEM.run;while(R.pos<=R.b)play(R.pos);tick(0.2);o.endWait=!R.done;tick(3);o.endDone=R.done;tick(1);memPress(70,'kb');o.keyNext=MEM.run!==R;
+ /* v5.09 Rückblick: falscher Ton + Hilfe an Anschlag 3 → Rückblick nennt ihn; Puls zu spät → "zu spät", nicht "falsche Taste" */
+ awStart({k:0,mode:'head'});R=MEM.run;play(R.pos);play(R.pos);const j3=R.pos,wk=Math.max(...gs[j3].mids)+13;memPress(wk,'kb');while(R.pos<=R.b)play(R.pos);tick(3);
+ o.rb=[R.done,R.worst===j3,!!(R.mk[j3]&&R.mk[j3].help&&R.mk[j3].wrong.includes(wk)),/Anschlag 3: richtig ist/.test(awHier(R)),awNm(wk)&&awHier(R).includes(awNm(wk))];
+ o.weg=/Aus dem Kopf/.test($('#memStages').textContent)&&/erst die Töne ohne Uhr/.test($('#memStages').textContent);
  o.timers=timers;return o}
