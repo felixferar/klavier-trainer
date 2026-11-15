@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.14</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.15</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2820,10 +2820,11 @@ const awWaitMode=m=>m==='find'||m==='fade'||m==='head'||m==='spot';
 /* Ausblenden: welche Anschläge sind versteckt (der erste bleibt immer sichtbar) */
 function awHidden(R,j){if(R.mode!=='fade'||j<=R.a||R.rev.has(j))return false;const i=j-R.a;return R.fl===0?i%3===2:R.fl===1?i%3!==0:true}
 function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch[p.k],mode=p.mode;
-  const span=mode==='link'?{s:p.s,e:p.e}:null,a=mode==='whole'?0:span?C[span.s].a:mode==='spot'&&c.spot?c.spot[0]:C[p.k].a,b=mode==='whole'?gs.length-1:span?C[span.e].b:mode==='spot'&&c.spot?c.spot[1]:C[p.k].b;
+  const lead=(mode==='head'||mode==='puls')&&p.k>0&&v.ch[p.k-1].st>=2&&C[p.k].a-1>=C[p.k-1].a?1:0; /* v5.15: Übergang üben – der letzte Anschlag des Abschnitts davor kommt mit */
+  const span=mode==='link'?{s:p.s,e:p.e}:null,a=mode==='whole'?0:span?C[span.s].a:mode==='spot'&&c.spot?c.spot[0]:C[p.k].a-lead,b=mode==='whole'?gs.length-1:span?C[span.e].b:mode==='spot'&&c.spot?c.spot[1]:C[p.k].b;
   const timed=mode==='puls'||mode==='review'||mode==='link',speed=mode==='find'||mode==='fade'||mode==='head'||mode==='spot'?AW.findSpeed:mode==='puls'&&c.relearn!==2?AW.tempi[c.tp]:1; /* v5.12: Metronom hörbar → Tempo steigt nur: 60 % (Mitspielen, Ausblenden, Kopf) → 75 → 90 → 100 % */
   const ns=awSecNotes(a,b).slice().sort((x,y)=>x.start-y.start);
-  const R=MEM.run={k:p.k,mode,span,a,b,ns,nj:ns.map(n=>{for(let j=a;j<=b;j++)if(n.start>=gs[j].start-0.001&&n.start<=gs[j].last+0.001)return j;return -1}),timed,dark:!(mode==='find'||mode==='fade'),speed,
+  const R=MEM.run={k:p.k,mode,span,a,b,ns,nj:ns.map(n=>{for(let j=a;j<=b;j++)if(n.start>=gs[j].start-0.001&&n.start<=gs[j].last+0.001)return j;return -1}),timed,dark:!(mode==='find'||mode==='fade'),speed,lead,
     pos:a,hit:{},proc:{},wrong:0,hints:0,cues:0,miss:0,devs:[],waits:[],waitT0:null,clock:0,lastKey:0,anchor:mode==='head'||mode==='spot',show:null,helpAt:[],rev:new Set(),fl:c.fl||0,
     pv:null,done:false,endT:null,ht:{},mk:{},vt:gs[a].start-1.2*speed,clicks:[],ck:0,mj:a,acc:[],ap:0,lat:v.lat||0,glideV:0,kb0:kbOn(),off:0,wait0:timed,wt:0};
   if(mode!=='whole')awClicks(R,v,p);
@@ -2918,7 +2919,7 @@ function awHier(R){const gs=MEM.gs,j=awWorst(R);if(j<0)return R.mode==='find'?''
   if(k.miss&&!k.off)t.push(R.mode==='whole'?'ausgelassen':'nicht gespielt');if(k.help)t.push('Hilfe gebraucht');if(k.cue)t.push('Note gebraucht');if(k.wrong)t.push('du hast '+k.wrong.map(awNm).join(', ')+' gespielt');
   if(k.slow)t.push(`${k.slow.toFixed(0)} s gezögert`);if(k.dev!=null&&(k.off||Math.abs(k.dev)>0.09))t.push(k.dev>0?`${Math.round(k.dev*1000)} ms zu spät`:`${Math.round(-k.dev*1000)} ms zu früh`);if(k.slip)t.push('aus dem Takt');
   const nB=Object.keys(R.mk).filter(x=>awBad(R.mk[x])>0).length;
-  return `👉 Anschlag ${j-R.a+1}: richtig ist ${ms}${t.length?' – '+t.join(', '):''}.${nB>1?` (${nB} Stellen markiert)`:''}`}
+  return `👉 ${j<R.a+(R.lead||0)?'Übergang (Ende vom Abschnitt davor)':`Anschlag ${j-R.a-(R.lead||0)+1}`}: richtig ist ${ms}${t.length?' – '+t.join(', '):''}.${nB>1?` (${nB} Stellen markiert)`:''}`}
 /* --- Ganzer Song: Rhythmus relativ zu deinem eigenen Tempo (kein Klick). Abweichung eines Abstands > Faktor 1,67 oder Hänger > 3 s = Rhythmus-Patzer --- */
 function awRhythm(R){const gs=MEM.gs,rs=[],pairs=[];for(let j=R.a;j<R.b;j++){const t1=R.ht[j],t2=R.ht[j+1],e=gs[j+1].start-gs[j].start;if(t1==null||t2==null||e<0.1)continue;pairs.push([t2-t1,e,j+1]);rs.push((t2-t1)/e)}
   if(rs.length<3)return {tempo:1,slips:0};const so=rs.slice().sort((x,y)=>x-y),med=so[so.length>>1];let slips=0;
@@ -2938,11 +2939,12 @@ function awFehler(R){const t=[];if(R.miss)t.push(`${R.miss} ${R.miss===1?'Anschl
 function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C;R.done=true;R.doneClock=R.clock;$('#mem').classList.remove('blind');
   const n=R.b-R.a+1;if(R.timed){const pr=awPulse(R);R.tempo=pr.tempo}const offOk=(R.off||0)<=Math.max(1,Math.round(n*0.15)),tempoOk=!R.timed||R.tempo>=R.speed*0.8;let ok,msg;c.last=now;c.reps++;R.worst=awWorst(R);
   if(R.timed&&R.devs.length>=6){const d=R.devs.slice().sort((x,y)=>x-y),md=d[d.length>>1];v.lat=Math.round(clamp((v.lat||0)+0.3*md,-AW.latMax,AW.latMax)*1000)/1000} /* Bluetooth-Verzögerung lernen (geglättet) */
-  if(R.mode==='find'){ok=R.wrong<=AW.findWrong;c.fc=ok?(c.fc||0)+1:0;
+  if(R.mode==='find'){ok=R.wrong<=AW.findWrong;c.fc=ok?(c.fc||0)+(R.wrong===0?2:1):0; /* v5.15: fehlerfrei = gleich weiter (weniger Wiederholungen) */
     if(c.fc>=AW.findGood){c.st=1;c.fl=0;c.fc=0;msg='✓ Sitzt mit Bildschirm! Jetzt verschwinden nach und nach Noten.'}
     else msg=ok?'✓ Gut! Noch einmal mitspielen – zweimal hintereinander, dann geht es weiter.':`Noch einmal mitspielen – ${R.wrong} falsche Töne. Zweimal hintereinander höchstens ${AW.findWrong}, dann geht es weiter.`}
   else if(R.mode==='fade'){ok=R.cues<=AW.fadeCue&&R.wrong<=AW.fadeWrong;
-    if(ok){if(c.fl>=2){c.st=2;msg='✓ Fast ohne Noten geschafft! Jetzt ganz aus dem Kopf – der Bildschirm wird dunkel.'}else{c.fl++;msg=`✓ Geschafft! Jetzt verschwinden noch mehr Noten (Stufe ${c.fl+1} von 3).`}}
+    if(ok){const jump=R.cues===0&&R.wrong===0?2:1; /* v5.15: ohne eine gebrauchte Note und ohne Fehler → eine Stufe überspringen */
+      if(c.fl+jump>2){c.st=2;msg=jump===2&&c.fl<2?'✓ Ohne eine einzige Hilfe! Stufe übersprungen – jetzt ganz aus dem Kopf.':'✓ Fast ohne Noten geschafft! Jetzt ganz aus dem Kopf – der Bildschirm wird dunkel.'}else{c.fl+=jump;msg=jump===2?`✓ Perfekt – Stufe übersprungen! Jetzt nur noch der Anfang zu sehen (Stufe 3 von 3).`:`✓ Geschafft! Jetzt verschwinden noch mehr Noten (Stufe ${c.fl+1} von 3).`}}
     else{if(R.cues>=3&&c.fl>0){c.fl--;msg=`Da fehlten noch ${R.cues} Noten – eine Stufe zurück, es sind wieder mehr zu sehen.`}else msg=`Fast – ${awFehler(R)}. Nochmal auf dieser Stufe.`}}
   else if(R.mode==='head'||R.mode==='spot'){ok=R.hints===0;
     if(R.mode==='spot'){if(ok){c.spot=null;c.sf=0;msg='✓ Die Stelle sitzt! Jetzt wieder der ganze Abschnitt aus dem Kopf.'}
@@ -2950,12 +2952,12 @@ function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C
     else if(ok){if(c.relearn===1){c.relearn=2;msg='✓ Aus dem Kopf wieder da. Jetzt noch einmal im Puls (100 %).'}else{c.st=3;msg=`✓ Ganz aus dem Kopf! Als Nächstes im Puls: mit Metronom, ${awPct(AW.tempi[c.tp])}.`}}
     else{c.fails++;
       if(R.hints>=AW.headBack&&!c.relearn){c.st=1;c.fl=1;msg=`Da hat noch viel gefehlt (${R.hints}× Hilfe) – zurück zum Ausblenden, mit ein paar Noten zur Orientierung.`}
-      else{const C0=C[R.k],p0=Math.min(...R.helpAt),p1=Math.max(...R.helpAt);c.spot=[Math.max(C0.a,p0-1),Math.min(C0.b,Math.max(p1+2,p0+2))];c.sf=0;
-        msg=`Fast – ${awFehler(R)}. Jetzt kurz nur die Stelle, an der es gehakt hat (Anschlag ${p0-C0.a+1}), dann wieder alles.`}}}
+      else{const C0=C[R.k],p0=Math.min(...R.helpAt),p1=Math.max(...R.helpAt);c.spot=[Math.max(C0.a-(R.lead||0),p0-1),Math.min(C0.b,Math.max(p1+2,p0+2))];c.sf=0;
+        msg=`Fast – ${awFehler(R)}. Jetzt kurz nur die Stelle, an der es gehakt hat (${p0<C0.a?'Übergang':`Anschlag ${p0-C0.a+1}`}), dann wieder alles.`}}}
   else if(R.mode==='puls'){ok=R.miss<=AW.maxMiss&&R.wrong<=AW.maxWrong&&offOk&&tempoOk;
     if(ok){if(c.relearn===2){c.relearn=0;c.due=now+AW.iv[1];msg=`✓ Im Puls wieder da – Abschnitt ${R.k+1} kommt ${awWhen(c.due)} kalt wieder.`}
-      else if(c.tp<AW.tempi.length-1){c.tp++;msg=`✓ Im Puls bei ${awPct(R.speed)}! Als Nächstes ${awPct(AW.tempi[c.tp])}.`}
-      else{c.box=1;c.due=now+AW.iv[1];msg=`✓ Sitzt im Tempo! Abschnitt ${R.k+1} kommt ${awWhen(c.due)} kalt wieder (Kasten 1) – dazwischen lernst du etwas anderes.`}}
+      else if(c.tp<AW.tempi.length-1&&R.tempo<AW.tempi[AW.tempi.length-1]*0.95){let t=c.tp+1;while(t<AW.tempi.length-1&&R.tempo>=AW.tempi[t]*0.95)t++;const sk=t-c.tp>1;c.tp=t;msg=`✓ Im Puls – dein Tempo ${awPct(R.tempo)}!${sk?' Eine Stufe übersprungen.':''} Als Nächstes ${awPct(AW.tempi[c.tp])}.`} /* v5.15: spielst du schon fast im nächsten Tempo, wird die Stufe übersprungen */
+      else{c.tp=AW.tempi.length-1;c.box=1;c.due=now+AW.iv[1];msg=`✓ Sitzt im Tempo (${awPct(R.tempo)})! Abschnitt ${R.k+1} kommt ${awWhen(c.due)} kalt wieder (Kasten 1) – dazwischen lernst du etwas anderes.`}}
     else{c.fails++;msg=`Noch nicht im Puls – ${awFehler(R)}. Nochmal bei ${awPct(R.speed)}.`}}
   else if(R.mode==='review'){ok=R.miss<=AW.maxMiss&&R.wrong<=AW.maxWrong&&offOk&&tempoOk;
     if(ok){const was=c.box;c.box=Math.min(AW.solid,c.box+1);c.due=now+AW.iv[c.box];
@@ -3011,7 +3013,7 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
   if(R.done)return;
   if(R.mode==='find')msg(R.pos>R.b?'Geschafft ✓':'Finde die blauen Tasten – das Lied wartet auf dich.',`Anschlag ${Math.min(R.b,R.pos)-R.a+1} von ${R.b-R.a+1}`);
   else if(R.mode==='fade')msg(R.pos>R.b?'Geschafft ✓':awHidden(R,R.pos)?'Diese Note ist versteckt – spiel sie aus dem Kopf. Fehlt sie dir, greif einfach: dann erscheint sie.':'Spiel die blauen Tasten – manche Noten sind versteckt.',`Stufe ${R.fl+1} von 3 · Anschlag ${Math.min(R.b,R.pos)-R.a+1} von ${R.b-R.a+1}`);
-  else msg(R.anchor?(R.mode==='spot'?'Hier geht die Stelle los – spiel den Anschlag. Dann wird es dunkel.':'Hier fängt der Abschnitt an – spiel den ersten Anschlag. Dann wird es dunkel.'):'So geht es weiter – spiel den Anschlag. Danebengreifen zählt jetzt nicht.')}
+  else msg(R.anchor?(R.mode==='spot'?'Hier geht die Stelle los – spiel den Anschlag. Dann wird es dunkel.':R.lead?'Übergang: das ist das Ende vom Abschnitt davor – spiel es, dann geht es nahtlos weiter. Dann wird es dunkel.':'Hier fängt der Abschnitt an – spiel den ersten Anschlag. Dann wird es dunkel.'):'So geht es weiter – spiel den Anschlag. Danebengreifen zählt jetzt nicht.')}
 
 /* --- v5.09: Rückblick nach dem Durchgang – der Abschnitt steht als Balken über der Klaviatur (unten = Anfang, oben = Ende), jeder Ton eingefärbt:
    grün richtig · orange Hilfe/Note gebraucht · gelb gezögert/zu spät/zu früh/aus dem Takt · grau nicht gespielt · rote Marke = falsche Taste. Die schlimmste Stelle ist umrandet,
@@ -3031,7 +3033,7 @@ function awReview(R,c,p,kb,hn){const gs=MEM.gs,w=R.worst!=null?R.worst:awWorst(R
   for(let j=R.a;j<=R.b;j++){const k=R.mk[j];if(!k||!k.wrong||gs[j].start>t1||gs[j].start<t0-0.01)continue;const yb=Y(gs[j].start);
     for(const m of k.wrong){const K=MEM.pos[m];if(!K)continue;const ww=K.w*(K.b?0.6:0.78),x=K.x+K.w/2-ww/2;c.fillStyle='#E5484D';c.fillRect(x,yb-9,ww,9);c.fillStyle='#fff';c.font='800 9px Inter,system-ui';c.textAlign='center';c.fillText('✗',K.x+K.w/2,yb-1);
       if(j===w){bx0=Math.min(bx0,x);bx1=Math.max(bx1,x+ww);by0=Math.min(by0,yb-9);by1=Math.max(by1,yb)}}}
-  if(bx1>0){c.strokeStyle='#fff';c.lineWidth=2;c.setLineDash([4,3]);c.strokeRect(bx0-4,by0-4,bx1-bx0+8,by1-by0+8);c.setLineDash([]);c.fillStyle='#fff';c.font='800 11px Inter,system-ui';c.textAlign=bx0>40?'right':'left';c.fillText(`Anschlag ${w-R.a+1}`,bx0>40?bx0-8:bx1+8,(by0+by1)/2+4)}
+  if(bx1>0){c.strokeStyle='#fff';c.lineWidth=2;c.setLineDash([4,3]);c.strokeRect(bx0-4,by0-4,bx1-bx0+8,by1-by0+8);c.setLineDash([]);c.fillStyle='#fff';c.font='800 11px Inter,system-ui';c.textAlign=bx0>40?'right':'left';c.fillText(w<R.a+(R.lead||0)?'Übergang':`Anschlag ${w-R.a-(R.lead||0)+1}`,bx0>40?bx0-8:bx1+8,(by0+by1)/2+4)}
   c.restore()}
 /* --- Bildschleife, Stopp, automatisch weiter --- */
 function memLoop(){const R=MEM.run;if(!R||$('#mem').classList.contains('hidden')){MEM.raf=0;return}
@@ -4336,7 +4338,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.14 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.15 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

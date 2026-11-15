@@ -54,6 +54,7 @@ async def main():
          '5 s Pause beendet den Durchgang': r['pause'] == [True, True],
          'Metronom beim Mitspielen: tickt mit der Musik, schweigt wenn das Lied wartet': r['findClick'] == [True, True, True],
          'Metronom ist ein echter Klick (kein Klavierton)': r['klick'] == [True],
+         'perfekter Weg kurz (≤ 5 Durchgänge, ≤ 2 dunkel) und Übergang vom Abschnitt davor': r['pfad'][0] <= 5 and r['pfad'][1] <= 2 and r['pfad'][3] is True,
          'keine Zeitgeber im Lernablauf': r['timers'] == 0,
          'keine Fehler': not errs}
     for k, v in c.items():

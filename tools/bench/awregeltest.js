@@ -8,7 +8,7 @@
  const wrongKeyOf=j=>{let m=Math.max(...gs[j].mids)+1;while(gs[j].mids.has(m)||(gs[j+1]&&gs[j+1].mids.has(m)))m++;return m};const pulse=(R,skip,lat)=>{let q=R.a,g=0;while(!R.done&&g++<40000&&MEM.run===R){awTick(R,1/120);if(R.wait0&&!R.pv){tick(0.5);if(!(skip&&skip.includes(q)))play(q);q++;continue}while(q<=R.b&&!R.pv&&R.vt>=gs[q].start+(lat||0.03)*R.speed){if(!(skip&&skip.includes(q)))play(q);q++}}return R};
  o.n=MEM.C.length;o.vorgriffGrp=gs.some(G=>G.mids.has(54)&&G.mids.has(57)&&!G.mids.has(66))&&gs.some(G=>G.mids.has(66));
  timers=0;let p=awPick();o.p1=p.mode;awNext();let R=MEM.run;o.findScreen=!R.dark;runWait(R=>{if(R.pos===R.a)for(const m of [30,31,32])memPress(m,'kb')});o.find1=[R.ok,ch(0).fc,ch(0).st];
- awNext();R=runWait();o.find2=[R.ok,ch(0).fc,ch(0).st];awNext();R=runWait();o.find3=[R.ok,ch(0).fc,ch(0).st,ch(0).fl];
+ awNext();R=runWait(R=>{if(R.pos===R.a&&!R.w1){R.w1=1;memPress(30,'kb')}});o.find2=[R.ok,ch(0).fc,ch(0).st];awNext();R=runWait();o.find3=[R.ok,ch(0).fc,ch(0).st,ch(0).fl];
  awNext();R=MEM.run;o.p2=[R.mode,R.fl];o.hide0=[...Array(R.b-R.a+1)].map((_,i)=>awHidden(R,R.a+i)?1:0).join('');awDraw();o.fadeState=R.drawState;
  let jh=R.a;while(!awHidden(R,jh))jh++;while(R.pos<jh)play(R.pos);awDraw();o.hiddenMsg=$('#memMsg').textContent.includes('versteckt');memPress(30,'kb');o.reveal=[R.rev.has(jh),R.cues,R.wrong];play(R.pos);
  R=runWait();o.fade0=[R.ok,ch(0).fl,ch(0).st];
@@ -69,4 +69,10 @@
   awStart({k:0,mode:'find'});const R3=MEM.run;tones=[];tick(8);const stop=tones.filter(x=>x.m>=96).length;o.findClick=[flow>=4,stop<=2,R2.clicks.length>0];memStop()}
  /* v5.13 Klick ist ein eigener Klick-Ton, kein Klavierton mehr */
  {awStart({k:0,mode:'puls'});const R4=MEM.run;tones=[];tick(3);o.klick=[tones.length>0&&tones.every(x=>x.click===1)];memStop()}
+ /* v5.15: perfekter Weg – wie viele Durchgänge bis „im Tempo“ (Kasten 1)? Übergang: Kopf/Puls von Abschnitt 2 beginnen mit dem letzten Anschlag von Abschnitt 1 */
+ {delete MEM.rec.v9;awState();const v=awState();let n=0,dark=0,modes=[],leadOk=null,g=0;
+  while(v.ch[1].box<1&&g++<40){const p=awPick();if(!p)break;if(p.mode==='link')break;awStart(p);const R=MEM.run;if(p.k===1&&(p.mode==='head'||p.mode==='puls')&&leadOk==null)leadOk=R.lead===1&&R.a===MEM.C[1].a-1;
+    if(p.k===1)modes.push(p.mode);if(R.timed){tick(0.5);let T=0;const P=[];for(let j=R.a;j<=R.b;j++)P.push([(gs[j].start-gs[R.a].start)/1.0,j]);for(const [t,j] of P){tick(Math.max(0,t-T));T=t;play(j)}tick(2)}
+    else{tick(1.5);while(R.pos<=R.b&&!R.done){play(R.pos);tick(0.3)}tick(3)}if(p.k===1){n++;if(R.dark)dark++}}
+  o.pfad=[n,dark,modes.join(','),leadOk]}
  o.timers=timers;return o}
