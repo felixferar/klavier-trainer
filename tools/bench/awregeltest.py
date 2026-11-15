@@ -55,6 +55,10 @@ async def main():
          'Metronom beim Mitspielen: tickt mit der Musik, schweigt wenn das Lied wartet': r['findClick'] == [True, True, True],
          'Metronom ist ein echter Klick (kein Klavierton)': r['klick'] == [True],
          'perfekter Weg kurz (≤ 5 Durchgänge, ≤ 2 dunkel) und Übergang vom Abschnitt davor': r['pfad'][0] <= 5 and r['pfad'][1] <= 2 and r['pfad'][3] is True,
+         'Puls-Start zeigt den ersten Ton (blau, mit Namen)': r['h1'] == ['start', True],
+         'Taste beim Vorführen überspringt es': r['h2'] == [True, True],
+         'Akkord halb gespielt + nächster Ton → geht weiter, kein Fehler': r['h3'] == [True, 0],
+         'ganzer Song: 8 s Hänger → Durchgang endet (nicht bestanden)': r['h4'] == [True, True, True],
          'keine Zeitgeber im Lernablauf': r['timers'] == 0,
          'keine Fehler': not errs}
     for k, v in c.items():

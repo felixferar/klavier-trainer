@@ -24,7 +24,7 @@
  p=awPick();o.p6=p.mode;awNext();R=MEM.run;o.spotRange=[R.a,R.b,R.anchor];R=runWait();o.spotOk=[R.ok,ch(0).spot];
  p=awPick();o.p7=p.mode;awNext();R=runWait();o.head2=[R.ok,ch(0).st];
  awNext();R=MEM.run;o.p8=[R.mode,Math.round(R.speed*100)];tick(0.5);tones=[];memPress(21,'kb');R=MEM.run;awDraw();o.demo=[!!R.pv,R.drawState];
- const dp=R.pos;play(R.pos);o.demoIgnore=R.pos===dp;tick(1);awDraw();o.demoKeys=$('#memMsg').textContent.includes('ohne Ton');{let g=0;while(R.pv&&g++<2000)awTick(R,1/60)}o.demoSilent=!tones.filter(x=>x.m<90).length;o.demoEnd=!R.pv&&!R.done;
+ tick(1);awDraw();o.demoKeys=$('#memMsg').textContent.includes('ohne Ton');const dp=R.pos;play(R.pos);o.demoIgnore=R.pos===dp&&R.wrong===0;{let g=0;while(R.pv&&g++<2000)awTick(R,1/60)}o.demoSilent=!tones.filter(x=>x.m<90).length;o.demoEnd=!R.pv&&!R.done;
  o.clicks=[R.wait0,R.clicks.length,+(R.beat.p).toFixed(2),R.beat.ok];tones=[];pulse(R);o.pulsTones=tones.filter(x=>x.m>=96).length;o.puls1=[R.ok,ch(0).tp];
  awNext();R=MEM.run;pulse(R,[R.a+2,R.a+4]);o.pulsMiss=[R.ok,R.miss,ch(0).tp];awNext();R=MEM.run;pulse(R,[R.a+3]);o.oneMiss=[R.ok,R.miss,ch(0).tp];
  awNext();R=MEM.run;o.p9=Math.round(R.speed*100);pulse(R);o.box1=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/6e4)];
@@ -75,4 +75,10 @@
     if(p.k===1)modes.push(p.mode);if(R.timed){tick(0.5);let T=0;const P=[];for(let j=R.a;j<=R.b;j++)P.push([(gs[j].start-gs[R.a].start)/1.0,j]);for(const [t,j] of P){tick(Math.max(0,t-T));T=t;play(j)}tick(2)}
     else{tick(1.5);while(R.pos<=R.b&&!R.done){play(R.pos);tick(0.3)}tick(3)}if(p.k===1){n++;if(R.dark)dark++}}
   o.pfad=[n,dark,modes.join(','),leadOk]}
+ /* v5.16 nicht hängen bleiben */
+ {const v=awState();v.ch.forEach(c=>{c.st=3;c.box=0;c.tp=0});awStart({k:0,mode:'puls'});let R=MEM.run;awDraw();o.h1=[R.drawState,/blauen Ton/.test($('#memMsg').textContent)];memStop();
+  awStart({k:0,mode:'puls'},true);R=MEM.run;const pv0=!!R.pv;memPress(gs[R.a].start?60:60,'kb');tick(0.1);o.h2=[pv0,!R.pv];memStop();
+  let jc=gs.findIndex((G,j)=>G.mids.size>=2&&j+1<gs.length&&[...gs[j+1].mids].some(m=>!G.mids.has(m)));const kc=MEM.C.findIndex(C=>jc>=C.a&&jc<C.b);
+  if(kc>=0){v.ch[kc].st=0;awStart({k:kc,mode:'find'});R=MEM.run;while(R.pos<jc){play(R.pos);tick(0.05)}const G=gs[jc],m1=[...G.mids][0],mn=[...gs[jc+1].mids].find(m=>!G.mids.has(m));memPress(m1,'kb');memPress(mn,'kb');o.h3=[R.pos>jc,R.wrong]}else o.h3=['kein Akkord',0];memStop();
+  awStart({k:0,mode:'whole'});R=MEM.run;play(R.pos);play(R.pos);tick(9);o.h4=[R.done,R.stall===1,!R.ok]}
  o.timers=timers;return o}
