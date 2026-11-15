@@ -1,0 +1,48 @@
+()=>{window.AW_NOLOOP=true;let tones=[];window.playTone=(m,d,v,g)=>tones.push({m,g});window.toast=()=>{};KB.state='off';const o={};
+ let timers=0;const sT=window.setTimeout,sI=window.setInterval;window.setTimeout=(f,t)=>{timers++;return sT(f,t)};window.setInterval=(f,t)=>{timers++;return sI(f,t)};
+ const notes=[];let t=0;for(let bar=0;bar<8;bar++){notes.push({m:48,start:t,dur:1.9,hand:'L'});for(let q=0;q<4;q++)notes.push({m:60+((bar+q)%5)*2,start:t+q*0.5,dur:0.45,hand:'R'});t+=2}
+ notes.push({m:54,start:4.0,dur:0.4,hand:'L'},{m:57,start:4.0,dur:0.4,hand:'L'},{m:66,start:4.118,dur:0.3,hand:'R'});
+ const it={id:'regel',type:'midi',title:'Regel',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);const T0=Date.UTC(2026,10,16,9);window.AW_NOW=T0;openMem(it);
+ const gs=MEM.gs,v=()=>MEM.rec.v9,ch=k=>v().ch[k],tick=s=>{for(let x=0;x<s;x+=1/60){const R=MEM.run;if(!R)return;awTick(R,1/60)}},play=j=>{for(const m of gs[j].mids)memPress(m,'kb')};
+ const runWait=(f)=>{const R=MEM.run;let g=0;while(!R.done&&g++<300&&MEM.run===R){if(R.pv){tick(0.5);continue}if(R.pos<=R.b){if(f)f(R);if(MEM.run!==R||R.done)break;play(R.pos)}tick(0.1)}return R};
+ const pulse=(R,skip,lat)=>{let q=R.a,g=0;while(!R.done&&g++<40000&&MEM.run===R){awTick(R,1/120);while(q<=R.b&&!R.pv&&R.vt>=gs[q].start+(lat||0.03)*R.speed){if(!(skip&&skip.includes(q)))play(q);q++}}return R};
+ o.n=MEM.C.length;o.vorgriffGrp=gs.some(G=>G.mids.has(54)&&G.mids.has(57)&&!G.mids.has(66))&&gs.some(G=>G.mids.has(66));
+ timers=0;let p=awPick();o.p1=p.mode;awNext();let R=MEM.run;o.findScreen=!R.dark;runWait(R=>{if(R.pos===R.a)for(const m of [30,31,32])memPress(m,'kb')});o.find1=[R.ok,ch(0).fc,ch(0).st];
+ awNext();R=runWait();o.find2=[R.ok,ch(0).fc,ch(0).st];awNext();R=runWait();o.find3=[R.ok,ch(0).fc,ch(0).st,ch(0).fl];
+ awNext();R=MEM.run;o.p2=[R.mode,R.fl];o.hide0=[...Array(R.b-R.a+1)].map((_,i)=>awHidden(R,R.a+i)?1:0).join('');awDraw();o.fadeState=R.drawState;
+ let jh=R.a;while(!awHidden(R,jh))jh++;while(R.pos<jh)play(R.pos);awDraw();o.hiddenMsg=$('#memMsg').textContent.includes('versteckt');memPress(30,'kb');o.reveal=[R.rev.has(jh),R.cues,R.wrong];play(R.pos);
+ R=runWait();o.fade0=[R.ok,ch(0).fl,ch(0).st];
+ awNext();R=MEM.run;o.hide1=[...Array(R.b-R.a+1)].map((_,i)=>awHidden(R,R.a+i)?1:0).join('');R=runWait(R=>{if(awHidden(R,R.pos))memPress(30,'kb')});o.fadeBack=[R.ok,R.cues,ch(0).fl];
+ {let g=0;while(awPick().mode==='fade'&&g++<8){awNext();R=MEM.run;if(R.fl===2)o.hide2=[...Array(R.b-R.a+1)].map((_,i)=>awHidden(R,R.a+i)?1:0).join('');R=runWait()}}o.fade2=[R.ok,ch(0).st];
+ awNext();R=MEM.run;o.p3=R.mode;awDraw();o.anchor0=R.drawState==='anker';tick(30);o.anchorStays=R.anchor;memPress(30,'kb');o.anchorSearch=R.wrong;play(R.pos);awDraw();o.dark=R.drawState==='dunkel';
+ const h0=R.hints;tones=[];tick(25);o.thinkNoHelp=R.hints===h0&&R.show==null&&!tones.length;
+ const pw=R.pos;memPress(30,'kb');o.wrongShows=[R.wrong,R.hints,R.show===pw];awDraw();o.helpState=R.drawState;tick(20);o.showStays=R.show===pw;memPress(31,'kb');memPress(32,'kb');o.searchFree=R.wrong===1;play(R.pos);o.continues=R.pos===pw+1&&R.show==null;
+ for(let i=0;i<8;i++){memPress(33,'kb');if(R.show!=null)play(R.pos)}o.noAbort=MEM.run===R&&!R.pv;
+ R=runWait();o.head1=[R.ok,R.hints>=3,ch(0).st,ch(0).fl];
+ o.p4=awPick().mode;let g=0;while(awPick().mode==='fade'&&g++<6){awNext();runWait()}
+ awNext();R=MEM.run;o.p5=R.mode;play(R.pos);play(R.pos);play(R.pos);const ph=R.pos;memPress(22,'kb');o.bHelp=[R.hints,R.show===ph];R=runWait();o.spot=[R.ok,ch(0).spot,ph];
+ p=awPick();o.p6=p.mode;awNext();R=MEM.run;o.spotRange=[R.a,R.b,R.anchor];R=runWait();o.spotOk=[R.ok,ch(0).spot];
+ p=awPick();o.p7=p.mode;awNext();R=runWait();o.head2=[R.ok,ch(0).st];
+ awNext();R=MEM.run;o.p8=[R.mode,Math.round(R.speed*100)];tick(0.5);tones=[];memPress(21,'kb');R=MEM.run;awDraw();o.demo=[!!R.pv,R.drawState];
+ const dp=R.pos;play(R.pos);o.demoIgnore=R.pos===dp;tick(1);awDraw();o.demoKeys=$('#memMsg').textContent.includes('ohne Ton');{let g=0;while(R.pv&&g++<2000)awTick(R,1/60)}o.demoSilent=!tones.filter(x=>x.m<90).length;o.demoEnd=!R.pv&&!R.done;
+ const cnt=R.clicks.filter(x=>x.cnt).length,inPlay=R.clicks.filter(x=>!x.cnt).length;o.clicks=[cnt,inPlay,+(R.beat.p).toFixed(2),R.beat.ok];tones=[];pulse(R);o.pulsTones=tones.filter(x=>x.m>=96).length;o.puls1=[R.ok,ch(0).tp];
+ awNext();R=MEM.run;pulse(R,[R.a+2,R.a+4]);o.pulsMiss=[R.ok,R.miss,ch(0).tp];awNext();R=MEM.run;pulse(R,[R.a+3]);o.oneMiss=[R.ok,R.miss,ch(0).tp];
+ awNext();R=MEM.run;o.p9=Math.round(R.speed*100);pulse(R);o.box1=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/6e4)];
+ window.AW_NOW+=11*60e3;p=awPick();o.rev=[p.mode,p.k];awNext();R=MEM.run;o.revSp=Math.round(R.speed*100);pulse(R);o.box2=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/36e5)];
+ const toK0=()=>{let g=0;while(MEM.run.k!==0&&g++<60){const R=MEM.run;if(R.timed)pulse(R);else runWait();awNext()}};
+ window.AW_NOW=ch(0).due+1;awNext();toK0();pulse(MEM.run);o.box3=[ch(0).box,$('#memMsg').textContent.includes('Gelernt')];
+ window.AW_NOW=ch(0).due+1;awNext();toK0();pulse(MEM.run);o.box4=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/864e5)];
+ window.AW_NOW=ch(0).due+1;awNext();toK0();R=MEM.run;pulse(R,[R.a,R.a+1,R.a+2]);o.fail=[R.ok,ch(0).box,ch(0).relearn];
+ const vv=v();vv.ch.forEach(c=>{c.box=3;c.st=3;c.due=window.AW_NOW+9e9;c.relearn=0;c.spot=null});vv.ln=[];for(let k=0;k<vv.ch.length-2;k++)vv.ln[k]=1;vv.lw=[];
+ p=awPick();o.chain=[p.mode,p.s,p.e,vv.ch.length];awNext();R=MEM.run;o.chainSp=Math.round(R.speed*100);pulse(R);o.chainOk=[R.ok,!!vv.ln[vv.ch.length-2]];
+ p=awPick();o.w1=p.mode;awNext();R=MEM.run;o.wSetup=[R.a,R.b,gs.length-1,R.dark,R.clicks.length,R.anchor];memPress(22,'kb');o.wNoHelp=R.hints===0&&R.show==null;
+ const pl=(R,opt)=>{while(R.pos<=R.b&&MEM.run===R){const j=R.pos;if(opt&&opt.skip===j){tick(0.6);play(j+1);continue}tick((j>R.a?gs[j].start-gs[j-1].start:0.2)*1.2);play(j)}tick(3);return R};
+ R=pl(R);o.w1r=[R.ok,R.miss,R.wrong,R.slips,+(R.tempo||0).toFixed(2),new Set(v().whole.days).size,Math.round((v().whole.due-window.AW_NOW)/36e5)];
+ window.AW_NOW+=864e5;p=awPick();o.w2=p.mode;awNext();R=MEM.run;const sk=R.a+15;R=pl(R,{skip:sk});o.w2r=[R.ok,R.miss,awSongSits(v()),Math.round((v().whole.due-window.AW_NOW)/864e5)];
+ window.AW_NOW=v().whole.due+1;p=awPick();awNext();R=MEM.run;R=(()=>{while(R.pos<=R.b&&MEM.run===R){const j=R.pos;if(j>=20&&j<=28){tick(0.4);play(Math.min(R.b,j+3));continue}tick(0.6);play(j)}tick(3);return R})();
+ const sj=(R.skipAt||[-1])[0],kBad=MEM.C.findIndex(c=>sj>=c.a&&sj<=c.b);o.w3=[R.ok,R.miss,kBad>=0&&v().ch[kBad].due<=window.AW_NOW,awPick().mode];
+ const kV=MEM.C.findIndex(c=>gs[c.a].start<=4.01&&gs[c.b].start>=4.0);awStart({k:kV,mode:'head'});R=MEM.run;let jj=gs.findIndex(G=>G.mids.has(54));while(R.pos<jj)play(R.pos);
+ memPress(66,'kb');for(const m of gs[jj].mids)memPress(m,'kb');o.vorgriff=[R.wrong,R.pos>jj+1];
+ awStart({k:kV,mode:'head'});R=MEM.run;while(R.pos<jj)play(R.pos);const ks=[...gs[jj].mids];for(const m of ks)memPress(m,'kb');o.chord4=R.wrong;tick(1.2);memPress(ks[3],'kb');o.chord4late=R.wrong;
+ awStart({k:0,mode:'head'});R=MEM.run;while(R.pos<=R.b)play(R.pos);tick(0.2);o.endWait=!R.done;tick(3);o.endDone=R.done;tick(1);memPress(70,'kb');o.keyNext=MEM.run!==R;
+ o.timers=timers;return o}
