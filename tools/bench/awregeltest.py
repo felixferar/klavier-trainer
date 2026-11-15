@@ -44,6 +44,8 @@ async def main():
          '4-Ton-Akkord: 4. Ton nach dem Weiterspringen kein Fehler, 1 s später schon': r['chord4'] == 0 and r['chord4late'] >= 1,
          'Ende erst nach dem letzten Ton; Taste danach = weiter': r['endWait'] and r['endDone'] and r['keyNext'],
          'Hintergrund → endet, Übersicht, zählt nicht': r['bg'] == {'run': False, 'home': True, 'zaehlt': False},
+         'Rückblick: Fehlerstelle (Anschlag 3, falsche Taste, Hilfe) wird erkannt und benannt': r['rb'] == [True, True, True, True, True],
+         'Weg-Anzeige beim Spielen (erst Töne ohne Uhr, dann Takt)': r['weg'],
          'keine Zeitgeber im Lernablauf': r['timers'] == 0,
          'keine Fehler': not errs}
     for k, v in c.items():
