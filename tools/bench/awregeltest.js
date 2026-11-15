@@ -49,4 +49,8 @@
  awStart({k:0,mode:'head'});R=MEM.run;play(R.pos);play(R.pos);const j3=R.pos,wk=Math.max(...gs[j3].mids)+13;memPress(wk,'kb');while(R.pos<=R.b)play(R.pos);tick(3);
  o.rb=[R.done,R.worst===j3,!!(R.mk[j3]&&R.mk[j3].help&&R.mk[j3].wrong.includes(wk)),/Anschlag 3: richtig ist/.test(awHier(R)),awNm(wk)&&awHier(R).includes(awNm(wk))];
  o.weg=/Aus dem Kopf/.test($('#memStages').textContent)&&/erst die Töne ohne Uhr/.test($('#memStages').textContent);
+ /* v5.11 Einzählen: 4 Klicks, der 5. Schlag = erster Ton; kein Anlauf-Ton (auch wenn der Abschnitt davor gekonnt ist); Klicks im Abschnitt fließend im selben Abstand */
+ {const v=awState();v.ch[0].box=2;v.ch[0].st=3;v.ch[1].st=3;v.ch[1].tp=0;awStart({k:1,mode:'puls'});const R1=MEM.run,t0=gs[R1.a].start,bp=R1.beat.p,cs=R1.clicks.filter(x=>x.cnt).map(x=>x.t),all=R1.clicks.map(x=>x.t);
+  tones=[];let guard=0;while(R1.vt<t0-0.01&&guard++<5000)awTick(R1,1/120);const before=tones.map(x=>x.m);
+  const gaps=all.slice(1).map((x,i)=>x-all[i]);o.count=[cs.length,Math.abs(cs[3]+bp-t0)<1e-6,before.length===4&&before.every(m=>m>=96),before[0]===100,R1.acc.length,gaps.every(g=>Math.abs(g-bp)<1e-6)];memStop()}
  o.timers=timers;return o}

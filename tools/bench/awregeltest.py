@@ -46,6 +46,7 @@ async def main():
          'Hintergrund → endet, Übersicht, zählt nicht': r['bg'] == {'run': False, 'home': True, 'zaehlt': False},
          'Rückblick: Fehlerstelle (Anschlag 3, falsche Taste, Hilfe) wird erkannt und benannt': r['rb'] == [True, True, True, True, True],
          'Weg-Anzeige beim Spielen (erst Töne ohne Uhr, dann Takt)': r['weg'],
+         'Einzählen: 4 Klicks (1. betont), die nächste 1 = erster Ton, kein Anlauf-Ton dazwischen, Klicks fließend': r['count'] == [4, True, True, True, 0, True],
          'keine Zeitgeber im Lernablauf': r['timers'] == 0,
          'keine Fehler': not errs}
     for k, v in c.items():
