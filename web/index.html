@@ -2866,7 +2866,7 @@ function awTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   if(R.wait0){if(R.beat.ok){R.wt+=dt*R.speed;if(R.wt>=R.beat.p){R.wt-=R.beat.p;try{playClick()}catch(e){}}}return} /* „Start“: wartet auf deinen ersten Ton, das Metronom gibt schon das Tempo */
   R.vt+=dt*R.speed;awClickUpTo(R); /* das Metronom läuft im Ziel-Tempo weiter – Orientierung, nicht Richter */
   if(R.pos>R.b){if(R.endT==null)R.endT=0.6;R.endT-=dt;if(R.endT<=0)awFinish();return}
-  if(R.clock-R.lastKey>5){for(let j=R.pos;j<=R.b;j++){R.miss++;awMk(R,j).miss=1}R.pos=R.b+1;R.stall=1;awFinish()}} /* 5 s nichts gespielt → Durchgang endet, der Rest zählt als nicht gespielt */
+  if(R.clock-(R.lastProg||0)>5){for(let j=R.pos;j<=R.b;j++){R.miss++;awMk(R,j).miss=1}R.pos=R.b+1;R.stall=1;awFinish()}} /* v5.16: 5 s ohne Fortschritt (auch wenn du andere Tasten drückst) → Durchgang endet */ /* 5 s nichts gespielt → Durchgang endet, der Rest zählt als nicht gespielt */
 
 /* --- Tasten --- */
 function memPress(m,src){const R=MEM.run;if(!R)return;const now=performance.now();
@@ -2889,7 +2889,7 @@ function memPress(m,src){const R=MEM.run;if(!R)return;const now=performance.now(
     if(R.anchor||R.show!=null)return; /* beim Suchen der gezeigten Taste zählt danebengreifen nicht */
     R.wrong++;awWrong(R,R.pos,m);awShow(R);return} /* aus dem Kopf: falscher Ton → der richtige erscheint sofort, es geht dort weiter */
   if(R.wait0){if(!gs[R.a].mids.has(m)){MEM.flash.set(m,now);return} /* vor dem Start zählt nur der erste Ton – er startet den Durchgang (danebengreifen zählt nicht) */
-    R.wait0=false;R.vt=gs[R.a].start}
+    R.wait0=false;R.vt=gs[R.a].start;R.lastProg=R.clock}
   /* v5.14: Im Puls folgt die App dir (wie beim ganzen Song) – kein „verpasst“, nur weil du langsamer oder schneller bist als der Klick.
      Bewertet wird danach, ob die Abstände im Verhältnis stimmen (dein eigenes Tempo, streng aber machbar) – siehe awPulse. */
   if(R.pos>R.b){if((R.recent||[]).some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m)))MEM.good.set(m,now);return}
@@ -2987,6 +2987,9 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
     let t;if(R.timed&&R.wait0){c.fillStyle='rgba(59,178,115,.95)';c.font='800 56px Inter,system-ui';c.fillText('Start',p.w/2,p.h/2+8);c.font='700 14px Inter,system-ui';c.fillStyle='rgba(255,255,255,.6)';c.fillText('spiel los, wenn du bereit bist – mit deinem ersten Ton geht es los',p.w/2,p.h/2+38);t=null}
     else t=R.mode==='whole'?'Ganzer Song – ohne App 🎹':R.timed?'Im Puls – Augen aufs Klavier 🎹':'Aus dem Kopf – nimm dir Zeit 🎹';
     if(t)c.fillText(t,p.w/2,p.h/2);
+    if(!(R.timed&&R.wait0)){const n=R.b-R.a+1,done=Math.min(n,R.pos-R.a),r=Math.min(6,Math.max(3,(p.w*0.7)/n/3)),gap=r*3,x0=p.w/2-(n-1)*gap/2,y=p.h/2+34; /* v5.16: Punkte = wie weit du bist */
+      for(let i=0;i<n&&n<=60;i++){c.beginPath();c.arc(x0+i*gap,y,r,0,7);c.fillStyle=i<done?'rgba(59,178,115,.95)':'rgba(255,255,255,.18)';c.fill()}
+      if(R.timed&&R.clock-(R.lastProg||0)>2.5){c.fillStyle='rgba(242,169,59,.95)';c.font='700 14px Inter,system-ui';c.fillText('Hängst du? Spiel an der nächsten Stelle weiter, die du weißt.',p.w/2,y+28);c.font='600 12px Inter,system-ui';c.fillText('Nach 5 s ohne weiter endet der Durchgang.',p.w/2,y+46)}}
     msg(R.mode==='whole'?'Spiel in deinem Tempo. Patzer? Einfach weiterspielen – die App hört nur zu.':R.timed?(R.wait0?(R.beat&&R.beat.ok?'Start: Fang an, wann du willst – mit deinem ersten Ton läuft es los. Das Metronom zeigt dir schon das Tempo.':'Start: Fang an, wann du willst – mit deinem ersten Ton läuft es los (kein Metronom: das Tempo im Video schwankt).'):R.beat&&R.beat.ok?'Spiel gleichmäßig – das Metronom hilft dir. Bewertet wird, ob die Abstände stimmen. Patzer? Weiterspielen.':'Spiel gleichmäßig weiter – bewertet wird, ob die Abstände stimmen. Patzer? Weiterspielen.'):'Es läuft keine Uhr. Greifst du daneben, erscheint der richtige Ton.',R.mode==='whole'?`${Math.min(R.pos,R.b+1)-R.a} von ${R.b-R.a+1}`:'');return}
   if(R.done&&!pv)return awReview(R,c,p,kb,hn);
   const lo=R.lo,hi=R.hi,pre=new Set(),t=pv?R.pv.t:R.vt,fall=pv||R.mode==='find'||R.mode==='fade';

@@ -80,5 +80,6 @@
   awStart({k:0,mode:'puls'},true);R=MEM.run;const pv0=!!R.pv;memPress(gs[R.a].start?60:60,'kb');tick(0.1);o.h2=[pv0,!R.pv];memStop();
   let jc=gs.findIndex((G,j)=>G.mids.size>=2&&j+1<gs.length&&[...gs[j+1].mids].some(m=>!G.mids.has(m)));const kc=MEM.C.findIndex(C=>jc>=C.a&&jc<C.b);
   if(kc>=0){v.ch[kc].st=0;awStart({k:kc,mode:'find'});R=MEM.run;while(R.pos<jc){play(R.pos);tick(0.05)}const G=gs[jc],m1=[...G.mids][0],mn=[...gs[jc+1].mids].find(m=>!G.mids.has(m));memPress(m1,'kb');memPress(mn,'kb');o.h3=[R.pos>jc,R.wrong]}else o.h3=['kein Akkord',0];memStop();
-  awStart({k:0,mode:'whole'});R=MEM.run;play(R.pos);play(R.pos);tick(9);o.h4=[R.done,R.stall===1,!R.ok]}
+  awStart({k:0,mode:'whole'});R=MEM.run;play(R.pos);play(R.pos);tick(9);o.h4=[R.done,R.stall===1,!R.ok];
+  awStart({k:0,mode:'puls'});R=MEM.run;play(R.pos);let g=0;while(!R.done&&g++<20){memPress(wrongKeyOf(R.pos),'kb');tick(0.5)}o.h5=[R.done,R.stall===1]}
  o.timers=timers;return o}
