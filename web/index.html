@@ -4556,7 +4556,6 @@ function scanCore(px,w,n,f){
       else if(ln.on&&SCAN.laneBgc&&SCAN.laneBgc[k]<2){} // no bar, but no background either (letters inside a pill fill the rows): the bar goes on
       else{ln.cnt=0;ln.offF=(ln.offF||0)+1;if(ln.offF===1)ln.offT=tt; // a single frame without bar (letters inside a pill passing the rows) does not end the bar
         if(!ln.on||ln.offF>=2){if(ln.on){if(ln.seen)ln.offs[ln.offs.length-1]=ln.offT;else if(ln.pre)ln.pre.off=ln.offT}ln.on=false;ln.seen=true}}}
-    {SCAN.flog=SCAN.flog||SCAN.keys.map(()=>[]);const ln0=SCAN.lane[k];SCAN.flog[k].push([tt,sat*val,0,0,dist,h,pressed?1:0,ln0&&ln0.on?1:0,(laneOcc&&laneOcc[k])?1:0,SCAN.laneBgc?SCAN.laneBgc[k]:-1,sat,val,r,g,b])}
     const st=SCAN.state[k];
     if(pressed){
       // repeated note: between two strikes the key looks EXACTLY like at rest for a single frame (~40 ms) → a new note, not a flicker
