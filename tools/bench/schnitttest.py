@@ -10,13 +10,13 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
  phrase(PA);/* Takt nur mit zwei gehaltenen Tönen */notes.push({m:55,start:t,dur:1.9,hand:'L'},{m:64,start:t,dur:1.9,hand:'R'});t+=2;phrase(PB);phrase(PA);phrase(PB);
  const it={id:'sc',type:'midi',title:'Schnitt',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];
  localStorage.setItem('kt_mem',JSON.stringify({}));openMem(it);
- /* alter v8-Stand (Takt-Abschnitte, ohne cv) */
- MEM.rec.v8={n:MEM.bars.length,ch:MEM.bars.map(()=>({box:2,due:0,st:1,fails:0,last:0,reps:0,relearn:0}))};memSaveAll();MEM.v8c=null;memHome();
- const gs=MEM.gs,C=v8Chunks(),ld=v8Load(gs);o.n=C.length;o.oldBars=MEM.bars.length;
+ /* alter v8-Stand mit anderer Abschnittszahl (z. B. Takt-Abschnitte) → wird nicht übernommen */
+ const nb=Math.round((t)/2);delete MEMS.sc.v9;MEMS.sc.v8={n:nb,ch:Array.from({length:nb},()=>({box:2,due:0,st:1}))};memSaveAll();openMem(it);memHome();
+ const gs=MEM.gs,C=MEM.C,ld=(()=>{const sig=gs.map(awGSig),seen=new Set(),l=[];for(let j=0;j<gs.length;j++){const key=(j?sig[j-1]:'^')+'|'+sig[j]+'|'+(j+1<gs.length?sig[j+1]:'$');l.push(seen.has(key)?0.3:1);seen.add(key)}return l})();o.n=C.length;o.oldBars=nb;
  o.small=C.slice(0,-1).filter(c=>c.load<3).length;o.maxDur=Math.max(...C.map(c=>c.t1-c.t0));
  const cutT=C.slice(0,-1).map(c=>gs[c.b+1].start);o.atRest=cutT.filter(x=>rests.some(r=>Math.abs(x-(r+0.8))<0.15)).length;o.cuts=cutT.length;o.nRests=rests.length;
  const half=gs.findIndex(G=>G.start>=rests[2]-0.01);o.knownLater=ld.slice(half).filter(x=>x<1).length/ld.slice(half).length;o.knownEarly=ld.slice(0,8).filter(x=>x<1).length;
- o.reset=MEM.rec.v8.cv===2&&MEM.rec.v8.ch.length===C.length&&MEM.rec.v8.ch.every(c=>c.box===0);
+ o.reset=MEM.rec.v9.ch.length===C.length&&MEM.rec.v9.ch.every(c=>c.box===0&&c.st===0)&&!MEM.rec.v8;
  const map=document.querySelectorAll('#memSum .v8map i');o.mapN=map.length;o.outlined=[...map].filter(e=>e.style.outline.includes('solid')).length;o.leg=$('#memSum').textContent;
  const w0=parseFloat(map[0].style.flexGrow),wl=C.map(c=>c.t1-c.t0);o.prop=Math.abs(w0-Math.max(0.6,wl[0]))<0.01;
  $('#memGo').click();o.runT=$('#memRunT').textContent;o.rng=[MEM.run.a,MEM.run.b,C[0].a,C[0].b];

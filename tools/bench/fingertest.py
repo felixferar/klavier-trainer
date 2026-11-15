@@ -36,7 +36,7 @@ JS_FLAG1 = r"""()=>{window.__up=[];save('kt_ghtok','test');ghUpload=async(p,b)=>
 JS_FLAG2 = r"""()=>{const u=window.__up[window.__up.length-1];const o={n:window.__up.length,path:u&&u[0],info:u&&u[1]};
  document.getElementById('pFlag').click();o.after=(load('kt_fingflags')||{})[songId].length;return o}"""
 JS_MEM = r"""()=>{const it=LIB[0];let ok=true;try{openMem(it)}catch(e){ok=String(e)}return {ok}}"""
-JS_MEM2 = r"""()=>{let e=null;try{memStart(0)}catch(x){e=String(x)}try{memDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
+JS_MEM2 = r"""()=>{let e=null;try{awStart({k:0,mode:'find'})}catch(x){e=String(x)}try{awDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
 
 async def main():
     async with async_playwright() as p:

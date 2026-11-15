@@ -8,19 +8,19 @@ JS="""async()=>{const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms));
  document.body.classList.add('inplayer');const f=$('#shotFab');o.fabHidden=getComputedStyle(f).display==='none';document.body.classList.remove('inplayer');
  // 2 appBack im Auswendig-Modus
  openMem(it);o.curMem=navStack[navStack.length-1]==='mem';const r=appBack();o.backTrue=r===true;o.leftMem=navStack[navStack.length-1]!=='mem';
- // 3 Hintergrund: Zeit wird verschoben
- openMem(it);MEM.rec.secs.forEach(x=>x.watched=true);memStart(0,false);const R=MEM.run;const g0=R.gStart;
+ // 3 Hintergrund (v5.04): Durchgang endet, zählt nicht, Übersicht
+ openMem(it);awStart({k:0,mode:'head'});const R=MEM.run;
  const realVis=Object.getOwnPropertyDescriptor(Document.prototype,'visibilityState');
  const setVis=v=>{Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>v});document.dispatchEvent(new Event('visibilitychange'))};
- setVis('hidden');MEM.hiddenAt-=20000;setVis('visible');o.shifted=R.gStart-g0>=19000;o.noHint=R.hints===0&&!R.hinted;
+ setVis('hidden');setVis('visible');o.shifted=!MEM.run&&!$('#memHome').classList.contains('hidden');o.noHint=R.hints===0;
  // 5 Speicher voll
  const oldSet=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new Error('quota')};
  let n=0;const ot=window.toast;window.toast=(m)=>{n++;o.warnMsg=m};
  const a=saveW('kt_x',1),b=saveW('kt_x',2);o.saveFalse=a===false&&b===false;o.warnOnce=n===1;
  Storage.prototype.setItem=oldSet;window.toast=ot;
  // 7 Klavier getrennt
- KB.state='on';memStop();memStart(0,false);const R2=MEM.run;o.kbWasSet=R2.kbWas===true;KB.state='off';memTick();o.paused=R2.paused===true;
- const gs=R2.gStart;R2.pausedAt-=5000;KB.state='on';memTick();o.resumed=R2.paused===false&&R2.gStart-gs>=4900;KB.state='off';
+ /* v5.04: Klavier getrennt → Durchgang endet, zählt nicht */
+ KB.state='on';memStop();awStart({k:0,mode:'head'});const R2=MEM.run;o.kbWasSet=R2.kb0===true;KB.state='off';awTick(R2,0.05);o.paused=!MEM.run;o.resumed=!$('#memHome').classList.contains('hidden');KB.state='off';
  memStop();
  return o}"""
 async def main():
