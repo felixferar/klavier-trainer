@@ -1374,6 +1374,9 @@
           const before = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], F, P) : 0), after = (i < groups.length - 1 ? chordTrans(groups[i], F, groups[i + 1], Fs[i + 1], P) : 0);
           const old = (i > 0 ? chordTrans(groups[i - 1], Fs[i - 1], groups[i], Fs[i], P) : 0) + (i < groups.length - 1 ? chordTrans(groups[i], Fs[i], groups[i + 1], Fs[i + 1], P) : 0) + chordShape(groups[i], Fs[i], P).c;
           if (before === INF || after === INF || before + after + sh.c - old > 4) { ok = false; break; }
+          // v0.5: Angleichen darf keinen Einzelton daneben zum Rutschen zwingen (derselbe Finger auf der Nachbartaste)
+          if (MODE.easy && [i - 1, i + 1].some(j => { const G = groups[j]; if (!G || G.k !== 1) return false; const nb = G.notes[0], fn = fingers[nb.src];
+            return groups[i].notes.some((c, q) => F[q] === fn && c.midi !== nb.midi && Math.abs(c.midi - nb.midi) <= EASY.STEP_MAX); })) { ok = false; break; }
           changes.push(i);
         }
         if (!ok) continue;
