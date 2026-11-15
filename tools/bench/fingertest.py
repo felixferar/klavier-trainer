@@ -1,10 +1,11 @@
 """v5.03: Fingersatz in der App.
 usage: python3 tools/bench/fingertest.py [APP.html]   (Standard: web/index.html)
- 1. Seite lädt ohne pageerror; eingebettetes Modul = tools/fingering/fingering.js (Version 0.3.0).
+ 1. Seite lädt ohne pageerror; eingebettetes Modul = tools/fingering/fingering.js (Version 0.4.0).
  2. Song mit Händen: rechts C-Dur-Tonleiter → 1 2 3 1 2 3 4 5, links Akkord C3-E3-G3 → 5 3 1 (tief→hoch).
  3. Einfarbiger Song (alle Töne "R", Bass tief): Bass bekommt die linke Hand (fingH = L), Melodie rechts.
  4. Abspielen zeichnet mit Fingerzahlen ohne Fehler; Schalter "Fingersatz" aus → keine Rechnung, kein Fehler.
  5. Auswendig öffnen (gleiche Noten) ohne Fehler; Fingerzahlen an MEM.song nach einem Bild.
+ 7. Stil: Standard "einfach"; Schalter "Lehrbuch" rechnet neu (Melodie A-G-F-E langsam + langes E → einfach 3-2-1-1, Lehrbuch 3-2-1-3).
  6. Fingersatz-Flagge ⚑: markiert die Stelle, Upload nach diag/fingerflags/ mit Tönen ±3 s, Finger, Hand, Begründung; nochmal drücken = weg.
 Bildschirmfoto: /tmp/fingertest.png
 """
@@ -17,7 +18,7 @@ JS = r"""()=>{const o={};
  o.version=window.Fingering&&Fingering.VERSION;
  const el=document.getElementById('fingering-js');o.inline=el?el.textContent:'';
  const mk=(ns,id)=>{const it={id,type:'midi',title:'Fingertest '+id,artist:'x',data:b64FromBuf(writeMidi(ns))};return it};
- const scale=[60,62,64,65,67,69,71,72].map((m,i)=>({m,start:i*0.3,dur:0.27,hand:'R'}));
+ const scale=[60,62,64,65,67,69,71,72].map((m,i)=>({m,start:i*0.25,dur:0.22,hand:'R'}));
  const chord=[48,52,55].map(m=>({m,start:3,dur:1,hand:'L'}));
  const it=mk(scale.concat(chord),'f1');LIB=[it];
  const s=songForItem(it);openSong(s,it.id);S.fingers=true;draw();
@@ -35,6 +36,10 @@ JS_FLAG1 = r"""()=>{window.__up=[];save('kt_ghtok','test');ghUpload=async(p,b)=>
  const it=LIB[0];openSong(songForItem(it),it.id);t=1.0;draw();document.getElementById('pFlag').click();return {red:document.getElementById('pFlag').style.color}}"""
 JS_FLAG2 = r"""()=>{const u=window.__up[window.__up.length-1];const o={n:window.__up.length,path:u&&u[0],info:u&&u[1]};
  document.getElementById('pFlag').click();o.after=(load('kt_fingflags')||{})[songId].length;return o}"""
+JS_STYLE = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Stil',artist:'x',data:b64FromBuf(writeMidi(ns))});
+ const mel=[72,71,69,67,65,64].map((m,i)=>({m,start:i*0.65,dur:i===5?2.6:0.6,hand:'R'}));const it=mk(mel,'st');LIB.push(it);const s=songForItem(it);
+ const o={def:S.fingStyle||'einfach'};openSong(s,it.id);draw();o.einfach=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');
+ S.fingStyle='lehrbuch';draw();o.lehrbuch=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');S.fingStyle='einfach';draw();return o}"""
 JS_MEM = r"""()=>{const it=LIB[0];let ok=true;try{openMem(it)}catch(e){ok=String(e)}return {ok}}"""
 JS_MEM2 = r"""()=>{let e=null;try{memStart(0)}catch(x){e=String(x)}try{memDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
 
@@ -50,16 +55,18 @@ async def main():
         import base64
         fi = json.loads(base64.b64decode(f2['info']).decode('utf-8')) if f2['info'] else {}; fl = (fi.get('flags') or [{}])[0]; nr = fl.get('near') or []
         print('Flagge:', f2['path'], json.dumps(nr[:2], ensure_ascii=False))
+        st = await pg.evaluate(JS_STYLE); print('Stil:', st)
         m = await pg.evaluate(JS_MEM); await pg.wait_for_timeout(800)
         m2 = await pg.evaluate(JS_MEM2)
         inline = r.pop('inline'); body = re.sub(r'^/\* FINGERING-BEGIN[^\n]*\n', '', inline); body = re.sub(r'\n/\* FINGERING-END \*/$', '', body)
         checks = {
-            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.3.0',
+            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.4.0',
             'rechts_tonleiter_12312345': r['rh'] == '12312345', 'links_akkord_531': r['lh'] == '531' and r['lhH'] == 'LLL',
             'einfarbig_bass_links': r['bassH'] == 'L' and r['melH'] == 'R', 'schalter_aus': r['offNoCalc'],
             'flagge_rot': f1['red'] != '', 'flagge_upload': f2['n'] == 1 and (f2['path'] or '').startswith('diag/fingerflags/') and fi.get('kind') == 'fingerflags',
             'flagge_inhalt': fl.get('T') == 1.0 and len(nr) >= 5 and all(x['f'] in (1, 2, 3, 4, 5) and x['fh'] in ('L', 'R') and x['why'] for x in nr),
             'flagge_weg': f2['after'] == 0,
+            'stil_standard_einfach': st['def'] == 'einfach' and st['einfach'].endswith('11'), 'stil_lehrbuch_anders': st['lehrbuch'] != st['einfach'],
             'auswendig_ok': m['ok'] is True, 'auswendig_finger': m2['memFing'] and not m2['err'], 'keine_pageerror': not errs,
         }
         print(json.dumps(r)); print('pageerrors', errs)

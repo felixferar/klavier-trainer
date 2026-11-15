@@ -4,6 +4,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const F = require('../fingering.js');
+const STIL = process.argv.includes('--einfach') ? 'einfach' : 'lehrbuch';   // --einfach: Stil der App
 const datei = require('./daten.js');
 const DETAIL = process.argv.includes('--detail');
 const D = path.join(__dirname, 'daten');
@@ -48,7 +49,7 @@ for (const pr of ['meine', 'standard', 'klein']) {
     const ns = s.notes.filter(n => n.hand === hand).map(n => ({ midi: n.midi, start: n.start, dur: n.dur }));
     if (!ns.length) continue;
     const t0 = Date.now();
-    const r = F.computeHand(ns, { profile: F.PROFILES[pr], hand });
+    const r = F.computeHand(ns, { profile: F.PROFILES[pr], hand, style: STIL });
     const ms = Date.now() - t0;
     const u = F.unavoidableHand(ns, F.PROFILES[pr], hand);
     // Verstöße an Stellen, die mit keinem Griff gehen, zählen nicht (Eingabe unspielbar)

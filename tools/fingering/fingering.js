@@ -20,7 +20,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.3.0';
+  const VERSION = '0.4.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -39,6 +39,20 @@
     RUN_MAX_IOI: 0.8,        // größere Lücke unterbricht Tonleiter/Arpeggio
     PHRASE_GAP: 0.35,        // Pause dazwischen trennt Phrasen
   };
+
+  // Stil "einfach" (für Selbstlerner, Standard in der App ab v5.04): Lehrbuch-Tonleiter-Fingersatz nur in schnellen Läufen;
+  // bei langsamen Tönen wird die Hand versetzt (in Ruhe, während des langen Tons) statt unter-/übergesetzt.
+  // Anlass: Flaggen des Nutzers in "Fly Me To The Moon" (A-G-F-E mit 3-2-1-3, C-D-F mit 2-3-1).
+  const EASY = {
+    RUN_MAX_IOI: 0.30,       // Tonleiter-/Arpeggio-Muster nur, wenn die Töne höchstens so weit auseinander liegen
+    SLOW: 1.2,              // ab diesem Anschlagsabstand (= nach einem langen Ton) ist Zeit, die Hand in Ruhe zu versetzen
+    SHIFT_SLOW: 2.0,         // Lagenwechsel mit Zeit (statt 4)
+    SAME_SLOW: 2.0,          // gleicher Finger rückt auf die Nachbartaste, mit Zeit (statt 4)
+    CROSS_SLOW: 3.0,
+    LONG: 1.0,               // langer Ton (Sekunden)
+    LAND_LONG: 0.5,          // Versetzen auf einen langen Ton ist etwas günstiger als mitten in der Phrase         // Unter-/Übersetzen, obwohl Zeit zum Versetzen wäre: zusätzlich
+  };
+  const MODE = { easy: false };
 
   // ===================================================================
   // 2. Kosten (Punkte). Höher = schlechter.
@@ -196,7 +210,9 @@
       if (held) return impossible('held-same', 'derselbe Finger müsste zwei Tasten gleichzeitig halten');
       const need = T.SAME_FINGER_MIN + T.SAME_FINGER_PER_ST * ad;
       if (ioi < need) return impossible('same-too-fast', `derselbe Finger schafft ${ht(ad)} nicht in ${fmt(ioi * 1000)} ms`);
-      add(K.SAME_FINGER + K.SAME_FINGER_PER_ST * ad, 'same-finger', `derselbe Finger direkt nacheinander auf zwei Tasten`);
+      if (MODE.easy && ioi >= EASY.SLOW) { add(EASY.SAME_SLOW + K.SAME_FINGER_PER_ST * ad, 'same-finger', `Finger ${f} rückt in Ruhe weiter (Hand versetzen)`); if (a.inPos && b.inPos) add(K.CROSS_NEEDLESS, 'shift-needless', 'Versetzen unnötig – die Töne ringsum passen in eine Handlage'); }
+      else add(K.SAME_FINGER + K.SAME_FINGER_PER_ST * ad, 'same-finger', `derselbe Finger direkt nacheinander auf zwei Tasten`);
+      if (MODE.easy && b.dur >= EASY.LONG) add(-EASY.LAND_LONG, 'land-long', 'rückt auf einen langen Ton – danach hat die Hand Ruhe');
       if (ioi < 2 * need) add(K.MOVE_FAST, 'move-fast', 'wenig Zeit für den Sprung');
       return c;
     }
@@ -218,6 +234,7 @@
       if (crossing) {
         const txt = g === 1 ? `Daumenuntersatz (${ht(dist)})` : `Finger ${g} setzt über den Daumen (${ht(dist)})`;
         add(K.CROSS_BASE[hi] + K.CROSS_PER_ST * Math.max(0, dist - p.crossComf), 'cross', txt);
+        if (MODE.easy && ioi > EASY.RUN_MAX_IOI) add(EASY.CROSS_SLOW, 'cross-slow', 'Untersetzen bei ruhigem Tempo – Hand versetzen ist einfacher');
         const low = a.midi < b.midi ? a : b, high = a.midi < b.midi ? b : a;
         if (low.black === high.black) add(K.CROSS_LEVEL_SAME, 'cross-level', 'Untersetzen zwischen gleich hohen Tasten');
         else if (!low.black && high.black) add(K.CROSS_WHITE_TO_BLACK, 'cross-wb', 'Untersetzen von weißer auf höhere schwarze Taste');
@@ -254,7 +271,8 @@
     }
     const need = T.SHIFT_MIN + T.SHIFT_PER_ST * excess;
     if (ioi < need) return impossible('shift-too-fast', `Handsprung ${f}→${g} in ${fmt(ioi * 1000)} ms nicht machbar`);
-    add(K.SHIFT + K.SHIFT_PER_ST * excess, 'shift', `Lagenwechsel: Hand springt (${ht(Math.abs(d))}, ${f}→${g})`);
+    if (MODE.easy && ioi >= EASY.SLOW) { add(EASY.SHIFT_SLOW + K.SHIFT_PER_ST * excess, 'shift', `Hand in Ruhe versetzen (${ht(Math.abs(d))}, ${f}→${g})`); if (a.inPos && b.inPos) add(K.CROSS_NEEDLESS, 'shift-needless', 'Versetzen unnötig – die Töne ringsum passen in eine Handlage'); }
+    else add(K.SHIFT + K.SHIFT_PER_ST * excess, 'shift', `Lagenwechsel: Hand springt (${ht(Math.abs(d))}, ${f}→${g})`);
     if ((lo === 1 && D < 0 && hi === 5) || (lo !== 1 && D < p.minPrac)) add(K.TWIST, 'twist', `verdrehte Fingerfolge ${f}→${g}: Hand muss umgreifen`);
     if (ioi < 2 * need) add(K.MOVE_FAST, 'move-fast', 'wenig Zeit für den Sprung');
     return c;
@@ -544,7 +562,7 @@
     const notes = M.notes, n = M.n, runs = [];
     const step = (i, kind) => {
       const s = notes[i + 1].midi - notes[i].midi, gap = notes[i + 1].start - notes[i].start;
-      if (gap > T.RUN_MAX_IOI || gap < T.CHORD) return 0;
+      if (gap > (MODE.easy ? EASY.RUN_MAX_IOI : T.RUN_MAX_IOI) || gap < T.CHORD) return 0;
       const a = Math.abs(s);
       if (kind === 'scale' && a >= 1 && a <= 3) return Math.sign(s);
       if (kind === 'arp' && a >= 3 && a <= 5) return Math.sign(s);
@@ -708,6 +726,10 @@
     const record = (s, d, len) => {
       len = Math.min(len, d);                      // Vorkommen dürfen sich nicht überlappen
       if (len < L0) return;
+      // Kurze Motive (< 6 Töne): auch der letzte Ton muss gleich lang dauern (bis zum nächsten Anschlag).
+      // Sonst ist "A G F E (lang, Phrasenende)" dasselbe wie "A G F E (weiter nach D)" – musikalisch zwei Stellen.
+      // Anlass: Flaggen in "Fly Me To The Moon" (15.11.2026).
+      if (len < 6) { const e1 = s + len - 1, e2 = s + d + len - 1; if (e1 + 1 < n && e2 + 1 < n && !rhythmSame(notes, e1, e2)) return; }
       const key = len + ':' + notes.slice(s, s + len).map(x => x.midi).join(',');
       let g = byKey.get(key);
       if (!g) { g = { len, starts: new Set() }; byKey.set(key, g); }
@@ -937,6 +959,7 @@
    * Rückgabe: { fingers, open, alt, status, violations, patterns, repeats, totalCost, explain(i) }
    */
   function computeFingering(notesIn, opts) {
+    MODE.easy = !!(opts && opts.style === 'einfach');
     opts = opts || {};
     const profile = opts.profile || PROFILES.meine;
     const hand = opts.hand === 'L' ? 'L' : 'R';
@@ -1244,6 +1267,7 @@
    */
   function computeHand(notesIn, opts) {
     opts = opts || {};
+    MODE.easy = opts.style === 'einfach';
     const hand = opts.hand === 'L' ? 'L' : 'R', profile = opts.profile || PROFILES.meine, P = pairTable(profile);
     const notes = makeNotes(notesIn, hand), groups = groupNotes(notes);
     if (groups.every(g => g.k === 1)) {

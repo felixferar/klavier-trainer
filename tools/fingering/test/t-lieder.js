@@ -2,6 +2,7 @@
 // Aufruf: node test/t-lieder.js
 'use strict';
 const F = require('../fingering.js');
+const STIL = process.argv.includes('--einfach') ? 'einfach' : 'lehrbuch';   // --einfach: Stil der App
 let ok = 0, bad = 0, tones = 0, same = 0;
 const N = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, H: 11, B: 10 };
 // "E4 Dis5 …" → MIDI
@@ -9,7 +10,7 @@ const midi = s => { const m = s.match(/^([A-H])(is|es)?(-?\d)$/); return 12 * (+
 function song(name, hand, tonesStr, beats, beat, book, alts = []) {
   const ms = tonesStr.trim().split(/\s+/).map(midi), notes = []; let t = 0;
   ms.forEach((m, i) => { const d = beats[i % beats.length] * beat; notes.push({ midi: m, start: t, dur: d * 0.9 }); t += d; });
-  const r = F.computeHand(notes, { hand });
+  const r = F.computeHand(notes, { hand, style: STIL });
   const got = r.fingers.join(''), refs = [book].concat(alts);
   const best = refs.map(x => [...x].filter((c, i) => +c === r.fingers[i]).length).reduce((a, b) => Math.max(a, b), 0);
   tones += ms.length; same += best;

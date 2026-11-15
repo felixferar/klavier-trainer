@@ -1,4 +1,4 @@
-# Fingersatz-Kern (v0.3.0: beide Hände, Akkorde, Hand-Zuordnung)
+# Fingersatz-Kern (v0.4.0: beide Hände, Akkorde, Hand-Zuordnung, Stil „einfach“)
 
 In der App eingebettet (`web/index.html`, Block `fingering-js`). Nach jeder Änderung hier: `python3 tools/fingering/einbauen.py`, dann `python3 tools/bench/fingertest.py`.
 
@@ -24,6 +24,13 @@ const r2 = Fingering.withFixed(r, 12, 3);   // Korrektur setzen, Rest wird neu b
 ```
 
 `noten` = `[{ midi, start, dur }, …]` in Sekunden.
+
+## Stil (neu in 0.4.0)
+
+`{ style: 'einfach' }` (App-Standard ab v5.04): Lehrbuch-Tonleiter-Fingersatz nur in schnellen Läufen (≤ 0,3 s je Ton);
+Unter-/Übersetzen bei ruhigem Tempo kostet +3; nach langen Tönen (≥ 1,2 s Abstand) wird die Hand in Ruhe versetzt;
+Versetzen auf einen langen Ton ist etwas günstiger. Ohne `style` (= 'lehrbuch') rechnet das Modul wie bisher.
+Kurze Wiederholungen (< 6 Töne) zählen nur, wenn auch der letzte Ton gleich lang ist (beide Stile).
 
 ## Beide Hände, Akkorde (neu in 0.3.0)
 
@@ -62,7 +69,9 @@ node test/t-links.js                        # Spiegeltest, Chromatik/Fünftonlag
 node test/t-akkorde.js                      # Dreiklänge, Umkehrungen, Kadenz, gehaltener Bass, zu weit, schnell, gleiche Akkorde
 node test/t-haende-zuordnung.js             # Hand-Zuordnung gegen bekannte Hände (kt-test-301…315)
 node test/t-haende-songs.js [--detail]      # T2 + T5 beide Hände mit allen Tönen, 3 Handgrößen
-node test/t-lieder.js                       # bekannte Lieder mit Lehrbuch-Fingersatz, rechts + links
+node test/t-lieder.js [--einfach]           # bekannte Lieder mit Lehrbuch-Fingersatz, rechts + links
+node test/t-flaggen.js                      # Stellen, die du mit ⚑ markiert hast (Stil einfach)
+node test/t-haende-songs.js --einfach       # T2/T5 im Stil der App
 ```
 
 `r.releaseHints` = Noten, die laut Daten weiterklingen, aber zu weit weg zum Halten sind
