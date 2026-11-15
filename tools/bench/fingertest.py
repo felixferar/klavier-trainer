@@ -101,6 +101,7 @@ async def main():
         m2 = await pg.evaluate(JS_MEM2)
         inline = r.pop('inline'); body = re.sub(r'^/\* FINGERING-BEGIN[^\n]*\n', '', inline); body = re.sub(r'\n/\* FINGERING-END \*/$', '', body)
         checks = {
+            'standard_aus': r['stdAus'] is True,
             'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.7.0',
             'rechts_tonleiter_12312345': r['rh'] == '12312345', 'links_akkord_531': r['lh'] == '531' and r['lhH'] == 'LLL',
             'einfarbig_bass_links': r['bassH'] == 'L' and r['melH'] == 'R', 'schalter_aus': r['offNoCalc'],
