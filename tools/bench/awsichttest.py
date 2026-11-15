@@ -1,6 +1,6 @@
 """v5.04: Bildschirm-Prüfung Auswendig-Modus (quer 780×360 und hoch 360×760).
 - „Weiß nicht weiter“ im Dunkeln: voll deckend (keine Abdunklung), im Bild, Kontrast Schrift/Hintergrund ≥ 4,5
-- Zustände: Start-Anker (Anschlag sichtbar), dunkel, Hilfe sichtbar, Puls mit Einzählen – Bildschirmfotos nach /tmp/awsicht_*.png zum Ansehen
+- Zustände: Start-Anker (Anschlag sichtbar), dunkel, Hilfe sichtbar, Puls mit „Start“ (wartet auf den ersten Ton) – Bildschirmfotos nach /tmp/awsicht_*.png zum Ansehen
 - „Beenden“ und „Weiter“ erreichbar
 usage: python3 tools/bench/awsichttest.py $PWD/web/index.html"""
 import sys, asyncio, json
@@ -44,7 +44,7 @@ async def main():
     for name, st in res.items():
         k, kd = st['knopf'], st['knopfDunkel']
         c[f'{name}: Knopf „Weiß nicht weiter“ voll deckend, im Bild, Kontrast ≥ 4,5'] = all(x and x['opacity'] >= 0.99 and x['inView'] and x['contrast'] >= 4.5 and not x['disabled'] for x in (k, kd))
-        c[f'{name}: Zustände Anker → dunkel → Hilfe → Puls'] = (st['anker'], st['dunkel'], st['hilfe'], st['puls']) == ('anker', 'dunkel', 'hilfe', 'dunkel') and 'Einzählen' in st['zaehlen']
+        c[f'{name}: Zustände Anker → dunkel → Hilfe → Puls'] = (st['anker'], st['dunkel'], st['hilfe'], st['puls']) == ('anker', 'dunkel', 'hilfe', 'dunkel') and 'Start' in st['zaehlen']
         c[f'{name}: Beenden und Weiter erreichbar'] = st['beenden']['opacity'] >= 0.99 and st['weiter']['inView'] and st['weiter']['opacity'] >= 0.99
         c[f'{name}: keine Fehler'] = not st['fehler']
     print(c); print('Bilder: /tmp/awsicht_*.png'); print('OK' if all(c.values()) else 'FEHLER')

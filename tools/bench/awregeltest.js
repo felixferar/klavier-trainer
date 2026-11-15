@@ -5,7 +5,7 @@
  const it={id:'regel',type:'midi',title:'Regel',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);const T0=Date.UTC(2026,10,16,9);window.AW_NOW=T0;openMem(it);
  const gs=MEM.gs,v=()=>MEM.rec.v9,ch=k=>v().ch[k],tick=s=>{for(let x=0;x<s;x+=1/60){const R=MEM.run;if(!R)return;awTick(R,1/60)}},play=j=>{for(const m of gs[j].mids)memPress(m,'kb')};
  const runWait=(f)=>{const R=MEM.run;let g=0;while(!R.done&&g++<300&&MEM.run===R){if(R.pv){tick(0.5);continue}if(R.pos<=R.b){if(f)f(R);if(MEM.run!==R||R.done)break;play(R.pos)}tick(0.1)}return R};
- const pulse=(R,skip,lat)=>{let q=R.a,g=0;while(!R.done&&g++<40000&&MEM.run===R){awTick(R,1/120);while(q<=R.b&&!R.pv&&R.vt>=gs[q].start+(lat||0.03)*R.speed){if(!(skip&&skip.includes(q)))play(q);q++}}return R};
+ const wrongKeyOf=j=>{let m=Math.max(...gs[j].mids)+1;while(gs[j].mids.has(m)||(gs[j+1]&&gs[j+1].mids.has(m)))m++;return m};const pulse=(R,skip,lat)=>{let q=R.a,g=0;while(!R.done&&g++<40000&&MEM.run===R){awTick(R,1/120);if(R.wait0&&!R.pv){tick(0.5);if(!(skip&&skip.includes(q)))play(q);q++;continue}while(q<=R.b&&!R.pv&&R.vt>=gs[q].start+(lat||0.03)*R.speed){if(!(skip&&skip.includes(q)))play(q);q++}}return R};
  o.n=MEM.C.length;o.vorgriffGrp=gs.some(G=>G.mids.has(54)&&G.mids.has(57)&&!G.mids.has(66))&&gs.some(G=>G.mids.has(66));
  timers=0;let p=awPick();o.p1=p.mode;awNext();let R=MEM.run;o.findScreen=!R.dark;runWait(R=>{if(R.pos===R.a)for(const m of [30,31,32])memPress(m,'kb')});o.find1=[R.ok,ch(0).fc,ch(0).st];
  awNext();R=runWait();o.find2=[R.ok,ch(0).fc,ch(0).st];awNext();R=runWait();o.find3=[R.ok,ch(0).fc,ch(0).st,ch(0).fl];
@@ -25,7 +25,7 @@
  p=awPick();o.p7=p.mode;awNext();R=runWait();o.head2=[R.ok,ch(0).st];
  awNext();R=MEM.run;o.p8=[R.mode,Math.round(R.speed*100)];tick(0.5);tones=[];memPress(21,'kb');R=MEM.run;awDraw();o.demo=[!!R.pv,R.drawState];
  const dp=R.pos;play(R.pos);o.demoIgnore=R.pos===dp;tick(1);awDraw();o.demoKeys=$('#memMsg').textContent.includes('ohne Ton');{let g=0;while(R.pv&&g++<2000)awTick(R,1/60)}o.demoSilent=!tones.filter(x=>x.m<90).length;o.demoEnd=!R.pv&&!R.done;
- const cnt=R.clicks.filter(x=>x.cnt).length,inPlay=R.clicks.filter(x=>!x.cnt).length;o.clicks=[cnt,inPlay,+(R.beat.p).toFixed(2),R.beat.ok];tones=[];pulse(R);o.pulsTones=tones.filter(x=>x.m>=96).length;o.puls1=[R.ok,ch(0).tp];
+ o.clicks=[R.wait0,R.clicks.length,+(R.beat.p).toFixed(2),R.beat.ok];tones=[];pulse(R);o.pulsTones=tones.filter(x=>x.m>=96).length;o.puls1=[R.ok,ch(0).tp];
  awNext();R=MEM.run;pulse(R,[R.a+2,R.a+4]);o.pulsMiss=[R.ok,R.miss,ch(0).tp];awNext();R=MEM.run;pulse(R,[R.a+3]);o.oneMiss=[R.ok,R.miss,ch(0).tp];
  awNext();R=MEM.run;o.p9=Math.round(R.speed*100);pulse(R);o.box1=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/6e4)];
  window.AW_NOW+=11*60e3;p=awPick();o.rev=[p.mode,p.k];awNext();R=MEM.run;o.revSp=Math.round(R.speed*100);pulse(R);o.box2=[ch(0).box,Math.round((ch(0).due-window.AW_NOW)/36e5)];
@@ -48,9 +48,15 @@
  /* v5.09 Rückblick: falscher Ton + Hilfe an Anschlag 3 → Rückblick nennt ihn; Puls zu spät → "zu spät", nicht "falsche Taste" */
  awStart({k:0,mode:'head'});R=MEM.run;play(R.pos);play(R.pos);const j3=R.pos,wk=Math.max(...gs[j3].mids)+13;memPress(wk,'kb');while(R.pos<=R.b)play(R.pos);tick(3);
  o.rb=[R.done,R.worst===j3,!!(R.mk[j3]&&R.mk[j3].help&&R.mk[j3].wrong.includes(wk)),/Anschlag 3: richtig ist/.test(awHier(R)),awNm(wk)&&awHier(R).includes(awNm(wk))];
- o.weg=/Aus dem Kopf/.test($('#memStages').textContent)&&/erst die Töne ohne Uhr/.test($('#memStages').textContent);
+ o.weg=/Aus dem Kopf/.test($('#memStages').textContent)&&/Metronom läuft bei allen Schritten/.test($('#memStages').textContent);
  /* v5.11 Einzählen: 4 Klicks, der 5. Schlag = erster Ton; kein Anlauf-Ton (auch wenn der Abschnitt davor gekonnt ist); Klicks im Abschnitt fließend im selben Abstand */
- {const v=awState();v.ch[0].box=2;v.ch[0].st=3;v.ch[1].st=3;v.ch[1].tp=0;awStart({k:1,mode:'puls'});const R1=MEM.run,t0=gs[R1.a].start,bp=R1.beat.p,cs=R1.clicks.filter(x=>x.cnt).map(x=>x.t),all=R1.clicks.map(x=>x.t);
-  tones=[];let guard=0;while(R1.vt<t0-0.01&&guard++<5000)awTick(R1,1/120);const before=tones.map(x=>x.m);
-  const gaps=all.slice(1).map((x,i)=>x-all[i]);o.count=[cs.length,Math.abs(cs[3]+bp-t0)<1e-6,before.length===4&&before.every(m=>m>=96),before[0]===100,R1.acc.length,gaps.every(g=>Math.abs(g-bp)<1e-6)];memStop()}
+ /* v5.12 Start beim Spielen: kein Einzählen; wartet beliebig lange (Metronom tickt als Tempo), falsche Taste startet nicht, der erste Ton startet genau im Takt; danach Klicks auf dem Schlag; richtiger Ton 0,3 s zu spät = „neben dem Takt“, nicht falsch */
+ {const v=awState();v.ch[0].box=2;v.ch[0].st=3;v.ch[1].st=3;v.ch[1].tp=0;awStart({k:1,mode:'puls'});const R1=MEM.run,t0=gs[R1.a].start;tones=[];tick(6);
+  const waitClicks=tones.filter(x=>x.m>=96).length,still=R1.wait0&&Math.abs(R1.vt-t0)<1e-9;memPress(wrongKeyOf(R1.a),'kb');const noStart=R1.wait0&&R1.wrong===0;
+  play(R1.a);const started=!R1.wait0&&R1.hit[R1.a]&&R1.hit[R1.a].size===gs[R1.a].mids.size&&R1.devs.length>0&&Math.abs(R1.devs[0])<1e-6;
+  const j2=R1.a+1;while(R1.vt-R1.lat*R1.speed<gs[j2].start+0.3*R1.speed)awTick(R1,1/120);play(j2);
+  o.start=[waitClicks>=6,still,noStart,!!started,R1.wrong===0,R1.off===1,!!(R1.mk[j2]&&R1.mk[j2].off),R1.clicks.every(x=>x.t>t0)];memStop()}
+ /* v5.12 Metronom auch beim Mitspielen: läuft mit der Musik, hält an, wenn das Lied wartet */
+ {awStart({k:0,mode:'find'});const R2=MEM.run;tones=[];let q=R2.a,g=0;while(!R2.done&&g++<4000){awTick(R2,1/60);if(R2.pos===q&&R2.vt>=gs[q].start-1e-9){play(q);q++}}const flow=tones.filter(x=>x.m>=96).length;
+  awStart({k:0,mode:'find'});const R3=MEM.run;tones=[];tick(8);const stop=tones.filter(x=>x.m>=96).length;o.findClick=[flow>=4,stop<=2,R2.clicks.length>0];memStop()}
  o.timers=timers;return o}

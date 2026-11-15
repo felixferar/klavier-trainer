@@ -32,7 +32,7 @@ async def main():
          'B ganz links → Hilfe; 1 Hilfe → Problemstelle um die Stelle': r['p5'] == 'head' and r['bHelp'] == [1, True] and r['spot'][0] is False and r['spot'][1] and r['spot'][1][0] <= r['spot'][2] <= r['spot'][1][1],
          'Problemstelle: nur die Stelle, mit Anker; geschafft → wieder ganzer Abschnitt aus dem Kopf → Puls': r['p6'] == 'spot' and r['spotRange'][2] and r['spotOk'] == [True, None] and r['p7'] == 'head' and r['head2'] == [True, 3],
          'Vorführen (tiefstes A): sichtbar, ohne Ton, Tasten zählen nicht, danach weiter': r['p8'] == ['puls', 75] and r['demo'][0] and r['demo'][1] == 'vorfuehren' and r['demoIgnore'] and r['demoKeys'] and r['demoSilent'] and r['demoEnd'],
-         'Puls: 4 Klicks + Metronom auf dem Schlag': r['clicks'][0] == 4 and r['clicks'][1] >= 6 and abs(r['clicks'][2] - 0.5) < 0.02 and r['clicks'][3] and r['pulsTones'] >= 10,
+         'Puls: „Start“ (wartet), Metronom auf dem Schlag': r['clicks'][0] and r['clicks'][1] >= 6 and abs(r['clicks'][2] - 0.5) < 0.02 and r['clicks'][3] and r['pulsTones'] >= 6,
          'Puls 75 → 90; 2 Verpasser = nochmal, 1 Verpasser = geschafft; 100 % → Kasten 1 (10 min)': r['puls1'] == [True, 1] and r['pulsMiss'] == [False, 2, 1] and r['oneMiss'] == [True, 1, 2] and r['p9'] == 100 and r['box1'] == [1, 10],
          'Kästen: 10 min → Kasten 2 (morgen) → gelernt → sitzt (14 Tage); Patzer → zurück + auffrischen': r['rev'] == ['review', 0] and r['revSp'] == 100 and r['box2'][0] == 2 and 18 <= r['box2'][1] <= 21 and r['box3'] == [3, True] and r['box4'] == [4, 14] and r['fail'] == [False, 3, 1],
          'Verbinden ohne Obergrenze (Kette wächst bis zum ganzen Song)': r['chain'][0] == 'link' and r['chain'][1] == 0 and r['chain'][2] == r['chain'][3] - 1 and r['chainSp'] == 100 and r['chainOk'] == [True, True],
@@ -46,7 +46,8 @@ async def main():
          'Hintergrund → endet, Übersicht, zählt nicht': r['bg'] == {'run': False, 'home': True, 'zaehlt': False},
          'Rückblick: Fehlerstelle (Anschlag 3, falsche Taste, Hilfe) wird erkannt und benannt': r['rb'] == [True, True, True, True, True],
          'Weg-Anzeige beim Spielen (erst Töne ohne Uhr, dann Takt)': r['weg'],
-         'Einzählen: 4 Klicks (1. betont), die nächste 1 = erster Ton, kein Anlauf-Ton dazwischen, Klicks fließend': r['count'] == [4, True, True, True, 0, True],
+         'Start beim Spielen: wartet (Metronom tickt), falsche Taste startet nicht, erster Ton = Start im Takt, zu später richtiger Ton = neben dem Takt statt falsch': r['start'] == [True] * 8,
+         'Metronom beim Mitspielen: tickt mit der Musik, schweigt wenn das Lied wartet': r['findClick'] == [True, True, True],
          'keine Zeitgeber im Lernablauf': r['timers'] == 0,
          'keine Fehler': not errs}
     for k, v in c.items():

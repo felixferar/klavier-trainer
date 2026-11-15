@@ -29,7 +29,7 @@ async([seed,maxMiss,stp])=>{if(maxMiss!=null)AW.maxMiss=maxMiss;if(stp)window.AW
    out.stats.askHelp++;const h0=R.hints;if(rnd()<0.5)press([22]);else $('#memHelp').click();if(R.hints!==h0+1||R.show!==j)V('Hilfe','B / Knopf zeigte den Anschlag nicht');tick(2+rnd()*4);press(ks)}
  function playTimed(R){let q=R.a;const plan={};
    for(let j=R.a;j<=R.b;j++){const f=R.mode==='puls'?0.12:0.3;plan[j]={miss:rnd()<Math.min(0.4,(1-str[kOf(j)])*f),jit:(rnd()-0.5)*0.08,wrong:rnd()<0.02}}
-   let guard=0;const fs=Math.min(step,1/120);while(MEM.run===R&&!R.done&&guard++<120000){awTick(R,fs);if(R.done||MEM.run!==R||R.pv)continue;
+   let guard=0;const fs=Math.min(step,1/120);while(MEM.run===R&&!R.done&&guard++<120000){awTick(R,fs);if(R.done||MEM.run!==R||R.pv)continue;if(R.wait0){tick(0.3+rnd());press([...gs[R.a].mids]);q=R.a+1;continue}
      while(q<=R.b&&R.vt>=gs[q].start+(L_USER+plan[q].jit)*R.speed){const P=plan[q];if(!P.miss){press([...gs[q].mids]);if(P.wrong)press([wrongKey(gs[q])])}q++;if(MEM.run!==R)break}}
    if(guard>=120000)V('Hängt','Puls-Durchgang endet nicht')}
  function playWhole(R){let guard=0;
