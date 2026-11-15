@@ -41,7 +41,7 @@ JS_STYLE = r"""()=>{const mk=(ns,id)=>({id,type:'midi',title:'Stil',artist:'x',d
  const o={def:S.fingStyle||'einfach'};openSong(s,it.id);draw();o.einfach=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');
  S.fingStyle='lehrbuch';draw();o.lehrbuch=s.notes.slice().sort((a,b)=>a.start-b.start).map(n=>n.fing).join('');S.fingStyle='einfach';draw();return o}"""
 JS_MEM = r"""()=>{const it=LIB[0];let ok=true;try{openMem(it)}catch(e){ok=String(e)}return {ok}}"""
-JS_MEM2 = r"""()=>{let e=null;try{memStart(0)}catch(x){e=String(x)}try{memDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
+JS_MEM2 = r"""()=>{let e=null;try{awStart({k:0,mode:'find'})}catch(x){e=String(x)}try{awDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
 
 async def main():
     async with async_playwright() as p:

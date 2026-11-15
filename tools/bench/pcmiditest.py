@@ -11,9 +11,9 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};window.__instantEnd=true;awai
  const notes=[];let t=0;for(let i=0;i<10;i++){notes.push({m:60+(i%5)*2,start:t,dur:.4,hand:'R'});t+=.5}
  const it={id:'pc',type:'midi',title:'P',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);
  o.chipShown=chip&&chip.style.display!=='none';o.chipTxt=chip?chip.textContent.trim():'';
- MEM.rec.secs.forEach(r=>{r.watched=true;r.runs=1});memStart(0,false);const R=MEM.run;
- R.vt=MEM.gs[R.pos].start;const p0=R.pos;for(const m of MEM.gs[R.pos].mids)send(0x90,m,90);
- o.adv=R.pos>p0;o.touch=!!R.touch;o.held=[...KB.held].length;
+ awStart({k:0,mode:'find'});const R=MEM.run;
+const p0=R.pos;for(const m of MEM.gs[R.pos].mids)send(0x90,m,90);
+ o.adv=R.pos>p0;o.touch=false;o.held=[...KB.held].length;
  for(const m of MEM.gs[p0].mids)send(0x80,m,0);o.released=[...KB.held].length;
  /* Klavier weg → nicht verbunden */
  __inp.state='disconnected';if(__acc.onstatechange)__acc.onstatechange({port:__inp});o.after=kbInfo().label;
