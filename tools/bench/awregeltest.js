@@ -82,4 +82,6 @@
   if(kc>=0){v.ch[kc].st=0;awStart({k:kc,mode:'find'});R=MEM.run;while(R.pos<jc){play(R.pos);tick(0.05)}const G=gs[jc],m1=[...G.mids][0],mn=[...gs[jc+1].mids].find(m=>!G.mids.has(m));memPress(m1,'kb');memPress(mn,'kb');o.h3=[R.pos>jc,R.wrong]}else o.h3=['kein Akkord',0];memStop();
   awStart({k:0,mode:'whole'});R=MEM.run;play(R.pos);play(R.pos);tick(9);o.h4=[R.done,R.stall===1,!R.ok];
   awStart({k:0,mode:'puls'});R=MEM.run;play(R.pos);let g=0;while(!R.done&&g++<20){memPress(wrongKeyOf(R.pos),'kb');tick(0.5)}o.h5=[R.done,R.stall===1]}
+ /* v5.17 Song-Karte + Titel + Weiter sagt wohin */
+ {awStart({k:1,mode:'head'});const M=$('#memMapR').innerHTML;o.map=[(M.match(/<i /g)||[]).length===MEM.C.length,(M.match(/outline:2px/g)||[]).length===1,/Abschnitt 2/.test($('#memRunT').textContent)];memStop()}
  o.timers=timers;return o}

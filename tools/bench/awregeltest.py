@@ -60,6 +60,7 @@ async def main():
          'Akkord halb gespielt + nächster Ton → geht weiter, kein Fehler': r['h3'] == [True, 0],
          'ganzer Song: 8 s Hänger → Durchgang endet (nicht bestanden)': r['h4'] == [True, True, True],
          'Puls: wahllos falsche Tasten nach dem Start → endet trotzdem nach 5 s ohne Fortschritt': r['h5'] == [True, True],
+         'Song-Karte: alle Abschnitte, der aktuelle markiert, Titel „Abschnitt 2“': r['map'] == [True, True, True],
          'keine Zeitgeber im Lernablauf': r['timers'] == 0,
          'keine Fehler': not errs}
     for k, v in c.items():
