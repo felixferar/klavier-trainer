@@ -612,7 +612,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.24</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.26</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -4468,7 +4468,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.24 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.26 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -4852,9 +4852,13 @@ function finishCore(raw,preview){
     SCAN.dK=d===null?null:[estBD(ev.filter(e=>!SCAN.keys[kIdx.get(e.m)].black),kIdx),estBD(ev.filter(e=>SCAN.keys[kIdx.get(e.m)].black),kIdx)];const dk=e=>{const v=SCAN.dK&&SCAN.dK[SCAN.keys[kIdx.get(e.m)].black?1:0];return v!=null?v:d};
     // a held note that only flickered (sparkles, labels, fading glow): same key, short gap and no new bar arrived → one long note
     {const byKey=new Map();for(const e of ev){if(!byKey.has(e.m))byKey.set(e.m,[]);byKey.get(e.m).push(e)}const out=[];
+      /* v5.26: a gap that other keys share at the same moment (end ±40 ms, restart ±40 ms) is a re-struck chord, not flicker – flicker is per key (V7dy: repeated left-hand chord every 0.23 s, no readable bars) */
+      const gp=[];for(const [m,l] of byKey){const q=l.slice().sort((x,y)=>x.start-y.start);for(let i=1;i<q.length;i++){const g=q[i].start-q[i-1].end;if(g>0&&g<=0.25)gp.push([m,q[i-1].end,q[i].start])}}
+      const shared=(m,e0,s1)=>gp.some(g=>g[0]!==m&&Math.abs(g[1]-e0)<=0.04&&Math.abs(g[2]-s1)<=0.04);
+      const mK=[0,1].map(bl=>{const v=ev.filter(x=>x.ch>0&&!isWhitePC(x.m%12)===!!bl).map(x=>x.ch).sort((p,q)=>p-q);return v.length?v[v.length>>1]:0}),strong=e=>e.ch>=0.35&&e.ch>=0.6*mK[isWhitePC(e.m%12)?0:1]; /* only strongly lit parts are strikes – sparkles flicker together but dimly (307) */
       for(const [m,list] of byKey){list.sort((a,b)=>a.start-b.start);const ons=SCAN.lane[kIdx.get(m)].ons;let cur=null;
         for(const e of list){if(cur){const gap=e.start-cur.end,newBar=d!==null&&ons.some(o=>Math.abs(o+dk(e)-e.start)<0.12);
-            if(gap<=(d!==null?0.25:0.1)&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
+            if(gap<=(d!==null?0.25:0.1)&&!newBar&&!e.clean&&!(shared(m,cur.end,e.start)&&strong(cur)&&strong(e))){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
       ev=out.sort((a,b)=>a.start-b.start)}
     if(d!==null){const out=[];for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons.map(o=>o+dk(e)).filter(x=>x>e.start+0.2&&x<e.end-0.05);
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
@@ -4868,6 +4872,12 @@ function finishCore(raw,preview){
       // E: a key lit as strongly as the neighbour AND as strongly as the bar-confirmed notes of its kind (white/black) is a real strike whose bar was missed – glow only tints (measured: real ≥ 0.86 / 0.75, glow ≤ 0.66 / 0.59)
       const chRef=[0,1].map(bl=>{const a=ev.filter(e=>e.bar&&e.ch>0&&!isWhitePC(e.m%12)===!!bl).map(e=>e.ch).sort((p,q)=>p-q);return a.length?a[a.length>>1]:null});
       const full=(e,f)=>e.ch>0&&f.ch>0&&e.ch>=0.7*f.ch&&chRef[isWhitePC(e.m%12)?0:1]!=null&&e.ch>=0.7*chRef[isWhitePC(e.m%12)?0:1];
+      /* v5.21 colour whose bars are poorly read: ≥ 15 % of its notes have no bar AND those notes keep the song's rhythm (≥ 45 % start within 90 ms of a note with bar – onsets are not yet merged into chords here).
+         Real songs: XA4V/V7dy/5Owc pale left hand without bar, 62–74 % on the beat; hand ghosts only 24 %. Such a colour is never deleted by the rules below. */
+      const BS=ev.filter(e=>e.bar).map(e=>e.start).sort((p,q)=>p-q),onBeat=t=>{let lo=0,hi=BS.length;while(lo<hi){const mid=(lo+hi)>>1;if(BS[mid]<t-0.09)lo=mid+1;else hi=mid}return lo<BS.length&&BS[lo]<=t+0.09};
+      const poorC=new Map(),poor=h=>{if(h==null)return false;const b=Math.round(h/10)%36;if(poorC.has(b))return poorC.get(b);
+        const same=ev.filter(x=>x.hue!=null&&hueDist(x.hue,b*10)<=30),nb=same.filter(x=>x.bar).length,nl=same.filter(x=>!x.bar&&!x.early);
+        const r=b>=0&&nb>=5&&nl.length>=0.15*(nb+nl.length)&&nl.filter(x=>onBeat(x.start)).length>=0.45*nl.length;poorC.set(b,r);return r};
       SCAN.preGhost=ev.slice();ev=ev.filter(e=>e.bar||!ev.some(f=>f!==e&&f.bar&&Math.abs(f.m-e.m)<=2&&Math.abs(f.start-e.start)<0.15&&!full(e,f))&&e.end-e.start>=0.06);
       // a long lit key without any falling bar (> 8 s) is an overlay / end screen / lit-up logo, not a note (measured: no bar-less note > 4.2 s in 20 recordings)
       // overlay / end screen: ≥3 such keys lit at the same moment (a screen lighting up many keys) or a key that is almost colourless (dark tint); one or two held bass notes whose bar was missed stay
@@ -4878,12 +4888,6 @@ function finishCore(raw,preview){
          – dim (sat×val < 0.6×) AND the directly adjacent key is lit strongly (≥ 0.8×) for the whole time: light spilling over from the neighbour → drop.
          Dim but saturated notes WITHOUT such a neighbour stay (some videos light black keys only darkly).
          Measured: Prüfstand stoer 24 videos 181 of 193 bar-less ghosts gone, 1 real note lost; 10 real YouTube runs 13 ghosts gone, 0 real notes lost. */
-      /* v5.21 colour whose bars are poorly read: ≥ 15 % of its notes have no bar AND those notes keep the song's rhythm (≥ 45 % start within 90 ms of a note with bar – onsets are not yet merged into chords here).
-         Real songs: XA4V/V7dy/5Owc pale left hand without bar, 62–74 % on the beat; hand ghosts only 24 %. Such a colour is never deleted by the rules below. */
-      const BS=ev.filter(e=>e.bar).map(e=>e.start).sort((p,q)=>p-q),onBeat=t=>{let lo=0,hi=BS.length;while(lo<hi){const mid=(lo+hi)>>1;if(BS[mid]<t-0.09)lo=mid+1;else hi=mid}return lo<BS.length&&BS[lo]<=t+0.09};
-      const poorC=new Map(),poor=h=>{if(h==null)return false;const b=Math.round(h/10)%36;if(poorC.has(b))return poorC.get(b);
-        const same=ev.filter(x=>x.hue!=null&&hueDist(x.hue,b*10)<=30),nb=same.filter(x=>x.bar).length,nl=same.filter(x=>!x.bar&&!x.early);
-        const r=b>=0&&nb>=5&&nl.length>=0.15*(nb+nl.length)&&nl.filter(x=>onBeat(x.start)).length>=0.45*nl.length;poorC.set(b,r);return r};
       {const W=e=>isWhitePC(e.m%12)?0:1,NB=e=>!e.bar&&!e.early;
         /* v5.21: compare with notes of the SAME colour (±30°). Two-colour songs often have one pale hand colour (w7mo: green sat 1.0, purple 0.5).
            Colours with poorly read bars (see poor()) are skipped. */
