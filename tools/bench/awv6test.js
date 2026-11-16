@@ -25,19 +25,25 @@
  awNext();R=runWait(R=>{if(R.pos===R.a+3&&!R.w1){R.w1=1;memPress(wrongKeyOf(R.pos),'kb')}});o.headWrong=[R.ok,R.hints,ch(0).st];
  awNext();R=runWait();o.headOk=[R.ok,ch(0).st];
  p=awPick();o.p3=p.mode;R=run();o.flowOk=[R.mode,R.ok,ch(0).st,ch(0).box,Math.round((ch(0).due-T0)/36e5)];
+ /* v5.29 Fluss-Regeln an Häppchen 1: großzügig ungleichmäßig = ok, Denkpause = nicht sauber, Hänger → Griff erscheint, Durchgang läuft weiter */
+ const flowRun=(f)=>{awStart({k:0,mode:'flow'});const R=MEM.run;let q=R.a,g=0,extra=0;while(!R.done&&g++<400000&&MEM.run===R){awTick(R,1/120);if(R.wait0&&!R.pv){tick(0.3);play(q);q++;continue}
+   while(q<=R.b&&!R.pv&&R.vt>=gs()[q].start+(f?f(R,q):0)){play(q);q++}}return R};
+ R=flowRun((R,q)=>((q-R.a)%2?0.1:-0.05)*R.speed);o.flowWobble=[R.ok,R.off,R.pauses,R.hang];
+ R=flowRun((R,q)=>q===R.a+5?2.2:q>R.a+5?2.2:0);o.flowPause=[R.ok,R.pauses,R.hang,R.done];
+ {awStart({k:0,mode:'flow'});const RR=MEM.run;tick(0.3);play(RR.a);tick(0.3);play(RR.a+1);tick(3.3);awDraw();o.hang=[RR.hang,RR.show===RR.a+2,RR.drawState,RR.done];play(RR.a+2);o.hangGone=RR.show==null;let q=RR.a+3,g=0;while(!RR.done&&g++<200000){awTick(RR,1/120);while(q<=RR.b&&RR.vt>=gs()[q].start+0.03)play(q++)}o.hangEnd=[RR.done,RR.ok,RR.miss,RR.stall||0]}
  /* Teil 2 ganz → dann Schneeball 1+2 */
- for(let i=0;i<3;i++)run();o.part2=[ch(1).st];p=awPick();o.snow1=[p.mode,p.s,p.e];R=run();o.snow1ok=[R.ok,!!v().sn[1]];
+ for(let i=0;i<3;i++)run();o.part2=[ch(1).st];p=awPick();o.snow1=[p.mode,p.s,p.e];awNext();R=MEM.run;awDraw();o.snowkScreen=[R.dark,R.drawState,R.timed,$('#memHelp')!=null,document.querySelectorAll('#memStages .awSteps li').length];R=runWait();o.snow1k=[R.ok,!!(v().sk&&v().sk[1]),!!v().sn[1]];p=awPick();o.snow1b=[p.mode,p.s,p.e];R=run();o.snow1ok=[R.ok,!!v().sn[1]];
  /* alles weiter mit perfektem Spiel – wir merken uns die Reihenfolge */
  const seq=[];let guard=0;
- while(guard++<200){p=awPick();if(!p||p.mode==='whole')break;seq.push(p.mode==='snow'?`S${p.s}-${p.e}`:p.mode==='form'?`form${p.f}`:`${p.mode}${p.k}${p.half!=null?'h'+p.half:''}`);
+ while(guard++<200){p=awPick();if(!p||p.mode==='whole')break;seq.push(p.mode==='snow'?`S${p.s}-${p.e}`:p.mode==='snowk'?`K${p.s}-${p.e}`:p.mode==='form'?`form${p.f}`:`${p.mode}${p.k}${p.half!=null?'h'+p.half:''}`);
    if(p.mode==='snow'&&MEM.C[p.e].b-MEM.C[p.s].a+1>30&&!o.tol){ /* Toleranz: 2 Streifer = nicht geschafft, 1 Streifer = geschafft */
      let n=0;R=run(null,(R,q)=>{if(q>R.a+3&&n<2){n++;memPress(wrongKeyOf(q),'kb')}});o.tol2=[R.ok,R.wrong,R.tolW];
      n=0;R=run(null,(R,q)=>{if(q>R.a+3&&n<1){n++;memPress(wrongKeyOf(q),'kb')}});o.tol=[R.ok,R.wrong,R.tolW];continue}
    run()}
  o.seq=seq;const K=MEM.C.length,big=MEM.C.findIndex(P=>P.h),tw=MEM.C.findIndex(P=>P.twin>=0);
  o.halves=big>=0?[seq.indexOf(`learn${big}h0`)<seq.indexOf(`head${big}h0`),seq.indexOf(`head${big}h0`)<seq.indexOf(`learn${big}h1`),seq.indexOf(`head${big}h1`)<seq.indexOf(`head${big}`),seq.indexOf(`head${big}`)<seq.indexOf(`flow${big}`),!seq.includes(`learn${big}`)]:null;
- o.twinSkipped=tw>=0&&!seq.some(x=>x===`learn${tw}`||x===`flow${tw}`)&&ch(tw).st===3;
- o.snowSpans=['S0-1'].concat(seq.filter(x=>x[0]==='S'));o.snowMax3=o.snowSpans.every(x=>{const [a,b]=x.slice(1).split('-').map(Number),fa=MEM.C[a].f,fb=MEM.C[b].f;return b-a<=2&&(fa===fb?a>=MEM.F[fa].s:b-a===1&&b===MEM.F[fb].s)});o.snowAll=o.snowSpans.length===MEM.C.length-1;o.formRuns=seq.filter(x=>x.startsWith('form')).length;o.formNeed=MEM.F.filter((F,f)=>awNeedForm(f)).length;
+ o.twinKnown=tw>=0&&!v().ch[tw].tk;o.twinSkipped=tw>=0&&!seq.some(x=>x===`learn${tw}`||x===`flow${tw}`)&&ch(tw).st===3;
+ o.snowSpans=['S0-1'].concat(seq.filter(x=>x[0]==='S'));o.snowMax3=o.snowSpans.every(x=>{const [a,b]=x.slice(1).split('-').map(Number),fa=MEM.C[a].f,fb=MEM.C[b].f;return b-a<=2&&(fa===fb?a>=MEM.F[fa].s:b-a===1&&b===MEM.F[fb].s)});o.snowAll=o.snowSpans.length===MEM.C.length-1;o.kBefore=seq.every((x,i)=>x[0]!=='S'||seq[i-1]==='K'+x.slice(1));o.formRuns=seq.filter(x=>x.startsWith('form')).length;o.formNeed=MEM.F.filter((F,f)=>awNeedForm(f)).length;
  o.allSit=v().ch.every(c=>c.st===3)&&[...Array(K-1)].every((_,i)=>v().sn[i+1]);
  /* ganzer Song: Tag 1 */
  p=awPick();o.w1=p&&p.mode;R=run();o.w1r=[R.ok,new Set(v().whole.days).size,R.tolW];o.after1=awPick();
