@@ -4859,8 +4859,6 @@ function finishCore(raw,preview){
       const poorC=new Map(),poor=h=>{if(h==null)return false;const b=Math.round(h/10)%36;if(poorC.has(b))return poorC.get(b);
         const same=ev.filter(x=>x.hue!=null&&hueDist(x.hue,b*10)<=30),nb=same.filter(x=>x.bar).length,nl=same.filter(x=>!x.bar&&!x.early);
         const r=b>=0&&nb>=5&&nl.length>=0.15*(nb+nl.length)&&nl.filter(x=>onBeat(x.start)).length>=0.45*nl.length;poorC.set(b,r);return r};
-      const real=e=>{if(e.hue==null)return false;const same=ev.filter(x=>x.bar&&x.hue!=null&&hueDist(x.hue,e.hue)<=12&&isWhitePC(x.m%12)===isWhitePC(e.m%12)&&x.sa>0);if(same.length<5)return false;
-        const v=f=>same.map(x=>x[f]).sort((p,q)=>p-q)[same.length>>1];return e.sa>=0.75*v('sa')&&e.ch>=0.6*v('ch')}; /* looks exactly like a note of the song: its colour and strength (GBdq: final left-hand chord without bars) */
       {const W=e=>isWhitePC(e.m%12)?0:1,NB=e=>!e.bar&&!e.early;
         /* v5.21: compare with notes of the SAME colour (±30°). Two-colour songs often have one pale hand colour (w7mo: green sat 1.0, purple 0.5).
            Colours with poorly read bars (see poor()) are skipped. */
@@ -4879,7 +4877,7 @@ function finishCore(raw,preview){
       /* v5.17 object over the keys: ≥ 4 bar-less notes, overlapping in time, each ≤ 3 semitones from the next, all the same colour (± 12°) = one object
          (hand, light beam, effect) lit across neighbouring keys – real notes in a bar video come with bars. Training set (12 new hand videos): 98 of 138 ghosts gone, 0 real notes lost;
          YouTube-Test / old Prüfstand: nothing changes; real video with filmed hands (_mwgDFm2yIU): 32 skin-coloured notes gone. */
-      {const L=ev.filter(e=>!e.bar&&!e.early&&e.hue!=null&&!poor(e.hue)&&!real(e)),par=L.map((_,i)=>i),fd=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i};
+      {const L=ev.filter(e=>!e.bar&&!e.early&&e.hue!=null&&!poor(e.hue)),par=L.map((_,i)=>i),fd=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i};
         for(let a=0;a<L.length;a++)for(let b=a+1;b<L.length;b++){const A=L[a],B=L[b];if(Math.abs(A.m-B.m)<=3&&A.start<B.end&&B.start<A.end&&hueDist(A.hue,B.hue)<=12)par[fd(a)]=fd(b)}
         const cnt=new Map();L.forEach((_,i)=>{const r=fd(i);cnt.set(r,(cnt.get(r)||0)+1)});const drop=new Set(L.filter((_,i)=>cnt.get(fd(i))>=4));if(drop.size)ev=ev.filter(e=>!drop.has(e))}
       /* v5.17 end card: a bar-less note ≥ 2 s that lasts until the end of reading and whose colour is none of the song's colours (> 30° from every hue
