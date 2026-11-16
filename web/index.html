@@ -4850,18 +4850,36 @@ function finishCore(raw,preview){
         ev=ev.filter(e=>e.bar||!T.some(t=>Math.abs(t-e.start)<0.3))}
       /* v5.17 bar as evidence: a note WITHOUT its own bar must look like a real lit key of this song (compared with the bar-confirmed notes of the same kind, white/black):
          – pale (saturation < 0.6×): a hand/arm/object over the keys tints them skin-coloured or grey, a lit key keeps the note colour → drop;
-         – dim (sat×val < 0.6×) AND a key ≤ 2 semitones away is lit strongly (≥ 0.8×) at the same time: light spilling over from the neighbour → drop.
+         – dim (sat×val < 0.6×) AND the directly adjacent key is lit strongly (≥ 0.8×) for the whole time: light spilling over from the neighbour → drop.
          Dim but saturated notes WITHOUT such a neighbour stay (some videos light black keys only darkly).
          Measured: Prüfstand stoer 24 videos 181 of 193 bar-less ghosts gone, 1 real note lost; 10 real YouTube runs 13 ghosts gone, 0 real notes lost. */
-      {const W=e=>isWhitePC(e.m%12)?0:1,md=(f,k)=>{const a=ev.filter(e=>e.bar&&e[f]>0&&W(e)===k).map(e=>e[f]).sort((p,q)=>p-q);return a.length>=3?a[a.length>>1]:null};
-        const RC=[md('ch',0),md('ch',1)],RS=[md('sa',0),md('sa',1)];
-        const ghost=e=>{if(e.bar||e.early||e.sa==null)return false;const k=W(e);if(!RC[k]||!RS[k])return false;if(e.sa<0.6*RS[k]||(e.sa<0.4&&e.sa<0.75*RS[k]))return true; /* v5.20: skin is pale in absolute terms (sat ≈ 0.3); note colours on real/synthetic videos ≥ 0.52 */
-          if(!(e.ch<0.6*RC[k]))return false;return ev.some(h=>h!==e&&h.m!==e.m&&Math.abs(h.m-e.m)<=2&&RC[W(h)]&&h.ch>=0.8*RC[W(h)]&&h.start<e.end&&e.start<h.end)};
+      /* v5.21 colour whose bars are poorly read: ≥ 15 % of its notes have no bar AND those notes keep the song's rhythm (≥ 45 % start within 90 ms of a note with bar – onsets are not yet merged into chords here).
+         Real songs: XA4V/V7dy/5Owc pale left hand without bar, 62–74 % on the beat; hand ghosts only 24 %. Such a colour is never deleted by the rules below. */
+      const BS=ev.filter(e=>e.bar).map(e=>e.start).sort((p,q)=>p-q),onBeat=t=>{let lo=0,hi=BS.length;while(lo<hi){const mid=(lo+hi)>>1;if(BS[mid]<t-0.09)lo=mid+1;else hi=mid}return lo<BS.length&&BS[lo]<=t+0.09};
+      const poorC=new Map(),poor=h=>{const b=h==null?-1:Math.round(h/10)%36;if(poorC.has(b))return poorC.get(b); /* h==null: notes without measurable hue form their own group (Kg8z: dark-blue left hand on black keys, 643 notes) */
+        const same=b<0?ev.filter(x=>x.hue==null):ev.filter(x=>x.hue!=null&&hueDist(x.hue,b*10)<=30),nb=same.filter(x=>x.bar).length,nl=same.filter(x=>!x.bar&&!x.early);
+        const beat=nl.filter(x=>onBeat(x.start)).length>=0.45*nl.length,r=b<0?(nl.length>=5&&beat):(nb>=5&&nl.length>=0.15*(nb+nl.length)&&beat);poorC.set(b,r);return r}; /* hue-less group: protected whenever it keeps the rhythm (Sdij: dark periodic left hand, almost no hue-less bar notes) */
+      const real=e=>{if(e.hue==null)return false;const same=ev.filter(x=>x.bar&&x.hue!=null&&hueDist(x.hue,e.hue)<=12&&isWhitePC(x.m%12)===isWhitePC(e.m%12)&&x.sa>0);if(same.length<5)return false;
+        const v=f=>same.map(x=>x[f]).sort((p,q)=>p-q)[same.length>>1];return e.sa>=0.75*v('sa')&&e.ch>=0.6*v('ch')}; /* looks exactly like a note of the song: its colour and strength (GBdq: final left-hand chord without bars) */
+      {const W=e=>isWhitePC(e.m%12)?0:1,NB=e=>!e.bar&&!e.early;
+        /* v5.21: compare with notes of the SAME colour (±30°). Two-colour songs often have one pale hand colour (w7mo: green sat 1.0, purple 0.5).
+           Colours with poorly read bars (see poor()) are skipped. */
+        const md=(a,f,k)=>{const v=a.filter(e=>e.bar&&e[f]>0&&W(e)===k).map(e=>e[f]).sort((p,q)=>p-q);return v.length>=3?v[v.length>>1]:null};
+        const RC0=[md(ev,'ch',0),md(ev,'ch',1)],RS0=[md(ev,'sa',0),md(ev,'sa',1)],cache=new Map();
+        const refs=e=>{if(e.hue==null)return poor(null)?{skip:true}:{rc:RC0,rs:RS0,skip:false};const b=Math.round(e.hue/10)%36;if(cache.has(b))return cache.get(b);
+          const same=ev.filter(x=>x.hue!=null&&hueDist(x.hue,b*10)<=30),nb=same.filter(x=>x.bar).length,nl=same.filter(NB).length;let r;
+          if(nb<5)r={rc:RC0,rs:RS0,skip:false}; /* colour of no bar note: an object, not a song colour → compare with the whole song */
+          else if(poor(b*10))r={skip:true};
+          else{const rc=[md(same,'ch',0)||RC0[0],md(same,'ch',1)||RC0[1]],rs=[md(same,'sa',0)||RS0[0],md(same,'sa',1)||RS0[1]];r={rc,rs,skip:false}}
+          cache.set(b,r);return r};
+        const ghost=e=>{if(!NB(e)||e.sa==null)return false;const R=refs(e);if(R.skip)return false;const k=W(e),RC=R.rc,RS=R.rs;if(!RC[k]||!RS[k])return false;
+          if(e.sa<0.6*RS[k]||(e.sa<0.4&&e.sa<0.75*RS[k]))return true;
+          if(!(e.ch<0.6*RC[k]))return false;return ev.some(h=>h!==e&&Math.abs(h.m-e.m)===1&&RC0[W(h)]&&h.ch>=0.8*RC0[W(h)]&&h.start<=e.start+0.03&&h.end>=e.end-0.03)}; /* spill only onto the directly adjacent key and never outlasting its source (5Owc: real dark black keys in chords with a key 2 semitones away) */
         const gone=new Set(ev.filter(ghost));if(gone.size)ev=ev.filter(e=>!gone.has(e))}
       /* v5.17 object over the keys: ≥ 4 bar-less notes, overlapping in time, each ≤ 3 semitones from the next, all the same colour (± 12°) = one object
          (hand, light beam, effect) lit across neighbouring keys – real notes in a bar video come with bars. Training set (12 new hand videos): 98 of 138 ghosts gone, 0 real notes lost;
          YouTube-Test / old Prüfstand: nothing changes; real video with filmed hands (_mwgDFm2yIU): 32 skin-coloured notes gone. */
-      {const L=ev.filter(e=>!e.bar&&!e.early&&e.hue!=null),par=L.map((_,i)=>i),fd=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i};
+      {const L=ev.filter(e=>!e.bar&&!e.early&&e.hue!=null&&!poor(e.hue)&&!real(e)),par=L.map((_,i)=>i),fd=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i};
         for(let a=0;a<L.length;a++)for(let b=a+1;b<L.length;b++){const A=L[a],B=L[b];if(Math.abs(A.m-B.m)<=3&&A.start<B.end&&B.start<A.end&&hueDist(A.hue,B.hue)<=12)par[fd(a)]=fd(b)}
         const cnt=new Map();L.forEach((_,i)=>{const r=fd(i);cnt.set(r,(cnt.get(r)||0)+1)});const drop=new Set(L.filter((_,i)=>cnt.get(fd(i))>=4));if(drop.size)ev=ev.filter(e=>!drop.has(e))}
       /* v5.17 end card: a bar-less note ≥ 2 s that lasts until the end of reading and whose colour is none of the song's colours (> 30° from every hue
