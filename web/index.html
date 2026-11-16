@@ -590,7 +590,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.23</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.24</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -631,6 +631,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="list" style="margin-top:12px">
         <div class="li"><div class="grow"><b>Andere Hand</b></div><select id="otherSel"><option value="show">grau zeigen</option><option value="hide">ausblenden</option><option value="play">App spielt sie</option></select></div>
         <div class="li"><div class="grow"><b>Fallhöhe der Noten</b><small>Wie weit du die Noten vorher siehst</small><input type="range" id="lookR" min="1" max="6" step="0.5"></div></div>
+        <div class="li"><div class="grow"><b>Fingersatz</b><small>Einschalten, wenn du an einer Stelle hängst: 1 = Daumen … 5 = kleiner Finger</small></div><input type="checkbox" class="sw" id="fingChk"></div> <!-- v5.24: Schalter direkt beim Spielen -->
       </div>
       <div class="lbl">Erweitert</div>
       <div class="list">
@@ -644,7 +645,6 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
 <div class="li"><div class="grow"><b>Erkennung über</b></div><select id="inputSel"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
 <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sensR" min="1" max="10" step="1"><div class="meter" style="width:100%;margin-top:4px"><i id="lvl"></i></div><small id="micInfo">Mikrofon aus</small></div></div>
 <div class="li"><div class="grow"><b>Notennamen</b></div><input type="checkbox" class="sw" id="namesChk"></div>
-<div class="li"><div class="grow"><b>Fingersatz</b></div><input type="checkbox" class="sw" id="fingChk"></div>
 <div class="li"><div class="grow"><b>Alle 88 Tasten</b></div><input type="checkbox" class="sw" id="fullChk"></div>
 </div>
     </div>
@@ -774,7 +774,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="mRest"><div class="tasBox"><span id="memTasti" class="tasti"></span><div id="memMsg" style="min-height:44px"></div></div>
       <div id="memEv" class="memEv hidden"></div>
       <div id="memResBox" style="display:none;flex-direction:column;gap:8px"><button class="btn pri" id="memNext" style="height:48px">Weiter</button><button class="btn hidden" id="memHold" style="height:40px">Pause</button></div>
-      <button class="btn" id="memStop" style="width:100%;height:44px">Beenden</button></div>
+      <div style="display:flex;gap:8px"><button class="btn" id="memFing" style="flex:1;height:44px" title="Fingersatz ein- oder ausblenden">Finger: aus</button><button class="btn" id="memStop" style="flex:1;height:44px">Beenden</button></div></div> <!-- v5.24: Fingersatz-Schalter im Lernen -->
     </div>
   </div>
 </div>
@@ -2892,7 +2892,7 @@ function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch
     pos:a,hit:{},proc:{},wrong:0,hints:0,cues:0,miss:0,devs:[],waits:[],waitT0:null,clock:0,lastKey:0,anchor:mode==='head'||mode==='spot',show:null,helpAt:[],rev:new Set(),fl:c.fl||0,
     pv:null,done:false,endT:null,ht:{},mk:{},vt:gs[a].start-1.2*speed,clicks:[],ck:0,mj:a,acc:[],ap:0,lat:v.lat||0,glideV:0,kb0:kbOn(),off:0,wait0:timed,wt:0};
   if(mode!=='whole')awClicks(R,v,p);
-  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML=awWeg(R,c);$('#memStages').style.display='block';$('#mem').classList.toggle('blind',R.dark);
+  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');if(typeof memFingUI==='function')memFingUI();$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML=awWeg(R,c);$('#memStages').style.display='block';$('#mem').classList.toggle('blind',R.dark);
   if(mode==='puls'&&!c.pi){c.pi=1;memSaveAll();try{toast(R.beat&&R.beat.ok?'Neu: Jetzt wartet das Lied nicht mehr. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Takt mit dem Metronom.':'Neu: Jetzt wartet das Lied nicht mehr. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Tempo weiter.',5000)}catch(e){}}
   {const sm=span?-1:awSame(p.k);R.pr0=awProg(v);$('#memMapR').innerHTML=awMap(R);
    $('#memRunT').innerHTML=mode==='whole'?`<div style="font-size:20px">Ganzer Song</div><div class="st mu">${memClock(gs[a].start)}–${memClock(gs[b].end)} · ohne Klick</div>`:`<div style="font-size:20px">Abschnitt ${span?`${span.s+1}–${span.e+1}`:p.k+1} <span class="mu" style="font-size:14px">von ${C.length}</span></div><div class="st mu">${memClock(gs[a].start)}–${memClock(gs[b].end)} · ${AW_MODE[mode]}${mode==='fade'?` (Stufe ${R.fl+1}/3)`:''}${timed?' · '+awPct(speed):''}${sm>=0?` · gleich wie Abschnitt ${sm+1}`:''}</div>`;
@@ -3956,7 +3956,9 @@ $('#scoreChk').onchange=e=>{S.score=e.target.checked;syncUI();ensureInput()};
 $('#inputSel').onchange=e=>{S.input=e.target.value;micFailed=false;syncUI();ensureInput()};
 $('#sensR').oninput=e=>{S.sens=+e.target.value;syncUI()};
 $('#namesChk').onchange=e=>{S.names=e.target.checked;syncUI()};
-$('#fingChk').onchange=e=>{S.fingers=e.target.checked;syncUI()};
+$('#fingChk').onchange=e=>{S.fingers=e.target.checked;saveS();syncUI()}; /* v5.24: wird gespeichert, gilt überall (wie Ich › Fingersatz) */
+function memFingUI(){const b=$('#memFing');if(b){b.textContent='Finger: '+(S.fingers===true?'an':'aus')}}
+$('#memFing').onclick=()=>{S.fingers=S.fingers!==true;saveS();if(S.fingers&&MEM.song){try{fingSong(MEM.song)}catch(e){}}memFingUI();$('#fing2')&&($('#fing2').checked=S.fingers===true)}; /* v5.24: Zahlen erscheinen beim Mitspielen/Ausblenden/Vorführen, im Dunkeln nicht (wie v5.08) */
 $('#fullChk').onchange=e=>{S.full=e.target.checked;calcRange();syncUI()};
 $('#lookR').oninput=e=>{S.look=+e.target.value;syncUI()};
 // result modal
@@ -4443,7 +4445,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.23 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.24 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
