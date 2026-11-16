@@ -2696,9 +2696,14 @@ function renderStudio(){
   $('#tasti').outerHTML=tastiSVG(40).replace('<svg class="tasti"','<svg id="tasti" class="tasti"');
   // continue block
   const last=ST.last&&itemById(ST.last.id),ci=last||allItems().find(x=>x.type==='midi'&&MEMS[x.id])||last||DEMO,info=memInfo(ci);
-  const cw=$('#contWrap');cw.innerHTML=`<div class="stLbl">Weiter mit</div><div class="stTtl"></div><div class="stSub"></div><div class="segs">${segsHTML(info)}</div><button class="btn pri big" id="contBtn"><svg class="i" style="width:20px;height:20px"><use href="#i-play"/></svg>${info&&info.next==null?'Wiederholen':'Los geht’s'}</button>`;
+  const cw=$('#contWrap');
+  if(!LIB.some(x=>x.type==='midi')){ /* v5.21: erster Start ohne eigene Songs – klare Einladung statt Demo als „Weiter mit“ */
+    cw.innerHTML=`<div class="stLbl">Willkommen</div><div class="stTtl">Dein erster Song</div><div class="stSub">Füge ein Klavier-Video von YouTube, eine Video-Datei oder eine MIDI-Datei hinzu – die App macht daraus fallende Noten.</div><button class="btn pri big" id="contBtn"><svg class="i" style="width:20px;height:20px"><use href="#i-plus"/></svg>Song hinzufügen</button><button class="btn" id="contDemo" style="width:100%;height:46px;margin-top:10px;font-weight:800">Erst mal das Demo anhören</button>`;
+    cw.querySelector('#contBtn').onclick=()=>openSheet('#addSheet');cw.querySelector('#contDemo').onclick=()=>playAs(DEMO,'play');
+  }else{
+  cw.innerHTML=`<div class="stLbl">Weiter mit</div><div class="stTtl"></div><div class="stSub"></div><div class="segs">${segsHTML(info)}</div><button class="btn pri big" id="contBtn"><svg class="i" style="width:20px;height:20px"><use href="#i-play"/></svg>${info&&info.next==null?'Wiederholen':'Los geht’s'}</button>`;
   cw.querySelector('.stTtl').textContent=ci.title;cw.querySelector('.stSub').textContent=memSub(ci,info);
-  cw.querySelector('#contBtn').onclick=()=>startLearn(ci);
+  cw.querySelector('#contBtn').onclick=()=>startLearn(ci);}
   // week keys
   const goal=S.goal*60,WD=['So','Mo','Di','Mi','Do','Fr','Sa'],wk=$('#wkeys');let h='',tot=0;
   for(let i=6;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const v=ST.days[dayKey(dd)]||0;tot+=v;const idx=6-i,on=v>=goal,m=Math.round(v/60);
@@ -3232,7 +3237,7 @@ function ytPlaylistIds(listId){return new Promise(res=>{let done=false,p,d;const
 function parseLinks(txt){const out=[];for(const raw of txt.split(/[\s,;]+/)){const u=raw.trim();if(!u)continue;const pl=(u.match(/[?&]list=([A-Za-z0-9_-]{10,})/)||[])[1],v=/playlist\?/.test(u)?null:ytId(u);
     if(v)out.push({id:v,start:ytIdStart(u)});else if(pl)out.push({list:pl})}return out}
 function qClearInput(){try{$('#ytMulti').value='';save('kt_lastq','')}catch(e){}}
-async function qStart(txt,opt){if(Q.on)return;Q.force=!!(opt&&opt.force);if(!NAT.ok){toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
+async function qStart(txt,opt){if(Q.on)return;if(navigator.onLine===false){closeSheets();showConvError(OFFLINE_MSG,'Kein Internet');return}Q.force=!!(opt&&opt.force);if(!NAT.ok){toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
   const raw=parseLinks(txt);if(!raw.length){toast('Keine YouTube-Links gefunden');return}
   toast('Warteschlange wird vorbereitet …',2500);const list=[];let plBad=0;
   for(const r of raw){if(r.id)list.push(r);else{const ids=await ytPlaylistIds(r.list);if(!ids.length)plBad++;for(const id of ids.slice(0,50))list.push({id,start:0})}}
@@ -3256,7 +3261,11 @@ async function qStart(txt,opt){if(Q.on)return;Q.force=!!(opt&&opt.force);if(!NAT
 $('#ytMulti').value=load('kt_lastq')||'';
 $('#ytMultiBtn').onclick=()=>$('#ytMultiBox').classList.toggle('hidden');
 $('#ytMultiGo').onclick=()=>qStart($('#ytMulti').value);
+const OFFLINE_MSG='Für YouTube braucht die App Internet. Verbinde dich mit dem WLAN – oder nimm eine Video-Datei oder MIDI-Datei, das geht auch ohne Internet.';
+addEventListener('offline',()=>toast('Kein Internet – Üben und Auswendiglernen gehen weiter, nur YouTube braucht Internet.',4000));
+addEventListener('online',()=>toast('Wieder online'));
 function addYT(convert){const u=$('#ytUrl').value,id=ytId(u);if(!id){toast('Das ist kein YouTube-Link');return}
+  if(navigator.onLine===false){closeSheets();showConvError(OFFLINE_MSG,'Kein Internet');return} /* v5.21 */
   const it={id:'y'+Date.now(),type:'yt',title:'YouTube-Video',videoId:id,start:ytIdStart(u)};$('#ytUrl').value='';closeSheets();openYT(it,convert)}
 $('#vidAdd').onclick=()=>$('#vidFile').click();
 $('#vidFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.type&&!/^video\//.test(f.type)){toast('Das ist keine Video-Datei');return}closeSheets();fileConvert(f)};
