@@ -83,5 +83,5 @@
   awStart({k:0,mode:'whole'});R=MEM.run;play(R.pos);play(R.pos);tick(9);o.h4=[R.done,R.stall===1,!R.ok];
   awStart({k:0,mode:'puls'});R=MEM.run;play(R.pos);let g=0;while(!R.done&&g++<20){memPress(wrongKeyOf(R.pos),'kb');tick(0.5)}o.h5=[R.done,R.stall===1]}
  /* v5.17 Song-Karte + Titel + Weiter sagt wohin */
- {awStart({k:1,mode:'head'});const M=$('#memMapR').innerHTML;o.map=[(M.match(/<i /g)||[]).length===MEM.C.length,(M.match(/outline:2px/g)||[]).length===1,/Abschnitt 2/.test($('#memRunT').textContent)];memStop()}
+ {awStart({k:1,mode:'head'});const M=$('#memMapR').innerHTML;o.map=[(M.match(/<i /g)||[]).length===MEM.C.length+2,(M.match(/class="cur"/g)||[]).length===1,/Abschnitt 2/.test($('#memRunT').textContent)];memStop()}
  o.timers=timers;return o}
