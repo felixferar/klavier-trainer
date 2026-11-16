@@ -424,7 +424,6 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
 .awSteps li::before{content:'';height:3px;border-radius:2px;background:var(--s3)}
 .awSteps li.done{color:var(--mu)}.awSteps li.done::before{background:var(--tx)}
 .awSteps li.cur{color:var(--gold)}.awSteps li.cur::before{background:var(--ac);box-shadow:0 0 8px rgba(245,166,35,.55)}
-#memFing.on{background:var(--acs);color:var(--gold);border-color:rgba(245,166,35,.45)}
 #memSum .gel,#memSum .v8map,#memSum .v8leg{display:none!important}
 #meSet [data-go=profile]{display:none!important}
 #modeChip{display:none!important}
@@ -797,7 +796,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="mRest"><div class="tasBox"><span id="memTasti" class="tasti"></span><div id="memMsg" style="min-height:44px"></div></div>
       <div id="memEv" class="memEv hidden"></div>
       <div id="memResBox" style="display:none;flex-direction:column;gap:8px"><button class="btn pri" id="memNext" style="height:48px">Weiter</button><button class="btn hidden" id="memHold" style="height:40px">Pause</button></div>
-      <div style="display:flex;gap:8px"><button class="btn" id="memFing" style="flex:1;height:44px" title="Fingersatz ein- oder ausblenden">Finger: aus</button><button class="btn" id="memStop" style="flex:1;height:44px">Beenden</button></div></div> <!-- v5.24: Fingersatz-Schalter im Lernen -->
+      <button class="btn" id="memStop" style="width:100%;height:44px">Beenden</button></div> <!-- v5.25: kein Fingersatz-Knopf im Lernen, Schalter nur in den Einstellungen -->
     </div>
   </div>
 </div>
@@ -2908,7 +2907,7 @@ function awRange(R){let lo=127,hi=0;for(const n of R.ns){if(n.midi<lo)lo=n.midi;
 const awWaitMode=m=>m==='find'||m==='fade'||m==='head'||m==='spot';
 /* Ausblenden: welche Anschläge sind versteckt (der erste bleibt immer sichtbar) */
 function awHidden(R,j){if(R.mode!=='fade'||j<=R.a||R.rev.has(j))return false;const i=j-R.a;return R.fl===0?i%3===2:R.fl===1?i%3!==0:true}
-function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch[p.k],mode=p.mode;
+function awStart(p,demo){memAutoOff();try{fingSong(MEM.song)}catch(e){} /* v5.24: Fingersatz evtl. inzwischen in den Einstellungen eingeschaltet */const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch[p.k],mode=p.mode;
   const lead=(mode==='head'||mode==='puls')&&p.k>0&&v.ch[p.k-1].st>=2&&C[p.k].a-1>=C[p.k-1].a?1:0; /* v5.15: Übergang üben – der letzte Anschlag des Abschnitts davor kommt mit */
   const span=mode==='link'?{s:p.s,e:p.e}:null,a=mode==='whole'?0:span?C[span.s].a:mode==='spot'&&c.spot?c.spot[0]:C[p.k].a-lead,b=mode==='whole'?gs.length-1:span?C[span.e].b:mode==='spot'&&c.spot?c.spot[1]:C[p.k].b;
   const timed=mode==='puls'||mode==='review'||mode==='link',speed=mode==='find'||mode==='fade'||mode==='head'||mode==='spot'?AW.findSpeed:mode==='puls'&&c.relearn!==2?AW.tempi[c.tp]:1; /* v5.12: Metronom hörbar → Tempo steigt nur: 60 % (Mitspielen, Ausblenden, Kopf) → 75 → 90 → 100 % */
@@ -2917,7 +2916,7 @@ function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch
     pos:a,hit:{},proc:{},wrong:0,hints:0,cues:0,miss:0,devs:[],waits:[],waitT0:null,clock:0,lastKey:0,anchor:mode==='head'||mode==='spot',show:null,helpAt:[],rev:new Set(),fl:c.fl||0,
     pv:null,done:false,endT:null,ht:{},mk:{},vt:gs[a].start-1.2*speed,clicks:[],ck:0,mj:a,acc:[],ap:0,lat:v.lat||0,glideV:0,kb0:kbOn(),off:0,wait0:timed,wt:0};
   if(mode!=='whole')awClicks(R,v,p);
-  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');if(typeof memFingUI==='function')memFingUI();{const tt=$('#mem .topbar .ttl');if(tt)tt.textContent=$('#memSong').textContent||'Auswendig'}$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML=awWeg(R,c);$('#memStages').style.display='block';$('#mem').classList.toggle('blind',R.dark);
+  $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');{const tt=$('#mem .topbar .ttl');if(tt)tt.textContent=$('#memSong').textContent||'Auswendig'}$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML=awWeg(R,c);$('#memStages').style.display='block';$('#mem').classList.toggle('blind',R.dark);
   if(mode==='puls'&&!c.pi){c.pi=1;memSaveAll();try{toast(R.beat&&R.beat.ok?'Neu: Jetzt wartet das Lied nicht mehr. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Takt mit dem Metronom.':'Neu: Jetzt wartet das Lied nicht mehr. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Tempo weiter.',5000)}catch(e){}}
   {const sm=span?-1:awSame(p.k);R.pr0=awProg(v);$('#memMapR').innerHTML=awMap(R);
    $('#memRunT').innerHTML=mode==='whole'?`<div style="font-size:20px">Ganzer Song</div><div class="st mu">${memClock(gs[a].start)}–${memClock(gs[b].end)} · ohne Hilfe</div>`:`<div style="font-size:20px">Abschnitt ${span?`${span.s+1}–${span.e+1}`:p.k+1} <span class="mu" style="font-size:14px">von ${C.length}</span></div><div class="st mu">${memClock(gs[a].start)}–${memClock(gs[b].end)} · ${AW_MODE[mode]}${mode==='find'?` · ${c.fc||0}/2 sauber`:''}${mode==='fade'?` · Stufe ${R.fl+1}/3`:''}${timed?' · '+awPct(speed):''}${sm>=0?` · gleich wie Abschnitt ${sm+1}`:''}</div>`;
@@ -3983,8 +3982,6 @@ $('#inputSel').onchange=e=>{S.input=e.target.value;micFailed=false;syncUI();ensu
 $('#sensR').oninput=e=>{S.sens=+e.target.value;syncUI()};
 $('#namesChk').onchange=e=>{S.names=e.target.checked;syncUI()};
 $('#fingChk').onchange=e=>{S.fingers=e.target.checked;saveS();syncUI()}; /* v5.24: wird gespeichert, gilt überall (wie Ich › Fingersatz) */
-function memFingUI(){const b=$('#memFing');if(b){b.textContent='Finger: '+(S.fingers===true?'an':'aus');b.classList.toggle('on',S.fingers===true)}}
-$('#memFing').onclick=()=>{S.fingers=S.fingers!==true;saveS();if(S.fingers&&MEM.song){try{fingSong(MEM.song)}catch(e){}}memFingUI();$('#fing2')&&($('#fing2').checked=S.fingers===true)}; /* v5.24: Zahlen erscheinen beim Mitspielen/Ausblenden/Vorführen, im Dunkeln nicht (wie v5.08) */
 $('#fullChk').onchange=e=>{S.full=e.target.checked;calcRange();syncUI()};
 $('#lookR').oninput=e=>{S.look=+e.target.value;syncUI()};
 // result modal
