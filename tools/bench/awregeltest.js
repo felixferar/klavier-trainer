@@ -48,7 +48,7 @@
  /* v5.09 Rückblick: falscher Ton + Hilfe an Anschlag 3 → Rückblick nennt ihn; Puls zu spät → "zu spät", nicht "falsche Taste" */
  awStart({k:0,mode:'head'});R=MEM.run;play(R.pos);play(R.pos);const j3=R.pos,wk=Math.max(...gs[j3].mids)+13;memPress(wk,'kb');while(R.pos<=R.b)play(R.pos);tick(3);
  o.rb=[R.done,R.worst===j3,!!(R.mk[j3]&&R.mk[j3].help&&R.mk[j3].wrong.includes(wk)),/Anschlag 3: richtig ist/.test(awHier(R)),awNm(wk)&&awHier(R).includes(awNm(wk))];
- o.weg=/Aus dem Kopf/.test($('#memStages').textContent)&&/Metronom läuft bei allen Schritten/.test($('#memStages').textContent);
+ o.weg=/Aus dem Kopf/.test($('#memStages').textContent)&&$$('#memStages .awSteps li').length===5&&$$('#memStages .awSteps li.cur').length===1; /* v5.25: Schritt-Leiste statt Textzeile */
  /* v5.11 Einzählen: 4 Klicks, der 5. Schlag = erster Ton; kein Anlauf-Ton (auch wenn der Abschnitt davor gekonnt ist); Klicks im Abschnitt fließend im selben Abstand */
  /* v5.12/5.14 Start beim Spielen: wartet (Metronom tickt), falsche Taste startet nicht, der erste Ton startet */
  {const v=awState();v.ch[0].box=2;v.ch[0].st=3;v.ch[1].st=3;v.ch[1].tp=0;awStart({k:1,mode:'puls'});const R1=MEM.run,t0=gs[R1.a].start;tones=[];tick(6);

@@ -113,7 +113,7 @@ async def main():
             'kante_ueber_klaviatur_kein_ueberlappen': edge_ok and any(fr['items'] for fr in ed),
             'beschriftung_springt_nicht': springt_ok,
             'auswendig_finden_zeigt_zahlen': fw['mode1'] == 'find' and fw['find'] >= 1,
-            'auswendig_aus_dem_kopf_keine_zahlen': fw['mode2'] == 'head' and fw['dark'] and fw['recall'] == 0 and fw['hint'] == 0,
+            'auswendig_aus_dem_kopf_zahl_nur_auf_gezeigtem_ton': fw['mode2'] == 'head' and fw['dark'] and 0 < fw['recall'] <= 4 and 0 < fw['hint'] <= 4, # v5.25: Schalter an → im Dunkeln nur die Zahl auf dem gezeigten Ton (Start, Hilfe)
             'auswendig_zahl_ueber_klaviatur': fw['awBottom'] is not None and fw['awBottom'] <= fw['awHn'],
             'auswendig_ok': m['ok'] is True, 'auswendig_finger': m2['memFing'] and not m2['err'], 'keine_pageerror': not errs,
         }
