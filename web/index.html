@@ -2935,8 +2935,9 @@ const awNeedForm=f=>{const F=MEM.F[f];return F.e-F.s+1>AW.maxSnow}; /* bis 3 Hä
 /* Zwillinge: ein genau gleiches Häppchen sitzt, sobald sein Zwilling sitzt */
 function awTwins(v){let ch=false;MEM.C.forEach((P,k)=>{const c=v.ch[k];if(P.twin>=0&&c.st<3&&v.ch[P.twin].st>=3){c.st=3;c.tk=1;c.box=Math.max(c.box,1);c.due=v.ch[P.twin].due;ch=true} /* v5.29: „bekannt“ – sitzt erst, wenn im Zusammenhang gespielt */});if(ch)memSaveAll()}
 /* fällige Wiederholungen – nur am Anfang einer Sitzung, gebündelt */
-function awDue(v,now){let best=-1;v.ch.forEach((c,k)=>{if(c.st>=3&&c.box>=1&&c.due<=now&&MEM.C[k].twin<0&&(best<0||c.due<v.ch[best].due))best=k});
-  if(best>=0)return {k:best,mode:'rev'};if(awSongSits(v)&&v.whole.due&&v.whole.due<=now)return {k:0,mode:'whole',rev:1};return null}
+/* v5.32: Wiederholung gebündelt – bis zu 3 fällige Häppchen hintereinander in einem Durchgang (aus dem Kopf, wartet) */
+function awDue(v,now){const due=k=>{const c=v.ch[k];return c&&c.st>=3&&c.box>=1&&c.due<=now};let s=-1;for(let k=0;k<v.ch.length;k++)if(due(k)&&MEM.C[k].twin<0){s=k;break}
+  if(s>=0){let e=s;while(e+1<v.ch.length&&e-s+1<AW.maxSnow&&due(e+1))e++;return {k:s,mode:'rev',s,e}}if(awSongSits(v)&&v.whole.due&&v.whole.due<=now)return {k:0,mode:'whole',rev:1};return null}
 function awPart(v,k){const c=v.ch[k];if(c.st===0)return {k,mode:'learn'};if(c.st===1)return {k,mode:'head'};const sp=awSnowSpan(k);return {k,mode:'snowk',s:sp.s,e:sp.e}}
 /* v5.32 Ablauf: je Häppchen mit Noten → aus dem Kopf → Kette (die letzten bis zu 3 Häppchen bis zum neuen, aus dem Kopf, das Lied wartet).
    Ist ein Formteil komplett: einmal im Fluss. Dann der ganze Song. Hängt ein Schritt 3× hintereinander: einmal mit Noten, dann weiter. */
@@ -2969,15 +2970,15 @@ function awSetHand(h){if(!MEM.item||h===MEM.hand)return;const running=!!MEM.run;
 
 /* --- Übersicht --- */
 const awFLab=k=>{const F=MEM.F&&MEM.F[MEM.C[k].f];return F?F.lab:''};
-const awSpanM=m=>m==='snow'||m==='snowk'||m==='form';
-const awPartName=(p,C)=>p.re?`Nochmal mit Noten (Häppchen ${p.k+1})`:p.mode==='snowk'?`Kette: Häppchen ${p.s+1}–${p.e+1}`:p.mode==='spot'?`Stelle (Häppchen ${p.k+1})`:p.mode==='snow'?`Häppchen ${p.s+1}–${p.e+1}`:p.mode==='form'?`Formteil ${MEM.F[p.f].lab} am Stück`:p.mode==='whole'?'Ganzer Song':`${awFLab(p.k)} · Häppchen ${p.k+1}`;
+const awSpanM=m=>m==='snow'||m==='snowk'||m==='form'||m==='rev';
+const awPartName=(p,C)=>p.mode==='rev'?`Wiederholung: Häppchen ${p.s+1}${p.e>p.s?'–'+(p.e+1):''}`:p.re?`Nochmal mit Noten (Häppchen ${p.k+1})`:p.mode==='snowk'?`Kette: Häppchen ${p.s+1}–${p.e+1}`:p.mode==='spot'?`Stelle (Häppchen ${p.k+1})`:p.mode==='snow'?`Häppchen ${p.s+1}–${p.e+1}`:p.mode==='form'?`Formteil ${MEM.F[p.f].lab} am Stück`:p.mode==='whole'?'Ganzer Song':`${awFLab(p.k)} · Häppchen ${p.k+1}`;
 function awWhy(p,v){const P=MEM.C[p.k],tw=P&&P.near>=0?` Fast wie Häppchen ${P.near+1} – achte auf die andere Abzweigung.`:'';
   if(p.re)return 'Hier hat es 3× hintereinander gehakt – darum einmal mit Noten. Vertipper sind in Ordnung. Danach wieder aus dem Kopf.';
   return {learn:`Mit Noten – das Lied wartet auf dich. Vertipper sind in Ordnung, einmal durchspielen reicht.${tw} Vorspielen mit Klang: Knopf oder tiefstes A.`,
     head:'Aus dem Kopf: dunkel, das Lied wartet. Oben siehst du, wo du bist. Hängst du: B ganz links oder „Weiß nicht weiter“ – nach 5 s kommt die Hilfe von selbst. Eine Hilfe ist erlaubt.',
     snowk:`Kette: Häppchen ${p.s+1}–${p.e+1} am Stück aus dem Kopf – das Lied wartet. So hängst du das neue Häppchen an. Hilfe wie gewohnt, kleine Patzer sind erlaubt.`,
     form:p.mode==='form'?`Formteil ${MEM.F[p.f].lab} (Häppchen ${p.s+1}–${p.e+1}) einmal ganz am Stück aus dem Kopf – das Lied wartet.`:'',
-    rev:`Wiederholung: Häppchen ${p.k+1} aus dem Kopf – sitzt es noch?`,
+    rev:p.mode==='rev'?`Wiederholung: Häppchen ${p.s+1}${p.e>p.s?'–'+(p.e+1):''} aus dem Kopf am Stück – sitzt es noch?`:'',
     whole:p.rev?'Wiederholung: der ganze Song ohne Hilfe.':`Der ganze Song – ohne Hilfe, in deinem Tempo. ${new Set(v.whole.days).size?`(${new Set(v.whole.days).size} von ${AW.wholeDays} Tagen ✓)`:'An 2 verschiedenen Tagen geschafft = der Song sitzt.'}`}[p.mode]||''}
 function memHome(){memStop();$('#mem').classList.remove('running','blind');memKbChip();$('#memHome').classList.remove('hidden');$('#memRunV').classList.add('hidden');
   try{awLogSync()}catch(e){}
@@ -3078,6 +3079,7 @@ function memPress(m,src){const R=MEM.run;if(!R)return;const now=performance.now(
   if(m===AW.helpKey&&R.dark){awShow(R);return}
   const gs=MEM.gs;R.lastKey=R.clock;
   if(!R.timed){if(R.pos>R.b)return;const G=gs[R.pos],nx0=gs[R.pos+1]||null;
+    {const rc=(R.recent||[]).find(x=>R.clock-x.at<=0.06&&gs[x.j].mids.has(m)&&!(R.hit[x.j]&&R.hit[x.j].has(m)));if(rc){R.hit[rc.j].add(m);MEM.good.set(m,now);return}} /* v5.32: restlicher Ton desselben Akkords (gleichzeitig angeschlagen) gehört zum gerade gespielten Griff – nicht schon zum nächsten, gleichen Akkord */
     if(G.mids.has(m)){if(R.ht[R.pos]==null)R.ht[R.pos]=R.clock;(R.hit[R.pos]||(R.hit[R.pos]=new Set())).add(m);MEM.good.set(m,now);awAdvance(R);return}
     if(nx0&&nx0.start-G.start<=0.16&&nx0.mids.has(m)){if(R.pos<R.b)(R.hit[R.pos+1]||(R.hit[R.pos+1]=new Set())).add(m);MEM.good.set(m,now);return} /* Vorgriff (v4.70): leicht versetzt erkannter Akkordton (≤ 0,16 s) zählt als mitgespielt, auch über die Abschnittsgrenze */
     if((R.recent||[]).some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m))){MEM.good.set(m,now);return} /* v5.04: letzter Ton eines Akkords nach dem Weiterspringen – kein Fehler */
@@ -3204,12 +3206,19 @@ function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C
     else msg=fail(key,{k:ke,a:R.a,b:R.b})?`Fast – ${awFehler(R)}. Das war der 3. Versuch – jetzt die Kette einmal mit Noten, dann wieder aus dem Kopf.`:`Fast – ${awFehler(R)}. Nochmal die Kette – oben siehst du, wo du bist; Hilfe mit B oder nach 5 s.`}
   else if(R.mode==='form'){const key='form:'+R.f;if(ok){okKey(key);v.fd[R.f]=1;msg=`✓ Formteil ${MEM.F[R.f].lab} sitzt am Stück${streif}!${MEM.F.every((F,f)=>awFDone(v,f))?' Jetzt kommt der ganze Song.':''}`}
     else{const kw=Math.max(0,MEM.C.findIndex(Q=>R.worst>=Q.a&&R.worst<=Q.b)),sp=awSnowSpan(kw);msg=fail(key,{k:kw,a:C[sp.s].a,b:C[sp.e].b})?`Fast – ${awFehler(R)}. Das war der 3. Versuch – jetzt die Stelle einmal mit Noten.`:`Fast – ${awFehler(R)}. Nochmal den Formteil am Stück.`}}
-  else if(R.mode==='rev'){if(ok){c.box=Math.min(AW.maxBox,c.box+1);c.due=now+AW.iv[c.box];MEM.C.forEach((Q,i)=>{if(Q.twin===R.k){v.ch[i].box=c.box;v.ch[i].due=c.due}});msg=`✓ Sitzt noch${streif}. Nächste Wiederholung ${awWhen(c.due)}.`}
-    else{awRevFail(v,R.k,now);msg=`Häppchen ${R.k+1} sitzt nicht mehr ganz – ${awFehler(R)}. Es kommt gleich noch einmal aus dem Kopf und in der Kette dran.`}}
+  else if(R.mode==='rev'){const sp=R.span||{s:R.k,e:R.k},isDue=i=>{const x=v.ch[i];return x.st>=3&&x.box>=1&&x.due<=now};
+    if(ok){let nd=Infinity;for(let i=sp.s;i<=sp.e;i++)if(isDue(i)){const x=v.ch[i];x.box=Math.min(AW.maxBox,x.box+1);x.due=now+AW.iv[x.box];nd=Math.min(nd,x.due);MEM.C.forEach((Q,q)=>{if(Q.twin===i){v.ch[q].box=x.box;v.ch[q].due=x.due}})}msg=`✓ Sitzt noch${streif}. Nächste Wiederholung ${awWhen(nd<Infinity?nd:now+AW.iv[1])}.`}
+    else{const kw0=MEM.C.findIndex(Q=>R.worst>=Q.a&&R.worst<=Q.b),kw=kw0>=sp.s&&kw0<=sp.e?kw0:sp.s;for(let i=sp.s;i<=sp.e;i++)if(i!==kw&&isDue(i))v.ch[i].due=now+AW.iv[1]; /* die anderen kommen morgen wieder */
+      awRevFail(v,kw,now);msg=`Häppchen ${kw+1} sitzt nicht mehr ganz – ${awFehler(R)}. Es kommt gleich noch einmal aus dem Kopf und in der Kette dran.`}}
   else{const W=v.whole;W.n=(W.n||0)+1;
     if(ok){const d=awDay(now);if(!W.days.includes(d))W.days.push(d);const k=new Set(W.days).size;W.due=now+(k>=AW.wholeDays?AW.wholeIv:AW.iv[1]);
       msg=R.rev?`✓ Der Song sitzt weiter${streif}. Nächstes Mal ${awWhen(W.due)}.`:k>=AW.wholeDays?`⭐ Der Song sitzt – ganz ohne App${streif}! Ab jetzt alle 14 Tage einmal durchspielen.`:`✓ Ganzer Song sauber${streif} (Tempo ${awPct(R.tempo)})! Morgen noch einmal – dann sitzt er.`}
-    else{if(R.rev){W.due=now+AW.iv[1];W.days=W.days.slice(0,1)}else W.due=now;msg=`Noch nicht ganz – ${awFehler(R)}. ${R.rev?'Morgen nochmal.':'Nochmal der ganze Song.'}`}}
+    else{const S0=MEM.sess||(MEM.sess={});S0.wf=(S0.wf||0)+1;
+      /* v5.32: keine Endlosschleife beim ganzen Song – die bis zu 3 Häppchen mit den meisten Patzern kommen sofort noch einmal in die Kette; nach 2 Fehlversuchen heute: morgen frisch */
+      const bad=new Map();for(const [j,k] of Object.entries(R.mk)){const b=awBad(k);if(!b)continue;const u=MEM.C.findIndex(Q=>+j>=Q.a&&+j<=Q.b);if(u>0)bad.set(u,(bad.get(u)||0)+b)}
+      const worst=[...bad.entries()].sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);for(const u of worst){const x=v.ch[u];if(x.st>=3){x.st=2;delete x.tk}}
+      if(R.rev){W.due=now+AW.iv[1];W.days=W.days.slice(0,1)}else W.due=S0.wf>=2?now+AW.iv[1]:now;
+      msg=`Noch nicht ganz – ${awFehler(R)}. ${worst.length?`Häppchen ${worst.map(u=>u+1).sort((a,b)=>a-b).join(', ')} kommen ${S0.wf>=2&&!R.rev?'':'jetzt '}noch einmal in die Kette. `:''}${R.rev||S0.wf>=2?'Der ganze Song kommt morgen frisch wieder.':'Danach wieder der ganze Song.'}`}}
   R.ok=ok;memSaveAll();awLog(R,ok);
   $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=`<div class="st" id="memHier" style="margin-bottom:4px;font-weight:700">${awHier(R)}</div><div class="st mu">${R.hints?`👀 ${R.hints}× Hilfe · `:''}${R.timed||R.mode==='whole'?`${R.miss} ${R.mode==='whole'?'ausgelassen':'nicht gespielt'} · `:''}${R.wrong} falsche Töne${R.tolW?' (1 erlaubt)':''}${R.mode==='whole'?` · ${R.slips} Rhythmus-Hänger · Tempo ${awPct(R.tempo)}`:''}${R.timed?` · ${R.off||0} ungleichmäßig · dein Tempo ${awPct(R.tempo)}`:''}</div>${awWorst(R)>=0?'<div class="st mu" style="font-size:11px">Im Bild: <span style="color:#3BB273">▮ richtig</span> · <span style="color:#F2A93B">▮ Hilfe gebraucht</span> · <span style="color:#E5C34B">▮ gezögert/zu spät/zu früh</span> · <span style="color:#8a8f99">▮ nicht gespielt</span> · <span style="color:#E5484D">▮ falsche Taste</span></div>':''}`;ev.classList.remove('hidden');$('#memGoal').innerHTML='';
   const nx=awPick();$('#memResBox').style.display='flex';{const L=awNextLabel(nx,R);$('#memNext').textContent=L;$('#memNext').style.fontSize=L.length>16?'13px':''}$('#memMapR').innerHTML=awMap(R,true);awGrow($('#memMapR'));$('#memProg').textContent='Fertig';awDraw();memAuto()}

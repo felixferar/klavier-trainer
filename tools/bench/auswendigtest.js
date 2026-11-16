@@ -31,7 +31,7 @@
  /* 7. ganzer Song Tag 1 → morgen; nächster Tag: Wiederholungen gebündelt, dann ganzer Song → sitzt */
  R=run();o.w1=[R.ok,new Set(v().whole.days).size,awPick()];
  window.AW_NOW=T0+DAY+2*36e5;openMem(it);const seq2=[];g=0;let failed=-1;
- while(g++<40){p=awPick();if(!p)break;seq2.push(lbl(p));if(p.mode==='rev'&&failed<0){failed=p.k;const pr0=awProg().total;awNext();R=MEM.run;R=runWait(R=>{if([R.a+2,R.a+4,R.a+6].includes(R.pos)&&!R['x'+R.pos]){R['x'+R.pos]=1;memPress(wrongKeyOf(R.pos),'kb')}});o.revFail=[R.ok,v().ch[failed].st,awProg().total<pr0];continue}run()}
+ while(g++<40){p=awPick();if(!p)break;seq2.push(lbl(p));if(p.mode==='rev'&&failed<0){failed=p.k;const pr0=awProg().total;awNext();R=MEM.run;R=runWait(R=>{if([R.a+2,R.a+4,R.a+6,R.a+8,R.a+10].includes(R.pos)&&!R['x'+R.pos]){R['x'+R.pos]=1;memPress(wrongKeyOf(R.pos),'kb')}});o.revFail=[R.ok,v().ch[failed].st,awProg().total<pr0];continue}run()}
  o.seq2=seq2;o.sits=awSongSits(v());
  window.AW_NOW+=30*DAY;o.midSess=awPick();
  /* 8. Hand-Filter */
