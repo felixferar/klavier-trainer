@@ -385,6 +385,37 @@ body.short #onbDots{margin:8px 0}
 .kbSec{margin-top:14px}.kbSec .lbl{margin:0 4px 6px}.kbSec.hidden{display:none}
 .kbSpin{width:14px;height:14px;border-radius:7px;border:2px solid var(--s3);border-top-color:var(--ac);animation:kbs .8s linear infinite;display:none}.kbSpin.on{display:inline-block}
 @keyframes kbs{to{transform:rotate(360deg)}}
+
+/* ===== v5.21 Design C2 „Fokus-Flow“: Mitternacht, Warmweiß, EIN Bernstein-Akzent, Salbei nur für Sitzt/Verbunden; Grautexte ≥ 4,5:1 ===== */
+:root{--bg:#0B0D12;--s1:#141823;--s2:#1A1F2C;--s3:#272D3B;--bd:rgba(244,242,236,.08);--bd2:rgba(244,242,236,.15);--tx:#F4F2EC;--mu:#A3A6B0;--mu2:#80848F;
+  --ac:#F5A623;--ac2:#9A6B1E;--acs:rgba(245,166,35,.15);--gold:#FFB84D;--ink:#1B1304;--key:#ECE9E2;--good:#5CE1A6;--bad:#F0776B;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;--serif:var(--font)}
+.kbBar.on .dot,.kbchip.on .dot,.kbBig.on .dot{background:var(--good)}.kbRow.on .r{color:var(--good)}
+.stHdr{gap:10px}
+.stHdr #kbBar{width:auto;flex:none;margin:0;padding:7px 12px;gap:8px;border-radius:16px;background:var(--s1);border:1px solid var(--bd2)}
+.stHdr #kbBar .s,.stHdr #kbBar .act{display:none}.stHdr #kbBar b{font-size:13px;white-space:nowrap}.stHdr #kbBar .dot{width:8px;height:8px}
+.stHdr .streak{display:none}
+#kbCard{display:none!important}
+.stBadge{flex:none;font-size:12px;font-weight:700;padding:4px 9px;border-radius:8px;white-space:nowrap;margin-left:6px}
+.stBadge.b0{color:var(--mu);border:1px solid var(--bd2)}.stBadge.b1{color:var(--gold);background:var(--acs)}.stBadge.b2{color:var(--good);background:rgba(92,225,166,.13)}
+#filt{display:flex}#filt button{flex:1}
+.spDuo{display:flex;gap:10px;margin-top:12px}.spDuo .btn{flex:1;height:50px;font-size:16px;font-weight:800;border-radius:14px}
+#songp .topbar .sp,#mem .topbar .sp{flex:1}
+#meProf{margin-bottom:6px}#meProf .avatar{flex:none}
+details.werk{margin-top:18px;border:1px dashed var(--bd2);border-radius:14px;padding:0 12px}
+details.werk summary{list-style:none;padding:14px 4px;font-weight:800;color:var(--mu);cursor:pointer}details.werk summary::-webkit-details-marker{display:none}
+details.werk summary::after{content:'+';float:right}details.werk[open] summary::after{content:'−'}
+body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!important}
+@media (orientation:landscape) and (max-height:600px){
+ #home{flex-direction:row}#home .tabbar{order:-1;flex-direction:column;justify-content:center;width:84px;border-top:0;border-right:1px solid var(--bd);padding-bottom:0;padding-left:env(safe-area-inset-left)}
+ #home .tabbar button{flex:none;flex-direction:column;gap:3px;padding:12px 0;font-size:11px}
+ #vStart{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:28px;align-items:start}
+ #vStart>*{grid-column:2;min-width:0}#vStart>.stHdr{grid-column:1/3}#vStart>#contWrap{grid-column:1;grid-row:2/span 6}
+ #vStart .weekBox{margin-top:12px;padding-top:0;border-top:0}#vStart .wkeys{height:70px}
+ #songp .scroll{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:28px;align-content:start;grid-template-areas:"hero go" "lbl duo" "bars rows" "num rows"}
+ #songp .spHero{grid-area:hero}#songp #spLbl{grid-area:lbl;margin-top:10px!important}#songp #spBars{grid-area:bars;height:70px}#songp #spNum{grid-area:num}
+ #songp #spGo{grid-area:go;margin-top:6px}#songp .spDuo{grid-area:duo}#songp .spRows{grid-area:rows;margin-top:12px}
+}
 </style>
 </head>
 <body>
@@ -433,10 +464,9 @@ body.short #onbDots{margin:8px 0}
       <div class="stHdr"><span id="tasti" class="tasti"></span>
         <div class="grow"><div id="dateTxt"></div><h1 id="greet">Heute</h1></div>
         <span class="chip streak" id="streakChip"><svg class="i" style="width:15px;height:15px"><use href="#i-flame"/></svg><span>0 Tage</span></span>
-        <button class="ib" data-go="settings" title="Einstellungen"><svg class="i"><use href="#i-gear"/></svg></button>
-        <button class="avatar" id="homeAv" data-go="profile" title="Profil">?</button>
+        <button class="kbBar hidden" id="kbBar"><span class="dot"></span><span><b></b><span class="s"></span></span><span class="act"></span></button>
+        <button class="avatar hidden" id="homeAv" data-go="profile" title="Profil">?</button>
       </div>
-      <button class="kbBar hidden" id="kbBar"><span class="dot"></span><span><b></b><span class="s"></span></span><span class="act"></span></button>
       <div id="contWrap" class="stCont"></div>
       <div class="weekBox"><div class="wh"><span>Diese Woche</span><span id="goalTxt2"></span></div><div class="wkeys" id="wkeys"></div></div>
       <div id="dueWrap"></div>
@@ -458,12 +488,14 @@ body.short #onbDots{margin:8px 0}
     <section id="vSongs" class="hidden">
       <div class="hdr"><h1>Songs</h1><button class="btn sm pri" data-add><svg class="i" style="width:16px;height:16px"><use href="#i-plus"/></svg>Hinzufügen</button></div>
       <div class="search"><svg class="i" style="color:var(--mu2)"><use href="#i-search"/></svg><input id="q" placeholder="Song suchen"></div>
-      <div class="seg hidden" id="filt" style="margin-bottom:10px"><button data-f="all" class="on">Alle</button><button data-f="midi">MIDI</button><button data-f="yt">YouTube</button></div>
+      <div class="seg" id="filt" style="margin-bottom:10px"><button data-f="all" class="on">Alle</button><button data-f="learn">Am Lernen</button><button data-f="done">Sitzt</button></div>
       <div id="songList"></div>
     </section>
 
     <section id="vStats" class="hidden">
-      <div class="hdr"><h1>Fortschritt</h1></div>
+      <div class="hdr"><h1>Ich</h1></div>
+      <div class="list" id="meProf"><div class="li" data-go="profile" style="cursor:pointer"><div class="avatar" id="meAv">?</div><div class="grow"><b id="meName">Profil</b><small id="meSub">Name, E-Mail, Daten löschen</small></div><svg class="i" style="color:var(--mu2)"><use href="#i-chev"/></svg></div></div>
+      <div class="lbl">Fortschritt</div>
       <div class="card kpis" id="kpis"></div>
       <div class="card" style="margin-top:12px">
         <div style="display:flex;align-items:center"><b class="grow">Übungszeit der letzten 14 Tage</b><span class="mu xs" id="avgTxt"></span></div>
@@ -471,13 +503,14 @@ body.short #onbDots{margin:8px 0}
       </div>
       <div class="sect"><h2>Songs</h2></div>
       <div id="statSongs"></div>
+      <div id="meSet"></div>
     </section>
 
   </div>
   <nav class="tabbar">
     <button data-tab="start" class="on"><svg class="i"><use href="#i-home"/></svg>Heute</button>
     <button data-tab="songs"><svg class="i"><use href="#i-music"/></svg>Songs</button>
-    <button data-tab="stats"><svg class="i"><use href="#i-chart"/></svg>Fortschritt</button>
+    <button data-tab="stats"><svg class="i"><use href="#i-user"/></svg>Ich</button>
   </nav>
 </div>
 
@@ -521,15 +554,13 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Tagesziel</b><small>Zählt für deine Serie (ab 1 Min pro Tag)</small></div>
         <select id="goalSel"><option value="5">5 Min</option><option value="10">10 Min</option><option value="15">15 Min</option><option value="20">20 Min</option><option value="30">30 Min</option><option value="45">45 Min</option><option value="60">60 Min</option></select></div>
     </div>
-    <div class="lbl">Tonerkennung</div>
+    <div class="lbl">Verbindung</div>
     <div class="list">
-      <div class="li"><div class="grow"><b>Keyboard (Bluetooth)</b><small id="kbSetTxt">Nicht verbunden – die App hört über das Mikrofon</small></div><button class="btn sm" id="kbSetBtn">Verbinden</button></div>
+      <div class="li"><div class="grow"><b>Keyboard (Bluetooth)</b><small id="kbSetTxt">Nicht verbunden – ohne Klavier gelten die Bildschirmtasten</small></div><button class="btn sm" id="kbSetBtn">Verbinden</button></div>
       <div class="li hidden" id="kbShiftRow"><div class="grow"><b>Keyboard-Verschiebung</b><small>Wurde automatisch erkannt und wird ausgeglichen</small></div><button class="btn sm" id="kbShiftReset">Zurücksetzen</button></div>
       <div class="li hidden"><div class="grow"><b>Erkennung über</b></div><select id="inputSel2"><option value="mic">Mikrofon</option><option value="touch">Bildschirm-Tasten</option><option value="midi">MIDI-Keyboard</option></select></div>
-      <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
       <div class="li hidden"><div class="grow"><b>Kalibrierung</b><small id="calStat2">–</small></div><button class="btn sm" data-go="calib">Öffnen</button></div>
       <div class="li"><div class="grow"><b>Einführung ansehen</b><small>Die kurze Erklärung vom ersten Start</small></div><button class="btn sm" id="onbAgain">Zeigen</button></div>
-      <div class="li"><div class="grow"><b>Mikrofon testen</b><small id="micInfo2">Zeigt den Ton, den die App gerade hört</small></div><button class="btn sm" id="micTest2">Test</button></div>
     </div>
     <div class="lbl">Anzeige</div>
     <div class="list">
@@ -544,8 +575,11 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>Backup speichern</b><small>Songs, Statistik, Kalibrierung und Einstellungen als Datei</small></div><button class="btn sm" id="expBtn">Speichern</button></div>
       <div class="li"><div class="grow"><b>Backup laden</b><small id="impInfo">Ersetzt alle Daten auf diesem Gerät</small></div><button class="btn sm" id="impBtn">Laden</button><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
     </div>
-    <div class="lbl">Fehlersuche</div>
+    <details class="werk" id="werk"><summary>Werkstatt (Entwicklung)</summary>
     <div class="list">
+      <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
+      <div class="li"><div class="grow"><b>Mikrofon testen</b><small id="micInfo2">Zeigt den Ton, den die App gerade hört</small></div><button class="btn sm" id="micTest2">Test</button></div>
+
       <div class="li"><div class="grow"><b>Erkennungs-Details anzeigen</b><small>Zeigt bei der Kalibrierung, was die App gehört hat</small></div><input type="checkbox" class="sw" id="dbgChk"></div>
       <div class="li"><div class="grow"><b>Bildschirmfoto an Claude</b><small>Schickt in 8 Sekunden ein Foto der App an dein privates Archiv („klavier-diagnose“). Danach die gewünschte Ansicht öffnen, z. B. den Vergleich.</small></div><button class="btn sm" id="shotBtn">Senden</button></div>
       <div class="li hidden" id="crashRow"><div class="grow"><b>Letzter Absturz</b><small id="crashTxt" style="white-space:pre-wrap;word-break:break-word"></small></div><button class="btn sm" id="crashSave">Speichern</button></div>
@@ -554,7 +588,8 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.17</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    </details>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.21</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -638,7 +673,7 @@ body.short #onbDots{margin:8px 0}
     <button class="card modecard" data-pick="play"><div class="mic" style="background:var(--acs);color:var(--ac)"><svg class="i" style="fill:currentColor;stroke:none"><use href="#i-play"/></svg></div>
       <div class="grow"><div class="ttl">Abspielen</div><div class="meta" style="display:block">Der Song läuft mit Klavierklang durch – zum Anhören und Mitspielen.</div></div></button>
     <button class="card modecard" data-pick="learn" style="margin-top:10px"><div class="mic" style="background:rgba(127,182,133,.16);color:#A6D2AA"><svg class="i"><use href="#i-mic"/></svg></div>
-      <div class="grow"><div class="ttl">Üben</div><div class="meta" style="display:block">Die Noten warten, bis du richtig spielst. Die App hört über das Mikrofon zu.</div></div></button>
+      <div class="grow"><div class="ttl">Üben</div><div class="meta" style="display:block">Die Noten warten, bis du die richtige Taste spielst.</div></div></button>
   </div>
   <!-- result -->
   <div class="modal" id="resModal">
@@ -709,8 +744,9 @@ body.short #onbDots{margin:8px 0}
     <div class="stLbl" style="margin-top:26px" id="spLbl">Auswendig</div>
     <div class="spBars" id="spBars"></div><div class="spNum" id="spNum"></div>
     <button class="btn pri big" id="spGo"></button>
+    <div class="spDuo"><button class="btn" id="spPlay">Anhören</button><button class="btn" id="spPract">Frei üben</button></div>
     <div class="spRows">
-      <div class="spRow" id="spPlay"><div class="grow"><b>Spielen</b><span>Mit allen Noten, in deinem Tempo</span></div><svg class="i"><use href="#i-chev"/></svg></div>
+      <div class="spRow" id="spWay"><div class="grow"><b>Lernweg</b><span>Alle Abschnitte, Stand und „So funktioniert's“</span></div><svg class="i"><use href="#i-chev"/></svg></div>
       <div class="spRow" id="spOct" style="cursor:default"><div class="grow"><b>Oktave</b><span id="spOctTxt">Liegt der Song zu hoch oder zu tief? Hier verschieben.</span></div><div class="stp"><button id="spOctM" aria-label="eine Oktave tiefer">−</button><span id="spOctV">0</span><button id="spOctP" aria-label="eine Oktave höher">+</button></div></div>
       <div class="spRow hidden" id="spCmp"><div class="grow"><b>Noten prüfen und bearbeiten</b><span>Video gegen erkannte Noten, Töne ändern, teilen, ergänzen</span></div><svg class="i"><use href="#i-chev"/></svg></div>
     </div>
@@ -816,7 +852,7 @@ body.short #onbDots{margin:8px 0}
   <div class="sb scroll">
     <button class="card" id="midiAdd" style="width:100%;display:flex;gap:14px;align-items:center;text-align:left;color:var(--tx)">
       <div class="cover" style="display:grid;place-items:center;color:var(--ac)"><svg class="i" style="width:26px;height:26px"><use href="#i-file"/></svg></div>
-      <div class="grow"><div class="ttl">MIDI-Datei</div><div class="meta">Alle Funktionen: Hände, Lern-Modus, Takte, Sterne</div></div>
+      <div class="grow"><div class="ttl">MIDI-Datei</div><div class="meta">Genaue Noten, z. B. von musescore.com</div></div>
     </button>
     <input type="file" id="midiFile" accept=".mid,.midi,audio/midi,audio/x-midi" class="hidden">
     <div class="card" style="margin-top:10px">
@@ -2428,7 +2464,7 @@ function ago(ts){if(!ts)return 'noch nie geübt';const d=Math.floor((Date.now()-
 /* ================= settings & colors ================= */
 const PAL={green:{n:'Grün',l:'#63E6A0',d:'#1E9E5A'},blue:{n:'Blau',l:'#74AAFF',d:'#2F64DA'},violet:{n:'Violett',l:'#BBA0FF',d:'#7048E8'},orange:{n:'Orange',l:'#FFB467',d:'#D9731F'},pink:{n:'Rosa',l:'#FF92C9',d:'#D33C8B'},cyan:{n:'Türkis',l:'#63E3E9',d:'#14999F'},yellow:{n:'Gelb',l:'#FFE070',d:'#C29E00'}};
 const KEYSETS={88:[21,108,'A0 – C8'],76:[28,103,'E1 – G7'],73:[28,100,'E1 – E7'],61:[36,96,'C2 – C7'],49:[36,84,'C2 – C6'],37:[48,84,'C3 – C6']};
-const S=Object.assign({layout:88,sound:true,speed:1,hand:'B',other:'show',fingers:true,soundMine:false,swap:false,wait:false,score:true,input:'mic',sens:6,names:true,full:false,look:2.5,reps:3,autoNext:false,speedUp:false,colL:'green',colR:'blue',goal:15},load('kt_settings')||{});
+const S=Object.assign({layout:88,sound:true,speed:1,hand:'B',other:'show',fingers:false,soundMine:false,swap:false,wait:false,score:true,input:'mic',sens:6,names:true,full:false,look:2.5,reps:3,autoNext:false,speedUp:false,colL:'green',colR:'blue',goal:15},load('kt_settings')||{});
 if(S.speed>1)S.speed=1;S.input='touch';S.score=false;S.soundMine=false; /* v4.78: Mikrofon-Eingabe ist entfernt – nie von selbst nach dem Mikrofon fragen */
 const saveS=()=>saveW('kt_settings',S);
 const fmtSpeed=v=>(Math.round(v*100)/100).toLocaleString('de-DE')+'×';
@@ -2465,7 +2501,7 @@ $('#dLand').onclick=()=>{deskMode='land';applyDesk()};$('#dPort').onclick=()=>{d
 /* ================= navigation ================= */
 let navStack=['home'];
 function show(id){$('#app').scrollTop=0;$$('.toast').forEach(t=>t.remove());document.body.classList.toggle('inplayer',id==='player');for(const s of $$('.screen'))s.classList.add('hidden');$('#'+id).classList.remove('hidden');onResize()}
-function go(id){if(id==='calib')return openCal();navStack.push(id);show(id);if(id==='settings')renderSettings();if(id==='profile')renderProfile()}
+function go(id){if(id==='calib')return openCal();if(id==='settings'){navStack.length=0;navStack.push('home');show('home');setTab('stats');return} /* v5.21: Einstellungen leben im Tab „Ich“ */navStack.push(id);show(id);if(id==='settings')renderSettings();if(id==='profile')renderProfile()}
 function back(){if(MEM.run||MEM.timer)memStop();navStack.pop();const id=navStack[navStack.length-1]||'home';show(id);if(id==='mem'&&MEM.item){const it=LIB.find(x=>x.id===MEM.item.id);if(it&&memLoad(it))memHome()}if(id==='home')renderHome();if(id==='songp')renderSongPage()}
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);return}
@@ -2476,7 +2512,7 @@ document.addEventListener('click',e=>{
 let tab='start';
 function setTab(t){tab=t;for(const b of $$('.tabbar button'))b.classList.toggle('on',b.dataset.tab===t);
   $('#vStart').classList.toggle('hidden',t!=='start');$('#vSongs').classList.toggle('hidden',t!=='songs');$('#vStats').classList.toggle('hidden',t!=='stats');
-  $('#homeScroll').scrollTop=0;renderHome()}
+  $('#homeScroll').scrollTop=0;renderHome();if(t==='stats'){renderSettings();meHead()}}
 function openSheet(id,dim){closeSheets();$(dim||'#gDim').classList.add('on');$(id).classList.add('on')}
 function closeSheets(){$$('.sheet.on,.dim.on').forEach(e=>e.classList.remove('on'));$('#app').scrollTop=0;$('#app').scrollLeft=0}
 $('#gDim').onclick=closeSheets;
@@ -2593,7 +2629,8 @@ const saveLib=()=>{if(!save('kt_lib',LIB))toast('Speicher voll – Song nicht ge
 function songRow(it,opts={}){
   const s=ST.songs[it.id]||{};const sub=it.type==='yt'?'YouTube':(it.artist||'MIDI');
   const d=document.createElement('div');d.className='song';
-  d.innerHTML=`${coverHTML(it)}<div class="grow"><div class="ttl"></div><div class="meta"><span>${esc(sub)}</span>${it.type!=='yt'?starsHTML(s.stars||0):''}<span>${s.time?fmtMin(s.time):''}</span></div></div>${opts.del&&it.type!=='demo'?'<button class="ib menu" title="Umbenennen oder löschen" style="font-size:20px;color:var(--mu)">⋯</button>':''}`;
+  const sst=songState(it);
+  d.innerHTML=`${coverHTML(it)}<div class="grow"><div class="ttl"></div><div class="meta"><span>${esc(sub)}</span><span>${s.time?fmtMin(s.time):''}</span></div></div>${sst!=null?`<span class="stBadge b${sst}">${ST_NAME[sst]}</span>`:''}${opts.del&&it.type!=='demo'?'<button class="ib menu" title="Umbenennen oder löschen" style="font-size:20px;color:var(--mu)">⋯</button>':''}`;
   d.querySelector('.ttl').textContent=it.title;
   d.onclick=e=>{if(e.target.closest('.menu')){openSongMenu(it);return}openItem(it)};
   return d;
@@ -2626,12 +2663,22 @@ function renderHome(){handVars();
   try{renderStudio()}catch(e){console.error(e)}
   // songs tab
   const q=$('#q').value.trim().toLowerCase();const sl=$('#songList');sl.innerHTML='';
-  const fl=allItems().filter(it=>(filt==='all'||(filt==='yt'?it.type==='yt':it.type!=='yt'))&&(!q||it.title.toLowerCase().includes(q)));
-  if(!fl.length)sl.innerHTML='<div class="empty">Keine Songs gefunden.<br>Tippe auf + um einen hinzuzufügen.</div>';
+  const fl=allItems().filter(it=>(filt==='all'||songState(it)===(filt==='done'?2:1))&&(!q||it.title.toLowerCase().includes(q)));
+  if(!fl.length)sl.innerHTML=filt!=='all'?'<div class="empty">Hier ist noch kein Song.</div>':'<div class="empty">Keine Songs gefunden.<br>Tippe auf + um einen hinzuzufügen.</div>';
   for(const it of fl)sl.appendChild(songRow(it,{del:true}));
   if(tab==='stats')renderStats();
 }
 $('#q').oninput=renderHome;
+/* v5.21 (Design C2): ein Stand je Song – Neu · Am Lernen · Sitzt; Filter in „Songs“; Kopf im Tab „Ich“ */
+function songState(it){if(it.type!=='midi'||!it.data)return null;const i=memInfo(it);return !i?0:(i.next==null?2:1)}
+const ST_NAME=['Neu','Am Lernen','Sitzt'];
+for(const b of $$('#filt [data-f]'))b.onclick=()=>{filt=b.dataset.f;for(const x of $$('#filt [data-f]'))x.classList.toggle('on',x===b);renderHome()};
+function meHead(){paintAv();const nm=(PF.name||'').trim();$('#meName').textContent=nm||'Profil';const s=streak();$('#meSub').textContent=s?`${s} ${s===1?'Tag':'Tage'} in Folge · Name, E-Mail, Daten`:'Name, E-Mail, Daten löschen'}
+const isDev=()=>{try{return !!ghTok()||!!load('kt_dev')}catch(e){return !!load('kt_dev')}};
+function devSync(){document.body.classList.toggle('dev',isDev())}
+{const ms=$('#meSet'),sc=$('#settings .scroll');if(ms&&sc)for(const n of [...sc.children])ms.appendChild(n)} /* Einstellungen wandern in den Tab „Ich“ (IDs bleiben gleich) */
+{let n=0,tm=0;const li=$('#verTxt').closest('.li');li.addEventListener('click',e=>{if(e.target.closest('button'))return;clearTimeout(tm);tm=setTimeout(()=>n=0,1500);
+  if(++n>=7){n=0;const on=!load('kt_dev');save('kt_dev',on?1:0);devSync();toast(on?'Werkstatt eingeschaltet':'Werkstatt ausgeschaltet');renderSettings()}})} /* 7× auf die Version tippen = Werkstatt */
 
 /* ================= v4.56 Studio: Heute, Song-Seite, Mascot ================= */
 function tastiSVG(sz){return `<svg class="tasti" width="${sz}" height="${Math.round(sz*1.15)}" viewBox="0 0 100 115" role="img" aria-label="Tasti"><rect x="26" y="0" width="22" height="34" rx="6" fill="#ECEBE6" opacity=".35"/><rect x="52" y="4" width="22" height="30" rx="6" fill="#ECEBE6" opacity=".35"/><rect x="8" y="26" width="84" height="84" rx="26" fill="#E9E4D8"/><circle cx="35" cy="54" r="5.5" fill="#0E0F13"/><circle cx="65" cy="54" r="5.5" fill="#0E0F13"/><path d="M40 68q10 6 20 0" fill="none" stroke="#0E0F13" stroke-width="3.2" stroke-linecap="round"/></svg>`}
@@ -2647,9 +2694,9 @@ function renderStudio(){
   $('#tasti').outerHTML=tastiSVG(40).replace('<svg class="tasti"','<svg id="tasti" class="tasti"');
   // continue block
   const last=ST.last&&itemById(ST.last.id),ci=last||allItems().find(x=>x.type==='midi'&&MEMS[x.id])||last||DEMO,info=memInfo(ci);
-  const cw=$('#contWrap');cw.innerHTML=`<div class="stLbl">Weiter mit</div><div class="stTtl"></div><div class="stSub"></div><div class="segs">${segsHTML(info)}</div><button class="btn pri big" id="contBtn"><svg class="i" style="width:20px;height:20px"><use href="#i-play"/></svg>Weiterüben</button>`;
+  const cw=$('#contWrap');cw.innerHTML=`<div class="stLbl">Weiter mit</div><div class="stTtl"></div><div class="stSub"></div><div class="segs">${segsHTML(info)}</div><button class="btn pri big" id="contBtn"><svg class="i" style="width:20px;height:20px"><use href="#i-play"/></svg>${info&&info.next==null?'Wiederholen':'Los geht’s'}</button>`;
   cw.querySelector('.stTtl').textContent=ci.title;cw.querySelector('.stSub').textContent=memSub(ci,info);
-  cw.querySelector('#contBtn').onclick=()=>openItem(ci);
+  cw.querySelector('#contBtn').onclick=()=>startLearn(ci);
   // week keys
   const goal=S.goal*60,WD=['So','Mo','Di','Mi','Do','Fr','Sa'],wk=$('#wkeys');let h='',tot=0;
   for(let i=6;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const v=ST.days[dayKey(dd)]||0;tot+=v;const idx=6-i,on=v>=goal,m=Math.round(v/60);
@@ -2672,8 +2719,8 @@ function renderSongPage(){const it=SP.item=fresh(SP.item);if(!it)return;const in
     for(let i=0;i<n;i++){const st=rs?(info.learned(i)?3:(rs[i].lvl||1)-1):0,cur=info&&i===info.next;
       bars.insertAdjacentHTML('beforeend',`<div class="${cur?'cur':''}${st>=3?' full':''}"><div class="bx" style="height:${H[i%6]}px"><i style="height:${Math.round(H[i%6]*Math.min(1,st/3))}px"></i></div></div>`);
       num.insertAdjacentHTML('beforeend',`<span class="${cur?'cur':''}">${i+1}</span>`)}}
-  const go=$('#spGo');go.style.display=can?'':'none';
-  if(can)go.textContent=info?(info.next==null?'Alles wiederholen':(info.due.length?`Wiederholen: Abschnitt ${info.next+1}`:`Weiter: Abschnitt ${info.next+1}`)):'Auswendig lernen starten';
+  const go=$('#spGo');go.style.display=can?'':'none';$('#spWay').style.display=can?'':'none';$('#spPract').style.display=it.type==='demo'?'none':'';
+  if(can)go.textContent=info?(info.next==null?'Ganzen Song wiederholen':(info.due.length?`Wiederholen: Abschnitt ${info.next+1}`:`Weiter: Abschnitt ${info.next+1}`)):'Auswendig lernen';
   $('#spCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));spOctUI(it)}
 /* v5.02: Oktave von Hand – für Songs, deren Oktave falsch erkannt wurde (gilt in Spielen, Üben und Auswendig; Lernstand bleibt) */
 function spOctUI(it){const ok=it&&it.type==='midi'&&!!it.data;$('#spOct').style.display=ok?'':'none';if(!ok)return;const v=(it.octShift||0)/12;
@@ -2685,8 +2732,13 @@ function spOct(d){const it=fresh(SP.item);if(!it||it.type!=='midi'||!it.data)ret
   const old=it.octShift;it.octShift=nx;it.octLearned=true;if(!save('kt_lib',LIB)){it.octShift=old;toast('Speicher voll – nicht gespeichert');return}
   spOctUI(it);toast(`Song eine Oktave ${d>0?'höher':'tiefer'}`)}
 $('#spOctM').onclick=e=>{e.stopPropagation();spOct(-12)};$('#spOctP').onclick=e=>{e.stopPropagation();spOct(12)};
-$('#spGo').onclick=()=>{if(SP.item)openMem(SP.item)};
-$('#spPlay').onclick=()=>{if(SP.item)openItemPlay(SP.item)};
+$('#spGo').onclick=()=>{if(SP.item)startLearn(SP.item)};
+/* v5.21: direkt ins Lernen – ohne Übersicht dazwischen; Anhören / Frei üben ohne Zwischenfrage */
+function startLearn(it){it=fresh(it);if(!it)return;if(it.type!=='midi'||!it.data)return openItem(it);openMem(it);if(navStack[navStack.length-1]==='mem'&&!MEM.run)awNext()}
+function playAs(it,mode){it=fresh(it);if(!it)return;songStat(it.id).mode=mode;stDirty=true;openItemPlay(it)}
+$('#spPlay').onclick=()=>{if(SP.item)playAs(SP.item,'play')};
+$('#spPract').onclick=()=>{if(SP.item)playAs(SP.item,'learn')};
+$('#spWay').onclick=()=>{if(SP.item)openMem(SP.item)};
 $('#spCmp').onclick=()=>{if(SP.item)openCompare(SP.item)};
 $('#spMenu').onclick=()=>{if(SP.item)openSongMenu(SP.item)};
 /* ===== Auswendig lernen (v5.04 Neubau, v5.06 Weg bis „ganzer Song ohne App“). Ersetzt Stufen-Modus (v4.65–4.72), „Nebel im Fluss“ (v4.86–4.93), v8 (v4.94–5.03). =====
@@ -2810,7 +2862,7 @@ function memHome(){memStop();$('#mem').classList.remove('running','blind');memKb
   $('#memHere').insertAdjacentHTML('beforeend','<div style="margin-top:8px"><button class="btn" id="memReset">↺ Lernstand zurücksetzen</button></div>');
   {const b=$('#memReset');b.onclick=()=>{if(!b.dataset.sure){b.dataset.sure=1;b.textContent='Wirklich alles von vorn? Nochmal tippen';return}
     delete MEM.rec.v9;awState();memHome();try{toast('Lernstand zurückgesetzt – alles von vorn')}catch(e){}}}
-  $('#memHow').innerHTML='Ziel: den ganzen Song <b>ohne App</b> spielen, nur mit Blick aufs Klavier. Der Bildschirm ist nur Starthilfe. Jeder Abschnitt: <b>1. Mitspielen</b> mit Bildschirm, bis es zweimal hintereinander fast ohne Fehler klappt. <b>2. Ausblenden</b>: die Noten verschwinden in drei Stufen – fehlt dir eine, greif einfach, dann erscheint sie. <b>3. Aus dem Kopf</b>: dunkel, ohne Uhr. Greifst du daneben, erscheint der richtige Ton, bis du ihn spielst – und es geht dort weiter. Hat es gehakt, übst du kurz nur diese Stelle. <b>4. Im Puls</b>: dunkel, mit Metronom, 75 → 90 → 100 %. Patzer bremsen nicht – weiterspielen. Danach <b>kalt wiederholen</b>: heute nach 10 Minuten, morgen (= gelernt), nach 3 Tagen (= sitzt), dann alle 14 Tage. <b>Verbinden</b>: Nachbarn am Stück, bis zum ganzen Song. <b>Ganzer Song ohne Klick</b>: die App folgt dir in deinem Tempo, keine Hilfe. An zwei verschiedenen Tagen geschafft = <b>der Song sitzt</b>. 🎹 Tiefstes A = vorführen (ohne Ton) + neu, B daneben = weiß nicht weiter, jede andere Taste nach dem Versuch = weiter.'}
+  $('#memHow').innerHTML='Ziel: den ganzen Song <b>ohne App</b> spielen, nur mit Blick aufs Klavier. Der Bildschirm ist nur Starthilfe. Jeder Abschnitt: <b>1. Mitspielen</b> mit Bildschirm, bis es zweimal hintereinander fast ohne Fehler klappt. <b>2. Ausblenden</b>: die Noten verschwinden in drei Stufen – fehlt dir eine, greif einfach, dann erscheint sie. <b>3. Aus dem Kopf</b>: dunkel, ohne Uhr. Greifst du daneben, erscheint der richtige Ton, bis du ihn spielst – und es geht dort weiter. Hat es gehakt, übst du kurz nur diese Stelle. <b>4. Im Puls</b>: dunkel, mit Metronom, 75 → 90 → 100 % (vorher übst du mit 60 %). Patzer bremsen nicht – weiterspielen. Danach <b>kalt wiederholen</b>: heute nach 10 Minuten, morgen (= gelernt), nach 3 Tagen (= sitzt), dann alle 14 Tage. <b>Verbinden</b>: Nachbarn am Stück, bis zum ganzen Song. <b>Ganzer Song ohne Klick</b>: die App folgt dir in deinem Tempo, keine Hilfe. An zwei verschiedenen Tagen geschafft = <b>der Song sitzt</b>. 🎹 Tiefstes A = vorführen (ohne Ton) + neu, B daneben = weiß nicht weiter, jede andere Taste nach dem Versuch = weiter.'}
 
 /* --- Durchgang starten --- */
 function awSecNotes(a,b){const t0=MEM.gs[a].start-0.001,t1=MEM.gs[b].last+0.001;return MEM.song.notes.filter(n=>n.start>=t0&&n.start<=t1)}
@@ -3062,7 +3114,7 @@ function memAutoOff(){if(MEM.autoT){clearInterval(MEM.autoT);MEM.autoT=null}cons
 function memAutoGo(){if(!MEM.autoT)return;memAutoOff();$('#memNext').click()}
 function memAuto(){memAutoOff();const n=$('#memNext');if(!kbOn()||n.textContent==='Zur Übersicht')return;n.dataset.t=n.textContent;let k=3;const sh=()=>{n.textContent=`${n.dataset.t} (${k})`};sh();$('#memHold').classList.remove('hidden');
   MEM.autoT=setInterval(()=>{k--;if(k<=0)memAutoGo();else sh()},1000)}
-$('#memStop').onclick=()=>{memStop();memHome()};
+$('#memStop').onclick=()=>{memStop();back()}; /* v5.21: Beenden = zurück, wo du herkamst */
 $('#memHold').onclick=()=>memAutoOff();
 $('#memNext').onclick=()=>{memAutoOff();awNext()};
 $('#memGo').onclick=()=>awNext();
@@ -3096,7 +3148,7 @@ function renderStats(){
   const songsPlayed=Object.values(ST.songs).filter(s=>s.time>60).length;
   const secs=Object.values(ST.songs).reduce((a,s)=>a+Object.values(s.sections||{}).filter(x=>x.stars>=3).length,0);
   const accs=Object.values(ST.songs).map(s=>s.best).filter(x=>x>0);
-  const k=[[String(streak()),streak()===1?'Tag in Folge':'Tage in Folge',`Rekord: ${ST.bestStreak}`],[fmtMin(week),'Diese Woche',''],[fmtMin(total),'Gesamt',`${songsPlayed} Songs geübt`],[accs.length?Math.round(accs.reduce((a,b)=>a+b,0)/accs.length*100)+' %':'–','Ø Bestgenauigkeit',`${secs} Abschnitte mit 3 ★`]];
+  const k=[[String(streak()),streak()===1?'Tag in Folge':'Tage in Folge',`Rekord: ${ST.bestStreak}`],[fmtMin(week),'Diese Woche',''],[fmtMin(total),'Gesamt',`${songsPlayed} Songs geübt`],(()=>{const st=LIB.map(songState).filter(x=>x!=null),sit=st.filter(x=>x===2).length,lern=st.filter(x=>x===1).length;return [String(sit),sit===1?'Song sitzt':'Songs sitzen',`${lern} am Lernen`]})()]; /* v5.21: ein Fortschritt – Auswendig-Stand statt Sterne */
   $('#kpis').innerHTML=k.map(([v,l,s])=>`<div class="kpi"><div class="big">${v}</div><div class="mu">${l}</div>${s?`<div class="mu xs" style="margin-top:4px;color:var(--mu2)">${s}</div>`:''}</div>`).join('');
   const b=$('#bars14'),bl=$('#blab14');b.innerHTML='';bl.innerHTML='';const goal=S.goal*60;let mx=goal,sum=0;const ds=[];
   for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=ST.days[dayKey(d)]||0;ds.push([d,v]);mx=Math.max(mx,v);sum+=v}
@@ -3587,7 +3639,7 @@ function openSong(s,id,resume){
   ST.last={id,am:null,bm:null};stDirty=true;
   navStack.push('player');show('player');syncUI();pokeUI();try{audio();loadSamples()}catch(e){}
   const sm=songStat(id).mode;if(sm){S.wait=sm==='learn';resetPointers(t);newPass();syncUI()}
-  else{for(const b of $$('#modeModal [data-pick]'))b.classList.toggle('on',(b.dataset.pick==='learn')===S.wait);$('#pDim').classList.add('on');$('#modeModal').classList.add('on')}
+  else{songStat(id).mode=S.wait?'learn':'play';stDirty=true} /* v5.21: keine Zwischenfrage mehr – umschalten geht in der Leiste (Abspielen | Üben) */
   $('#hint').textContent='Tippe auf die Noten zum Starten';
   if(s.oneColor)setTimeout(()=>toast('Im Video sind beide Hände gleich gefärbt – deshalb sind alle Noten einer Hand (rechts) zugeordnet, genau wie im Video.',5000),600);
 }
@@ -3730,7 +3782,7 @@ function layoutKeys(){
   if(kbH!==lastKbH||W!==lastW){lastKbH=kbH;lastW=W;$('#hint').style.bottom=(kbH+44)+'px'}
 }
 function draw(waiting,now=performance.now()){
-  if(!song||!W)return;fingSong(song);{const fb=$('#pFlag');if(fb){fb.style.display=S.fingers!==true?'none':'';fb.style.color=ffNear()?'#E24B4A':''}}
+  if(!song||!W)return;fingSong(song);{const fb=$('#pFlag');if(fb){fb.style.display=S.fingers!==true||!isDev()?'none':'';fb.style.color=ffNear()?'#E24B4A':''}}
   const aw0=waiting||(listening()?groups[gi]:null);const T=(aw0&&S.wait&&t>aw0.start&&!aw0.notes.every(n=>n.hit))?aw0.start:t;
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#100E0B';ctx.fillRect(0,0,W,H);layoutKeys();
   const look=S.look,pps=hitY/look; // window in song-seconds → at 0.5× the notes fall half as fast
@@ -3879,7 +3931,7 @@ function showRes(r,kind,lp){
   if(r){$('#resStars').innerHTML=[0,1,2].map(i=>i<r.stars?'★':'<span class="off">★</span>').join('');$('#resAcc').textContent=Math.round(r.acc*100)+' %';
     $('#rP').textContent=r.p;$('#rG').textContent=r.g;$('#rM').textContent=r.m;$('#res3').classList.remove('hidden');
     $('#resNote').textContent=['Weiter üben – langsamer hilft!','Guter Anfang!','Stark gespielt!','Perfekt! Versuch es schneller.'][r.stars];}
-  else{$('#resStars').innerHTML='🎹';$('#resAcc').textContent='Geschafft!';$('#res3').classList.add('hidden');$('#resNote').textContent='Schalte „Treffer zählen“ oder den Lern-Modus ein, um Sterne zu sammeln.'}
+  else{$('#resStars').innerHTML='🎹';$('#resAcc').textContent='Geschafft!';$('#res3').classList.add('hidden');$('#resNote').textContent='Im Modus „Üben“ zählt die App deine Treffer.'}
   window._resLoop=lp||null;
 }
 function hideRes(){$('#resModal').classList.remove('on');if(!$('.sheet.on'))$('#pDim').classList.remove('on')}
@@ -4121,7 +4173,7 @@ async function shotSend(){const tok=ghTok();if(!tok){toast('Kein Diagnose-Schlü
     cmp:CMP?{flags:tlFlags(),T:cmpVT()-CMP.off,vt:cmpVT(),off:CMP.off,speed:CMP.speed,lo:CMP.lo,aspect:CMP.g&&CMP.g.ar,notes:CMP.notes.length,step:CMP.step,litT:CMP.litT,lit:CMP.lit?[...CMP.lit]:null,cover:CMP.cover,vt,quality:(function(){try{return ytp.getPlaybackQuality()}catch(e){return null}})(),geo:CMP.g}:null};
   const a=await ghUpload(`diag/shots/${ts}.jpg`,jpg,'Bildschirmfoto '+ts),b=await ghUpload(`diag/shots/${ts}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(info)))),'Bildschirmfoto Daten '+ts);
   toast(a.ok&&b.ok?'📷 gesendet':'Senden fehlgeschlagen: '+(a.err||b.err),a.ok&&b.ok?1800:4000,true)}
-const shotFabShow=()=>{const f=$('#shotFab');if(f)f.classList.toggle('hidden',!ghTok())};
+const shotFabShow=()=>{const f=$('#shotFab');if(f)f.classList.toggle('hidden',!ghTok());devSync()};
 $('#shotFab').onclick=async()=>{const f=$('#shotFab');f.style.visibility='hidden';await sleep(120);try{await shotSend()}finally{f.style.visibility='';}};
 $('#shotBtn').onclick=()=>{toast('Foto in 8 s',3500,true);setTimeout(()=>{shotSend()},8000)};
 $('#smCmp').onclick=()=>{if(smItem)openCompare(smItem)};
@@ -4157,7 +4209,7 @@ function artSvg(kind){
 const ONB=[
   {art:'fall',h:'Willkommen!',p:'Leg dein Handy aufs Klavier. Die Noten fallen von oben auf die Tasten – spiel sie, wenn sie unten ankommen.'},
   {art:'tools',h:'Üben, wie du willst',p:'Langsamer spielen, nur eine Hand üben oder einen schwierigen Abschnitt so oft wiederholen, bis er sitzt.'},
-  {art:'ear',h:'Die App hört zu',p:'Im Lern-Modus laufen die Noten erst weiter, wenn du den richtigen Ton triffst. Verbinde dazu dein Keyboard per Bluetooth.'},
+  {art:'keys',h:'Verbinde dein Klavier',p:'Mit einem Bluetooth-Klavier wartet das Lied, bis du den richtigen Ton triffst – und beim Auswendiglernen geht es von selbst weiter.'},
   {art:'keys',h:'Wie viele Tasten hat dein Klavier?',p:'Ein normales Klavier hat 88 Tasten. Keyboards haben oft 76, 61 oder 49.',lay:true},
 ];
 let onbI=0;
@@ -4355,7 +4407,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.17 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.21 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -4406,7 +4458,7 @@ const savePF=()=>saveW('kt_profile',PF);
 $('#pfSave').onclick=()=>{const m=$('#pfMail').value.trim();if(m&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){toast('Diese E-Mail-Adresse sieht nicht richtig aus');return}
   PF.name=$('#pfName').value.trim();PF.email=m;savePF();toast('Profil gespeichert');back()};
 const initials=()=>{const p=(PF.name||'').trim().split(/\s+/).filter(Boolean);return p.length?(p[0][0]+(p[1]?p[1][0]:'')).toUpperCase():'?'};
-function paintAv(){for(const id of ['#homeAv','#setAv','#pfAv']){const el=$(id);if(!el)continue;el.textContent=initials();el.style.background=(PAL[PF.col]||PAL.blue).l}const sn=$('#setName');if(sn)sn.textContent=PF.name||'Profil'}
+function paintAv(){for(const id of ['#homeAv','#setAv','#pfAv','#meAv']){const el=$(id);if(!el)continue;el.textContent=initials();el.style.background=(PAL[PF.col]||PAL.blue).l}const sn=$('#setName');if(sn)sn.textContent=PF.name||'Profil'}
 function renderProfile(){$('#pfName').value=PF.name;$('#pfMail').value=PF.email;$('#pfSince').textContent='Dabei seit '+new Date(PF.since).toLocaleDateString('de-DE',{month:'long',year:'numeric'});
   const el=$('#pfCol');el.innerHTML='';for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(PF.col===k?' on':'');b.style.borderRadius='50%';b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.l}"></i>`;b.onclick=()=>{PF.col=k;savePF();renderProfile()};el.appendChild(b)}
   const total=Object.values(ST.days).reduce((a,b)=>a+b,0),songs=Object.values(ST.songs).filter(x=>x.time>60).length;
