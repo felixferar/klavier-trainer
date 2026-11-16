@@ -17,8 +17,8 @@
  /* 1 falscher Ton beim Kennenlernen (≤ 30 Anschläge) = nicht sauber */
  R=runWait(R=>{if(R.pos===R.a+2&&!R.w1){R.w1=1;memPress(wrongKeyOf(R.pos),'kb')}});o.learnWrong=[R.ok,ch(0).st];
  /* tiefstes A = vorspielen mit Klang, dann neu */
- awNext();R=MEM.run;tones=[];memPress(21,'kb');o.demo=[!!MEM.run.pv];tick(3);o.demoTones=tones.length;R=MEM.run;memPress(60,'kb');tick(0.1);o.demoSkip=!R.pv;
- R=runWait();o.learnOk=[R.ok,ch(0).st];
+ awNext();R=MEM.run;tones=[];memPress(21,'kb');o.demo=[!!MEM.run.pv];tick(3);o.demoTones=tones.length;R=MEM.run;for(const m of MEM.gs[R.a].mids)memPress(m,'kb');tick(0.1);o.along=[!!R.pv,MEM.run===R,R.pos===R.a,R.wrong,[...MEM.gs[R.a].mids].every(m=>MEM.good.has(m)),$('#memSkip')!=null];$('#memSkip').click();tick(0.1);o.demoSkip=!R.pv&&$('#memSkip')==null;
+ R=runWait();o.learnOk=[R.ok,ch(0).st];memPress(21,'kb');o.doneDemo=[!!R.pv,!MEM.autoT];play(R.a);tick(0.3);o.doneAlong=[MEM.run===R,R.done,!!R.pv];tick(12);o.doneAfter=[!R.pv,MEM.run===R];
  p=awPick();o.p2=p.mode;awNext();R=MEM.run;awDraw();o.anchor=[R.dark,R.drawState];
  /* Hilfe (B): Griff bleibt stehen, bis er gespielt ist */
  play(R.pos);play(R.pos);memPress(22,'kb');const hj=R.pos;tick(20);awDraw();o.helpStays=[R.hints,R.drawState,R.show===hj];play(R.pos);o.helpGone=R.show==null;R=runWait();o.headHelp=[R.ok,ch(0).st];

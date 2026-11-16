@@ -1,4 +1,4 @@
-"""v5.26 Auswendig v6 (musikalischer Schneeball) – Regeln einzeln geprüft. Konzept: claude/konzept-auswendig-v6.md
+"""v5.26/v5.27 Auswendig v6 (v5.27: beim Vorspielen mitspielen) (musikalischer Schneeball) – Regeln einzeln geprüft. Konzept: claude/konzept-auswendig-v6.md
 4–6 Formteile (> 30 Anschläge → 2 Hälften, Zwilling übernimmt, fast gleich erkannt) · 3 Stufen je 1× sauber (Kennenlernen mit Noten · Aus dem Kopf dunkel mit
 Start-Anker, 0 Hilfen, Hilfe bleibt stehen · Im Fluss) · lokaler Schneeball (max. 3 Teile) · ganzer Song an 2 Tagen · 1 Streifer bei > 30 Anschlägen ·
 Vorspielen mit Klang nur auf Knopf / tiefstes A · Wiederholungen gebündelt am Anfang, misslungen → Balken sinkt · Hand-Filter L/R/L+R · Übernahme aus v9.
@@ -18,7 +18,9 @@ async def main():
     c = {'4–6 Formteile; > 30 Anschläge → 2 Hälften; Zwilling und „fast gleich“ erkannt': r['partsOk'],
          'Start: Teil 1 Kennenlernen mit Noten, Vorspiel-Knopf, Hand-Umschalter': r['p1'] == ['learn', 0] and r['learnScreen'] == [True, True, True],
          'Kennenlernen: 1 falscher Ton (≤ 30 Anschläge) = nicht sauber': r['learnWrong'] == [False, 0],
-         'tiefstes A = vorspielen MIT Klang, Taste überspringt': r['demo'] == [True] and r['demoTones'] >= 4 and r['demoSkip'],
+         'tiefstes A = vorspielen MIT Klang': r['demo'] == [True] and r['demoTones'] >= 4,
+         'beim Vorspielen mitspielen: kein Abbruch, kein neuer Versuch, nichts zählt, Tasten grün; Überspringen nur per Knopf': r['along'] == [True, True, True, 0, True, True] and r['demoSkip'],
+         'nach dem Durchgang: tiefes A spielt vor, Mitspielen startet keinen neuen Versuch, kein Auto-Weiter': r['doneDemo'] == [True, True] and r['doneAlong'] == [True, True, True] and r['doneAfter'] == [True, True],
          'Kennenlernen 1× sauber → Aus dem Kopf': r['learnOk'] == [True, 1] and r['p2'] == 'head',
          'Aus dem Kopf: dunkel mit Start-Anker': r['anchor'] == [True, 'anker'],
          'Hilfe (B): Griff bleibt stehen, bis gespielt; zählt als nicht sauber': r['helpStays'] == [1, 'hilfe', True] and r['helpGone'] and r['headHelp'] == [False, 1],

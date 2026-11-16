@@ -615,7 +615,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.26</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.27</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2976,13 +2976,16 @@ function awClicks(R,v,p){const gs=MEM.gs,bt=awBeat(),bp=bt.p,t0=gs[R.a].start;R.
   if(R.timed){R.vt=t0;R.wait0=true;R.wt=0}R.ck=0;R.ap=0;R.beat=bt}
 function awClickUpTo(R){let k=null;while(R.ck<R.clicks.length&&R.vt>=R.clicks[R.ck].t)k=R.clicks[R.ck++];if(k)try{playClick()}catch(e){}} /* höchstens ein Klick je Bild (springt das Lied vor, kein Klick-Gewitter) */
 /* Vorspielen (v6): die Noten fallen sichtbar und klingen (Klavierklang) – nur auf Knopfdruck oder mit dem tiefsten A. Danach startet der Durchgang neu. */
-function awDemo(R){const gs=MEM.gs,b=R.mode==='whole'?Math.min(R.b,MEM.C[0].b):R.b;R.pv={t:gs[R.a].start-1.2*AW.demoSpeed,end:gs[b].end+0.3,q:0,snd:true};R.demos++}
+function awDemo(R){memAutoOff();const gs=MEM.gs,b=R.mode==='whole'?Math.min(R.b,MEM.C[0].b):R.b;R.pv={t:gs[R.a].start-1.2*AW.demoSpeed,end:gs[b].end+0.3,q:0,snd:true};R.demos++;awSkipUI(true)}
+/* v5.27: Vorspielen läuft immer bis zum Ende – du darfst mitspielen (richtige Tasten grün), nichts zählt, nichts bricht ab. Überspringen nur per Knopf. */
+function awSkipUI(on){const o=$('#memSkip');if(o)o.remove();if(!on)return;const g=$('#memGoal');if(!g)return;g.insertAdjacentHTML('afterbegin','<button class="btn" id="memSkip" style="width:100%;height:40px;margin-top:6px">⏭ Vorspielen überspringen</button>');$('#memSkip').onclick=()=>{const R=MEM.run;if(R&&R.pv)R.pv.t=R.pv.end+1}}
+function awAlong(R,m,now){const t=R.pv.t,ok=R.ns.some(n=>n.midi===m&&n.start-0.35<=t&&t<=n.start+Math.max(0.35,n.dur));if(ok)MEM.good.set(m,now);else MEM.flash.set(m,now)}
 function awDemoSound(R){const pv=R.pv;if(!pv||!pv.snd)return;while(pv.q<R.ns.length&&R.ns[pv.q].start<=pv.t){const n=R.ns[pv.q++];if(n.start<=MEM.gs[Math.min(R.b,MEM.gs.length-1)].end+0.01)try{playTone(n.midi,n.dur/AW.demoSpeed,n.vel||0.8)}catch(e){}}}
 /* Hilfe (nur Aus dem Kopf): der gesuchte Griff bleibt stehen, bis er gespielt ist */
 function awShow(R){if(!R||R.done||R.pv||R.pos>R.b||R.mode!=='head'||R.show!=null)return;R.hints++;awMk(R,R.pos).help=1;R.show=R.pos;R.anchor=false;if(!R.helpAt.includes(R.pos))R.helpAt.push(R.pos);awDraw()}
 function awNext(){const p=awPick();if(!p){memStop();memHome();return}awStart(p)}
 /* tiefstes A: läuft ein Versuch → vorspielen (mit Klang) und neu; der Versuch zählt nicht (eine Wiederholung gilt als nicht geschafft). Nach dem Versuch → nur vorspielen */
-function awRestart(R){if(R.done){awDemo(R);return}const v=awState(),c=v.ch[R.k],now=memNow();
+function awRestart(R){if(R.pv||R.done){awDemo(R);return} /* läuft das Vorspielen schon oder ist der Versuch fertig: (nochmal) von vorn vorspielen, ohne Wertung */const v=awState(),c=v.ch[R.k],now=memNow();
   if(R.mode==='rev'){awRevFail(v,R.k,now);memSaveAll();awLog(R,false,{abort:'A'});return awStart({k:R.k,mode:'head'},true)}
   if(R.mode==='whole'&&R.rev){v.whole.due=now+AW.iv[1]}
   if(R.mode!=='learn')c.fails++;c.last=now;memSaveAll();awLog(R,false,{abort:'A'});const p={k:R.k,mode:R.mode,half:R.half,rev:R.rev};if(R.span){p.s=R.span.s;p.e=R.span.e}
@@ -2992,7 +2995,7 @@ function awRevFail(v,k,now){const c=v.ch[k];c.st=Math.min(c.st,1);c.box=0;c.due=
 /* --- Eine Uhr für alles --- */
 function awTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   if(R.kb0&&!kbOn()&&!R.done){memStop();memHome();try{toast('Klavier getrennt – der Durchgang zählt nicht.',3500)}catch(e){}return} /* v4.55/v5.04: Klavier weg → abbrechen, zählt nicht */
-  if(R.pv){R.pv.t+=dt*AW.demoSpeed;awDemoSound(R);if(R.pv.t>R.pv.end){R.pv=null;if(!R.timed)R.vt=gs[R.a].start-1.2*R.speed;if(R.mode!=='whole')awClicks(R,awState(),{k:R.k})}return}
+  if(R.pv){R.pv.t+=dt*AW.demoSpeed;awDemoSound(R);if(R.pv.t>R.pv.end){R.pv=null;awSkipUI(false);if(R.done)R.doneClock=R.clock;if(!R.timed)R.vt=gs[R.a].start-1.2*R.speed;if(R.mode!=='whole')awClicks(R,awState(),{k:R.k})}return}
   if(R.done)return;
   if(R.mode==='whole'&&R.pos<=R.b&&R.ht[R.a]!=null&&R.clock-(R.lastProg||0)>8){R.skipAt=(R.skipAt||[]).concat([R.pos]);for(let j=R.pos;j<=R.b;j++){R.miss++;awMk(R,j).miss=1}R.pos=R.b+1;R.stall=1;R.stallS=8;awFinish();return} /* v5.16: ganzer Song hängt 8 s → Ende, die Stelle wird geübt */
   if(!R.timed){ /* mitspielen / ausblenden / aus dem Kopf / Problemstelle / ganzer Song: das Lied wartet bzw. folgt dir – keine Zeit-Hilfe */
@@ -3006,8 +3009,8 @@ function awTick(R,dt){R.clock+=dt;const gs=MEM.gs;
 /* --- Tasten --- */
 function memPress(m,src){const R=MEM.run;if(!R)return;const now=performance.now();
   if(m===AW.restart)return awRestart(R);
+  if(R.pv){awAlong(R,m,now);return} /* v5.27: beim Vorspielen mitspielen – kein Abbruch, kein neuer Versuch */
   if(R.done){if(R.clock-R.doneClock>0.7){memAutoOff();awNext()}return}
-  if(R.pv){R.pv.t=R.pv.end+1;return} /* v5.16: beim Vorführen zählt nichts – eine Taste überspringt es (vorher reagierte nichts, bis es zu Ende war) */
   if(m===AW.helpKey&&R.dark){awShow(R);return}
   const gs=MEM.gs;R.lastKey=R.clock;
   if(!R.timed){if(R.pos>R.b)return;const G=gs[R.pos],nx0=gs[R.pos+1]||null;
@@ -3143,7 +3146,7 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
   if(pv)for(const n of R.ns)if(n.start<=t&&t<n.start+Math.max(0.15,n.dur))pre.add(n.midi); /* beim Vorführen leuchten die Tasten mit */
   if(R.dark&&!pv){c.fillStyle='#000';c.fillRect(0,0,p.w,hn)}
   c.save();c.translate(0,hn);const on=(m,t0)=>!!t0&&((KB.held.has(m)&&t0>=(KB.rel.get(m)||0))||now-Math.max(t0,KB.rel.get(m)||0)<120);
-  MEM.pos=drawKeys(c,lo,hi,p.w,kb,(m,b)=>{const w=MEM.flash.get(m),gd=MEM.good.get(m);if(!pv&&w&&on(m,w)&&!(gd&&gd>w))return '#E5484D';if(!pv&&gd&&on(m,gd))return '#3BB273';if(pre.has(m))return b?'#2F6FB0':'#A9D4FF';return b?'#2C2C2A':'#E8E6DF'},true);c.restore();
+  MEM.pos=drawKeys(c,lo,hi,p.w,kb,(m,b)=>{const w=MEM.flash.get(m),gd=MEM.good.get(m);if(w&&on(m,w)&&!(gd&&gd>w))return '#E5484D';if(gd&&on(m,gd))return '#3BB273'; /* v5.27: auch beim Vorspielen – Mitspielen sichtbar */if(pre.has(m))return b?'#2F6FB0':'#A9D4FF';return b?'#2C2C2A':'#E8E6DF'},true);c.restore();
   if(tj!=null||pv)for(let m=lo;m<=hi;m++){const k=MEM.pos[m];if(!k||k.b)continue;const fs=Math.min(11,Math.max(7,k.w*0.45));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle=pre.has(m)?'rgba(10,40,80,.95)':'rgba(40,40,40,.55)';c.fillText(NAMES[m%12]+(m%12===0?Math.floor(m/12)-1:''),k.x+k.w/2,hn+kb-6)}
   for(let m=lo;m<=hi;m++){const k=MEM.pos[m];if(!k||!k.b)continue;const fs=Math.min(9,Math.max(6,k.w*0.42));c.font=`700 ${fs}px Inter,system-ui`;c.textAlign='center';c.fillStyle='rgba(255,255,255,.75)';c.fillText(NAMES[m%12],k.x+k.w/2,hn+kb*0.6-5)}
   /* Fingerzahlen (Fingersatz v5.06/5.07) – Beschriftung über der Klaviatur, geklemmt an die Kante */
@@ -3159,7 +3162,7 @@ function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepC
     for(let q=0;q<R.ns.length;q++){const n=R.ns[q],j=R.nj[q];if(!pv&&j>=R.pos&&awHidden(R,j))continue; /* Ausblenden: versteckte Noten fallen unsichtbar */
       const yb=Y(n.start),yt=yb-Math.max(0.12,n.dur)*pps;if(yb<0||yt>hn)continue;const hitN=!pv&&j>=0&&R.hit[j]&&R.hit[j].has(n.midi),missN=!pv&&j>=0&&R.proc[j]&&!hitN;bar(n.midi,Math.max(0,yt),yb,missN?'#6b7079':noteCol(n),n)}}
   c.restore();
-  if(pv){msg('Hör zu und schau zu – so klingt es. Danach bist du dran (eine Taste überspringt).','Vorspielen');return}
+  if(pv){msg('Hör zu – du kannst gleich mitspielen (zählt nicht). Danach bist du dran.','Vorspielen');return}
   if(R.done)return;
   if(R.mode==='learn')msg(R.pos>R.b?'Geschafft ✓':'Kennenlernen: spiel die blauen Tasten – das Lied wartet auf dich. ▶ Vorspielen oder tiefstes A = mit Klang anhören.',`Anschlag ${Math.min(R.b,R.pos)-R.a+1} von ${R.b-R.a+1}`);
   else if(R.timed&&R.wait0){c.textAlign='center';c.fillStyle='rgba(59,178,115,.95)';c.font='800 34px Inter,system-ui';c.fillText('Start',p.w/2,40);
@@ -4493,7 +4496,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.26 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.27 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
