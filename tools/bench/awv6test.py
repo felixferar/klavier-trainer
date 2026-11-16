@@ -15,7 +15,9 @@ async def main():
         await br.close()
     print(json.dumps(r, ensure_ascii=False), errs)
     K = r['nParts']
-    c = {'4–6 Formteile; > 30 Anschläge → 2 Hälften; Zwilling und „fast gleich“ erkannt': r['partsOk'],
+    L = [x[1] for x in r['parts']]
+    c = {'Häppchen nach Last (≤ 26, außer dem letzten ≥ 12 bzw. an Formgrenzen), Formteil-Grenzen an Ruheton/Atempause': max(L) <= 26 and r['cutsOk'],
+         '4–6 Formteile; langer schneller Teil (44 Anschläge) → mehrere Häppchen; Zwilling und „fast gleich“ erkannt': 4 <= len(r['forms']) <= 6 and r['longSplit'] >= 2 and any(x[3] >= 0 for x in r['parts']) and any(x[4] >= 0 for x in r['parts']),
          'Start: Teil 1 Kennenlernen mit Noten, Vorspiel-Knopf, Hand-Umschalter': r['p1'] == ['learn', 0] and r['learnScreen'] == [True, True, True],
          'Kennenlernen: 1 falscher Ton (≤ 30 Anschläge) = nicht sauber': r['learnWrong'] == [False, 0],
          'tiefstes A = vorspielen MIT Klang': r['demo'] == [True] and r['demoTones'] >= 4,
@@ -27,9 +29,9 @@ async def main():
          'Aus dem Kopf: falscher Ton ohne Hilfe zeigt nichts an, zählt aber (≤ 30)': r['headWrong'] == [False, 0, 1],
          'Aus dem Kopf 1× sauber → Im Fluss → sitzt, Wiederholung morgen': r['headOk'] == [True, 2] and r['p3'] == 'flow' and r['flowOk'][:4] == ['flow', True, 3, 1] and 18 <= r['flowOk'][4] <= 22,
          'Schneeball 1+2 direkt nach Teil 2': r['part2'] == [3] and r['snow1'] == ['snow', 0, 1] and r['snow1ok'] == [True, True],
-         'Hälften: Kennenlernen/Kopf je Hälfte, dann ganzer Teil aus dem Kopf und im Fluss': r['halves'] is None or all(r['halves']),
-         'Genau gleicher Teil übernimmt den Stand (kein neues Lernen)': r['twinSkipped'],
-         'Schneeball höchstens 3 Teile (1+2, 1+2+3, 2+3+4 …)': r['snowMax3'] and len(r['snowSpans']) == K - 1 and r['snowSpans'][0] == 'S0-1' and (K < 3 or r['snowSpans'][1] == 'S0-2') and (K < 4 or r['snowSpans'][2] == 'S1-3') and r['snowSpans'][-1] == f'S{K-3}-{K-1}',
+         
+         'Genau gleiches Häppchen übernimmt den Stand (kein neues Lernen)': r['twinSkipped'],
+         'Schneeball: höchstens 3 Häppchen im Formteil, Naht zum vorigen Formteil, jedes Häppchen gekoppelt; lange Formteile einmal am Stück': r['snowMax3'] and r['snowAll'] and r['snowSpans'][0] == 'S0-1' and r['formRuns'] == r['formNeed'],
          '> 30 Anschläge: 1 Streifer erlaubt, 2 nicht': r.get('tol2', [None])[0] is False and r.get('tol') == [True, 1, 1],
          'erst alle Teile + Schneebälle, dann der ganze Song': r['allSit'] and r['w1'] == 'whole',
          'ganzer Song Tag 1 → morgen nochmal (jetzt nichts mehr)': r['w1r'][:2] == [True, 1] and r['after1'] is None,

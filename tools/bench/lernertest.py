@@ -1,4 +1,4 @@
-"""v5.26 (Auswendig v6): Virtueller Lerner – ein simulierter Spieler (fester Zufall, reproduzierbar) lernt einen Song (Form A B A B' C, C lang und schnell)
+"""v5.26/v5.28 (Auswendig v6, Häppchen + Formteile): Virtueller Lerner – ein simulierter Spieler (fester Zufall, reproduzierbar) lernt einen Song (Form A B A B' C, C lang und schnell)
 über bis zu 14 Tage: er greift daneben, denkt lange nach und bittet dann um Hilfe (B ganz links), hört sich Teile an (tiefstes A), spielt im Fluss mit
 leichtem Zittern und vergisst über Nacht. Alles läuft über die eine Uhr des Auswendig-Modus (awTick) – ohne Warten.
 Geprüft wird:
@@ -17,7 +17,7 @@ async def main():
         pg = await br.new_page(viewport={'width': 780, 'height': 360}); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto('file://' + sys.argv[1]); await pg.wait_for_timeout(2500); await pg.evaluate("localStorage.clear()")
         r = await pg.evaluate(JS, [seed]); await br.close()
-    print('Teile [Anschläge, Hälften, Zwilling, fast wie]:', r['parts'])
+    print('Häppchen [Anschläge, Last, Formteil, Zwilling, fast wie]:', r['parts'])
     for d in r['days']:
         if d['att']: print(f"Tag {d['day']:2}: {d['att']:2} Versuche ({d['ok']} sauber, {d['rev']} Wiederholungen) · Stufen {d['st']} · Schneeball {d['sn']} · ganzer Song {d['whole']}/2 · {d['pct']} %")
     print('Versuche je Modus:', r['att']); print('Versuche je Teil [gesamt, sauber]:', r['perPart'])
@@ -29,10 +29,10 @@ async def main():
          'kein hängender Durchgang': r['stuck'] == 0,
          'Hilfe und Fehler kamen vor (der Lerner ist nicht perfekt)': r['help'] >= 2 and r['wrongs'] >= 5,
          'Vorspielen klingt': r['demos'] == 0 or r['demoTones'] == r['demos'],
-         'alle Stufen kamen vor (Kennenlernen, Kopf, Fluss, Hälften, Schneeball, ganzer Song, Wiederholung)': all(k in r['att'] for k in ['learn', 'head', 'flow', 'learn½', 'head½', 'snow', 'whole', 'rev']),
-         'alle Teile sitzen am ersten Tag': r['allSit'] == 0,
+         'alle Stufen kamen vor (Kennenlernen, Kopf, Fluss, Schneeball, ganzer Song, Wiederholung)': all(k in r['att'] for k in ['learn', 'head', 'flow', 'snow', 'whole', 'rev']),
+         'alle Häppchen sitzen am ersten Tag': r['allSit'] == 0,
          'Ziel erreicht: der Song sitzt nach wenigen Tagen': r['songSits'] is not None and r['songSits'] <= 3,
-         f'überschaubar: höchstens 25 Versuche je Teil (schlimmster: {worst})': worst <= 25}
+         f'überschaubar: höchstens 25 Versuche je Häppchen (schlimmster: {worst})': worst <= 25}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)
 asyncio.run(main())

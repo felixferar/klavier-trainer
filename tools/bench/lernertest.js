@@ -6,7 +6,7 @@ async([seed])=>{let S0=seed>>>0;const rnd=()=>{S0|=0;S0=S0+0x6D2B79F5|0;let t=Ma
  const notes=[];let t=0;const sec=(mel,d)=>{mel.forEach((m,i)=>{notes.push({m,start:t,dur:d*0.9,hand:'R'});if(i%4===0)notes.push({m:43+(i/4%4)*2,start:t,dur:d*3.6,hand:'L'});t+=d});t+=0.9};
  sec(A,0.32);sec(B,0.32);sec(A,0.32);sec(B2,0.32);sec(Cs,0.2);
  const it={id:'lerner6',type:'midi',title:'Lerner v6',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);
- const DAY=864e5,T0=Date.UTC(2026,10,16,17);window.AW_NOW=T0;openMem(it);out.parts=MEM.C.map(P=>[P.n,!!P.h,P.twin,P.near]);
+ const DAY=864e5,T0=Date.UTC(2026,10,16,17);window.AW_NOW=T0;openMem(it);out.parts=MEM.C.map(P=>[P.n,P.L,MEM.F[P.f].lab,P.twin,P.near]);
  const gs=()=>MEM.gs,tick=s=>{for(let x=0;x<s;x+=1/60){const R=MEM.run;if(!R)return;awTick(R,1/60)}},play=j=>{for(const m of gs()[j].mids)memPress(m,'kb')};
  const wrongKeyOf=j=>{let m=Math.max(...gs()[j].mids)+1;while(gs()[j].mids.has(m)||(gs()[j+1]&&gs()[j+1].mids.has(m)))m++;return m};
  /* Gedächtnis je Anschlag: wächst mit jedem Spielen, sinkt über Nacht */
