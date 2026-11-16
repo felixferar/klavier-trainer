@@ -554,7 +554,7 @@ body.short #onbDots{margin:8px 0}
       <div class="li"><div class="grow"><b>YouTube-Umwandlung aufzeichnen</b><small>Speichert nach der nächsten Umwandlung eine Diagnose-Datei. Schick sie an Claude, dann lässt sich die Erkennung mit deinem echten Video verbessern.</small></div><input type="checkbox" class="sw" id="diagChk"></div>
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.19</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.20</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -4355,7 +4355,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.19 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.20 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -4767,7 +4767,7 @@ function finishCore(raw,preview){
          Measured: Prüfstand stoer 24 videos 181 of 193 bar-less ghosts gone, 1 real note lost; 10 real YouTube runs 13 ghosts gone, 0 real notes lost. */
       {const W=e=>isWhitePC(e.m%12)?0:1,md=(f,k)=>{const a=ev.filter(e=>e.bar&&e[f]>0&&W(e)===k).map(e=>e[f]).sort((p,q)=>p-q);return a.length>=3?a[a.length>>1]:null};
         const RC=[md('ch',0),md('ch',1)],RS=[md('sa',0),md('sa',1)];
-        const ghost=e=>{if(e.bar||e.early||e.sa==null)return false;const k=W(e);if(!RC[k]||!RS[k])return false;if(e.sa<0.6*RS[k])return true;
+        const ghost=e=>{if(e.bar||e.early||e.sa==null)return false;const k=W(e);if(!RC[k]||!RS[k])return false;if(e.sa<0.6*RS[k]||(e.sa<0.4&&e.sa<0.75*RS[k]))return true; /* v5.20: skin is pale in absolute terms (sat ≈ 0.3); note colours on real/synthetic videos ≥ 0.52 */
           if(!(e.ch<0.6*RC[k]))return false;return ev.some(h=>h!==e&&h.m!==e.m&&Math.abs(h.m-e.m)<=2&&RC[W(h)]&&h.ch>=0.8*RC[W(h)]&&h.start<e.end&&e.start<h.end)};
         const gone=new Set(ev.filter(ghost));if(gone.size)ev=ev.filter(e=>!gone.has(e))}
       /* v5.17 object over the keys: ≥ 4 bar-less notes, overlapping in time, each ≤ 3 semitones from the next, all the same colour (± 12°) = one object
