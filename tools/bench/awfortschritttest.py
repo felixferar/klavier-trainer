@@ -10,7 +10,7 @@ JS = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};window.playClick=()=>
  const runWait=()=>{const R=MEM.run;let g=0;while(!R.done&&g++<300&&MEM.run===R){if(R.pv){tick(0.5);continue}if(R.pos<=R.b)play(R.pos);tick(0.1)}return R};
  o.n=MEM.C.length;const p0=awProg();o.start=p0.total;o.weights=Math.abs(p0.segs.reduce((a,x)=>a+x.f,0)+p0.L.f+p0.W.f-1)<1e-9;
  o.homeBig=/0 %/.test($('#memSum .big').textContent)&&/noch 100 %/.test($('#memSum').textContent)&&/Noch: \d+ neu/.test($('#memSum').textContent);
- o.homeSegs=$('#memSum .awBar').querySelectorAll('i').length===o.n+2&&$('#memSum .awBar i.cur')!=null&&/ohne App/.test($('#memSum .awLab').textContent)&&/am Stück/.test($('#memSum .awLab').textContent)&&$$('#memSum .awLab .awFlab').length===MEM.F.length;
+ o.homeSegs=$('#memSum .awBar').querySelectorAll('i').length===o.n+2&&$('#memSum .awBar i.cur')!=null&&/ohne App/.test($('#memSum .awLab').textContent)&&/Formteile/.test($('#memSum .awLab').textContent)&&$$('#memSum .awLab .awFlab').length===MEM.F.length;
  /* Weg eines Abschnitts: jede Stufe mehr = mehr Prozent */
  const seq=[{st:0,h:[0,0]},{st:0,h:[1,0]},{st:0,h:[2,0]},{st:0,h:[2,1]},{st:0,h:[2,2]},{st:1,h:[2,2]},{st:2},{st:3}].map(x=>awChP(Object.assign({h:null},x)));
  o.mono=seq.every((x,i)=>i===0||x>seq[i-1])&&seq[0]===0&&seq[seq.length-1]===1;
@@ -50,7 +50,7 @@ async def main():
     for name, r in res.items():
         c = {'Start 0 %, Gewichte ergeben 100 %': r['start'] == 0 and r['weights'],
              'Übersicht: große Zahl, „noch 100 %“, „Noch: x neu“': r['homeBig'],
-             'Übersicht: Teilstücke = Häppchen + am Stück + ganzer Song, Formteil-Buchstaben, nächster markiert, Beschriftung': r['homeSegs'],
+             'Übersicht: Teilstücke = Häppchen + Formteile + ganzer Song, Formteil-Buchstaben, nächster markiert, Beschriftung': r['homeSegs'],
              'jede Stufe eines Teils (auch je Hälfte) zählt mehr (0 → 100 %)': r['mono'],
              'Spielbildschirm: Balken mit allen Teilstücken, aktueller markiert, „Song 0 %“': r['runSegs'],
              'nach fehlerfreiem Durchgang „+x %“, Wert steigt': r['gain'] == [True, True, True],

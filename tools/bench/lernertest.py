@@ -29,7 +29,7 @@ async def main():
          'kein hängender Durchgang': r['stuck'] == 0,
          'Hilfe und Fehler kamen vor (der Lerner ist nicht perfekt)': r['help'] >= 2 and r['wrongs'] >= 5,
          'Vorspielen klingt': r['demos'] == 0 or r['demoTones'] == r['demos'],
-         'alle Stufen kamen vor (Kennenlernen, Kopf, Fluss, Schneeball, ganzer Song, Wiederholung)': all(k in r['att'] for k in ['learn', 'head', 'flow', 'snow', 'whole', 'rev']),
+         'alle Schritte kamen vor (mit Noten, aus dem Kopf, Kette, ganzer Song, Wiederholung)': all(k in r['att'] for k in ['learn', 'head', 'snowk', 'whole', 'rev']),
          'alle Häppchen sitzen spätestens am zweiten Tag (max. 45 Versuche pro Tag)': r['allSit'] is not None and r['allSit'] <= 1,
          'Ziel erreicht: der Song sitzt nach wenigen Tagen': r['songSits'] is not None and r['songSits'] <= 3,
          f'überschaubar: höchstens 25 Versuche je Häppchen (schlimmster: {worst})': worst <= 25}
