@@ -12,8 +12,8 @@ async([seed,notesIn,daysIn])=>{let S0=seed>>>0;const rnd=()=>{S0|=0;S0=S0+0x6D2B
  const wrongKeyOf=j=>{let m=Math.max(...gs()[j].mids)+1;while(gs()[j].mids.has(m)||(gs()[j+1]&&gs()[j+1].mids.has(m)))m++;return m};
  /* Gedächtnis je Anschlag: wächst mit jedem Spielen, sinkt über Nacht */
  const mem=new Float64Array(gs().length).fill(0);
- const pErr=(R,j)=>{const m=mem[j];if(R.mode==='learn')return 0.03;const base=R.mode==='head'?0.35:R.mode==='whole'?0.12:0.18;return base*Math.pow(1-m,2)};
- const learnFrom=R=>{for(let j=R.a;j<=R.b;j++)mem[j]=Math.min(1,mem[j]+(R.mode==='learn'?0.25:0.18))};
+ const pErr=(R,j)=>{if(R.mode==='lhead')return 0.08;const m=mem[j];if(R.mode==='learn')return 0.03;const base=R.mode==='head'?0.35:R.mode==='whole'?0.12:0.18;return base*Math.pow(1-m,2)};
+ const learnFrom=R=>{if(R.mode==='lhead'){const P=MEM.C[R.k];for(let j=P.a;j<=P.b;j++)mem[j]=Math.min(1,mem[j]+0.1);return}for(let j=R.a;j<=R.b;j++)mem[j]=Math.min(1,mem[j]+(R.mode==='learn'?0.25:0.18))};
  const doRun=()=>{awNext();const R=MEM.run;if(!R)return null;const key=R.mode+(R.half!=null?'½':'');out.att[key]=(out.att[key]||0)+1;
    if(R.mode==='learn'&&rnd()<0.3){memPress(21,'kb');out.demos++;const n0=tones.length;tick(4);if(tones.length>n0)out.demoTones++;}
    const RR=MEM.run;let g=0;
@@ -21,7 +21,7 @@ async([seed,notesIn,daysIn])=>{let S0=seed>>>0;const rnd=()=>{S0|=0;S0=S0+0x6D2B
        while(q<=RR.b&&!RR.pv&&RR.vt>=gs()[q].start+(0.03+(rnd()-0.5)*0.04)*RR.speed){if(rnd()<pErr(RR,q)){memPress(wrongKeyOf(q),'kb');out.wrongs++}play(q);q++}}}
    else if(RR.mode==='whole'){while(!RR.done&&g++<20000&&MEM.run===RR){if(RR.pos<=RR.b){const j=RR.pos;if(rnd()<pErr(RR,j)){memPress(wrongKeyOf(j),'kb');out.wrongs++}play(j);tick(j<RR.b?Math.max(0.02,gs()[j+1].start-gs()[j].start):0.1)}else tick(0.1)}}
    else{while(!RR.done&&g++<3000&&MEM.run===RR){if(RR.pv){tick(0.5);continue}if(RR.pos<=RR.b){const j=RR.pos;
-       if(RR.mode!=='learn'&&!RR.anchor&&rnd()<pErr(RR,j)){if((RR.mode==='head'||RR.mode==='snowk')&&rnd()<0.5){/* weiß nicht weiter: lange nachdenken, dann Hilfe */const sh=RR.hints;tick(3);if(RR.show!=null)V('Hilfe schon vor 5 s');tick(3);if(RR.show!==j||RR.hints!==sh+1)V('keine Hilfe nach 5 s');out.help++;tick(10);if(RR.show!==j)V('Hilfe bleibt nicht stehen');}
+       if(RR.mode!=='learn'&&!RR.anchor&&rnd()<pErr(RR,j)){if((RR.mode==='head'||RR.mode==='snowk')&&rnd()<0.5){/* weiß nicht weiter: lange nachdenken, dann Hilfe */const sh=RR.hints;tick(8);if(RR.show!=null||RR.hints!==sh)V('Hilfe ohne Abruf');memPress(22,'kb');out.help++;tick(6);if(RR.show!==j)V('Hilfe bleibt nicht stehen');}
          else{memPress(wrongKeyOf(j),'kb');out.wrongs++;if(RR.mode==='head'&&RR.show!=null&&!RR.hints)V('falscher Ton zeigt Hilfe')}}
        else if(RR.mode==='learn'&&rnd()<pErr(RR,j)){memPress(wrongKeyOf(j),'kb');out.wrongs++}
        play(j)}tick(0.1)}}

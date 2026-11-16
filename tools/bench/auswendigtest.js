@@ -12,9 +12,9 @@
  /* Vorspielen mit Klang + mitspielen */
  tones=[];memPress(21,'kb');tick(3);o.demo=[tones.length>=4,!!MEM.run.pv];R=MEM.run;play(R.a);tick(0.1);o.along=[!!R.pv,R.pos===R.a];$('#memSkip').click();tick(0.1);
  R=runWait(R=>{if((R.pos===R.a+3||R.pos===R.a+7)&&!R['w'+R.pos]){R['w'+R.pos]=1;memPress(wrongKeyOf(R.pos),'kb')}});o.learn2wrong=[R.ok,R.wrong,v().ch[0].st];
- /* 2. aus dem Kopf: dunkel, Anker, Positionsleiste, Hilfe nach 5 s mit Zusammenhang; 1 Hilfe bei 13 Griffen erlaubt */
+ /* 2. aus dem Kopf: dunkel, Anker, Positionsleiste; v5.33: keine Hilfe von selbst, nur auf Abruf (B) mit Zusammenhang; 1 Hilfe erlaubt */
  p=awPick();o.p2=lbl(p);awNext();R=MEM.run;awDraw();o.anchor=[R.dark,R.drawState,R.lead];play(R.a);tick(0.2);awDraw();o.dark=[R.drawState,R.posTxt];
- play(R.pos);tick(4);o.before5=R.show;const al=[];const ctx=$('#memCv').getContext('2d'),fr=ctx.fillRect;ctx.fillRect=function(){al.push(+this.globalAlpha.toFixed(2));return fr.apply(this,arguments)};tick(1.5);awDraw();ctx.fillRect=fr;
+ play(R.pos);tick(12);o.before5=[R.show,R.hints];memPress(22,'kb');const al=[];const ctx=$('#memCv').getContext('2d'),fr=ctx.fillRect;ctx.fillRect=function(){al.push(+this.globalAlpha.toFixed(2));return fr.apply(this,arguments)};tick(1.5);awDraw();ctx.fillRect=fr;
  o.after5=[R.show===R.pos,R.hints,R.drawState,al.includes(0.45),al.includes(0.3)];R=runWait();o.head1help=[R.ok,R.hints,v().ch[0].st,v().ch[0].box];
  /* 3. Häppchen 2 → aus dem Kopf: 2 Hilfen = nicht geschafft; 3× nicht geschafft → einmal mit Noten */
  run();p=awPick();o.p3=lbl(p);const tries=[];for(let i=0;i<3;i++){R=run(R=>{if((R.pos===R.a+2||R.pos===R.a+6)&&!R['h'+R.pos]){R['h'+R.pos]=1;memPress(22,'kb')}});tries.push([R.ok,R.hints])}
@@ -22,12 +22,12 @@
  p=awPick();o.afterRe=lbl(p);R=run();o.head2=[R.ok,v().ch[1].st];
  /* 4. Kette 1–2: wartet, dunkel, Anker, 1 Hilfe bei 26 Griffen ok */
  p=awPick();o.p4=lbl(p);awNext();R=MEM.run;awDraw();o.chainScreen=[R.dark,R.drawState,R.timed,R.n];R=runWait(R=>{if(R.pos===C()[1].a&&!R.h){R.h=1;memPress(22,'kb')}});o.chain=[R.ok,R.hints,v().ch[1].st];
- /* 5. Häppchen 3 mit Kette 1–3; Kette 3× nicht geschafft → Kette einmal mit Noten */
+ /* 5. Häppchen 3 mit Naht 2–3; 3× vorne nicht geschafft → Naht einmal mit Noten (Anti-Schleife) */
  run();run();p=awPick();o.p5=lbl(p);const ct=[];for(let i=0;i<3;i++){R=run(R=>{if([C()[1].a,C()[1].a+3,C()[2].a].includes(R.pos)&&!R['h'+R.pos]){R['h'+R.pos]=1;memPress(22,'kb')}});ct.push([R.ok,R.hints])}
- o.chainFails=ct;p=awPick();o.chainRe=[lbl(p),p.a,p.b,C()[0].a,C()[2].b];R=run();o.chainReOk=[R.ok,!!v().re];p=awPick();o.afterChainRe=lbl(p);
+ o.chainFails=ct;p=awPick();o.chainRe=[lbl(p),p.a,p.b,C()[1].a,C()[2].b];R=run();o.chainReOk=[R.ok,!!v().re];p=awPick();o.afterChainRe=lbl(p);
  /* 6. Rest perfekt bis zum ganzen Song – Reihenfolge merken */
  const seq=[];let g=0;while(g++<60){p=awPick();if(!p||p.mode==='whole')break;seq.push(lbl(p));R=run()}o.seq=seq;o.whole=p&&p.mode;
- o.twin=[C().map(P=>P.twin),seq.some(x=>x==='learn(5)'||x==='head(5)'),seq.includes('snowk(3-5)'),v().ch[4].st,!v().ch[4].tk];
+ o.twin=[C().map(P=>P.twin),seq.some(x=>/\(5\)|-5\)|\(5-/.test(x)),v().ch[4].st,!v().ch[4].tk,C().map(P=>P.near),seq];
  /* 7. ganzer Song Tag 1 → morgen; nächster Tag: Wiederholungen gebündelt, dann ganzer Song → sitzt */
  R=run();o.w1=[R.ok,new Set(v().whole.days).size,awPick()];
  window.AW_NOW=T0+DAY+2*36e5;openMem(it);const seq2=[];g=0;let failed=-1;
@@ -42,4 +42,10 @@
  /* 10. langer Formteil (> 3 Häppchen) → einmal ganz am Stück, nach der Kette */
  MEMS.aw={};openMem(it);MEM.F=[{s:0,e:4,lab:'A',t0:0,t1:0},{s:5,e:C().length-1,lab:'B',t0:0,t1:0}];C().forEach((P,k)=>P.f=k<=4?0:1);v().ch.forEach((c,k)=>{if(k<=4)c.st=3});
  o.form=[lbl(awPick()),awNeedForm(0),awNeedForm(1)];awNext();o.formRun=[MEM.run.timed,MEM.run.dark,MEM.run.anchor];
+/* 11. v5.33 Rückwärts-Flicken: Häppchen 3 aus dem Kopf 2× hinten gescheitert → ab 3 Griffe vor der Stelle bis zum Ende → danach wieder ganz */
+ MEMS.aw={};openMem(it);v().ch.forEach((c,k)=>{if(k<2){c.st=3;c.box=1;c.due=T0+DAY}else if(k===2)c.st=1});memSaveAll();MEM.sess={revOver:true};
+ p=awPick();o.bc0=lbl(p);const P3=C()[2],back=[P3.b-2,P3.b-1,P3.b];const bt=[];for(let i=0;i<2;i++){R=run(R=>{if(back.includes(R.pos)&&!R['x'+R.pos]){R['x'+R.pos]=1;memPress(wrongKeyOf(R.pos),'kb')}});bt.push([R.ok,R.worst])}
+ p=awPick();o.bc=[lbl(p),!!p.bc,p.a,p.b,bt,P3.a,P3.b];R=run();o.bcOk=[R.ok,!!v().bc];p=awPick();o.bcAfter=[lbl(p),!!p.bc,p.a];
+ /* 12. v5.33 dichtes Häppchen: erst linke Hand allein aus dem Kopf, dann beide mit Noten */
+ MEMS.aw={};openMem(it);MEM.sess={revOver:true};C()[0].dense=true;p=awPick();awNext();R=MEM.run;o.lh=[lbl(p),MEM.gs===MEM.gsL,R.dark,MEM.gs.every(G=>[...G.hands.values()].every(h=>h==='L'))];R=runWait();o.lhOk=[R.ok,v().ch[0].lh];p=awPick();awNext();o.lhAfter=[lbl(p),MEM.gs===MEM.gsAll,MEM.run.dark];
  return o}
