@@ -8,7 +8,7 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';const up=[];le
  const it={id:'pr',type:'midi',title:'Proto',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];openMem(it);memHome();const gs=MEM.gs;await new Promise(r=>setTimeout(r,50));o.up0=up.length;
  window.AW_NOLOOP=true;const play=()=>{const R=MEM.run;let g=0;while(!R.done&&g++<300){if(R.pos<=R.b)for(const m of gs[R.pos].mids)memPress(m,'kb');awTick(R,1)}};
  $('#memGo').click();play();memStop();memHome();await new Promise(r=>setTimeout(r,50));
- o.up1=up.length;const u=up[0]||{};o.path=u.path||'';o.ent=(u.body&&u.body.entries||[]).map(e=>[e.mode,e.ok,e.song]);o.snap=!!(u.body&&u.body.snap&&u.body.snap.chunks&&u.body.snap.state);o.ver=u.body&&u.body.v;
+ o.up1=up.length;const u=up[0]||{};o.path=u.path||'';o.ent=(u.body&&u.body.entries||[]).map(e=>[e.mode,e.ok,e.song]);o.snap=!!(u.body&&u.body.snap&&u.body.snap.parts&&u.body.snap.state);o.ver=u.body&&u.body.v;
  /* gleich nochmal: nichts Neues → kein Upload */
  memHome();await new Promise(r=>setTimeout(r,50));o.up2=up.length;
  /* neuer Versuch innerhalb von 2 min → wartet */
@@ -29,10 +29,10 @@ async def main():
         await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(3500);await pg.evaluate("localStorage.clear()")
         r=await pg.evaluate(JS);print(json.dumps(r,ensure_ascii=False),errs)
         c={'ohne Versuch kein Upload':r['up0']==0,
-           'nach dem Versuch: Upload nach diag/learn mit Versuch, Abschnitten, Stand, Version':r['up1']==1 and r['path'].startswith('diag/learn/') and r['ent']==[['find',1,'pr']] and r['snap'] and bool(__import__('re').match(r'^\d+\.\d+$',r['ver'] or '')),
+           'nach dem Versuch: Upload nach diag/learn mit Versuch, Abschnitten, Stand, Version':r['up1']==1 and r['path'].startswith('diag/learn/') and r['ent']==[['learn',1,'pr']] and r['snap'] and bool(__import__('re').match(r'^\d+\.\d+$',r['ver'] or '')),
            'nichts Neues → kein Upload':r['up2']==1,'innerhalb von 2 min → wartet':r['up3']==1,
-           'danach nur der neue Versuch':r['up4']==2 and r['ent4'] in (['find'],['fade']),
-           'Fehlschlag → geht beim nächsten Mal mit':r['up5']==3 and r['ent5'] in (['find'],['fade']),
+           'danach nur der neue Versuch':r['up4']==2 and r['ent4'] in (['learn'],['head']),
+           'Fehlschlag → geht beim nächsten Mal mit':r['up5']==3 and r['ent5'] in (['learn'],['head']),
            'eigenes Protokoll, unabhängig vom alten':r['logN']>=2,'ohne Schlüssel nichts':r['noTok'],'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await br.close()
 asyncio.run(main())

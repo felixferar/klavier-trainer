@@ -20,7 +20,7 @@ CONTRAST=r"""()=>{
 SEED=r"""()=>{localStorage.clear();localStorage.setItem('kt_onb','1');
  const mk=(n,o)=>{const ns=[];let t=0;for(let i=0;i<n;i++){ns.push({m:60+(i*3+o)%14,start:t,dur:.4,hand:i%3?'R':'L'});t+=.45}return ns};
  LIB=[{id:'a',type:'midi',title:'Für Elise',artist:'Beethoven',data:b64FromBuf(writeMidi(mk(80,0)))},{id:'b',type:'midi',title:'River Flows in You',artist:'Yiruma',data:b64FromBuf(writeMidi(mk(60,2)))}];save('kt_lib',LIB);
- openMem(LIB[0]);const ch=MEM.rec.v9.ch;ch[0].box=2;ch[0].due=Date.now()+9e8;memSaveAll();navStack.length=0;navStack.push('home');show('home');setTab('start');ST.last={id:'a'};renderHome();return 1}"""
+ openMem(LIB[0]);const ch=MEM.rec.v10.ch;ch[0].st=3;ch[0].box=2;ch[0].due=Date.now()+9e8;memSaveAll();navStack.length=0;navStack.push('home');show('home');setTab('start');ST.last={id:'a'};renderHome();return 1}"""
 async def main():
   async with async_playwright() as p:
     br=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])

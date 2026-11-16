@@ -1,4 +1,4 @@
-"""v5.04: Bildschirm-Prüfung Auswendig-Modus (quer 780×360 und hoch 360×760).
+"""v5.04, v5.26 (Auswendig v6: Im Fluss statt Puls, Hand-Umschalter, Vorspiel-Knopf): Bildschirm-Prüfung Auswendig-Modus (quer 780×360 und hoch 360×760).
 - „Weiß nicht weiter“ im Dunkeln: voll deckend (keine Abdunklung), im Bild, Kontrast Schrift/Hintergrund ≥ 4,5
 - Zustände: Start-Anker (Anschlag sichtbar), dunkel, Hilfe sichtbar, Puls mit „Start“ (wartet auf den ersten Ton) – Bildschirmfotos nach /tmp/awsicht_*.png zum Ansehen
 - „Beenden“ und „Weiter“ erreichbar
@@ -7,7 +7,7 @@ import sys, asyncio, json
 from playwright.async_api import async_playwright
 SETUP = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};KB.state='off';const notes=[];let t=0;
  for(let bar=0;bar<8;bar++){notes.push({m:48+(bar%4)*2,start:t,dur:1.9,hand:'L'});for(let q=0;q<4;q++)notes.push({m:64+((bar+q)%5)*2,start:t+q*0.5,dur:0.45,hand:'R'});t+=2}
- const it={id:'sicht',type:'midi',title:'Sicht',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);openMem(it);MEM.rec.v9.ch[0].st=1;return true}"""
+ const it={id:'sicht',type:'midi',title:'Sicht',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);openMem(it);MEM.rec.v10.ch[0].st=1;return true}"""
 EFF = r"""(sel)=>{const el=document.querySelector(sel);if(!el)return null;let o=1,x=el;while(x&&x.nodeType===1){o*=parseFloat(getComputedStyle(x).opacity);x=x.parentElement}
  const lum=c=>{const v=(c.match(/[\d.]+/g)||[0,0,0]).slice(0,3).map(Number).map(v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4});return 0.2126*v[0]+0.7152*v[1]+0.0722*v[2]};
  let bg=null;x=el;while(x){const b=getComputedStyle(x).backgroundColor;const a=(b.match(/[\d.]+/g)||[]);if(b&&b!=='transparent'&&!(a.length===4&&+a[3]===0)){bg=b;break}x=x.parentElement}
@@ -31,8 +31,9 @@ async def main():
             await pg.screenshot(path=f'/tmp/awsicht_{name}_dunkel.png')
             await pg.evaluate("()=>{document.querySelector('#memHelp').click()}"); await pg.wait_for_timeout(100)
             st['hilfe'] = await pg.evaluate("MEM.run.drawState"); await pg.screenshot(path=f'/tmp/awsicht_{name}_hilfe.png')
-            st['beenden'] = await pg.evaluate(EFF, '#memStop')
-            await pg.evaluate("()=>{const v=MEM.rec.v9;v.ch[0].st=2;awStart({k:0,mode:'puls'});const R=MEM.run;for(let i=0;i<45;i++)awTick(R,1/30);awDraw()}"); await pg.wait_for_timeout(100)
+            st['beenden'] = await pg.evaluate(EFF, '#memStop'); st['hand'] = await pg.evaluate(EFF, '#memHandR .awHand button.on')
+            await pg.evaluate("()=>{awStart({k:0,mode:'learn'});awDraw()}"); await pg.wait_for_timeout(100); st['vorspielen'] = await pg.evaluate(EFF, '#memDemo'); await pg.screenshot(path=f'/tmp/awsicht_{name}_kennenlernen.png')
+            await pg.evaluate("()=>{const v=MEM.rec.v10;v.ch[0].st=2;awStart({k:0,mode:'flow'});const R=MEM.run;for(let i=0;i<45;i++)awTick(R,1/30);awDraw()}"); await pg.wait_for_timeout(100)
             st['puls'] = await pg.evaluate("MEM.run.drawState"); st['zaehlen'] = await pg.evaluate("$('#memMsg').textContent")
             await pg.screenshot(path=f'/tmp/awsicht_{name}_puls.png')
             await pg.evaluate("()=>{awFinish()}"); await pg.wait_for_timeout(100)
@@ -44,9 +45,10 @@ async def main():
     for name, st in res.items():
         k, kd = st['knopf'], st['knopfDunkel']
         c[f'{name}: Knopf „Weiß nicht weiter“ voll deckend, im Bild, Kontrast ≥ 4,5'] = all(x and x['opacity'] >= 0.99 and x['inView'] and x['contrast'] >= 4.5 and not x['disabled'] for x in (k, kd))
-        c[f'{name}: Zustände Anker → dunkel → Hilfe → Puls'] = (st['anker'], st['dunkel'], st['hilfe'], st['puls']) == ('anker', 'dunkel', 'hilfe', 'start') and 'Start' in st['zaehlen']
+        c[f'{name}: Zustände Anker → dunkel → Hilfe → Im Fluss (Start)'] = (st['anker'], st['dunkel'], st['hilfe'], st['puls']) == ('anker', 'dunkel', 'hilfe', 'start') and 'Start' in st['zaehlen']
         c[f'{name}: Beenden und Weiter erreichbar'] = st['beenden']['opacity'] >= 0.99 and st['weiter']['inView'] and st['weiter']['opacity'] >= 0.99
+        c[f'{name}: Hand-Umschalter und Vorspiel-Knopf sichtbar, Kontrast ≥ 4,5'] = all(x and x['inView'] and x['opacity'] >= 0.99 and x['contrast'] >= 4.5 for x in (st['hand'], st['vorspielen']))
         c[f'{name}: keine Fehler'] = not st['fehler']
-    print(c); print('Bilder: /tmp/awsicht_*.png'); print('OK' if all(c.values()) else 'FEHLER')
+    print(c); print('Bilder: /tmp/awsicht_*.png'); print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)
 
 asyncio.run(main())

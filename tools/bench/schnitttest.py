@@ -1,4 +1,4 @@
-"""v4.96: Abschnitte nach Menge statt nach Takt + Song-Karte.
+"""v4.96 (v5.26: die Phrasen sind jetzt die Bausteine der Formteile – Karte/Durchgang nach Formteilen): Abschnitte nach Menge statt nach Takt + Song-Karte.
 Prüft: kein Mini-Abschnitt (Last < 3, z. B. „nur zwei Töne halten“) außer ganz am Ende; jeder Abschnitt ≤ 10 s; jede Phrasenpause wird als Schnitt genutzt;
 wiederholte Stellen gelten als bekannt (weniger Last); alter Lernstand (Takt-Abschnitte) wird durch neuen ersetzt; Übersicht zeigt eine Song-Karte
 (ein Feld je Abschnitt, Breite nach Dauer, der nächste markiert, Legende); Durchgang nennt die Zeit des Abschnitts."""
@@ -12,14 +12,14 @@ JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
  localStorage.setItem('kt_mem',JSON.stringify({}));openMem(it);
  /* alter v8-Stand mit anderer Abschnittszahl (z. B. Takt-Abschnitte) → wird nicht übernommen */
  const nb=Math.round((t)/2);delete MEMS.sc.v9;MEMS.sc.v8={n:nb,ch:Array.from({length:nb},()=>({box:2,due:0,st:1}))};memSaveAll();openMem(it);memHome();
- const gs=MEM.gs,C=MEM.C,ld=(()=>{const sig=gs.map(awGSig),seen=new Set(),l=[];for(let j=0;j<gs.length;j++){const key=(j?sig[j-1]:'^')+'|'+sig[j]+'|'+(j+1<gs.length?sig[j+1]:'$');l.push(seen.has(key)?0.3:1);seen.add(key)}return l})();o.n=C.length;o.oldBars=nb;
+ const gs=MEM.gs,C=awChunks(MEM.gs),PC=MEM.C,ld=(()=>{const sig=gs.map(awGSig),seen=new Set(),l=[];for(let j=0;j<gs.length;j++){const key=(j?sig[j-1]:'^')+'|'+sig[j]+'|'+(j+1<gs.length?sig[j+1]:'$');l.push(seen.has(key)?0.3:1);seen.add(key)}return l})();o.n=C.length;o.oldBars=nb;
  o.small=C.slice(0,-1).filter(c=>c.load<3).length;o.maxDur=Math.max(...C.map(c=>c.t1-c.t0));
  const cutT=C.slice(0,-1).map(c=>gs[c.b+1].start);o.atRest=cutT.filter(x=>rests.some(r=>Math.abs(x-(r+0.8))<0.15)).length;o.cuts=cutT.length;o.nRests=rests.length;
  const half=gs.findIndex(G=>G.start>=rests[2]-0.01);o.knownLater=ld.slice(half).filter(x=>x<1).length/ld.slice(half).length;o.knownEarly=ld.slice(0,8).filter(x=>x<1).length;
- o.reset=MEM.rec.v9.ch.length===C.length&&MEM.rec.v9.ch.every(c=>c.box===0&&c.st===0)&&!MEM.rec.v8;
+ o.reset=MEM.rec.v10.ch.length===PC.length&&MEM.rec.v10.ch.every(c=>c.box===0&&c.st===0)&&!MEM.rec.v8;o.np=PC.length;
  const map=document.querySelectorAll('#memSum .v8map i');o.mapN=map.length;o.outlined=[...map].filter(e=>e.style.outline.includes('solid')).length;o.leg=$('#memSum').textContent;
- const w0=parseFloat(map[0].style.flexGrow),wl=C.map(c=>c.t1-c.t0);o.prop=Math.abs(w0-Math.max(0.6,wl[0]))<0.01;
- $('#memGo').click();o.runT=$('#memRunT').textContent;o.rng=[MEM.run.a,MEM.run.b,C[0].a,C[0].b];
+ const w0=parseFloat(map[0].style.flexGrow),wl=PC.map(c=>c.t1-c.t0);o.prop=Math.abs(w0-Math.max(0.6,wl[0]))<0.01;
+ $('#memGo').click();o.runT=$('#memRunT').textContent;o.rng=[MEM.run.a,MEM.run.b,PC[0].a,PC[0].h?PC[0].h[0].b:PC[0].b];
  return o}"""
 async def main():
     async with async_playwright() as p:
@@ -32,7 +32,7 @@ async def main():
            'Wiederholungen gelten als bekannt':r['knownEarly']==0 and r['knownLater']>=0.5,
            'weniger Abschnitte als Takte':r['n']<r['oldBars'],
            'alter Takt-Lernstand ersetzt':r['reset'],
-           'Song-Karte: ein Feld je Abschnitt, nach Dauer, nächster markiert, Legende':r['mapN']==r['n'] and r['outlined']==1 and r['prop'] and 'gelernt' in r['leg'] and 'Nächstes' in r['leg'],
+           'Song-Karte: ein Feld je Abschnitt, nach Dauer, nächster markiert, Legende':r['mapN']==r['np'] and r['outlined']==1 and r['prop'] and 'sitzt' in r['leg'] and 'Nächstes' in r['leg'],
            'Durchgang nutzt den Abschnitt und nennt die Zeit':r['rng'][0]==r['rng'][2] and r['rng'][1]==r['rng'][3] and '0:00' in r['runT'],
            'keine Fehler':not errs}
         print(c);print('OK' if all(c.values()) else 'FEHLER');await br.close()

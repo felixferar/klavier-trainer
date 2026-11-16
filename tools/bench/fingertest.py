@@ -56,13 +56,13 @@ JS_EDGE = r"""()=>{S.fingers=true;const mk=(ns,id)=>({id,type:'midi',title:'Kant
 JS_FLOW = r"""()=>{S.fingers=true;let cnt=0;const dF=drawFinger;drawFinger=function(){const r=dF.apply(this,arguments);if(r)cnt++;return r};
  const LH=[48,43,45,41],notes=[];let tt=0;for(let bar=0;bar<4;bar++){notes.push({m:LH[bar],start:tt,dur:1.9,hand:'L'});[72,74,76,77].forEach((m,q)=>notes.push({m:m+(bar%2?-5:0),start:tt+q*0.5,dur:0.45,hand:'R'}));tt+=2}
  const it={id:'fl',type:'midi',title:'Fluss',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB.push(it);localStorage.removeItem('kt_mem');
- openMem(it);const o={};awStart({k:0,mode:'find'});let R=MEM.run;o.mode1=R.mode;R.vt=MEM.gs[R.a].start-0.2;cnt=0;awDraw();o.find=cnt;o.st1=R.drawState;
+ openMem(it);const o={};awStart({k:0,mode:'learn'});let R=MEM.run;o.mode1=R.mode;R.vt=MEM.gs[R.a].start-0.2;cnt=0;awDraw();o.find=cnt;o.st1=R.drawState;
  S.fingShow='alle';const ys=[];const dF2=drawFinger;drawFinger=function(c,n,cx,yb,h,w){const r=dF2.apply(this,arguments);if(r&&yb-r<MEM.hn-r)ys.push(yb-2);return r};
  R.vt=MEM.gs[R.a].start+0.3;awDraw();o.awBottom=ys.length?Math.max(...ys):null;o.awHn=MEM.hn;drawFinger=dF2;delete S.fingShow;
  awStart({k:0,mode:'head'});R=MEM.run;o.mode2=R.mode;o.dark=!!R.dark;cnt=0;awDraw();o.recall=cnt;o.st2=R.drawState;
  R.anchor=false;R.show=R.pos;cnt=0;awDraw();o.hint=cnt;o.st3=R.drawState;drawFinger=dF;try{memStop()}catch(e){}return o}"""
 JS_MEM = r"""()=>{const it=LIB[0];let ok=true;try{openMem(it)}catch(e){ok=String(e)}return {ok}}"""
-JS_MEM2 = r"""()=>{S.fingers=true;let e=null;try{awStart({k:0,mode:'find'})}catch(x){e=String(x)}try{awDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
+JS_MEM2 = r"""()=>{S.fingers=true;let e=null;try{awStart({k:0,mode:'learn'})}catch(x){e=String(x)}try{awDraw()}catch(x){e=e||String(x)}return {err:e,memFing:!!(MEM&&MEM.song&&MEM.song.notes.some(n=>n.fing))}}"""
 
 async def main():
     async with async_playwright() as p:
@@ -112,7 +112,7 @@ async def main():
             'standard_jeder_ton': orr['std'] == 5, 'orientierung_nur_erste': orr['orient'] == 1 and orr['alle'] == 5,
             'kante_ueber_klaviatur_kein_ueberlappen': edge_ok and any(fr['items'] for fr in ed),
             'beschriftung_springt_nicht': springt_ok,
-            'auswendig_finden_zeigt_zahlen': fw['mode1'] == 'find' and fw['find'] >= 1,
+            'auswendig_finden_zeigt_zahlen': fw['mode1'] == 'learn' and fw['find'] >= 1,
             'auswendig_aus_dem_kopf_zahl_nur_auf_gezeigtem_ton': fw['mode2'] == 'head' and fw['dark'] and 0 < fw['recall'] <= 4 and 0 < fw['hint'] <= 4, # v5.25: Schalter an → im Dunkeln nur die Zahl auf dem gezeigten Ton (Start, Hilfe)
             'auswendig_zahl_ueber_klaviatur': fw['awBottom'] is not None and fw['awBottom'] <= fw['awHn'],
             'auswendig_ok': m['ok'] is True, 'auswendig_finger': m2['memFing'] and not m2['err'], 'keine_pageerror': not errs,
