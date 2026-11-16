@@ -400,7 +400,7 @@ body.short #onbDots{margin:8px 0}
 .stBadge.b0{color:var(--mu);border:1px solid var(--bd2)}.stBadge.b1{color:var(--gold);background:var(--acs)}.stBadge.b2{color:var(--good);background:rgba(92,225,166,.13)}
 #filt{display:flex}#filt button{flex:1}
 .spDuo{display:flex;gap:10px;margin-top:12px}.spDuo .btn{flex:1;height:50px;font-size:16px;font-weight:800;border-radius:14px}
-#songp .topbar .sp,#mem .topbar .sp{flex:1}
+#songp .topbar .sp{flex:1}#mem .topbar .ttl{min-width:0}
 #meProf{margin-bottom:6px}#meProf .avatar{flex:none}
 details.werk{margin-top:18px;border:1px dashed var(--bd2);border-radius:14px;padding:0 12px}
 details.werk summary{list-style:none;padding:14px 4px;font-weight:800;color:var(--mu);cursor:pointer}details.werk summary::-webkit-details-marker{display:none}
@@ -753,7 +753,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
   </div>
 </div>
 <div id="mem" class="screen hidden">
-  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Auswendig lernen</div><span class="sp"></span><button id="memKb" class="kbchip" style="background:none;border:0;color:var(--tx);font:inherit"><span class="dot"></span><span class="t"></span></button></div>
+  <div class="topbar"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="ttl" style="font-size:17px">Auswendig</div><span class="sp"></span><button id="memKb" class="kbchip" style="background:none;border:0;color:var(--tx);font:inherit"><span class="dot"></span><span class="t"></span></button></div>
   <div class="scroll" style="flex:1;padding:0 16px 30px">
     <div id="memHome">
       <div style="font-weight:800;font-size:18px;margin:8px 0 2px" id="memSong"></div>
