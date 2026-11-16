@@ -19,7 +19,7 @@ async([seed])=>{let S0=seed>>>0;const rnd=()=>{S0|=0;S0=S0+0x6D2B79F5|0;let t=Ma
    if(RR.timed){let q=RR.a;while(!RR.done&&g++<300000&&MEM.run===RR){awTick(RR,1/120);if(RR.wait0&&!RR.pv){tick(0.3);play(q);q++;continue}
        while(q<=RR.b&&!RR.pv&&RR.vt>=gs()[q].start+(0.03+(rnd()-0.5)*0.04)*RR.speed){if(rnd()<pErr(RR,q)){memPress(wrongKeyOf(q),'kb');out.wrongs++}play(q);q++}}}
    else{while(!RR.done&&g++<3000&&MEM.run===RR){if(RR.pv){tick(0.5);continue}if(RR.pos<=RR.b){const j=RR.pos;
-       if(RR.mode!=='learn'&&rnd()<pErr(RR,j)){if(RR.mode==='head'&&rnd()<0.5){/* weiß nicht weiter: lange nachdenken, dann Hilfe */const sh=RR.hints;tick(12);if(RR.show!=null||RR.hints!==sh)V('Zeit-Hilfe ohne Wunsch');memPress(22,'kb');out.help++;tick(2);if(RR.show!==j)V('Hilfe bleibt nicht stehen');}
+       if(RR.mode!=='learn'&&rnd()<pErr(RR,j)){if(RR.mode==='head'&&rnd()<0.5){/* weiß nicht weiter: lange nachdenken, dann Hilfe */const sh=RR.hints;tick(3);if(RR.show!=null)V('Hilfe schon vor 5 s');tick(3);if(RR.show!==j||RR.hints!==sh+1)V('keine Hilfe nach 5 s');out.help++;tick(10);if(RR.show!==j)V('Hilfe bleibt nicht stehen');}
          else{memPress(wrongKeyOf(j),'kb');out.wrongs++;if(RR.mode==='head'&&RR.show!=null&&!RR.hints)V('falscher Ton zeigt Hilfe')}}
        else if(RR.mode==='learn'&&rnd()<pErr(RR,j)){memPress(wrongKeyOf(j),'kb');out.wrongs++}
        play(j)}tick(0.1)}}

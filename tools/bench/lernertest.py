@@ -2,7 +2,7 @@
 über bis zu 14 Tage: er greift daneben, denkt lange nach und bittet dann um Hilfe (B ganz links), hört sich Teile an (tiefstes A), spielt im Fluss mit
 leichtem Zittern und vergisst über Nacht. Alles läuft über die eine Uhr des Auswendig-Modus (awTick) – ohne Warten.
 Geprüft wird:
-- keine Zeit-Hilfe, Hilfe nur auf Wunsch und sie bleibt stehen; ein falscher Ton zeigt nichts an
+- v5.30: Hilfe nach 5 s von selbst (vorher nicht), sie bleibt stehen; ein falscher Ton zeigt nichts an
 - Wiederholungen nie am ersten Tag und nur gebündelt am Anfang einer Sitzung
 - kein hängender Durchgang, keine Seitenfehler; Vorspielen klingt
 - Ziel: alle Teile sitzen am ersten Tag, der Song sitzt (ganzer Song an 2 Tagen) nach wenigen Tagen; überschaubare Versuche je Teil
@@ -25,7 +25,7 @@ async def main():
     for x in r['viol']: print('  VERSTOSS', x)
     worst = max(v[0] for v in r['perPart'].values()) if r['perPart'] else 0
     c = {'keine Seitenfehler': not errs,
-         'keine Zeit-Hilfe, Hilfe bleibt stehen, Wiederholungen nur gebündelt am Anfang und nie am ersten Tag (0 Verstöße)': not r['viol'],
+         'Hilfe kommt nach 5 s von selbst (nicht früher) und bleibt stehen, Wiederholungen nur gebündelt am Anfang und nie am ersten Tag (0 Verstöße)': not r['viol'],
          'kein hängender Durchgang': r['stuck'] == 0,
          'Hilfe und Fehler kamen vor (der Lerner ist nicht perfekt)': r['help'] >= 2 and r['wrongs'] >= 5,
          'Vorspielen klingt': r['demos'] == 0 or r['demoTones'] == r['demos'],

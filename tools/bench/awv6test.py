@@ -37,6 +37,7 @@ async def main():
          'Genau gleiches Häppchen übernimmt den Stand (kein neues Lernen)': r['twinSkipped'],
          'Schneeball: höchstens 3 Häppchen im Formteil, Naht zum vorigen Formteil, jedes Häppchen gekoppelt; lange Formteile einmal am Stück': r['snowMax3'] and r['snowAll'] and r['kBefore'] and r['snowSpans'][0] == 'S0-1' and r['formRuns'] == r['formNeed'],
          '> 30 Anschläge: 1 Streifer erlaubt, 2 nicht': r.get('tol2', [None])[0] is False and r.get('tol') == [True, 1, 1],
+         'nach misslungenem Durchgang am Stück: erst die knifflige Stelle (±3 Griffe, im Durchgang), dann zurück am Stück': r['spotAfterFail'][0] == 'spot' and r['spotAfterFail'][3] <= r['spotAfterFail'][1] < r['spotAfterFail'][2] <= r['spotAfterFail'][4] and r['spotAfterFail'][2] - r['spotAfterFail'][1] <= 6 and r['backToChain'] == 'snow',
          'erst alle Teile + Schneebälle, dann der ganze Song': r['allSit'] and r['w1'] == 'whole',
          'ganzer Song Tag 1 → morgen nochmal (jetzt nichts mehr)': r['w1r'][:2] == [True, 1] and r['after1'] is None,
          'nächster Tag: Wiederholungen gebündelt am Anfang, dann ganzer Song → Song sitzt': r['revBundled'] and r['sits'],

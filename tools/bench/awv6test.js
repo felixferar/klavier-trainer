@@ -35,15 +35,15 @@
  for(let i=0;i<3;i++)run();o.part2=[ch(1).st];p=awPick();o.snow1=[p.mode,p.s,p.e];awNext();R=MEM.run;awDraw();o.snowkScreen=[R.dark,R.drawState,R.timed,$('#memHelp')!=null,document.querySelectorAll('#memStages .awSteps li').length];R=runWait();o.snow1k=[R.ok,!!(v().sk&&v().sk[1]),!!v().sn[1]];p=awPick();o.snow1b=[p.mode,p.s,p.e];R=run();o.snow1ok=[R.ok,!!v().sn[1]];
  /* alles weiter mit perfektem Spiel – wir merken uns die Reihenfolge */
  const seq=[];let guard=0;
- while(guard++<200){p=awPick();if(!p||p.mode==='whole')break;seq.push(p.mode==='snow'?`S${p.s}-${p.e}`:p.mode==='snowk'?`K${p.s}-${p.e}`:p.mode==='form'?`form${p.f}`:`${p.mode}${p.k}${p.half!=null?'h'+p.half:''}`);
+ while(guard++<200){p=awPick();if(!p||p.mode==='whole')break;seq.push(p.mode==='spot'?'P':p.mode==='snow'?`S${p.s}-${p.e}`:p.mode==='snowk'?`K${p.s}-${p.e}`:p.mode==='form'?`form${p.f}`:`${p.mode}${p.k}${p.half!=null?'h'+p.half:''}`);
    if(p.mode==='snow'&&MEM.C[p.e].b-MEM.C[p.s].a+1>30&&!o.tol){ /* Toleranz: 2 Streifer = nicht geschafft, 1 Streifer = geschafft */
-     let n=0;R=run(null,(R,q)=>{if(q>R.a+3&&n<2){n++;memPress(wrongKeyOf(q),'kb')}});o.tol2=[R.ok,R.wrong,R.tolW];
+     let n=0;R=run(null,(R,q)=>{if(q>R.a+3&&n<2){n++;memPress(wrongKeyOf(q),'kb')}});o.tol2=[R.ok,R.wrong,R.tolW];{const q=awPick();o.spotAfterFail=q&&[q.mode,q.a,q.b,R.a,R.b];if(q&&q.mode==='spot'){seq.push('P');run()}o.backToChain=awPick().mode}
      n=0;R=run(null,(R,q)=>{if(q>R.a+3&&n<1){n++;memPress(wrongKeyOf(q),'kb')}});o.tol=[R.ok,R.wrong,R.tolW];continue}
    run()}
  o.seq=seq;const K=MEM.C.length,big=MEM.C.findIndex(P=>P.h),tw=MEM.C.findIndex(P=>P.twin>=0);
  o.halves=big>=0?[seq.indexOf(`learn${big}h0`)<seq.indexOf(`head${big}h0`),seq.indexOf(`head${big}h0`)<seq.indexOf(`learn${big}h1`),seq.indexOf(`head${big}h1`)<seq.indexOf(`head${big}`),seq.indexOf(`head${big}`)<seq.indexOf(`flow${big}`),!seq.includes(`learn${big}`)]:null;
  o.twinKnown=tw>=0&&!v().ch[tw].tk;o.twinSkipped=tw>=0&&!seq.some(x=>x===`learn${tw}`||x===`flow${tw}`)&&ch(tw).st===3;
- o.snowSpans=['S0-1'].concat(seq.filter(x=>x[0]==='S'));o.snowMax3=o.snowSpans.every(x=>{const [a,b]=x.slice(1).split('-').map(Number),fa=MEM.C[a].f,fb=MEM.C[b].f;return b-a<=2&&(fa===fb?a>=MEM.F[fa].s:b-a===1&&b===MEM.F[fb].s)});o.snowAll=o.snowSpans.length===MEM.C.length-1;o.kBefore=seq.every((x,i)=>x[0]!=='S'||seq[i-1]==='K'+x.slice(1));o.formRuns=seq.filter(x=>x.startsWith('form')).length;o.formNeed=MEM.F.filter((F,f)=>awNeedForm(f)).length;
+ o.snowSpans=['S0-1'].concat(seq.filter(x=>x[0]==='S'));o.snowMax3=o.snowSpans.every(x=>{const [a,b]=x.slice(1).split('-').map(Number),fa=MEM.C[a].f,fb=MEM.C[b].f;return b-a<=2&&(fa===fb?a>=MEM.F[fa].s:b-a===1&&b===MEM.F[fb].s)});o.snowAll=o.snowSpans.length===MEM.C.length-1;o.kBefore=seq.every((x,i)=>{if(x[0]!=='S')return true;let q=i-1;while(q>=0&&seq[q]==='P')q--;return seq[q]==='K'+x.slice(1)});o.formRuns=seq.filter(x=>x.startsWith('form')).length;o.formNeed=MEM.F.filter((F,f)=>awNeedForm(f)).length;
  o.allSit=v().ch.every(c=>c.st===3)&&[...Array(K-1)].every((_,i)=>v().sn[i+1]);
  /* ganzer Song: Tag 1 */
  p=awPick();o.w1=p&&p.mode;R=run();o.w1r=[R.ok,new Set(v().whole.days).size,R.tolW];o.after1=awPick();
