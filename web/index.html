@@ -590,7 +590,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.21</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.22</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -4434,7 +4434,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.21 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.22 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -4627,6 +4627,8 @@ function scanFrame(msg){
   if(!SCAN.on||!SCAN.keys)return;
   const raw=atob(msg.d),w=msg.w,n=msg.n;const px=(r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]};
   let vt=0,st=-2;try{st=ytp.getPlayerState?ytp.getPlayerState():-2;vt=ytp.getCurrentTime()}catch(e){}
+  if(SCAN.natArgs&&!SCAN.slow){const d=performance.now()-msg.t;if(SCAN.lagMin==null||d<SCAN.lagMin)SCAN.lagMin=d; /* clocks differ by a constant: d−min = how late this frame is processed */
+    if(d-SCAN.lagMin>250){if(++SCAN.lagN>=10){SCAN.slow=true;try{Promise.resolve(nat('scanStart',{...SCAN.natArgs,interval:40},'scanStarted')).catch(()=>{})}catch(e){}}}else SCAN.lagN=0}
   if(st!==1&&st!==-2&&!SCAN.test){SCAN.vtMap.length=0;diagFrame(raw,msg.t,vt,st,NaN);return} // buffering/loading: forget the time map, or the first frames after it are extrapolated across the stall and look like a jump (= 'hole')
   // video time for this frame (smoothed): native time → video time
   SCAN.vtMap.push([msg.t,vt]);if(SCAN.vtMap.length>40)SCAN.vtMap.shift();
@@ -4673,18 +4675,17 @@ function scanCore(px,w,n,f){
       else if(ln.on&&SCAN.laneBgc&&SCAN.laneBgc[k]<2){} // no bar, but no background either (letters inside a pill fill the rows): the bar goes on
       else{ln.cnt=0;ln.offF=(ln.offF||0)+1;if(ln.offF===1)ln.offT=tt; // a single frame without bar (letters inside a pill passing the rows) does not end the bar
         if(!ln.on||ln.offF>=2){if(ln.on){if(ln.seen)ln.offs[ln.offs.length-1]=ln.offT;else if(ln.pre)ln.pre.off=ln.offT}ln.on=false;ln.seen=true}}}
-    {SCAN.flog=SCAN.flog||SCAN.keys.map(()=>[]);const ln0=SCAN.lane[k];SCAN.flog[k].push([tt,sat*val,0,0,dist,h,pressed?1:0,ln0&&ln0.on?1:0,(laneOcc&&laneOcc[k])?1:0,SCAN.laneBgc?SCAN.laneBgc[k]:-1,sat,val,r,g,b])}
     const st=SCAN.state[k];
     if(pressed){
       // repeated note: between two strikes the key looks EXACTLY like at rest for a single frame (~40 ms) → a new note, not a flicker
-      if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,clean:!!st.split});st.start=tt;st.hue=[];st.cs=0;st.cn=0;st.split=true}
+      if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,sa:st.cn?st.ss/st.cn:0,clean:!!st.split});st.start=tt;st.hue=[];st.cs=0;st.ss=0;st.cn=0;st.split=true}
       // D1: a new strike after a gap of 1–4 frames in which the key looked EXACTLY like at rest is a repeated note, not a flicker
       if(!st.on&&st.cnt===0)st.cleanStart=!!(st.hadNote&&st.gapClean&&st.offN>=1&&st.offN<=8);
-      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1){st.start=tt;st.h1=h;st.c1=sat*val}if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.cs=0;st.cn=0;st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h);if(st.on){st.cs=(st.cs||0)+sat*val;st.cn=(st.cn||0)+1}}
+      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1){st.start=tt;st.h1=h;st.c1=sat*val}if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.cs=0;st.ss=0;st.cn=0;st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h);if(st.on){st.cs=(st.cs||0)+sat*val;st.ss=(st.ss||0)+sat;st.cn=(st.cn||0)+1}}
     else{ // v4.64: a key lit for a SINGLE frame (≤ 41 ms at 24 fps) is no event yet (flicker) – kept as a candidate; finishCore adopts it if the key's own bar arrived at that moment
       if(!st.on&&st.cnt===1){const L=SCAN.events.single||(SCAN.events.single=[]);L.push({m:key.m,start:st.start,end:tt,hue:st.h1,ch:st.c1||0,single:true})}
       st.cnt=0;{const cl=dist<30&&sat*val<0.2;st.offN=(st.offN||0)+1;st.gapClean=st.offN===1?cl:(st.gapClean&&cl)}
-      if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,clean:!!st.split});st.split=false;st.hadNote=true}}
+      if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,sa:st.cn?st.ss/st.cn:0,clean:!!st.split});st.split=false;st.hadNote=true}}
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
   SCAN.lastVt=tt;try{scanQuality()}catch(e){}
@@ -4796,7 +4797,7 @@ function estBD(list,kIdx){const hist=new Map();for(const e of list){for(const o 
   ds.sort((a,b)=>a-b);return ds.length>=8?ds[ds.length>>1]:null}
 function circMean(hs){if(!hs.length)return null;let x=0,y=0;for(const h of hs){x+=Math.cos(h*Math.PI/180);y+=Math.sin(h*Math.PI/180)}let a=Math.atan2(y,x)*180/Math.PI;return a<0?a+360:a}
 function finishScan(preview){
-  const open=[];for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)open.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0})}
+  const open=[];for(let k=0;k<(SCAN.state||[]).length;k++){const st=SCAN.state[k];if(st.on)open.push({m:SCAN.keys[k].m,start:st.start,end:SCAN.lastVt,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,sa:st.cn?st.ss/st.cn:0})}
   if(!preview)SCAN.events.push(...open);
   const lanes0=SCAN.lane;if(preview&&lanes0)SCAN.lane=lanes0.map(l=>({...l,ons:l.ons.slice(),offs:l.offs.slice(),pre:l.pre?{...l.pre}:l.pre}));
   try{return finishCore(preview?SCAN.events.concat(open):SCAN.events,preview)}finally{if(preview)SCAN.lane=lanes0}}
@@ -4837,7 +4838,29 @@ function finishCore(raw,preview){
       // a long lit key without any falling bar (> 8 s) is an overlay / end screen / lit-up logo, not a note (measured: no bar-less note > 4.2 s in 20 recordings)
       // overlay / end screen: ≥3 such keys lit at the same moment (a screen lighting up many keys) or a key that is almost colourless (dark tint); one or two held bass notes whose bar was missed stay
       {const lg=ev.filter(e=>!e.bar&&e.end-e.start>8),T=lg.filter(e=>lg.filter(o=>Math.abs(o.start-e.start)<0.3).length>=3||!(e.ch>=0.15)).map(e=>e.start);
-        ev=ev.filter(e=>e.bar||!T.some(t=>Math.abs(t-e.start)<0.3))}}}  // also drops short bar-less notes that start together with such an overlay (e.g. the last 'B' of an end screen)
+        ev=ev.filter(e=>e.bar||!T.some(t=>Math.abs(t-e.start)<0.3))}
+      /* v5.17 bar as evidence: a note WITHOUT its own bar must look like a real lit key of this song (compared with the bar-confirmed notes of the same kind, white/black):
+         – pale (saturation < 0.6×): a hand/arm/object over the keys tints them skin-coloured or grey, a lit key keeps the note colour → drop;
+         – dim (sat×val < 0.6×) AND a key ≤ 2 semitones away is lit strongly (≥ 0.8×) at the same time: light spilling over from the neighbour → drop.
+         Dim but saturated notes WITHOUT such a neighbour stay (some videos light black keys only darkly).
+         Measured: Prüfstand stoer 24 videos 181 of 193 bar-less ghosts gone, 1 real note lost; 10 real YouTube runs 13 ghosts gone, 0 real notes lost. */
+      {const W=e=>isWhitePC(e.m%12)?0:1,md=(f,k)=>{const a=ev.filter(e=>e.bar&&e[f]>0&&W(e)===k).map(e=>e[f]).sort((p,q)=>p-q);return a.length>=3?a[a.length>>1]:null};
+        const RC=[md('ch',0),md('ch',1)],RS=[md('sa',0),md('sa',1)];
+        const ghost=e=>{if(e.bar||e.early||e.sa==null)return false;const k=W(e);if(!RC[k]||!RS[k])return false;if(e.sa<0.6*RS[k]||(e.sa<0.4&&e.sa<0.75*RS[k]))return true; /* v5.20: skin is pale in absolute terms (sat ≈ 0.3); note colours on real/synthetic videos ≥ 0.52 */
+          if(!(e.ch<0.6*RC[k]))return false;return ev.some(h=>h!==e&&h.m!==e.m&&Math.abs(h.m-e.m)<=2&&RC[W(h)]&&h.ch>=0.8*RC[W(h)]&&h.start<e.end&&e.start<h.end)};
+        const gone=new Set(ev.filter(ghost));if(gone.size)ev=ev.filter(e=>!gone.has(e))}
+      /* v5.17 object over the keys: ≥ 4 bar-less notes, overlapping in time, each ≤ 3 semitones from the next, all the same colour (± 12°) = one object
+         (hand, light beam, effect) lit across neighbouring keys – real notes in a bar video come with bars. Training set (12 new hand videos): 98 of 138 ghosts gone, 0 real notes lost;
+         YouTube-Test / old Prüfstand: nothing changes; real video with filmed hands (_mwgDFm2yIU): 32 skin-coloured notes gone. */
+      {const L=ev.filter(e=>!e.bar&&!e.early&&e.hue!=null),par=L.map((_,i)=>i),fd=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i};
+        for(let a=0;a<L.length;a++)for(let b=a+1;b<L.length;b++){const A=L[a],B=L[b];if(Math.abs(A.m-B.m)<=3&&A.start<B.end&&B.start<A.end&&hueDist(A.hue,B.hue)<=12)par[fd(a)]=fd(b)}
+        const cnt=new Map();L.forEach((_,i)=>{const r=fd(i);cnt.set(r,(cnt.get(r)||0)+1)});const drop=new Set(L.filter((_,i)=>cnt.get(fd(i))>=4));if(drop.size)ev=ev.filter(e=>!drop.has(e))}
+      /* v5.17 end card: a bar-less note ≥ 2 s that lasts until the end of reading and whose colour is none of the song's colours (> 30° from every hue
+         held by ≥ 10 % of the bar notes) is a YouTube end card / overlay, not a held final chord (those come with bars or in the song's colour).
+         Training sets: 23 ghosts gone, 0 real notes lost; real runs: end card rpVvU3rN5Z8, overlay MRqlO8Bm2B0. */
+      {const hb=new Array(36).fill(0);let nb=0;for(const e of ev)if(e.bar&&e.hue!=null){hb[Math.floor(e.hue/10)%36]++;nb++}
+        const major=[];for(let k=0;k<36;k++)if(nb&&hb[k]+hb[(k+35)%36]+hb[(k+1)%36]>=0.1*nb)major.push(k*10+5);
+        if(major.length){const endT=Math.max(...ev.map(e=>e.end));ev=ev.filter(e=>e.bar||e.early||e.hue==null||e.end-e.start<2||e.end<endT-0.15||major.some(h=>hueDist(h,e.hue)<=30))}}}}  // also drops short bar-less notes that start together with such an overlay (e.g. the last 'B' of an end screen)
   // v4.64: very short notes (one video frame lit) – real when the key's own bar arrived exactly then (Golden Hour: fast F#4 in the G#/F# figure was lost)
   if(SCAN.lane&&SCAN.barDelay!=null&&raw.single&&raw.single.length){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay,add=[];
     const first=ev.length?ev[0].start:0,lastE=ev.length?Math.max(...ev.map(e=>e.end)):0;
@@ -4859,7 +4882,8 @@ function finishCore(raw,preview){
       if(bi>=0&&ln.offs[bi]!=null){const len=ln.offs[bi]-ln.ons[bi],kd=e.end-e.start;if(len>0.05&&len<kd-0.06&&len>=kd*0.5)e.end=e.start+len}}} // never cut a note to a fraction (letters can hide a bar for a moment)
   if(!preview)ev=earlyFromBars(ev);
   // notes struck together (chord): their onsets differ only by a frame or two (glow fading in) → same start
-  {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.085)e.start=g0;else g0=e.start}}
+  /* v5.17: 0.085 → 0.06 s – a melody note 60–100 ms before a chord pulled the whole chord onto itself (≈ 80 ms too early). YouTube-Test F1@50 0.910 → 0.957, F1@100 0.976 → 0.987; Prüfstand unchanged or better. Chords split by 2 phone frames are re-joined on loading (chordAlign ≤ 0.15 s). */
+  {let g0=null;for(const e of ev){if(g0!==null&&e.start-g0<=0.06)e.start=g0;else g0=e.start}}
   // hands by colour: two hue clusters, the lower-pitched one = left hand
   const hs=ev.filter(e=>e.hue!=null);let c1=hs.length?hs[0].hue:0,c2=(c1+180)%360;if(hs.length){let far=0;for(const e of hs){const d=hueDist(e.hue,c1);if(d>far){far=d;c2=e.hue}}}
   if(hs.length>=4){for(let it=0;it<12;it++){const A=[],B=[];for(const e of hs){(hueDist(e.hue,c1)<=hueDist(e.hue,c2)?A:B).push(e.hue)}if(A.length)c1=circMean(A);if(B.length)c2=circMean(B)}}
@@ -4933,11 +4957,14 @@ async function scanRun(live){
   // so hardly any note passes while the app still checks the keyboard – and those few are read in slow motion
   const prep=live&&ytAuto;if(prep){try{ytp.setPlaybackRate(0.25);ytRate=0.25}catch(e){}convProgress(null,'Tastatur wird geprüft …')}
   const box=$('#ytBox').getBoundingClientRect();scanBox={x:box.left,y:box.top,w:box.width,h:box.height};
-  const r=await nat('scanStart',{x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:Math.max(480,Math.min(1280,Math.round(box.width*(devicePixelRatio||1)))),interval:40},'scanStarted');
+  /* v5.17: a picture every 22 ms instead of 40 ms (phone reached exactly 24.5/s, never less – headroom). Simulated on the Prüfstand: notes within ±50 ms 97.6 % → 98.9 %.
+     If the app cannot keep up (frames arrive > 0.25 s late, 10× in a row), scanFrame switches back to 40 ms. */
+  SCAN.natArgs={x:box.left,y:box.top,w:box.width,h:box.height,rows:[scanRows.yA,scanRows.yB,scanRows.yC!=null?scanRows.yC:Math.max(0,scanRows.yA-0.08),...laneHigh(scanRows,scanDet,scanImg)],ow:Math.max(480,Math.min(1280,Math.round(box.width*(devicePixelRatio||1)))),interval:22};SCAN.lagMin=null;SCAN.lagN=0;SCAN.slow=false;
+  const r=await nat('scanStart',SCAN.natArgs,'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
   diagStart({w:r.w,n:7,box:{x:box.left,y:box.top,w:box.width,h:box.height},rowsSent:[scanRows.yA,scanRows.yB,scanRows.yC,...laneHigh(scanRows,scanDet,scanImg)],
     scanRows,scanDet,keys:SCAN.keys.map(k=>({...k,rest:k.rest&&k.rest.slice()})),kw:SCAN.kw,start:SCAN.start,live:!!live,
-    searchStills:(scanFrames||[]).slice(-16).map(f=>({t:f.t,img:imgJpeg(f,0.6)}))});
+    searchStills:(scanFrames||[]).slice(-16).map(f=>({t:f.t,t0:f.t0,img:imgJpeg(f,0.6)}))});
   if(prep){const t0=performance.now(); // until the keyboard looks normal (≥ ~1.2 s, lets the resting colours settle); at most 7 s
     while(ytAuto&&SCAN.on&&performance.now()-t0<7000&&(SCAN.okT==null||SCAN.frames<30))await sleep(100);
     try{ytp.setPlaybackRate(1)}catch(e){}ytRate=1;SCAN.vtMap=[];if(!ytAuto||!SCAN.on)return;convProgress(null,'Noten werden gelesen …')}
@@ -4967,7 +4994,7 @@ function scanSave(auto){
   const notes=SCAN.result;if(!notes)return;const title=(auto?$('#scName').value.trim():$('#scName').value.trim())||'Song aus Video';const ytOld=ytItem;
   const buf=writeMidi(notes);
   const it={id:'m'+Date.now(),type:'midi',title,artist:SCAN.fromFile?'Aus Video-Datei':'Aus YouTube-Video',data:b64FromBuf(buf),fromYT:ytOld&&!SCAN.fromFile?ytOld.videoId:null,
-    video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m],geo:videoGeo(),q:SCAN.qMin||null},
+    video:{v:2,src:SCAN.fromFile?'file':'yt',start:SCAN.start,first:SCAN.firstNote||0,fps:SCAN.lastVt>0?Math.round(SCAN.frames/SCAN.lastVt):null,keys:[SCAN.keys[0].m,SCAN.keys[SCAN.keys.length-1].m],geo:videoGeo(),q:SCAN.qMin||null,slow:!!SCAN.slow},
     octUnsure:!!(scanDet&&scanDet.octEst)&&!(SCAN.octFix&&SCAN.octFix.sure),octMark:SCAN.octFix&&SCAN.octFix.sure?SCAN.octFix.d:null,oneColor:!!SCAN.oneColor};
   let s;try{s=songForItem(it,buf)}catch(e){toast('Fehler: '+e.message);return}
   const libBak=LIB.slice();
@@ -5206,7 +5233,7 @@ async function autoConvert(it){
     convProgress(dur>st?Math.max(0,Math.min(99,Math.round((ct-st)/(dur-st)*100))):null,'Suche die Tastatur …');
     let ps=-1;try{ps=ytp.getPlayerState()}catch(e){}
     if(ps!==1){await sleep(300);continue} // ad, buffering or paused: wait
-    let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;if(f)f.t=gt;
+    let gt=0;try{gt=ytp.getCurrentTime()}catch(e){}const f=await grabVideo();if(!ytAuto)return;let gt2=gt;try{gt2=ytp.getCurrentTime()}catch(e){}if(f){f.t=gt2>=gt&&gt2-gt<0.5?gt2:gt;f.t0=gt} /* v5.05: the picture shows the video at the END of the grab (half speed, grab takes ~0.1 s): time read before the grab made the first notes ~0.1 s too early */
     if(f){if(isBlackImg(f)){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
     let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];best=pickKb(cand.map(tryKeyboard))}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
