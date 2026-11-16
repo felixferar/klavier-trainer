@@ -344,10 +344,11 @@ body.short #onbDots{margin:8px 0}
 .memGoal{font-size:13px;line-height:1.35;color:var(--mu);margin-top:6px}.memGoal .skm{position:relative;height:8px;background:var(--s3);border-radius:4px;margin:5px 0 5px;overflow:visible}.memGoal .skf{height:100%;border-radius:4px}.memGoal .skm span{position:absolute;top:-3px;width:2px;height:14px;background:var(--tx);opacity:.7}.memGoal em{font-style:normal;font-weight:800}.memGoal em.up{color:#3BB273}.memGoal em.dn{color:#E5484D}.memGoal .st2{font-size:12px;color:var(--mu2)}.memGoal b{color:var(--tx)}.memGoal i{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid var(--mu2);margin-right:3px;vertical-align:-1px;font-style:normal}.memGoal i.on{background:#3BB273;border-color:#3BB273}
 .tasBox{display:flex;align-items:center;gap:12px;margin:10px 0 8px}
 /* v4.80: Weiter-Knöpfe kleben unten – nach dem Durchgang nie mehr scrollen */#memResBox{position:sticky;bottom:0;z-index:3;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -12px 14px -6px var(--bg)}
-#memRunV{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"h" "c" "r"}#memRunV .mHead{grid-area:h;min-width:0}#memRunV #memCv{grid-area:c}#memRunV .mRest{grid-area:r;min-width:0}
+#memRunV{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"p" "h" "c" "r"}#memRunV .mBar{grid-area:p;min-width:0}
+/* v5.18: Fortschritt im ganzen Song – ein Balken, der nur wächst, wenn du weiterkommst */.awBar{display:flex;gap:2px;width:100%}.awBar i{display:block;position:relative;background:rgba(127,127,127,.22);border-radius:3px;overflow:hidden;min-width:3px}.awBar i b{display:block;height:100%;transition:width .9s cubic-bezier(.2,.8,.2,1)}.awBar i.cur{outline:2px solid #F2A93B;outline-offset:1px}.awPct{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.awPct .big{font-weight:800;color:var(--tx);font-variant-numeric:tabular-nums}.awGain{font-weight:800;color:#3BB273;animation:awGain 1.4s ease}.awGain.neg{color:var(--mu)}@keyframes awGain{0%{opacity:0;transform:translateY(6px) scale(.8)}30%{opacity:1;transform:none}}.awLab{display:flex;width:100%;font-size:10px;margin-top:2px}.awLab span{overflow:hidden;white-space:nowrap;text-overflow:clip}#memRunV .mHead{grid-area:h;min-width:0}#memRunV #memCv{grid-area:c}#memRunV .mRest{grid-area:r;min-width:0}
 @media (orientation:landscape) and (max-height:600px){ /* v4.68 quer: Notenbahn + Klaviatur links über die ganze Höhe, rechts Stand, Rückmeldung und Knöpfe – ohne Scrollen */
  #mem.running .topbar{display:none}#mem.running .scroll{padding:6px 8px 6px max(8px,env(safe-area-inset-left))!important;overflow:hidden}
- #mem.running #memRunV{grid-template-columns:minmax(0,1fr) min(230px,31vw);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"c h" "c r";column-gap:12px;height:calc(100vh - 12px);height:calc(100dvh - 12px)}
+ #mem.running #memRunV{grid-template-columns:minmax(0,1fr) min(230px,31vw);grid-template-rows:auto auto minmax(0,1fr);grid-template-areas:"p p" "c h" "c r";column-gap:12px;height:calc(100vh - 12px);height:calc(100dvh - 12px)}
  #mem.running #memCv{height:100%!important;margin:0!important}
  #mem.running .mHead #memRunT{font-size:14px!important;margin:0!important}#mem.running .mHead .segs{margin-top:6px}
  #mem.running .mRest{overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-bottom:4px}
@@ -766,7 +767,8 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="mu sm" id="memHow" style="line-height:1.5"></div>
     </div>
     <div id="memRunV" class="hidden">
-      <div class="mHead"><div id="memMapR"></div><div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
+      <div class="mBar" id="memMapR"></div>
+      <div class="mHead"><div style="font-weight:800;font-size:17px;margin:8px 0 2px" id="memRunT"></div>
       <div class="mu sm" id="memProg"></div><div class="segs" id="memStages"></div><div id="memGoal" class="memGoal"></div></div>
       <canvas id="memCv" style="width:100%;height:280px;display:block;margin:12px 0;border-radius:8px;background:var(--s1)"></canvas>
       <div class="mRest"><div class="tasBox"><span id="memTasti" class="tasti"></span><div id="memMsg" style="min-height:44px"></div></div>
@@ -2843,9 +2845,14 @@ function memHome(){memStop();$('#mem').classList.remove('running','blind');memKb
   const total=MEM.gs[MEM.gs.length-1].end-MEM.gs[0].start,pc=total?Math.round(100*tl/total):0,p=awPick(),wd=new Set(v.whole.days).size,sits=awSongSits(v);
   $('#memSong').textContent=MEM.item.title;$('#memCheck').classList.toggle('hidden',!cmpOK(MEM.item));
   const col=awCol;
-  $('#memSum').innerHTML=`<div class="memSecs"><b>${sits?'⭐ Der Song sitzt – ohne App!':`Ganzer Song ohne Klick: ${wd} von ${AW.wholeDays} Tagen`}</b><div class="st mu">Gelernt: ${memClock(tl)} von ${memClock(total)} · ${learned} von ${n} Abschnitten (Test am nächsten Tag bestanden) · im Tempo: ${inBox} · jetzt fällig: ${dueN}</div><div class="skm"><div class="skf" style="width:${pc}%;background:#3BB273"></div></div></div>`+
+  const pr=awProg(v),cur0=k=>p&&(p.mode==='whole'?k==='W':p.mode==='link'?k==='L'||(typeof k==='number'&&k>=p.s&&k<=p.e):k===p.k),pv0=MEM.rec.prSeen;MEM.rec.prSeen=pr;
+  $('#memSum').innerHTML=`<div class="memSecs"><div class="awPct"><span class="big" style="font-size:34px;line-height:1">${awP1(pr.total)}</span><span class="st" style="font-weight:700">vom Song</span>${pv0&&pr.total-pv0.total>=0.0005?`<span class="awGain">+${awP1(pr.total-pv0.total)}</span>`:''}<span class="st mu" style="margin-left:auto">${pr.total>=1?'⭐ geschafft':`noch ${awP1(1-pr.total)}`}</span></div>`+
+    `<div style="margin:8px 0 2px">${awBar(pr,{h:20,cur:cur0,lab:1,from:pv0&&pv0.segs&&pv0.segs.length===pr.segs.length?pv0:null})}</div>`+
+    `${pr.rest.length?`<div class="st mu" style="font-size:12px;margin-top:4px">Noch: ${pr.rest.join(' · ')}</div>`:''}`+
+    `<div style="margin-top:8px"><b>${sits?'⭐ Der Song sitzt – ohne App!':`Ganzer Song ohne Klick: ${wd} von ${AW.wholeDays} Tagen`}</b></div><div class="st mu">Gelernt: ${memClock(tl)} von ${memClock(total)} · ${learned} von ${n} Abschnitten (Test am nächsten Tag bestanden) · im Tempo: ${inBox} · jetzt fällig: ${dueN}</div></div>`+
     `<div class="v8map" style="display:flex;gap:2px;width:100%;height:22px;margin:4px 0">${v.ch.map((c,k)=>`<i data-k="${k}" title="Abschnitt ${k+1} · ${memClock(C[k].t0)}–${memClock(C[k].t1)}" style="display:block;flex:${Math.max(0.6,C[k].t1-C[k].t0)} 1 0;background:${col(c)};border-radius:3px;${v.ln[k-1]?'margin-left:-2px;border-top-left-radius:0;border-bottom-left-radius:0;':''}${v.ln[k]?'border-top-right-radius:0;border-bottom-right-radius:0;':''}${p&&(p.mode==='whole'||(p.mode==='link'?k>=p.s&&k<=p.e:k===p.k))?'outline:2px solid #F2A93B;outline-offset:1px;':''}"></i>`).join('')}</div>`+
     `<div class="v8leg st mu" style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px"><span>▮ neu</span><span style="color:#cdd8f0">▮ ausblenden</span><span style="color:#a3b8ec">▮ aus dem Kopf</span><span style="color:#7f9fe6">▮ im Puls</span><span style="color:#5b8def">▮ im Tempo (Kasten 1–2)</span><span style="color:#8fd6ae">▮ gelernt</span><span style="color:#3BB273">▮ sitzt</span><span style="color:#F2A93B">▢ als Nächstes</span><span>zusammenhängend = verbunden</span></div>`;
+  awGrow($('#memSum'));memSaveAll();
   $('#memGo').disabled=!p;
   if(!p){$('#memHere').innerHTML=`<div class="wh">Für jetzt alles erledigt ✓</div><div class="st mu">Nächste Wiederholung ${minDue<Infinity?awWhen(minDue):'–'}. Pause gehört zum Lernen – im Schlaf wird gefestigt.${sits?' Spiel ihn ruhig auch einfach so – ohne App.':''}</div>`;$('#memGo').textContent='Alles erledigt ✓'}
   else{const c=v.ch[p.k],K=p.mode==='link'?`${p.s+1}–${p.e+1}`:p.k+1,sp=awPct(c.relearn===2?1:AW.tempi[c.tp]);
@@ -2882,7 +2889,7 @@ function awStart(p,demo){memAutoOff();const C=MEM.C,gs=MEM.gs,v=awState(),c=v.ch
   if(mode!=='whole')awClicks(R,v,p);
   $('#memHome').classList.add('hidden');$('#memRunV').classList.remove('hidden');$('#memEv').classList.add('hidden');$('#memResBox').style.display='none';$('#memStages').innerHTML=awWeg(R,c);$('#memStages').style.display='block';$('#mem').classList.toggle('blind',R.dark);
   if(mode==='puls'&&!c.pi){c.pi=1;memSaveAll();try{toast(R.beat&&R.beat.ok?'Neu: Jetzt wartet das Lied nicht mehr. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Takt mit dem Metronom.':'Neu: Jetzt wartet das Lied nicht mehr. Es steht „Start“ – mit deinem ersten Ton geht es los, dann im Tempo weiter.',5000)}catch(e){}}
-  {const sm=span?-1:awSame(p.k);$('#memMapR').innerHTML=awMap(R);
+  {const sm=span?-1:awSame(p.k);R.pr0=awProg(v);$('#memMapR').innerHTML=awMap(R);
    $('#memRunT').innerHTML=mode==='whole'?`<div style="font-size:20px">Ganzer Song</div><div class="st mu">${memClock(gs[a].start)}–${memClock(gs[b].end)} · ohne Klick</div>`:`<div style="font-size:20px">Abschnitt ${span?`${span.s+1}–${span.e+1}`:p.k+1} <span class="mu" style="font-size:14px">von ${C.length}</span></div><div class="st mu">${memClock(gs[a].start)}–${memClock(gs[b].end)} · ${AW_MODE[mode]}${mode==='fade'?` (Stufe ${R.fl+1}/3)`:''}${timed?' · '+awPct(speed):''}${sm>=0?` · gleich wie Abschnitt ${sm+1}`:''}</div>`;
    if(mode==='find'&&!c.reps&&!span)try{toast(`Neuer Abschnitt: ${p.k+1} von ${C.length}${sm>=0?` (gleich wie Abschnitt ${sm+1})`:''}`,3000)}catch(e){}}
   $('#memGoal').innerHTML=mode==='head'||mode==='spot'?'<button class="btn" id="memHelp" style="width:100%;height:44px;margin-top:6px">🤷 Weiß nicht weiter</button>':mode==='fade'?'<button class="btn" id="memHelp" style="width:100%;height:44px;margin-top:6px">👀 Zeig mir den Ton</button>':'';
@@ -2962,9 +2969,29 @@ function awAdvance(R){const gs=MEM.gs,nd=R.mode==='find'||R.mode==='fade'?AW.nee
 /* --- v5.17: Wo bin ich im Song? Karte aller Abschnitte (Farbe = Stand), der aktuelle orange umrandet; Wiederholungen erkannt --- */
 const awCol=c=>c.box>=AW.solid?'#3BB273':c.box>=AW.learned?'#8fd6ae':c.box>=1?'#5b8def':c.st>=3?'#7f9fe6':c.st>=2?'#a3b8ec':c.st>=1?'#cdd8f0':'rgba(127,127,127,.28)';
 function awSame(k){const v=awState(),sg=v.ch[k]&&v.ch[k].sig;if(!sg)return -1;for(let i=0;i<k;i++)if(v.ch[i].sig===sg)return i;return -1}
-function awMap(R){const v=awState(),C=MEM.C,n=C.length,cur=k=>R.mode==='whole'||(R.span?k>=R.span.s&&k<=R.span.e:k===R.k),inT=v.ch.filter(c=>c.box>=1).length;
-  return `<div style="display:flex;gap:2px;height:14px;margin:6px 0 2px">${v.ch.map((c,k)=>`<i style="display:block;flex:${Math.max(0.6,C[k].t1-C[k].t0)} 1 0;background:${awCol(c)};border-radius:3px;${cur(k)?'outline:2px solid #F2A93B;outline-offset:1px;':''}"></i>`).join('')}</div>`+
-    `<div class="st mu" style="font-size:11px">Song: ${inT} von ${n} Abschnitten im Tempo${v.whole&&v.whole.days.length?` · ganzer Song ${new Set(v.whole.days).size}/${AW.wholeDays}`:''}</div>`}
+/* v5.18: Fortschritt im ganzen Song (0–100 %). 70 % die Abschnitte (gewichtet nach Länge), 15 % Verbinden, 15 % ganzer Song ohne Klick (2 Tage).
+   Je Abschnitt: mitspielen 0–10 %, ausblenden –25 %, aus dem Kopf –35 %, im Puls –60 % (= im Tempo), kalt wiederholt 75 %, gelernt 90 %, sitzt 100 %.
+   Ehrlich: fällt ein Abschnitt eine Stufe zurück, sinkt der Wert. */
+function awChP(c){if(c.box>=1)return [0,0.6,0.75,0.9,1][Math.min(AW.solid,c.box)];
+  if(c.st>=3)return 0.35+0.25*(c.tp||0)/AW.tempi.length;if(c.st===2)return 0.25;if(c.st===1)return 0.1+0.15*(c.fl||0)/3;return 0.1*Math.min(1,(c.fc||0)/AW.findGood)}
+function awProg(v){v=v||awState();const C=MEM.C,n=C.length,w=C.map(c=>Math.max(0.6,c.t1-c.t0)),T=w.reduce((a,b)=>a+b,0)||1,hasL=n>1,WC=hasL?0.7:0.85,WL=hasL?0.15:0,WW=0.15;
+  const segs=v.ch.map((c,k)=>({k,f:WC*w[k]/T,p:awChP(c)}));let nl=0;for(let k=0;k+1<n;k++)if(v.ln[k])nl++;
+  const L={f:WL,p:hasL?nl/(n-1):0},W={f:WW,p:Math.min(1,new Set(v.whole.days).size/AW.wholeDays)};
+  const total=segs.reduce((a,x)=>a+x.f*x.p,0)+L.f*L.p+W.f*W.p;
+  const neu=v.ch.filter(c=>c.box===0&&c.st===0&&!c.reps).length,lern=v.ch.filter(c=>c.box===0).length-neu,wdh=v.ch.filter(c=>c.box>=1&&c.box<AW.solid).length,offL=hasL?n-1-nl:0,offW=AW.wholeDays-Math.round(W.p*AW.wholeDays);
+  const rest=[];if(neu)rest.push(`${neu} neu`);if(lern)rest.push(`${lern} im Lernen`);if(wdh)rest.push(`${wdh} kalt wiederholen`);if(offL)rest.push(`${offL}× verbinden`);if(offW)rest.push(`ganzer Song ${offW}×`);
+  return {segs,L,W,total:Math.min(1,total),rest}}
+const awP1=x=>{const v=x*100;return (v>0&&v<10&&Math.abs(v-Math.round(v))>0.05?v.toFixed(1).replace('.',','):Math.round(v))+' %'};
+/* Balken: Abschnitte (grün gefüllt nach Stand), dann Verbinden (blau), dann ganzer Song (gold). cur = was gerade dran ist; from = Stand vorher (Balken wächst sichtbar) */
+function awBar(pr,o){o=o||{};const h=o.h||12,f0=o.from,cur=o.cur||(()=>false),seg=(f,p,col,c,p0,tt)=>`<i class="${c?'cur':''}" title="${tt}" style="flex:${Math.max(0.004,f)} 1 0;height:${h}px"><b data-to="${(p*100).toFixed(1)}" style="width:${((p0!=null?p0:p)*100).toFixed(1)}%;background:${col}"></b></i>`;
+  const C=MEM.C;
+  return `<div class="awBar">${pr.segs.map(x=>seg(x.f,x.p,x.p>=1?'#3BB273':x.p>=0.6?'#5fc48c':'#8fd6ae',cur(x.k),f0?f0.segs[x.k].p:null,`Abschnitt ${x.k+1} · ${memClock(C[x.k].t0)}–${memClock(C[x.k].t1)} · ${Math.round(x.p*100)} %`)).join('')}${pr.L.f?seg(pr.L.f,pr.L.p,'#5b8def',cur('L'),f0?f0.L.p:null,'Verbinden'):''}${seg(pr.W.f,pr.W.p,'#F2A93B',cur('W'),f0?f0.W.p:null,'Ganzer Song ohne Klick')}</div>`+
+    (o.lab?`<div class="awLab mu"><span style="flex:${1-pr.L.f-pr.W.f} 1 0">Abschnitte 1–${C.length}</span>${pr.L.f?`<span style="flex:${pr.L.f} 1 0">verbinden</span>`:''}<span style="flex:${pr.W.f} 1 0">ohne App</span></div>`:'')}
+function awGrow(el){if(!el)return;requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const b of el.querySelectorAll('.awBar b[data-to]'))b.style.width=b.dataset.to+'%'}))}
+function awMap(R,after){const v=awState(),pr=awProg(v),cur=k=>R.mode==='whole'?k==='W':R.mode==='link'?k==='L'||(typeof k==='number'&&k>=R.span.s&&k<=R.span.e):k===R.k,inT=v.ch.filter(c=>c.box>=1).length;
+  const d=after&&R.pr0?pr.total-R.pr0.total:0,g=Math.abs(d)>=0.0005?`<span class="awGain${d<0?' neg':''}">${d>0?'+':'−'}${awP1(Math.abs(d))}</span>`:'';
+  return `<div class="awPct" style="margin:2px 0 3px"><span class="big" style="font-size:15px">Song ${awP1(pr.total)}</span>${g}<span class="st mu" style="font-size:11px;margin-left:auto">${pr.total>=1?'⭐ geschafft':`noch ${awP1(1-pr.total)}`} · ${inT}/${C_len()} im Tempo</span></div>`+awBar(pr,{h:10,cur,from:after?R.pr0:null})}
+const C_len=()=>MEM.C.length;
 const AW_SHORT={find:'mitspielen',fade:'ausblenden',head:'aus dem Kopf',spot:'Problemstelle',puls:'Puls',review:'wiederholen',link:'verbinden',whole:'ganzer Song'};
 function awNextLabel(p,R){if(!p)return 'Zur Übersicht';const v=awState(),K=p.mode==='link'?`${p.s+1}–${p.e+1}`:p.k+1;
   if(p.mode==='whole')return '→ Ganzer Song';const neu=p.mode==='find'&&!v.ch[p.k].reps;
@@ -3041,7 +3068,7 @@ function awFinish(){const R=MEM.run,v=awState(),c=v.ch[R.k],now=memNow(),C=MEM.C
       msg=`Noch nicht ganz – ${awFehler(R)}. ${bad.size?'Die Stellen mit Patzern übst du gleich einzeln, dann':'In ein paar Minuten'} nochmal der ganze Song.`}}
   R.ok=ok;memSaveAll();awLog(R,ok);
   $('#memMsg').textContent=msg;const ev=$('#memEv');ev.innerHTML=R.mode==='find'?(awWorst(R)>=0?`<div class="st" id="memHier">${awHier(R)}</div>`:''):`<div class="st" id="memHier" style="margin-bottom:4px;font-weight:700">${awHier(R)}</div><div class="st mu">${R.hints?`👀 ${R.hints}× Hilfe · `:''}${R.cues?`👀 ${R.cues} Noten gebraucht · `:''}${R.timed||R.mode==='whole'?`${R.miss} ${R.mode==='whole'?'ausgelassen':'nicht gespielt'} · `:''}${R.wrong} falsche Töne${R.mode==='whole'?` · ${R.slips} Rhythmus-Hänger · Tempo ${awPct(R.tempo)}`:''}${R.timed?` · ${R.off||0} ungleichmäßig · dein Tempo ${awPct(R.tempo)} (Ziel ${awPct(R.speed)})`:''}</div>${awWorst(R)>=0?'<div class="st mu" style="font-size:11px">Im Bild: <span style="color:#3BB273">▮ richtig</span> · <span style="color:#F2A93B">▮ Hilfe/Note gebraucht</span> · <span style="color:#E5C34B">▮ gezögert/zu spät/zu früh</span> · <span style="color:#8a8f99">▮ nicht gespielt</span> · <span style="color:#E5484D">▮ falsche Taste</span></div>':''}`;ev.classList.remove('hidden');$('#memGoal').innerHTML='';
-  const nx=awPick();$('#memResBox').style.display='flex';{const L=awNextLabel(nx,R);$('#memNext').textContent=L;$('#memNext').style.fontSize=L.length>16?'13px':''}$('#memMapR').innerHTML=awMap(R);$('#memProg').textContent='Fertig';awDraw();memAuto()}
+  const nx=awPick();$('#memResBox').style.display='flex';{const L=awNextLabel(nx,R);$('#memNext').textContent=L;$('#memNext').style.fontSize=L.length>16?'13px':''}$('#memMapR').innerHTML=awMap(R,true);awGrow($('#memMapR'));$('#memProg').textContent='Fertig';awDraw();memAuto()}
 
 /* --- Zeichnen --- */
 function awDraw(){const R=MEM.run,cv=$('#memCv');if(!R||!cv)return;const p=prepCv(cv);if(!p)return;const c=p.c,now=performance.now(),kb=Math.min(110,p.h*0.42),hn=p.h-kb,gs=MEM.gs;MEM.kbH=kb;MEM.hn=hn;c.clearRect(0,0,p.w,p.h);
