@@ -1,5 +1,5 @@
-"""v5.24 Fingersatz-Schalter: Standard aus; im Player (Zahnrad › Üben) und im Lernen („Finger: aus/an“) direkt umschaltbar,
-gespeichert und überall gleich (Ich › Fingersatz). Im Lernen werden die Zahlen nach dem Einschalten sofort berechnet.
+"""v5.24 Fingersatz-Schalter: Standard aus; in den Einstellungen umschaltbar: Ich › Fingersatz und Player-Zahnrad › Üben (kein Knopf im Lernen),
+gespeichert und überall gleich (Ich › Fingersatz). Im Lernen werden die Zahlen beim nächsten Durchgang berechnet.
 usage: python3 tools/bench/fingschaltertest.py $PWD/web/index.html [BILDORDNER]"""
 import asyncio,sys,json,os
 from playwright.async_api import async_playwright
@@ -24,25 +24,23 @@ async def main():
       o['playerAn']=await pg.evaluate("S.fingers===true&&JSON.parse(localStorage.getItem('kt_settings')).fingers===true")
       await pg.evaluate("$('#fingChk').click()");o['playerAus']=await pg.evaluate("S.fingers===false&&JSON.parse(localStorage.getItem('kt_settings')).fingers===false")
       await pg.evaluate("closeSheets();navStack.length=0;navStack.push('home');show('home')")
-      # Lernen: Knopf „Finger: aus“ → an
+      # Lernen: kein eigener Knopf; Einschalten unter Ich › Fingersatz wirkt beim nächsten Durchgang
       await pg.evaluate("openMem(LIB[0])");await pg.wait_for_timeout(300);await pg.evaluate("$('#memGo').click()");await pg.wait_for_timeout(600)
-      o['lernSichtbar']=await pg.evaluate("("+VIS+")('#memFing')");o['lernText0']=await pg.inner_text('#memFing')
-      o['vorherOhneZahlen']=await pg.evaluate("!MEM.song.notes.some(n=>n.fing)")
-      await pg.evaluate("$('#memFing').click()");await pg.wait_for_timeout(500)
-      o['lernText1']=await pg.inner_text('#memFing');o['zahlenBerechnet']=await pg.evaluate("MEM.song.notes.filter(n=>n.fing).length/MEM.song.notes.length")
-      o['ichGleich']=await pg.evaluate("$('#fing2').checked===true&&JSON.parse(localStorage.getItem('kt_settings')).fingers===true")
+      o['keinKnopf']=await pg.evaluate("!$('#memFing')");o['vorherOhneZahlen']=await pg.evaluate("!MEM.song.notes.some(n=>n.fing)")
       o['stopSichtbar']=await pg.evaluate("("+VIS+")('#memStop')")
+      await pg.evaluate("memStop();$('#fing2').checked=true;$('#fing2').dispatchEvent(new Event('change'))")
+      await pg.evaluate("$('#memGo').click()");await pg.wait_for_timeout(600)
+      o['zahlenBerechnet']=await pg.evaluate("MEM.song.notes.filter(n=>n.fing).length/MEM.song.notes.length")
       if shots:await pg.screenshot(path=os.path.join(shots,f'lernen-{name}.png'))
-      await pg.evaluate("$('#memFing').click()");o['lernText2']=await pg.inner_text('#memFing');o['wiederAus']=await pg.evaluate("S.fingers===false")
+      o['playerGleich']=await pg.evaluate("syncUI(),$('#fingChk').checked===true")
       await pg.evaluate("memStop();back()");r[name]=o;await pg.close()
     await br.close()
   print(json.dumps(r,ensure_ascii=False),errs)
   c={}
   for n,o in r.items():
     c.update({f'{n}: Standard aus':o['standardAus'],f'{n}: Schalter im Player sichtbar':o['playerSichtbar'],f'{n}: Player an + gespeichert':o['playerAn'],f'{n}: Player aus':o['playerAus'],
-      f'{n}: Knopf im Lernen sichtbar':o['lernSichtbar'],f'{n}: „Finger: aus“':o['lernText0']=='Finger: aus',f'{n}: vorher keine Zahlen':o['vorherOhneZahlen'],
-      f'{n}: „Finger: an“':o['lernText1']=='Finger: an',f'{n}: Zahlen sofort berechnet':o['zahlenBerechnet']>0.9,f'{n}: Ich › Fingersatz gleich':o['ichGleich'],
-      f'{n}: Beenden sichtbar':o['stopSichtbar'],f'{n}: wieder aus':o['lernText2']=='Finger: aus' and o['wiederAus']})
+      f'{n}: kein Knopf im Lernen':o['keinKnopf'],f'{n}: vorher keine Zahlen':o['vorherOhneZahlen'],f'{n}: Beenden sichtbar':o['stopSichtbar'],
+      f'{n}: nach Ich › an Zahlen im Lernen':o['zahlenBerechnet']>0.9,f'{n}: Player-Schalter gleich':o['playerGleich']})
   c['keine Fehler']=not errs
   for k,v in c.items():
     if not v:print('  NICHT OK:',k)
