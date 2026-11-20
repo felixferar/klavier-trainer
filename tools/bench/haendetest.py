@@ -16,6 +16,9 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  awUseL(true);const z=zlState();z.st[0]=1;memSaveAll();const r=zlStart({k:0,stage:2});o.run={gs:MEM.gs.length,b:r.b,same:zlState()===z,st0:zlState().st[0]};
  const gs=MEM.gs;for(let j=r.a;j<=r.b;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}for(const m of gs[j].mids)memPress(m,'kb')}
  o.after={ok:r.res&&r.res.ok,st0:zlState().st[0],next:r.next,log:(load('kt_v8log')||[]).slice(-1)[0].st};
+ /* v5.38: viele Zeilen → nur ein Ausschnitt im Pfad (sonst läuft er über den ✕-Knopf) */
+ const big={st:Array(54).fill(0).map((x,i)=>i<5?4:0),song:0},d=document.createElement('div');d.innerHTML=zlPath(big,{k:5});o.path={nodes:d.querySelectorAll('.zlN').length,more:[...d.querySelectorAll('.zlMore')].map(x=>x.textContent),now:d.querySelector('.zlN.now').textContent};
+ d.innerHTML=zlPath(big,{k:5},{big:1});o.pathBig=d.querySelectorAll('.zlN').length;
  return o}"""
 async def main():
     async with async_playwright() as p:
@@ -29,6 +32,7 @@ async def main():
          'Übersicht nimmt wieder beide Hände, auch wenn „linke Hand allein“ hängen geblieben ist': r['home']['gs'] == r['home']['all'] == 89,
          'Durchgang nimmt beide Hände; Lernstand bleibt derselbe': r['run']['gs'] == 89 and r['run']['b'] == 12 and r['run']['same'] and r['run']['st0'] == 1,
          'geschaffte Stufe wird gespeichert (keine Schleife Mit Noten → Echo → Mit Noten)': r['after']['ok'] and r['after']['st0'] == 2 and r['after']['next'] == {'k': 0, 'stage': 3} and r['after']['log'].startswith('2'),
+         'viele Zeilen: Pfad zeigt nur einen Ausschnitt um die aktuelle Zeile (+ Song)': r['path']['nodes'] == 10 and r['path']['more'] == ['2 ✓', '+43'] and r['path']['now'] == '6' and r['pathBig'] == 7,
          'keine Fehler': not errs}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)

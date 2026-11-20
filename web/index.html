@@ -32,9 +32,9 @@ body.desk #deskBar{display:flex}
 .zlCard{background:#121826;border-radius:16px;padding:14px;color:#fff}.zlMeta{display:flex;justify-content:space-between;color:#9aa4bf;font-size:14px;margin:4px 0 12px}.zlFire{color:#FF9F43}
 .zlSm{color:#9aa4bf;font-size:14px}.zlPat{margin-top:10px;background:#1a2233;border-radius:10px;padding:8px 10px;color:#dfe5f5;font-size:15px}
 .zlGo{display:block;width:100%;height:54px;margin-top:14px;border:0;border-radius:14px;background:#22C58B;color:#0b2a1e;font:inherit;font-size:17px;font-weight:700}.zlGo:disabled{background:#2a3346;color:#9aa4bf}
-.zlPath{display:flex;align-items:center;flex:1;min-width:0}.zlN{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#2a3346;color:#9aa4bf;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.zlPath{display:flex;align-items:center;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}.zlN{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#2a3346;color:#9aa4bf;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
 .zlN.ok{background:#22C58B;color:#121826}.zlN.now{background:#fff;color:#121826;width:30px;height:30px;font-size:14px}.zlN.song{background:#2a3346}.zlN.song.ok{background:#FFC93C;color:#121826}.zlN.pop{animation:zlPop .6s ease}
-.zlLn{flex:1 1 auto;min-width:4px;height:3px;background:#2a3346}.zlLn.ok{background:#22C58B}.zlPath.big .zlN{width:30px;height:30px;font-size:14px}.zlPath.big .zlN.now{width:36px;height:36px;font-size:16px}
+.zlMore{flex:0 0 auto;color:#9aa4bf;font-size:12px;font-weight:700;padding:0 4px}.zlLn{flex:1 1 auto;min-width:4px;height:3px;background:#2a3346}.zlLn.ok{background:#22C58B}.zlPath.big .zlN{width:30px;height:30px;font-size:14px}.zlPath.big .zlN.now{width:36px;height:36px;font-size:16px}
 @keyframes zlPop{0%{transform:scale(1)}40%{transform:scale(1.45)}100%{transform:scale(1)}}
 .zlCut{flex:0 0 auto;width:16px;padding:0;border:0;background:none;color:#9aa4bf;font-size:18px}.zlCut.on{color:#FFC93C}
 #zlRun{background:#121826;border-radius:14px;padding:8px 10px;color:#fff}.zlTop{display:flex;align-items:center;gap:8px}.zlTop .ib{color:#9aa4bf}
@@ -3140,19 +3140,22 @@ function zlStars(n){return '★'.repeat(n)+'☆'.repeat(3-n)}
 function zlStats(){let L=[];try{L=(load('kt_v8log')||[]).filter(e=>e.zl)}catch(e){}const day=t=>{const d=new Date(t);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()},today=day(memNow());
   const min=Math.round(L.filter(e=>day(e.t)===today).reduce((s,e)=>s+(e.dur||0),0)/60000),days=new Set(L.map(e=>day(e.t)));let n=0;const d=new Date(memNow());
   if(!days.has(today))d.setDate(d.getDate()-1);while(days.has(day(d.getTime()))){n++;d.setDate(d.getDate()-1)}return {min,n}}
-function zlPath(z,cur,o){o=o||{};const n=z.st.length;let h='';
-  for(let k=0;k<n;k++){const ok=z.st[k]>=4,now=cur&&cur.k===k;if(k)h+=`<i class="zlLn${z.st[k-1]>=4&&(ok||now)?' ok':''}"></i>`;
+function zlPath(z,cur,o){o=o||{};const n=z.st.length,W=o.cuts?n:o.big?6:9;let h='';
+  /* v5.38: bei vielen Zeilen nur ein Ausschnitt um die aktuelle Zeile – sonst läuft der Pfad aus dem Bild (und über den ✕-Knopf) */
+  const c=cur&&cur.k>=0?cur.k:n-1;let k0=0,k1=n-1;if(n>Math.max(W,8)){ /* bis 8 Zeilen immer alle */k0=Math.max(0,Math.min(c-3,n-W));k1=k0+W-1}
+  if(k0>0)h+=`<span class="zlMore">${k0} ✓</span>`;
+  for(let k=k0;k<=k1;k++){const ok=z.st[k]>=4,now=cur&&cur.k===k;if(k>k0)h+=`<i class="zlLn${z.st[k-1]>=4&&(ok||now)?' ok':''}"></i>`;
     if(o.cuts&&k)h+=`<button class="zlCut${o.sel===k?' on':''}" data-c="${k}" aria-label="Grenze verschieben">┆</button>`;
     h+=`<span class="zlN${ok?' ok':''}${now?' now':''}${o.flash===k?' pop':''}" data-k="${k}">${ok?'✓':k+1}</span>`}
+  if(k1<n-1)h+=`<i class="zlLn"></i><span class="zlMore">+${n-1-k1}</span>`;
   h+=`<i class="zlLn${z.st.every(s=>s>=4)?' ok':''}"></i><span class="zlN song${z.song>=3?' ok':''}${cur&&cur.k<0?' now':''}">♪</span>`;return h}
 
 /* --- Übersicht --- */
 function zlHome(){memStop();awUseL(false);$('#mem').classList.remove('running','blind');memKbChip();
   ['#memHome','#memRunV','#zlRun'].forEach(s=>$(s).classList.add('hidden'));$('#zlHome').classList.remove('hidden');
-  try{awLogSync()}catch(e){}
   const z=zlState(),p=zlPick(z),sel=MEM.zlSel||0,sits=z.st.filter(s=>s>=4).length,S0=zlStats();$('#zlSong').textContent=MEM.item.title;{const tt=$('#mem .topbar .ttl');if(tt)tt.textContent=MEM.item.title||'Auswendig'}
   $('#zlMeta').innerHTML=`<span><b class="zlFire">●</b> ${S0.n} ${S0.n===1?'Tag':'Tage'} in Folge</span><span>Heute ${S0.min} Min</span>`;
-  $('#zlPathH').innerHTML=zlPath(z,p,{cuts:MEM.zlCuts,sel});
+  $('#zlPathH').innerHTML=zlPath(z,p,{cuts:MEM.zlCuts,sel,big:1});
   $('#zlSum').innerHTML=z.song>=3?'⭐ Der ganze Song sitzt – auch im Originaltempo.':`${sits} von ${z.st.length} Zeilen sitzen${sits===z.st.length?` · ganzer Song: ${z.song} von 3 Tempi`:''}`;
   const pt=p&&p.k>=0?zlPattern(p.k):'';$('#zlPat').textContent=pt;$('#zlPat').classList.toggle('hidden',!pt);
   $('#zlCutBox').innerHTML=MEM.zlCuts&&sel?`<div class="zlSm" style="margin:6px 0">Grenze zwischen Zeile ${sel} und ${sel+1}:</div><div style="display:flex;gap:8px"><button class="btn" data-mv="-1" style="flex:1;height:40px">◀ 1 Griff früher</button><button class="btn" data-mv="1" style="flex:1;height:40px">1 Griff später ▶</button></div>`:'';
@@ -3164,7 +3167,7 @@ function zlHome(){memStop();awUseL(false);$('#mem').classList.remove('running','
   const b=$('#zlReset');b.textContent='↺ Lernstand zurücksetzen';delete b.dataset.sure;
   b.onclick=()=>{if(!b.dataset.sure){b.dataset.sure=1;b.textContent='Wirklich alles von vorn? Nochmal tippen';return}
     const z2=zlState();z2.st=z2.st.map(()=>0);z2.eh=z2.eh.map(()=>0);z2.stars=z2.stars.map(()=>0);z2.song=0;memSaveAll();zlHome();try{toast('Lernstand zurückgesetzt – alles von vorn')}catch(e){}};
-  memSaveAll()}
+  memSaveAll();try{awLogSync()}catch(e){}}
 function zlMoveCut(k,d){const z=zlState(),N=MEM.gs.length,c=z.cuts[k]+d,lo=z.cuts[k-1]+2,hi=(k+1<z.cuts.length?z.cuts[k+1]:N)-2;
   if(c<lo||c>hi){try{toast('Eine Zeile braucht mindestens 2 Griffe',2000)}catch(e){}return}
   z.cuts[k]=c;for(const q of [k-1,k]){z.st[q]=0;z.eh[q]=0;z.stars[q]=0}z.song=0;z.moved=(z.moved||0)+1;memSaveAll();zlHome()}
