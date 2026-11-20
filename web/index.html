@@ -633,7 +633,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.37</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.38</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2809,7 +2809,7 @@ function spOct(d){const it=fresh(SP.item);if(!it||it.type!=='midi'||!it.data)ret
 $('#spOctM').onclick=e=>{e.stopPropagation();spOct(-12)};$('#spOctP').onclick=e=>{e.stopPropagation();spOct(12)};
 $('#spGo').onclick=()=>{if(SP.item)startLearn(SP.item)};
 /* v5.21: direkt ins Lernen – ohne Übersicht dazwischen; Anhören / Frei üben ohne Zwischenfrage */
-function startLearn(it){it=fresh(it);if(!it)return;if(it.type!=='midi'||!it.data)return openItem(it);openMem(it);if(navStack[navStack.length-1]==='mem'&&!MEM.run)awNext()}
+function startLearn(it){it=fresh(it);if(!it)return;if(it.type!=='midi'||!it.data)return openItem(it);openMem(it);if(navStack[navStack.length-1]==='mem'&&!MEM.run){if(zlOn())memHome();else awNext()}}
 function playAs(it,mode){it=fresh(it);if(!it)return;songStat(it.id).mode=mode;stDirty=true;openItemPlay(it)}
 $('#spPlay').onclick=()=>{if(SP.item)playAs(SP.item,'play')};
 $('#spPract').onclick=()=>{if(SP.item)playAs(SP.item,'learn')};
@@ -3049,7 +3049,7 @@ function openMem(it){it=fresh(it);if(memLoad(it)){closeSheets();navStack.push('m
 function memLoad(it,keepSess){it=fresh(it);let s;try{s=songForItem(it)}catch(e){toast('Fehler: '+e.message);return false}
   for(const n of s.notes){n.hand=S.swap?(n.hand0==='R'?'L':'R'):(n.hand0||n.hand);n.midi=foldKey(n.midi)} // genau wie beim Abspielen/Üben (applySwap)
   s.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);try{audio();loadSamples()}catch(e){}
-  const rec=MEMS[it.id]||(MEMS[it.id]={});for(const x of ['secs','fl','v8','sig','v6','k84'])delete rec[x]; /* sehr alte Stände weg, v9 bleibt (Rückweg) */let hand=rec.hand||'LR',ns=s.notes.filter(n=>hand==='LR'||n.hand===hand),gs=memGroups(ns);
+  const rec=MEMS[it.id]||(MEMS[it.id]={});for(const x of ['secs','fl','v8','sig','v6','k84'])delete rec[x]; /* sehr alte Stände weg, v9 bleibt (Rückweg) */let hand=zlOn()?'LR':(rec.hand||'LR'),ns=s.notes.filter(n=>hand==='LR'||n.hand===hand),gs=memGroups(ns);
   if(hand!=='LR'&&gs.length<3){hand='LR';rec.hand='LR';ns=s.notes;gs=memGroups(ns);try{toast('Für diese Hand gibt es zu wenig Töne – beide Hände',3000)}catch(e){}}
   if(gs.length<3){toast('Der Song ist zu kurz zum Auswendiglernen',3000);return false}
   Object.assign(MEM,{item:it,song:s,notes:ns,gs,rec,hand,run:null,C:awParts(gs,ns),beat:null});awDensity();if(!keepSess)MEM.sess={};try{fingSong(s)}catch(e){}awState();return true}
@@ -3065,7 +3065,7 @@ function awHandUI(){return `<div class="awHand" role="group" aria-label="Hand">$
 function awBindHand(el){if(!el)return;for(const b of el.querySelectorAll('.awHand button'))b.onclick=()=>awSetHand(b.dataset.h)}
 function awSetHand(h){if(!MEM.item||h===MEM.hand)return;const running=!!MEM.run;memStop();MEM.rec.hand=h;memSaveAll();if(!memLoad(MEM.item,true))return;
   try{toast(h==='LR'?'Beide Hände':h==='L'?'Nur linke Hand – eigener Lernstand':'Nur rechte Hand – eigener Lernstand',2500)}catch(e){}
-  if(running)awNext();else memHome()}
+  if(running&&!zlOn())awNext();else memHome()}
 
 /* --- Übersicht --- */
 const awFLab=k=>{const F=MEM.F&&MEM.F[MEM.C[k].f];return F?F.lab:''};
@@ -3120,7 +3120,7 @@ const ZLN=['C','Cis','D','Dis','E','F','Fis','G','Gis','A','B','H'],zlName=m=>ZL
 const zlKey=()=>'zl'+(MEM.hand==='LR'?'':MEM.hand);
 const zlBeat=()=>(MEM.takt&&MEM.takt.beat)||0.5;
 /* Lernstand: cuts = erster Griff jeder Zeile, st = geschaffte Stufen (4 = sitzt), eh = Echo-Hälfte (0/1), stars = beste Sterne aus dem Kopf, song = geschaffte Song-Tempi (0–3) */
-function zlState(){const rec=MEM.rec,N=MEM.gs.length;let z=rec[zlKey()];
+function zlState(){awUseL(false); /* v5.38: Zeilen immer mit beiden Händen – nie einen Stand zu den Griffen der linken Hand anlegen */const rec=MEM.rec,N=MEM.gs.length;let z=rec[zlKey()];
   if(!z||z.n!==N||!Array.isArray(z.cuts)||z.cuts[0]!==0||z.cuts.some((c,i)=>i&&(c<=z.cuts[i-1]||c>=N))){
     const cuts=MEM.C.map(P=>P.a);let st=cuts.map(()=>0);
     try{const v=awState();if(v&&v.ch&&v.ch.length===cuts.length)st=v.ch.map(c=>c&&c.st>=3?4:0)}catch(e){} /* Übernahme: was saß, sitzt weiter */
@@ -3147,7 +3147,7 @@ function zlPath(z,cur,o){o=o||{};const n=z.st.length;let h='';
   h+=`<i class="zlLn${z.st.every(s=>s>=4)?' ok':''}"></i><span class="zlN song${z.song>=3?' ok':''}${cur&&cur.k<0?' now':''}">♪</span>`;return h}
 
 /* --- Übersicht --- */
-function zlHome(){memStop();$('#mem').classList.remove('running','blind');memKbChip();
+function zlHome(){memStop();awUseL(false);$('#mem').classList.remove('running','blind');memKbChip();
   ['#memHome','#memRunV','#zlRun'].forEach(s=>$(s).classList.add('hidden'));$('#zlHome').classList.remove('hidden');
   try{awLogSync()}catch(e){}
   const z=zlState(),p=zlPick(z),sel=MEM.zlSel||0,sits=z.st.filter(s=>s>=4).length,S0=zlStats();$('#zlSong').textContent=MEM.item.title;{const tt=$('#mem .topbar .ttl');if(tt)tt.textContent=MEM.item.title||'Auswendig'}
@@ -3175,7 +3175,7 @@ function zlGo(){const z=zlState(),p=zlPick(z);if(!p){zlHome();return}zlStart(p)}
 function zlRange(z,p){const gs=MEM.gs,N=gs.length;if(p.k<0)return {a:0,la:0,b:N-1};const L=zlLine(z,p.k),pre=p.k>0?Math.max(0,L.a-ZL.ov):L.a;
   if(p.stage===3){const mid=L.a+Math.ceil((L.b-L.a+1)/2);return z.eh[p.k]?{a:Math.max(L.a,mid-ZL.ov),la:mid,b:L.b,half:1}:{a:pre,la:L.a,b:mid-1,half:0}}
   return {a:pre,la:L.a,b:L.b}}
-function zlStart(p){memAutoOff();const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=p.k<0?ZL.songT[p.t||0]:ZL.tempo;
+function zlStart(p){memAutoOff();awUseL(false);const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=p.k<0?ZL.songT[p.t||0]:ZL.tempo;
   const ns=MEM.notes.filter(n=>n.start>=gs[g.a].start-0.001&&n.start<=gs[g.b].last+0.001).sort((x,y)=>x.start-y.start);
   const R=MEM.run={zl:1,k:p.k,stage:p.stage,half:g.half,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
     peekJ:-1,peekT:0,flashT:-1,clock:0,vt:gs[g.a].start,run:false,lateJ:-1,recent:[],good:new Map(),bad:new Map(),demo:null,done:false,res:null,kb0:kbOn(),t0:Date.now(),
@@ -4888,7 +4888,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.37 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.38 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

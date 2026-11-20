@@ -1,4 +1,4 @@
-(ns)=>{window.toast=()=>{};let tones=[];window.playTone=m=>tones.push(m);window.playClick=()=>{};window.AW_NOLOOP=true;KB.state='off';const o={};
+(ns)=>{window.toast=()=>{};window.MEM_ZL=false;let tones=[];window.playTone=m=>tones.push(m);window.playClick=()=>{};window.AW_NOLOOP=true;KB.state='off';const o={};
  const DAY=864e5,T0=Date.UTC(2026,10,16,17);window.AW_NOW=T0;
  const it={id:'aw',type:'midi',title:'Fly',artist:'x',data:b64FromBuf(writeMidi(ns.map(([m,s,d,h])=>({m,start:s,dur:d,hand:h}))))};LIB=[it];save('kt_lib',LIB);openMem(it);
  const gs=()=>MEM.gs,C=()=>MEM.C,v=()=>MEM.rec[awKey()],tick=s=>{for(let x=0;x<s;x+=1/60){const R=MEM.run;if(!R)return;awTick(R,1/60)}},play=j=>{for(const m of gs()[j].mids)memPress(m,'kb')};
