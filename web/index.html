@@ -616,7 +616,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.33</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.34</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3063,6 +3063,16 @@ function awNext(){const p=awPick();if(!p){memStop();memHome();return}awStart(p)}
 /* tiefstes A: läuft ein Versuch → vorspielen (mit Klang) und neu; der Versuch zählt nicht (eine Wiederholung gilt als nicht geschafft). Nach dem Versuch → nur vorspielen */
 function awRestart(R){if(R.pv||R.done){awDemo(R);return} /* läuft das Vorspielen schon oder ist der Versuch fertig: (nochmal) von vorn vorspielen, ohne Wertung */const v=awState(),c=v.ch[R.k],now=memNow();
   if(R.mode==='rev'){awRevFail(v,R.k,now);memSaveAll();awLog(R,false,{abort:'A'});return awStart({k:R.k,mode:'head'},true)}
+  /* v5.34: noch nichts gespielt → nur zuhören, zählt nicht als Versuch */
+  if(R.pos<=R.a&&!R.wrong&&R.mode!=='whole'){awDemo(R);return}
+  /* v5.34: mitten im Versuch neu gestartet = Fehlversuch für die Anti-Schleife – nach 3× kommt der Schritt einmal mit Noten (vorher lief das nie an) */
+  if((R.mode==='head'||R.mode==='snowk'||R.mode==='form'||R.mode==='lhead')&&!R.re&&!R.bc){
+    const key=R.mode==='head'?'head:'+R.k:R.mode==='snowk'?'kette:'+R.span.s+'-'+R.span.e:R.mode==='form'?'form:'+R.f:'lh:'+R.k;
+    c.fails++;c.last=now;v.fc=v.fc||{};const n=v.fc[key]=(v.fc[key]||0)+1;awLog(R,false,{abort:'A',fc:n});
+    if(n>=AW.loopMax){if(R.mode==='lhead')c.lh=1;else{const P=MEM.C[R.k];v.re=R.mode==='head'?{key,k:R.k,a:P.a,b:P.b}:{key,k:R.mode==='snowk'?R.span.e:R.k,a:R.a,b:R.b}}if(R.mode==='lhead')delete v.fc[key];memSaveAll();
+      try{toast(R.mode==='lhead'?'3× neu gestartet – weiter mit beiden Händen und Noten.':'3× neu gestartet – jetzt einmal mit Noten, dann wieder aus dem Kopf.')}catch(e){}return awStart(awPick(),true)}
+    memSaveAll();if(!R.hints)try{toast('Tipp: B ganz links zeigt dir den nächsten Griff – 1 Hilfe ist erlaubt, der Versuch läuft weiter.')}catch(e){}
+    const p={k:R.k,mode:R.mode,f:R.f};if(R.span){p.s=R.span.s;p.e=R.span.e}if(R.mode==='lhead'){p.a=R.a;p.b=R.b}return awStart(p,true)}
   if(R.mode==='whole'&&R.rev){v.whole.due=now+AW.iv[1]}
   if(R.mode!=='learn')c.fails++;c.last=now;memSaveAll();awLog(R,false,{abort:'A'});const p={k:R.k,mode:R.mode,f:R.f,re:R.re,bc:R.bc,rev:R.rev,back:R.back,rest:R.spotRest,learn:R.sLearn};if(R.span){p.s=R.span.s;p.e=R.span.e}if(R.mode==='spot'||R.re||R.bc||R.mode==='lhead'){p.a=R.a;p.b=R.b}
   awStart(p,true)}
@@ -4622,7 +4632,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.33 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.34 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

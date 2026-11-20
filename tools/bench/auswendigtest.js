@@ -48,4 +48,8 @@
  p=awPick();o.bc=[lbl(p),!!p.bc,p.a,p.b,bt,P3.a,P3.b];R=run();o.bcOk=[R.ok,!!v().bc];p=awPick();o.bcAfter=[lbl(p),!!p.bc,p.a];
  /* 12. v5.33 dichtes Häppchen: erst linke Hand allein aus dem Kopf, dann beide mit Noten */
  MEMS.aw={};openMem(it);MEM.sess={revOver:true};C()[0].dense=true;p=awPick();awNext();R=MEM.run;o.lh=[lbl(p),MEM.gs===MEM.gsL,R.dark,MEM.gs.every(G=>[...G.hands.values()].every(h=>h==='L'))];R=runWait();o.lhOk=[R.ok,v().ch[0].lh];p=awPick();awNext();o.lhAfter=[lbl(p),MEM.gs===MEM.gsAll,MEM.run.dark];
+ /* 13. v5.34 echtes Verhalten (Protokolle 16.–18.11.): tiefstes A vor dem ersten Griff = nur zuhören; mitten im Versuch neu gestartet zählt als Fehlversuch → 3× → einmal mit Noten */
+ MEMS.aw={};openMem(it);MEM.sess={revOver:true};v().ch[0].st=1;memSaveAll();awNext();R=MEM.run;const R0=R;memPress(21,'kb');o.ab0=[MEM.run===R0,!!R0.pv,(v().fc||{})['head:0']||0,v().ch[0].fails];tick(20);
+ const abs=[];for(let i=0;i<3;i++){R=MEM.run;let g=0;while(R.pv&&g++<200)tick(0.5);play(R.pos);play(R.pos+1);tick(0.2);memPress(21,'kb');abs.push([lbl({k:R.k,mode:R.mode}),(v().fc||{})['head:0']||0])}
+ p=awPick();o.ab=[abs,lbl(p),MEM.run.re,MEM.run.dark];R=MEM.run;let g2=0;while(R.pv&&g2++<200)tick(0.5);R=runWait();o.abRe=[R.ok,!!v().re,lbl(awPick())];
  return o}

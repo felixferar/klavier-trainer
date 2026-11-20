@@ -35,6 +35,7 @@ async def main():
          'Formteil > 3 Häppchen: einmal ganz am Stück, wartend, dunkel': r['form'][0] == 'form(1-5)' and r['form'][1] is True and r['formRun'] == [False, True, True],
          'Rückwärts-Flicken: 2× hinten gehakt → ab 3 Griffe vor der Stelle bis zum Ende, geschafft → wieder ganz': r['bc0'] == 'head(3)' and [x[0] for x in r['bc'][4]] == [False, False] and r['bc'][1] and r['bc'][2] == r['bc'][4][1][1] - 3 and r['bc'][3] == r['bc'][6] and r['bcOk'] == [True, False] and r['bcAfter'][0] == 'head(3)' and not r['bcAfter'][1] and r['bcAfter'][2] is None,
          'dichtes Häppchen: erst linke Hand allein aus dem Kopf (dunkel), dann beide Hände mit Noten': r['lh'] == ['lhead(1)', True, True, True] and r['lhOk'] == [True, 1] and r['lhAfter'] == ['learn(1)', True, False],
+         'tiefstes A vor dem ersten Griff = nur zuhören (kein Fehlversuch); 3× mitten im Versuch neu gestartet → einmal mit Noten → wieder aus dem Kopf': r['ab0'] == [True, True, 0, 0] and [x[1] for x in r['ab'][0]] == [1, 2, 3] and r['ab'][1] == 'learn(1)+N' and r['ab'][2] is True and r['ab'][3] is False and r['abRe'] == [True, False, 'head(1)'],
          'keine Fehler': not errs}
     for k, x in c.items(): print(('OK  ' if x else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)
