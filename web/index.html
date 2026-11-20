@@ -616,7 +616,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.34</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.35</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2805,7 +2805,7 @@ function memKbChip(){try{kbChips()}catch(e){}}
 
 /* --- Anschläge: Töne eines Akkords kommen aus dem Video oft 1–2 Bilder versetzt (40–80 ms) – sie bleiben ein Anschlag (v4.66) --- */
 function memGroups(notes){const ns=notes.slice().sort((a,b)=>a.start-b.start||a.midi-b.midi),gs=[];
-  for(const n of ns){const g=gs[gs.length-1];if(g&&n.start-g.last<0.09&&n.start-g.start<0.13&&!g.mids.has(n.midi)){g.last=n.start;g.mids.add(n.midi);g.hands.set(n.midi,n.hand||(n.midi>=60?'R':'L'));g.end=Math.max(g.end,n.start+n.dur)}else gs.push({start:n.start,last:n.start,end:n.start+n.dur,mids:new Set([n.midi]),hands:new Map([[n.midi,n.hand||(n.midi>=60?'R':'L')]])})}
+  for(const n of ns){const g=gs[gs.length-1];const mel=(n.hand||(n.midi>=60?'R':'L'))!=='L'&&n.midi>=55;if(g&&n.start-g.last<0.09&&n.start-g.start<0.13&&!g.mids.has(n.midi)){g.last=n.start;g.mids.add(n.midi);g.hands.set(n.midi,n.hand||(n.midi>=60?'R':'L'));g.end=Math.max(g.end,n.start+n.dur);if(mel)g.md=Math.max(g.md||0,n.dur)}else gs.push({start:n.start,last:n.start,end:n.start+n.dur,mids:new Set([n.midi]),hands:new Map([[n.midi,n.hand||(n.midi>=60?'R':'L')]]),md:mel?n.dur:0})}
   return gs}
 /* --- Abschnitte nach Menge (v4.96): Last je Anschlag 1 = neu, 0,3 = schon bekannte Folge; Ziel ≈ 7, mindestens 3, höchstens 8 s / 16 Anschläge; Schnitt an Phrasenpausen --- */
 const AWC={target:7,min:3,maxDur:8,maxSparse:10,maxG:16,known:0.3};
@@ -2860,6 +2860,40 @@ function awAnchors(gs,info){const N=gs.length,ioi=[];for(let j=0;j+1<N;j++)ioi.p
     if(b1&&pb&&b1.midi!==pb.midi&&pb.dur>=1.5*mI){sc+=1.5;why.push('Harmoniewechsel')}
     if(!why.includes('Ruheton')&&!why.includes('Atempause'))sc-=4;anc.push({sc,why})}
   return anc}
+/* v5.35 Takt-Schnitt: Zeilen an Taktgrenzen statt nach Formel.
+   1) Schlag verfolgen (Einsatz-Hüllkurve, Autokorrelation, dynamische Schlagverfolgung – verträgt leichte Tempo-Schwankung)
+   2) Taktart und Eins: Basstöne und lange Töne fallen auf die Eins
+   3) Auftakt: Melodie im letzten Schlag vor der Eins nach einer Pause gehört zur neuen Zeile
+   4) Zeilen = 2, 4 oder 8 Takte, Ziel-Dauer nach Dichte, Schnitt bevorzugt nach langem Ton / Pause, Last-Obergrenze
+   Ergebnis: [{a,b}] Griff-Bereiche oder null (kein klarer Takt → alte Aufteilung) */
+function awTakt(gs,T,HI,MX){const N=gs.length;if(N<12)return null;const FS=100,t0=gs[0].start,TE=Math.max(...gs.map(g=>g.end)),n=Math.ceil((TE-t0)*FS)+FS;
+  const info=gs.map(g=>{const hs=[...g.hands.entries()],bass=hs.some(([m,h])=>h==='L'||m<52),mel=hs.some(([m,h])=>h!=='L'&&m>=55),k=g.mids.size;return {t:g.start,bass,mel,k,md:g.md||0,load:k===1?AWH.w1:k===2?AWH.w2:AWH.w3}});
+  const e=new Float64Array(n);for(const x of info){const w=1+(x.bass?1.5:0)+0.3*(x.k-1)+Math.min(x.md,1.5),c=Math.round((x.t-t0)*FS);for(let d=-4;d<=4;d++){const i=c+d;if(i>=0&&i<n)e[i]+=w*Math.exp(-((d/2)**2)/2)}}
+  let P=60,bs=-1;for(let lag=30;lag<=120;lag++){let a=0,a2=0;const h=lag>>1;for(let i=0;i+lag<n;i++){a+=e[i]*e[i+lag];a2+=e[i]*e[i+h]}const pr=Math.exp(-0.5*(Math.log2(lag/60)/0.9)**2),sc=(a+0.5*a2)*pr;if(sc>bs){bs=sc;P=lag}}
+  const sc=Float64Array.from(e),bk=new Int32Array(n).fill(-1),lo=P>>1,hi=2*P,pen=new Float64Array(hi+1);for(let d=1;d<=hi;d++)pen[d]=100*Math.log(d/P)**2;
+  for(let t=0;t<n;t++){let bv=-1e9,bi=-1;for(let tau=Math.max(0,t-hi);tau<=t-lo;tau++){const v=sc[tau]-pen[t-tau];if(v>bv){bv=v;bi=tau}}if(bi>=0&&bv>0){sc[t]=e[t]+bv;bk[t]=bi}}
+  let t=n-1;for(let i=Math.max(0,n-hi);i<n;i++)if(sc[i]>sc[t])t=i;const B=[];while(t>=0){B.push(t0+t/FS);t=bk[t]}B.reverse();if(B.length<8)return null;
+  const H=[];for(let i=0;i<B.length-1;i++)H.push(B[i],(B[i]+B[i+1])/2);H.push(B[B.length-1]);const hb=(H[H.length-1]-H[0])/(H.length-1),beat=2*hb;
+  const near=x=>{let l=0,r=H.length-1;while(r-l>1){const m=(l+r)>>1;if(H[m]<=x)l=m;else r=m}return Math.abs(H[l]-x)<=Math.abs(H[r]-x)?l:r};
+  /* Raster-Treffer (auch Viertel/Triolen) – unter 85 % kein verlässlicher Takt */
+  let hit=0;for(const x of info){const j=near(x.t);let d=Math.abs(H[j]-x.t);if(j+1<H.length)for(const f of [0.5,1/3,2/3])d=Math.min(d,Math.abs(H[j]+f*(H[j+1]-H[j])-x.t));if(j>0)for(const f of [0.5,1/3,2/3])d=Math.min(d,Math.abs(H[j-1]+f*(H[j]-H[j-1])-x.t));if(d<=0.06)hit++}
+  if(hit/N<0.85)return null;
+  const w=new Float64Array(H.length);for(const x of info){const j=near(x.t);if(Math.abs(H[j]-x.t)>0.35*hb)continue;w[j]+=(x.bass?2:0)+Math.min(x.md/hb,4)*0.25+0.3}
+  const mean=w.reduce((a,b)=>a+b,0)/w.length;let BM=null;for(const M of [8,6,4,3])for(let k=0;k<M;k++){let s=0,c=0;for(let j=k;j<H.length;j+=M){s+=w[j];c++}const v=(s/c-mean)*(M===8?1.08:1);if(!BM||v>BM.v)BM={v,M,k}}
+  const D=[];for(let j=BM.k;j<H.length;j+=BM.M)D.push(H[j]);if(D[0]>info[0].t+0.3*hb)D.unshift(info[0].t);
+  const melT=info.filter(x=>x.mel).map(x=>x.t);const lastMel=x=>{let r=-1;for(const m of melT){if(m<x-0.03)r=m;else break}return r};
+  const S=D.map(T=>{for(const x of info){if(x.t<T-1.1*beat-0.03||!x.mel)continue;if(x.t>=T-0.03)break;const pv=lastMel(x.t);if(pv<0||x.t-pv>=1.4*beat)return x.t-0.001;}return T});
+  const nb=S.length,ld=new Float64Array(nb),gb=new Int32Array(N);info.forEach((x,i)=>{let b=0;while(b+1<nb&&S[b+1]<=x.t+0.3*hb)b++;gb[i]=b;ld[b]+=x.load});
+  const endsc=i=>{const pv=lastMel(S[i]);return pv<0?0:Math.min((S[i]-pv)/beat,4)/4*2};
+  const pre=[0];for(const x of ld)pre.push(pre[pre.length-1]+x);const dens=pre[nb]/Math.max(1,TE-S[0]),Dt=Math.max(3.5,Math.min(11,T/dens));
+  const best=new Float64Array(nb+1).fill(Infinity),fr=new Int32Array(nb+1).fill(-1);best[0]=0;
+  for(let j=1;j<=nb;j++)for(let i=Math.max(0,j-16);i<j;i++){if(best[i]===Infinity)continue;const L=pre[j]-pre[i],m=j-i;if(L>MX&&m>1)continue;
+    const dur=(j<nb?S[j]:TE)-S[i];let c=((dur-Dt)/(0.35*Dt))**2+Math.max(0,L-HI)**2*0.3+(m===2||m===4||m===8?0:m===1?2:6);if(j<nb)c+=2*(2-endsc(j));
+    if(best[i]+c<best[j]){best[j]=best[i]+c;fr[j]=i}}
+  const cut=[];{let j=nb;while(j>0){cut.unshift(fr[j]);j=fr[j]}}
+  const out=[];for(let q=0;q<cut.length;q++){const a0=cut[q],b0=q+1<cut.length?cut[q+1]:nb;let a=-1,b=-1;for(let i=0;i<N;i++)if(gb[i]>=a0&&gb[i]<b0){if(a<0)a=i;b=i}if(a>=0)out.push({a,b})}
+  for(let i=1;i<out.length;i++)if(out[i].a!==out[i-1].b+1)return null;if(out.length<2||out[0].a!==0||out[out.length-1].b!==N-1)return null;
+  MEM.takt={beat:+beat.toFixed(3),M:BM.M,bars:nb,hit:+(hit/N).toFixed(2),S:S.map(x=>+x.toFixed(3))};return out}
 function awParts(gs,ns){const N=gs.length,info=awStrokeInfo(gs,ns||MEM.notes||[]),anc=awAnchors(gs,info),big=N>AWH.big,
     T=big?AWH.bigTgt:AWH.tgt,LO=big?AWH.bigLo:AWH.lo,HI=big?AWH.bigHi:AWH.hi,MX=big?AWH.bigMax:AWH.max;
   const W=[0];for(const x of info)W.push(W[W.length-1]+x.w);const L=(a,b)=>W[b+1]-W[a];
@@ -2868,7 +2902,8 @@ function awParts(gs,ns){const N=gs.length,info=awStrokeInfo(gs,ns||MEM.notes||[]
   for(let j=1;j<=N;j++)for(let i=j-1;i>=0;i--){const l=L(i,j-1);if(l>MX&&j-i>1)break;if(best[i]===Infinity)continue;
     let c=((l-T)/4)**2;if(l<LO&&j<N)c+=(LO-l)*1.2;if(l>HI)c+=(l-HI)*1.5;const dd=gs[j-1].start-gs[i].start;if(dd>AWH.soft)c+=(dd-AWH.soft)*1.5;if(j<N)c-=anc[j-1].sc;
     if(best[i]+c<best[j]){best[j]=best[i]+c;from[j]=i}}
-  const hp=[];{let j=N;while(j>0){const i=from[j]<0?j-1:from[j];hp.unshift({a:i,b:j-1});j=i}}
+  let hp=[];{let j=N;while(j>0){const i=from[j]<0?j-1:from[j];hp.unshift({a:i,b:j-1});j=i}}
+  MEM.takt=null;try{const tk=awTakt(gs,T,HI,MX);if(tk)hp=tk}catch(e){MEM.takt=null} /* v5.35: Takt-Schnitt, sonst die alte Aufteilung */
   const out=hp.map(h=>{const sa=[];for(let q=h.a;q<=h.b;q++)sa.push(awGSig(gs[q]));
     return {a:h.a,b:h.b,t0:gs[h.a].start,t1:gs[h.b].end,n:h.b-h.a+1,L:Math.round(L(h.a,h.b)*10)/10,sig:sa.join('|'),sa,h:null,twin:-1,near:-1,nearSim:0,f:0,why:h.b<N-1?anc[h.b].why:['Songende']}});
   out.forEach((x,k)=>{for(let i=0;i<k;i++){if(out[i].sig===x.sig){x.twin=i;break}const s=awSim(out[i].sa,x.sa);if(s>=AW.near&&s>x.nearSim){x.near=i;x.nearSim=s}}if(x.twin>=0){x.near=-1;x.nearSim=0}});
@@ -2914,7 +2949,11 @@ function awState(){const rec=MEM.rec,C=MEM.C,key=awKey();let v=rec[key];const wa
   const now=memNow();let ch,sn=[],fd=[],whole={days:[],due:0,n:0},lat=(rec.v9&&rec.v9.lat)||0,changed=0;
   if(v&&v.cv===1){const m=awFromCv1(v,C,now);if(m){({ch,sn,fd,whole,lat}=m)}}
   else if(v&&v.cv===2){/* Noten geändert: Häppchen mit genau denselben Tönen behalten ihren Stand */const old=v,used=new Set();lat=old.lat||0;
-    ch=C.map(P=>{const o=old.ch.findIndex((x,i)=>x.sig===P.sig&&!used.has(i));if(o>=0){used.add(o);return Object.assign({},old.ch[o],{a:P.a,b:P.b})}changed++;return awNew(P.sig,P)});
+    ch=C.map(P=>{const o=old.ch.findIndex((x,i)=>x.sig===P.sig&&!used.has(i));if(o>=0){used.add(o);return Object.assign({},old.ch[o],{a:P.a,b:P.b})}
+      /* v5.35: neu geschnitten (Grenzen verschoben, Töne fast gleich) → Stand übernehmen, höchstens „aus dem Kopf“ (einmal neu bestätigen) */
+      let bo=-1,bs=0;old.ch.forEach((x,i)=>{if(used.has(i)||x.a==null||(x.a===P.a&&x.b===P.b)||x.b<P.a||x.a>P.b)return;const q=awSim(String(x.sig).split('|'),P.sa);if(q>bs){bs=q;bo=i}});
+      if(bo>=0&&bs>=0.75){used.add(bo);const x=old.ch[bo];return Object.assign(awNew(P.sig,P),{st:Math.min(x.st,2),reps:x.reps||0,fails:x.fails||0,last:x.last||0,lh:x.lh})}
+      changed++;return awNew(P.sig,P)});
     for(let k=1;k<C.length;k++){const sp=awSnowSpan(k);let keep=!!(old.sn&&old.sn[k]);for(let i=sp.s;i<=sp.e&&keep;i++)if(!old.ch.some(x=>x.sig===C[i].sig))keep=false;if(keep)sn[k]=1}
     fd=awFdFrom(ch,sn);if(!changed)whole=old.whole;
     if(changed&&changed<C.length&&old.ch.some(c=>c.st>0))try{toast(`Noten geändert – ${changed===1?'1 Häppchen beginnt':changed+' Häppchen beginnen'} neu, der Rest bleibt.`,4000)}catch(e){}}
@@ -4632,7 +4671,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.34 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.35 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

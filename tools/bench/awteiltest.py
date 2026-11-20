@@ -15,7 +15,7 @@ JS = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};window.toast=()=>{};c
  o.whole=w.whole.days.length;
  /* v9: Teil = kleinster Stand seiner alten Abschnitte */
  const it2={id:'alt9',type:'midi',title:'Alt',artist:'x',data:b64FromBuf(writeMidi(mk(0)))};LIB.push(it2);save('kt_lib',LIB);openMem(it2);const oc=awChunks(MEM.gs),P0=MEM.C[0],P1=MEM.C[1];
- delete MEMS.alt9.v10;MEMS.alt9.v9={cv:10,n:oc.length,ch:oc.map(c=>({sig:'x',st:c.a>=P1.a&&c.a<=P1.b?(c.a===P1.a?2:3):0,box:c.a>=P0.a&&c.a<=P0.b?2:0,due:0})),ln:[],lw:[],lat:0.05,whole:{days:[],due:0,n:0}};memSaveAll();openMem(it2);
+ delete MEMS.alt9.v10;MEMS.alt9.v9={cv:10,n:oc.length,ch:oc.map(c=>({sig:'x',st:c.a>=P1.a&&c.a<=P1.b?(c.a===oc.find(d=>d.a>=P1.a).a?2:3):0,box:c.a>=P0.a&&c.a<=P0.b?2:0,due:0})),ln:[],lw:[],lat:0.05,whole:{days:[],due:0,n:0}};memSaveAll();openMem(it2);
  const x=MEMS.alt9.v10;o.mig=[x.ch[0].st,x.ch[0].box,x.ch[1].st,x.ch[2].st,x.lat];
  /* Zurücksetzen */
  memHome();const b=$('#memReset');b.click();const after1=MEMS.alt9.v10.ch[0].st;$('#memReset').click();o.resetBtn=[after1,MEMS.alt9.v10.ch[0].st];
