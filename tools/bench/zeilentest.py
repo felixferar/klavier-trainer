@@ -33,14 +33,14 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  /* Text im Übungsbildschirm: keine internen Zahlen/Begriffe */
  o.runText=$('#zlRun').innerText;
  /* Schnitt verschieben */
- memStop();z().st=z().st.map(()=>4);const c0=z().cuts[2];zlMoveCut(2,1);o.cut={from:c0,to:z().cuts[2],st:z().st.join('')};
+ memStop();z().st=z().st.map(()=>4);const c0=z().cuts[2];zlMoveCut(2,1);o.cut={from:c0,to:z().cuts[2],st:z().st.join('')};o.moved=z().moved;
  /* Übernahme aus dem alten Lernstand (v10): was saß, sitzt */
  delete MEM.rec[zlKey()];const v=awState();v.ch.forEach((c,k)=>c.st=[3,3,2,1,3,3,0,0][k]);memSaveAll();o.mig=zlState().st.join('');
- o.log=(load('kt_v8log')||[]).filter(e=>e.zl).map(e=>[e.line,e.stage,e.ok,e.wrong,e.help,e.ev||'']);
+ o.log=(load('kt_v8log')||[]).filter(e=>e.zl).map(e=>[e.k,e.mode,e.ok,e.wrong,e.hints,e.abort||0,e.why||'',e.demos,e.n,(e.waits||[]).length,typeof e.dur,e.t>0&&!!e.song]);
  /* App in den Hintergrund / Klavier getrennt: Durchgang endet, zählt nicht, Übersicht */
  z().st=z().st.map(()=>0);r=zlStart({k:0,stage:2});play(r,r.a,r.a+1);Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>'hidden'});document.dispatchEvent(new Event('visibilitychange'));
  delete document.visibilityState;o.bg={run:!!MEM.run,home:!$('#zlHome').classList.contains('hidden'),log:(load('kt_v8log')||[]).slice(-1)[0].why};
- KB.state='on';r=zlStart({k:0,stage:2});KB.state='off';zlTick(r,0.05);o.kb={run:!!MEM.run,home:!$('#zlHome').classList.contains('hidden'),log:(load('kt_v8log')||[]).slice(-1)[0].why};KB.state='off';
+ KB.state='on';r=zlStart({k:0,stage:2});play(r,r.a,r.a);KB.state='off';zlTick(r,0.05);o.kb={run:!!MEM.run,home:!$('#zlHome').classList.contains('hidden'),log:(load('kt_v8log')||[]).slice(-1)[0].why};KB.state='off';
  o.ver=$('#verTxt').textContent;return o}"""
 async def main():
     async with async_playwright() as p:
@@ -48,6 +48,7 @@ async def main():
         pg = await br.new_page(viewport={'width': 780, 'height': 360}); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto('file://' + sys.argv[1]); await pg.wait_for_timeout(2500); await pg.evaluate("localStorage.clear()")
         r = await pg.evaluate(JS, SONGS)
+        open('/tmp/zl/log.json','w').write(await pg.evaluate("JSON.stringify({kind:'learn',v:'5.36',entries:load('kt_v8log'),snap:{song:'fly_me',title:'Fly Me'}})"))
         await pg.evaluate("()=>{window.AW_NOLOOP=false;MEMS.fly_me[zlKey()].st=[4,4,0,0,0,0,0,0];zlStart({k:2,stage:3});const R=MEM.run;for(const m of MEM.gs[R.a].mids)memPress(m,'kb');memPress(30,'kb')}")
         await pg.wait_for_timeout(300); os.makedirs('/tmp/zl', exist_ok=True); await pg.screenshot(path='/tmp/zl/stufe3.png')
         await pg.evaluate("()=>{zlStart({k:2,stage:4})}"); await pg.wait_for_timeout(400); await pg.screenshot(path='/tmp/zl/stufe4.png')
@@ -73,7 +74,8 @@ async def main():
          'Übungsbildschirm ohne interne Zahlen/Begriffe': not any(w in r['runText'] for w in ['Häppchen', 'Formteil', 'Last', 'Anschl', 'Naht', ' s ']),
          'Schnitt verschieben: Grenze +1 Griff, beide Zeilen wieder Stufe 1': r['cut']['to'] == r['cut']['from'] + 1 and r['cut']['st'] == '40044444',
          'Übernahme: was saß, sitzt (alt 3 3 2 1 3 3 0 0 → 44004400)': r['mig'] == '44004400',
-         'Protokoll: jeder Versuch mit Zeile/Stufe/Fehler/Hilfe, dazu Vorspielen, Abbruch, Schnitt': any(e[5] == 'demo' for e in lg) and any(e[5] == 'abort' for e in lg) and any(e[5] == 'cut' for e in lg) and any(e[1] == 3 and e[3] == 1 and e[2] == 0 for e in lg) and any(e[4] == 1 for e in lg) and any(e[5] == 'stage1' for e in lg),
+         'Protokoll im Format von lernauswertung.py: je Durchgang k, mode (noten/halb/kopf/song), ok, wrong, hints, n, dur, demos, waits': all(e[10] == 'number' and e[11] for e in lg) and {e[1] for e in lg} >= {'noten', 'halb', 'kopf', 'song'} and any(e[1] == 'halb' and e[3] == 1 and e[2] == 0 for e in lg) and any(e[4] == 1 for e in lg) and all(e[9] == e[8] for e in lg if not e[5]),
+         'Protokoll: Vorspielen zählt in demos, kein eigener Durchgang; A mitten im Versuch = Abbruch; Zuhören (Stufe 1) und Schnitt sind keine Durchgänge': any(e[1] == 'noten' and e[7] >= 1 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'vor' for e in lg) and r['moved'] == 1,
          'App im Hintergrund: Durchgang endet, zählt nicht (Abbruch im Protokoll), Übersicht': not r['bg']['run'] and r['bg']['home'] and r['bg']['log'] == 'bg',
          'Klavier getrennt: Durchgang endet, Übersicht': not r['kb']['run'] and r['kb']['home'] and r['kb']['log'] == 'kb',
          'Version 5.36': r['ver'].startswith('Version 5.36'),

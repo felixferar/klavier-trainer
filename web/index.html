@@ -3130,7 +3130,7 @@ function zlHome(){memStop();$('#mem').classList.remove('running','blind');memKbC
   const sits=z.st.filter(s=>s>=4).length;
   $('#zlTilesH').innerHTML=zlTiles(z,p,{cuts:1,sel});
   $('#zlSum').textContent=z.whole?'⭐ Der ganze Song sitzt.':`${sits} von ${z.st.length} Zeilen sitzen`;
-  $('#zlCutBox').innerHTML=sel?`<div class="mu sm" style="margin:6px 0">Grenze zwischen Zeile ${sel} und ${sel+1}:</div><div style="display:flex;gap:8px"><button class="btn" data-mv="-1" style="flex:1;height:40px">◀ 1 Griff früher</button><button class="btn" data-mv="1" style="flex:1;height:40px">1 Griff später ▶</button></div><div class="mu sm" style="margin-top:4px">Beide Zeilen beginnen danach wieder bei Stufe 1.</div>`:'<div class="mu sm" style="margin-top:6px">Zeile falsch getrennt? Tippe auf ┆ zwischen zwei Zeilen.</div>';
+  $('#zlCutBox').innerHTML=sel?`<div class="mu sm" style="margin:6px 0">Grenze zwischen Zeile ${sel} und ${sel+1}:</div><div style="display:flex;gap:8px"><button class="btn" data-mv="-1" style="flex:1;height:40px">◀ 1 Griff früher</button><button class="btn" data-mv="1" style="flex:1;height:40px">1 Griff später ▶</button></div><div class="mu sm" style="margin-top:4px">Beide Zeilen beginnen danach wieder bei Stufe 1.</div>`:''; /* Schnitt verschieben nur als Notlösung – kein Aufruf zum Beurteilen nach Gehör */
   $('#zlTilesH').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;MEM.zlSel=MEM.zlSel===c?0:c;zlHome()});
   $('#zlCutBox').querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>zlMoveCut(sel,+b.dataset.mv));
   const go=$('#zlGo');go.disabled=!p;go.textContent=p?(p.k<0?'Weiter: Ganzer Song aus dem Kopf':`Weiter: Zeile ${p.k+1} · ${ZL.names[p.stage]}`):'Alles geschafft ⭐';
@@ -3141,7 +3141,7 @@ function zlHome(){memStop();$('#mem').classList.remove('running','blind');memKbC
   memSaveAll()}
 function zlMoveCut(k,d){const z=zlState(),N=MEM.gs.length,c=z.cuts[k]+d,lo=z.cuts[k-1]+2,hi=(k+1<z.cuts.length?z.cuts[k+1]:N)-2;
   if(c<lo||c>hi){try{toast('Eine Zeile braucht mindestens 2 Griffe',2000)}catch(e){}return}
-  z.cuts[k]=c;z.st[k-1]=0;z.st[k]=0;z.whole=0;memSaveAll();zlLog({k:k-1,stage:0,a:0,b:0,wrong:0,help:0,demos:0},0,{ev:'cut',cut:k,to:c,d});zlHome()}
+  z.cuts[k]=c;z.st[k-1]=0;z.st[k]=0;z.whole=0;z.moved=(z.moved||0)+1;memSaveAll();zlHome()}
 
 /* --- Durchgang --- */
 function zlGo(){const z=zlState(),p=zlPick(z);if(!p){zlHome();return}zlStart(p)}
@@ -3149,7 +3149,7 @@ function zlStart(p){memAutoOff();const z=zlState(),gs=MEM.gs,N=gs.length;let la,
   if(p.k<0){la=0;a=0;b=N-1}else{const L=zlLine(z,p.k);la=L.a;b=L.b;a=p.k>0?Math.max(0,la-ZL.ov):la}
   const ns=MEM.notes.filter(n=>n.start>=gs[a].start-0.001&&n.start<=gs[b].last+0.001).sort((x,y)=>x.start-y.start);
   const R=MEM.run={zl:1,k:p.k,stage:p.stage,a,la,b,ns,pos:a,hit:new Set(),pre:new Set(),wrong:0,help:0,demos:0,peekJ:-1,peekT:0,clock:0,vt:gs[a].start-ZL.view*1.5,recent:[],
-    good:new Map(),bad:new Map(),flashT:-1,demo:null,done:false,res:null,kb0:kbOn(),t0:Date.now(),lastWrong:-9};
+    good:new Map(),bad:new Map(),flashT:-1,waits:[],lastG:null,demo:null,done:false,res:null,kb0:kbOn(),t0:Date.now(),lastWrong:-9};
   $('#zlHome').classList.add('hidden');$('#memHome').classList.add('hidden');$('#memRunV').classList.add('hidden');$('#zlRun').classList.remove('hidden');$('#mem').classList.add('running');
   zlUI(R);if(p.stage===1)zlDemo(R,true);memLoopOn();zlDraw();return R}
 /* sichtbar? Anlauf immer (gedimmt), außer aus dem Kopf; halb blind: hintere Hälfte der eigenen Griffe aus */
@@ -3157,14 +3157,14 @@ function zlVis(R,j){if(R.demo)return 1;if(R.peekJ===j&&R.clock<R.peekT)return 1;
   if(R.stage<=2)return 1;
   if(R.stage===3){const n=R.b-R.la+1;return j<R.la+Math.ceil(n/2)?1:0}
   return (j===R.a&&R.pos===R.a)||(j===R.la&&R.clock<R.flashT)?1:0}
-function zlDemo(R,auto){auto=auto||R.stage===1; /* Stufe 1: auch mit A bleibt es das Vorspielen der Stufe */if(!auto){if(R.pos>R.a&&!R.done)zlLog(R,0,{ev:'abort'});zlLog(R,0,{ev:'demo'})}
-  R.demos++;const gs=MEM.gs;R.demo={t:gs[R.a].start-0.6,end:gs[R.b].end+0.3,q:0,auto:!!auto};R.done=false;R.res=null;R.pos=R.a;R.hit.clear();R.pre.clear();R.wrong=0;R.help=0;R.peekJ=-1;R.flashT=-1;R.t0=Date.now();zlUI(R)}
+function zlDemo(R,auto){auto=auto||R.stage===1; /* Stufe 1: auch mit A bleibt es das Vorspielen der Stufe */if(!auto&&R.pos>R.a&&!R.done){zlLog(R,0,{abort:1,why:'A'});R.demos=0}
+  R.demos++;const gs=MEM.gs;R.demo={t:gs[R.a].start-0.6,end:gs[R.b].end+0.3,q:0,auto:!!auto};R.done=false;R.res=null;R.pos=R.a;R.hit.clear();R.pre.clear();R.wrong=0;R.help=0;R.peekJ=-1;R.flashT=-1;R.waits=[];R.lastG=null;R.t0=Date.now();zlUI(R)}
 function zlTick(R,dt){R.clock+=dt;const gs=MEM.gs;
-  if(R.kb0&&!kbOn()&&!R.done){zlLog(R,0,{ev:'abort',why:'kb'});memStop();zlHome();try{toast('Klavier getrennt – der Durchgang zählt nicht.',3500)}catch(e){}return}
+  if(R.kb0&&!kbOn()&&!R.done){if(R.pos>R.a)zlLog(R,0,{abort:1,why:'kb'});memStop();zlHome();try{toast('Klavier getrennt – der Durchgang zählt nicht.',3500)}catch(e){}return}
   if(R.demo){const d=R.demo;d.t+=dt*ZL.demoSpeed;R.vt=d.t;
     while(d.q<R.ns.length&&R.ns[d.q].start<=d.t){const n=R.ns[d.q++];try{playTone(n.midi,n.dur/ZL.demoSpeed,n.vel||0.8)}catch(e){}}
     if(d.t>d.end){const auto=d.auto;R.demo=null;R.vt=gs[R.a].start-ZL.view*1.5;R.clock=0;
-      if(auto&&R.stage===1){const z=zlState();z.st[R.k]=Math.max(z.st[R.k],1);memSaveAll();zlLog(R,1,{ev:'stage1'});R.stage=2}
+      if(auto&&R.stage===1){const z=zlState();z.st[R.k]=Math.max(z.st[R.k],1);memSaveAll();R.stage=2;R.t0=Date.now()}
       zlUI(R)}return}
   if(R.done){R.doneT-=dt;if(R.doneT<=0){const p=R.next;if(p)zlStart(p);else{memStop();zlHome()}}return}
   const G=gs[Math.min(R.pos,R.b)];R.vt=Math.min(R.vt+dt*Math.max(ZL.view,(G.start-R.vt)*3),G.start)}
@@ -3179,16 +3179,18 @@ function zlPress(m){const R=MEM.run,gs=MEM.gs,now=performance.now();
   const nx=gs[R.pos+1];if(nx&&R.pos<R.b&&nx.start-G.start<=0.16&&nx.mids.has(m)){R.pre.add(m);R.good.set(m,now);return} /* fast gleichzeitig notierter Nachbargriff */
   R.wrong++;R.bad.set(m,now);R.lastWrong=R.clock;zlUI(R)}
 function zlAdv(R){const gs=MEM.gs;while(R.pos<=R.b){const G=gs[R.pos];for(const m of G.mids)if(!R.hit.has(m))return;
-  R.recent=R.recent.filter(x=>R.clock-x.at<=0.5);R.recent.push({j:R.pos,at:R.clock});R.pos++;if(R.pos===R.la&&R.la>R.a&&R.stage===4)R.flashT=R.clock+ZL.flash;R.hit=R.pre;R.pre=new Set();if(R.peekJ>=0&&R.peekJ<R.pos)R.peekJ=-1}
+  R.waits.push(R.lastG==null?0:Math.round((R.clock-R.lastG)*100)/100);R.lastG=R.clock;R.recent=R.recent.filter(x=>R.clock-x.at<=0.5);R.recent.push({j:R.pos,at:R.clock});R.pos++;if(R.pos===R.la&&R.la>R.a&&R.stage===4)R.flashT=R.clock+ZL.flash;R.hit=R.pre;R.pre=new Set();if(R.peekJ>=0&&R.peekJ<R.pos)R.peekJ=-1}
   if(R.pos>R.b)zlFinish(R)}
 function zlFinish(R){const z=zlState(),ok=R.help===0&&R.wrong<=(R.k<0?ZL.songWrong:0); /* ganzer Song: bis 2 korrigierte Vertipper erlaubt */R.done=true;R.doneT=ZL.pause;let msg,flash=-1;
   if(R.k<0){if(ok){z.whole=1;msg='⭐ Der ganze Song sitzt!'}else msg=(R.help?'Mit Hilfe':`${R.wrong} Vertipper (2 erlaubt)`)+' – der Song noch einmal'}
   else if(ok){z.st[R.k]=Math.max(z.st[R.k],R.stage);if(R.stage>=4){msg=`✓ Zeile ${R.k+1} sitzt!`;flash=R.k}else msg=`✓ Geschafft – weiter mit ${ZL.names[R.stage+1]}`}
   else msg=(R.wrong?(R.wrong===1?'1 Vertipper':`${R.wrong} Vertipper`):'Mit Hilfe')+` – Stufe ${R.stage} noch einmal`;
-  memSaveAll();zlLog(R,ok?1:0);R.res={ok,msg,flash};R.next=ok?zlPick(z):{k:R.k,stage:R.stage};zlUI(R)}
-/* Protokoll: jeder Versuch, jedes Vorspielen, jeder Abbruch (für die Auswertung nach 7 Tagen) */
-function zlLog(R,ok,extra){try{const L=load('kt_v8log')||[];L.push(Object.assign({t:Date.now(),v:12,zl:1,song:MEM.item&&MEM.item.id,hand:MEM.hand,line:R.k,stage:R.stage,ok:ok?1:0,
-  wrong:R.wrong,help:R.help,demos:R.demos,a:R.a,b:R.b,pos:R.pos!=null?R.pos-R.a:0,dur:R.t0?Math.round((Date.now()-R.t0)/100)/10:0,st:zlState().st.join('')},extra||{}));
+  memSaveAll();zlLog(R,ok?1:0);R.demos=0;R.res={ok,msg,flash};R.next=ok?zlPick(z):{k:R.k,stage:R.stage};zlUI(R)}
+/* Protokoll: ein Eintrag je Durchgang im Format von tools/lernauswertung.py (t, song, k, mode, ok, abort, hints, wrong, n, dur in ms, demos, waits).
+   Vorspielen mit A zählt in „demos“ des Durchgangs; ein Abbruch erst, wenn schon ein Griff gespielt war (vorher = nur zuhören). */
+const ZL_MODE=['','vor','noten','halb','kopf'];
+function zlLog(R,ok,extra){try{const L=load('kt_v8log')||[];L.push(Object.assign({t:Date.now(),v:12,zl:1,song:MEM.item&&MEM.item.id,hand:MEM.hand,k:R.k,mode:R.k<0?'song':ZL_MODE[R.stage],line:R.k,stage:R.stage,ok:ok?1:0,
+  hints:R.help,wrong:R.wrong,n:R.b-R.a+1,pos:R.pos-R.a,dur:R.t0?Date.now()-R.t0:0,demos:R.demos,waits:R.waits.slice(),a:R.a,b:R.b,st:zlState().st.join('')},extra||{}));
   while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}}
 function zlUI(R){const z=zlState(),p={k:R.k,stage:R.stage};
   $('#zlTilesR').innerHTML=zlTiles(z,p,{flash:R.res&&R.res.flash});
@@ -3541,7 +3543,7 @@ function memAutoGo(){if(!MEM.autoT)return;memAutoOff();$('#memNext').click()}
 function memAuto(){memAutoOff();const n=$('#memNext');if(!kbOn()||n.textContent==='Zur Übersicht')return;n.dataset.t=n.textContent;let k=3;const sh=()=>{n.textContent=`${n.dataset.t} (${k})`};sh();$('#memHold').classList.remove('hidden');
   MEM.autoT=setInterval(()=>{k--;if(k<=0)memAutoGo();else sh()},1000)}
 $('#memStop').onclick=()=>{memStop();back()};
-$('#zlEnd').onclick=()=>{const R=MEM.run;if(R&&R.zl&&!R.done&&(R.pos>R.a||R.demo))zlLog(R,0,{ev:'abort',why:'end'});memStop();zlHome()}; /* v5.21: Beenden = zurück, wo du herkamst */
+$('#zlEnd').onclick=()=>{const R=MEM.run;if(R&&R.zl&&!R.done&&!R.demo&&R.pos>R.a)zlLog(R,0,{abort:1,why:'end'});memStop();zlHome()}; /* v5.21: Beenden = zurück, wo du herkamst */
 $('#memHold').onclick=()=>memAutoOff();
 $('#memNext').onclick=()=>{memAutoOff();awNext()};
 $('#memGo').onclick=()=>awNext();
@@ -3560,7 +3562,7 @@ function awLog(R,ok,extra){try{const L=load('kt_v8log')||[],gs=MEM.gs,v=MEM.rec[
 let V8LOG_BUSY=false;
 async function awLogSync(force){if(V8LOG_BUSY||!ghTok())return;const L=load('kt_v8log')||[],sent=load('kt_v8logsent')||0,neu=L.filter(e=>e.t>sent);if(!neu.length)return;
   if(!force&&Date.now()-(load('kt_v8logat')||0)<120e3)return;V8LOG_BUSY=true;
-  try{const it=MEM.item||{},snap=MEM.rec&&MEM.rec[awKey()]?{song:it.id,title:it.title,videoId:it.videoId||it.fromYT,hand:MEM.hand,parts:MEM.C.map(c=>[c.a,c.b,+c.t0.toFixed(2),+c.t1.toFixed(2),c.n,c.twin,c.near,c.f,c.L]),forms:(MEM.F||[]).map(F=>[F.s,F.e,F.lab]),beat:MEM.beat,state:MEM.rec[awKey()]}:null;
+  try{const it=MEM.item||{},snap=MEM.rec&&MEM.rec[awKey()]?{song:it.id,title:it.title,videoId:it.videoId||it.fromYT,hand:MEM.hand,parts:MEM.C.map(c=>[c.a,c.b,+c.t0.toFixed(2),+c.t1.toFixed(2),c.n,c.twin,c.near,c.f,c.L]),forms:(MEM.F||[]).map(F=>[F.s,F.e,F.lab]),beat:MEM.beat,state:MEM.rec[awKey()],zl:MEM.rec[zlKey()]||null}:null;
     const body={kind:'learn',v:(document.body.innerHTML.match(/Version (\d+\.\d+)/)||[])[1]||'',ts:new Date().toISOString(),entries:neu,snap},ts=body.ts.replace(/[:.]/g,'-').slice(0,19),id=String(it.id||'song').replace(/[^\w-]/g,'_').slice(0,40);
     const r=await ghUpload(`diag/learn/${ts}_${id}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(body)))),`Lernprotokoll ${id} (${neu.length} Versuche)`);
     if(r&&r.ok){save('kt_v8logsent',neu[neu.length-1].t);save('kt_v8logat',Date.now())}}catch(e){}V8LOG_BUSY=false}
@@ -5765,7 +5767,7 @@ window.appBack=function(){
 document.addEventListener('visibilitychange',()=>{try{
   if(document.visibilityState==='hidden'){
     /* v5.01: App im Hintergrund → Auswendig-Durchgang sofort beenden (zählt nicht), geplante Töne streichen, Ton aus. Beim Zurückkommen: Übersicht, nichts startet von selbst. */
-    if(MEM.run){try{const R=MEM.run;if(R.zl&&!R.done&&(R.pos>R.a||R.demo))zlLog(R,0,{ev:'abort',why:'bg'})}catch(e){}memStop();try{if(!$('#mem').classList.contains('hidden'))memHome()}catch(e){}} /* v5.04: alle Töne hängen an der Bildschleife – mit dem Durchgang ist alles still */
+    if(MEM.run){try{const R=MEM.run;if(R.zl&&!R.done&&!R.demo&&R.pos>R.a)zlLog(R,0,{abort:1,why:'bg'})}catch(e){}memStop();try{if(!$('#mem').classList.contains('hidden'))memHome()}catch(e){}} /* v5.04: alle Töne hängen an der Bildschleife – mit dem Durchgang ist alles still */
     try{if(AC&&AC.state==='running'){AC.suspend();AC._bgSusp=true}}catch(e){}
     try{if(CMP&&CMP.dirty)ceSave()}catch(e){}}
   else if(AC&&AC._bgSusp){AC._bgSusp=false;try{AC.resume()}catch(e){}}
