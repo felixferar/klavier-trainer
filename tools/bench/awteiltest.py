@@ -3,7 +3,7 @@ unverändert sind; der ganze Song beginnt neu. Dazu: Übernahme aus dem v9-Stand
 usage: python3 tools/bench/awteiltest.py $PWD/web/index.html"""
 import sys, asyncio, json
 from playwright.async_api import async_playwright
-JS = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};window.toast=()=>{};const o={};
+JS = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};window.toast=()=>{};window.MEM_ZL=false;const o={};
  const mk=(chg)=>{const notes=[];let t=0;for(let bar=0;bar<16;bar++){notes.push({m:48+(bar%3)*2,start:t,dur:1.9,hand:'L'});for(let q=0;q<4;q++){let m=64+((bar*3+q)%7)*2;if(chg&&bar===chg&&q===2)m+=1;notes.push({m,start:t+q*0.5,dur:0.45,hand:'R'})}t+=2;if(bar%4===3)t+=0.8}return notes};
  const it={id:'teil',type:'midi',title:'Teil',artist:'x',data:b64FromBuf(writeMidi(mk(0)))};LIB=[it];save('kt_lib',LIB);openMem(it);
  const n=MEM.C.length;o.n=n;let v=MEM.rec.v10;v.ch.forEach(c=>{c.st=3;c.box=2;c.due=Date.now()+864e5});for(let k=1;k<n;k++)v.sn[k]=1;v.whole={days:['2026-11-1'],due:0,n:1};memSaveAll();

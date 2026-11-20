@@ -3,7 +3,7 @@ aktueller markiert, Prozent + „noch …“, nach jedem Durchgang „+x %“ un
 usage: python3 tools/bench/awfortschritttest.py $PWD/web/index.html [shot-dir]"""
 import sys, asyncio, json
 from playwright.async_api import async_playwright
-JS = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};window.playClick=()=>{};window.toast=()=>{};KB.state='off';const o={};
+JS = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};window.playClick=()=>{};window.toast=()=>{};window.MEM_ZL=false;KB.state='off';const o={};
  const notes=[];let t=0;for(let bar=0;bar<8;bar++){notes.push({m:48,start:t,dur:1.9,hand:'L'});for(let q=0;q<4;q++)notes.push({m:60+((bar+q)%5)*2,start:t+q*0.5,dur:0.45,hand:'R'});t+=2}
  const it={id:'fort',type:'midi',title:'Fortschritt',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);window.AW_NOW=Date.UTC(2026,10,16,9);openMem(it);
  const gs=MEM.gs,v=()=>MEM.rec.v10,tick=s=>{for(let x=0;x<s;x+=1/60){const R=MEM.run;if(!R)return;awTick(R,1/60)}},play=j=>{for(const m of gs[j].mids)memPress(m,'kb')};

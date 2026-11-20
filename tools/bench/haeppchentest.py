@@ -5,7 +5,7 @@ usage: python3 tools/bench/haeppchentest.py $PWD/web/index.html"""
 import sys, asyncio, json, os
 from playwright.async_api import async_playwright
 SONGS = json.load(open(os.path.join(os.path.dirname(__file__), 'fixtures', 'haeppchen_songs.json')))
-JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;const o={};
+JS = r"""(S)=>{window.toast=()=>{};window.MEM_ZL=false;window.AW_NOLOOP=true;const o={};
  const load=(id,ns)=>{const it={id,type:'midi',title:id,artist:'x',data:b64FromBuf(writeMidi(ns.map(([m,s,d,h])=>({m,start:s,dur:d,hand:h}))))};LIB=[it];save('kt_lib',LIB);openMem(it);return it};
  for(const k of ['fly_me','fuer_elise']){MEMS={};load(k,S[k]);
    o[k]={F:MEM.F.map(F=>F.lab).join(' '),n:MEM.C.length,first:[MEM.C[0].a,MEM.C[0].b],L:MEM.C.map(P=>P.L),dur:MEM.C.map(P=>+(MEM.gs[P.b].start-P.t0).toFixed(1)),

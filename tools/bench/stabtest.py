@@ -1,7 +1,7 @@
 """v4.55 Stabilitaet: Fab im Player weg, Zurueck im Auswendig-Modus, Hintergrund kostet keine Fehler, Speicher-voll-Warnung, CMP-Autosave, Klavier getrennt pausiert"""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS="""async()=>{const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms));
+JS="""async()=>{window.MEM_ZL=false;const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms));
  const notes=[];let t=0;for(let i=0;i<30;i++){notes.push({m:60+(i%7)*2,start:t,dur:0.4,hand:'R'});t+=0.5;if(i%10===9)t+=0.6}
  const it={id:'s1',type:'midi',title:'S',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];
  // 1 Fab im Player

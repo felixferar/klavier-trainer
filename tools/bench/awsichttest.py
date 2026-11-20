@@ -5,7 +5,7 @@
 usage: python3 tools/bench/awsichttest.py $PWD/web/index.html"""
 import sys, asyncio, json
 from playwright.async_api import async_playwright
-SETUP = r"""()=>{window.AW_NOLOOP=true;window.playTone=()=>{};KB.state='off';const notes=[];let t=0;
+SETUP = r"""()=>{window.MEM_ZL=false;window.AW_NOLOOP=true;window.playTone=()=>{};KB.state='off';const notes=[];let t=0;
  for(let bar=0;bar<8;bar++){notes.push({m:48+(bar%4)*2,start:t,dur:1.9,hand:'L'});for(let q=0;q<4;q++)notes.push({m:64+((bar+q)%5)*2,start:t+q*0.5,dur:0.45,hand:'R'});t+=2}
  const it={id:'sicht',type:'midi',title:'Sicht',artist:'x',data:b64FromBuf(writeMidi(notes))};LIB=[it];save('kt_lib',LIB);openMem(it);MEM.rec.v10.ch[0].st=1;return true}"""
 EFF = r"""(sel)=>{const el=document.querySelector(sel);if(!el)return null;let o=1,x=el;while(x&&x.nodeType===1){o*=parseFloat(getComputedStyle(x).opacity);x=x.parentElement}

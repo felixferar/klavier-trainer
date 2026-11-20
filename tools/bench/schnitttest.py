@@ -4,7 +4,7 @@ wiederholte Stellen gelten als bekannt (weniger Last); alter Lernstand (Takt-Abs
 (ein Feld je Abschnitt, Breite nach Dauer, der nächste markiert, Legende); Durchgang nennt die Zeit des Abschnitts."""
 import sys,asyncio,json
 from playwright.async_api import async_playwright
-JS=r"""async()=>{const o={};window.playTone=()=>{};KB.state='off';
+JS=r"""async()=>{window.MEM_ZL=false;const o={};window.playTone=()=>{};KB.state='off';
  const PA=[72,74,76,77,79,77,76,74,72,71,72,74,76,74,72,0],PB=[69,71,72,74,76,74,72,71,69,67,69,71,72,71,69,0];const notes=[];let t=0;const rests=[];
  const phrase=P=>{for(let bar=0;bar<4;bar++){notes.push({m:48+bar*2,start:t,dur:1.9,hand:'L'});for(let q=0;q<4;q++){const m=P[bar*4+q];if(m)notes.push({m,start:t+q*0.5,dur:0.45,hand:'R'})}t+=2}rests.push(t);t+=0.8};
  phrase(PA);/* Takt nur mit zwei gehaltenen Tönen */notes.push({m:55,start:t,dur:1.9,hand:'L'},{m:64,start:t,dur:1.9,hand:'R'});t+=2;phrase(PB);phrase(PA);phrase(PB);
