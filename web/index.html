@@ -2888,10 +2888,19 @@ function awTakt(gs,T,HI,MX){const N=gs.length;if(N<12)return null;const FS=100,t
   const pre=[0];for(const x of ld)pre.push(pre[pre.length-1]+x);const dens=pre[nb]/Math.max(1,TE-S[0]),Dt=Math.max(3.5,Math.min(11,T/dens));
   const best=new Float64Array(nb+1).fill(Infinity),fr=new Int32Array(nb+1).fill(-1);best[0]=0;
   for(let j=1;j<=nb;j++)for(let i=Math.max(0,j-16);i<j;i++){if(best[i]===Infinity)continue;const L=pre[j]-pre[i],m=j-i;if(L>MX&&m>1)continue;
-    const dur=(j<nb?S[j]:TE)-S[i];let c=((dur-Dt)/(0.35*Dt))**2+Math.max(0,L-HI)**2*0.3+(m===2||m===4||m===8?0:m===1?2:6);if(j<nb)c+=2*(2-endsc(j));
+    const dur=(j<nb?S[j]:TE)-S[i];if(dur>13&&m>2)continue;let c=((dur-Dt)/(0.35*Dt))**2+Math.max(0,L-HI)**2*0.3+(m===2||m===4||m===8?0:m===1?2:6);if(j<nb)c+=2*(2-endsc(j));
     if(best[i]+c<best[j]){best[j]=best[i]+c;fr[j]=i}}
   const cut=[];{let j=nb;while(j>0){cut.unshift(fr[j]);j=fr[j]}}
   const out=[];for(let q=0;q<cut.length;q++){const a0=cut[q],b0=q+1<cut.length?cut[q+1]:nb;let a=-1,b=-1;for(let i=0;i<N;i++)if(gb[i]>=a0&&gb[i]<b0){if(a<0)a=i;b=i}if(a>=0)out.push({a,b})}
+  /* v5.35b: lange Pause (≥ 4 Schläge und ≥ 3 s) mitten in einer Zeile → dort teilen */
+  for(let q=0;q<out.length;q++){const z=out[q];for(let i=z.a+1;i<=z.b;i++){if(gs[i].start-gs[i-1].start>=Math.max(3,4*beat)&&i>z.a){out.splice(q,1,{a:z.a,b:i-1},{a:i,b:z.b});break}}}
+  /* v5.35b: Zeile mit weniger als 4 Griffen (z. B. einzelner Akkord am Anfang oder zwischen zwei Teilen) → an die Nachbarzeile hängen, über die kürzere Pause */
+  const gap=Math.max(3,4*beat);for(let q=0;q<out.length&&out.length>1;q++){const z=out[q];if(z.b-z.a+1>=4&&gs[z.b].start-gs[z.a].start>=1.5)continue;const gp=q>0?gs[z.a].start-gs[out[q-1].b].start:Infinity,gn=q+1<out.length?gs[out[q+1].a].start-gs[z.b].start:Infinity;
+    if(gn<=gp||q===0){out[q+1].a=z.a}else{out[q-1].b=z.b}out.splice(q,1);q--}
+  /* v5.35b: ein einzelner Takt ist zu voll (Last über dem Maximum) → in der Mitte an der größten Lücke teilen */
+  const lw=(a,b)=>{let x=0;for(let i=a;i<=b;i++)x+=info[i].load;return x};
+  for(let q=0;q<out.length;q++){const z=out[q];if(lw(z.a,z.b)<=MX||z.b-z.a<7)continue;let bi=-1,bv=-1;const lo2=z.a+Math.floor((z.b-z.a+1)*0.3),hi2=z.b-Math.floor((z.b-z.a+1)*0.3);
+    for(let i=Math.max(z.a+1,lo2);i<=hi2;i++){const g=gs[i].start-gs[i-1].start;if(g>bv){bv=g;bi=i}}if(bi>0){out.splice(q,1,{a:z.a,b:bi-1},{a:bi,b:z.b});q--}}
   for(let i=1;i<out.length;i++)if(out[i].a!==out[i-1].b+1)return null;if(out.length<2||out[0].a!==0||out[out.length-1].b!==N-1)return null;
   MEM.takt={beat:+beat.toFixed(3),M:BM.M,bars:nb,hit:+(hit/N).toFixed(2),S:S.map(x=>+x.toFixed(3))};return out}
 function awParts(gs,ns){const N=gs.length,info=awStrokeInfo(gs,ns||MEM.notes||[]),anc=awAnchors(gs,info),big=N>AWH.big,

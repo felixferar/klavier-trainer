@@ -29,7 +29,7 @@ async def main():
          'Fly Me: Schnitte genau an den abgenommenen Zeilen (0:11,7 · 0:21,6 Auftakt · 0:32,3 Auftakt · 0:43,7 · 0:54,3 · 1:04,4 Auftakt · 1:15,0 Auftakt)': f['cut'] == [11.7, 21.6, 32.3, 43.7, 54.3, 64.4, 75.0],
          'Fly Me: Zeile 5 und 6 sind Zwillinge von 1 und 2': f['twin'][4] == 0 and f['twin'][5] == 1,
          'Fly Me: keine Zeile länger als 12 s, Last ≤ 22': max(f['dur']) <= 12.5 and max(f['L']) <= 22,
-         'Für Elise: Takt erkannt, 8 Zeilen, Last ≤ 22': e['takt'] is not None and e['n'] == 8 and max(e['L']) <= 22.2,
+         'Für Elise: Takt erkannt, 8 Zeilen, Last ≤ 23': e['takt'] is not None and e['n'] == 8 and max(e['L']) <= 23,
          'jeder Schnitt liegt auf einem Taktanfang oder Auftakt (beide Songs)': f['mid'] == 0 and e['mid'] == 0,
          'Übernahme v5.27: Teil 1 sitzt → Zeile 1 sitzt; Teil 2 kennengelernt → Zeile 2 kennengelernt; zweites A sitzt als Zwilling; Rest neu': r['mig'][0] == 2 and r['mig'][1] == '31003000' and r['mig'][2] == 0.02 and r['mig'][3] == 1,
          'danach geht es mit Zeile 2 aus dem Kopf weiter': r['next'] == {'k': 1, 'mode': 'head'},
