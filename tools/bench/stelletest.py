@@ -61,7 +61,7 @@ async def main():
          'Verblassen: Stelle in der Blässe der Stufe (30 %)': t(lambda: r['fade']['type'] == 'vergessen' and r['fade']['sv'] == 0.3),
          'geschafft (1 Fehler) → keine Stelle; langes Stück → keine Stelle': t(lambda: r['okNoSpot'] == {'ok': True, 'spot': False} and not r['blk']['ok'] and not r['blk']['spot']),
          'Protokoll: mode stelle mit spot, why, parent': t(lambda: len(r['log']) >= 6 and r['log'][0]['spot'] == [83, 86] and r['log'][0]['why'] == 'finger' and r['log'][0]['parent'] == 4 and r['log'][0]['n'] == 4),
-         'Version 5.44': t(lambda: r['ver'].startswith('Version 5.44')),
+         'Version 5.45': t(lambda: r['ver'].startswith('Version 5.45')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
