@@ -38,3 +38,9 @@ Größte Fehlerquelle in den Stör-Gruppen: die Hand über der Tastatur (ca. 180
 
 ## Echte Handy-Aufnahmen (Unterschiedstest, kein Sollwert)
 Aufnahmen aus `klavier-diagnose/diag` mit `diag.py --out` umwandeln. Dann alt und neu auf demselben `rec.json` nachspielen (exakter Handy-Zustand) und jede Abweichung mit der Gegenprobe ansehen. Für große Aufnahmen (bis 400 MB) `rec.json` im Browser per `fetch` laden, nicht über Playwright übergeben.
+
+## Gruppe kbox (v5.43)
+Namenskästchen wie KISHAKEYS (weißes Kästchen unten am Balken, grauer Rand): `KBOX=1 python3 tools/bench/gen.py SEED DIR` für SEED 401–406, dann `run.py DIR 401 … 406` und `replay.py DIR`.
+- v5.42: F1@100 0,925 (40 Zusatznoten = zerschnittene Noten).
+- v5.43: 0,980 (8). Rest: 7 zerschnittene Noten auf schwarzen Tasten bei 60 Bildern/s (Seed 406).
+Ohne KBOX bleiben alle Seeds bitgleich.
