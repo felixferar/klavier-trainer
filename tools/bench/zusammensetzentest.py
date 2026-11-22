@@ -16,7 +16,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
    press=j=>{for(const m of gs[j].mids)memPress(m,'kb')},
    demoEnd=()=>{let n=0;while(R()&&R().demo&&n++<5000)zlTick(R(),0.02)},
    play=(r,from,to,bad)=>{bad=bad||{};for(let j=from;j<=to;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}for(let i=0;i<(bad[j]||0);i++)memPress(30,'kb');press(j)}},
-   felix=bl=>{const v={cv:2,n:89,cuts:[0,13,26,35,46,59,72,81],st:[4,4,4,4,4,4,4,2],eh:[0,0,0,0,0,0,0,0],stars:[2,2,2,2,2,2,2,0],song:0};if(bl)v.bl=bl;MEM.rec[zlKey()]=v;memSaveAll()};
+   felix=bl=>{const v={cv:2,n:89,cuts:[0,13,26,35,46,59,72,81],st:[4,4,4,4,4,4,4,2],eh:[0,0,0,0,0,0,0,0],stars:[2,2,2,2,2,2,2,0],song:0};if(bl)v.bl=bl;v.bh={'b0-1':1,'b2-3':1,'b0-3':1,'b4-5':1,'b6-7':1,'b4-7':1,s0:1}; /* v5.50: Hilfe-Durchgänge als erledigt – hier geht es um die Kopf-Regeln (weichtest prüft den Einstieg) */MEM.rec[zlKey()]=v;memSaveAll()};
  o.blocks8=zlBlocks(8);o.blocks={9:zlBlocks(9),5:zlBlocks(5),3:zlBlocks(3),4:zlBlocks(4),54:zlBlocks(54).length};
  /* 1) Felix' Stand: Zeile 8 im Echo → erst Zeile 8 fertig, nicht 1–4 */
  felix();zlHome();o.felix={pick:zlPick(z()),go:$('#zlGo').textContent,sum:$('#zlSum').textContent,kc:z().kc.join('')};
@@ -70,11 +70,11 @@ async def main():
          'in der Toleranz, aber Zeile fehlt → „Fast“': t(lambda: not r['b34']['f']['ok'] and r['b34']['f']['stars'] == 2 and r['b34']['f']['sub'].startswith('Fast') and 'Zeile 3' in r['b34']['f']['sub']),
          '3× gescheitert → Zeile 3 nachüben → zurück zu 3–4': t(lambda: r['rep']['rep'] == 2 and 'Zeile 3' in r['rep']['sub'] and r['rep']['next'] == {'k': 2, 'stage': 4, 'rep': 1} and r['rep']['run']['rep'] == 1 and r['rep']['ok']['rep'] is None and r['rep']['ok']['next'] == {'k': -1, 'blk': '2-3', 'stage': 4, 't': 0} and r['b34']['ok']['ok'] and r['b34']['ok']['next'] == {'k': -1, 'blk': '0-3', 'stage': 4, 't': 0}),
          'Reihenfolge: 1–4, 5–6, 7–8, 5–8, Song': t(lambda: r['order'] == ['0-3', '4-5', '6-7', '4-7', 's0', 's1', 's2']),
-         'Übersicht vor dem Song': t(lambda: r['home']['go'] == 'Weiter: Ganzer Song · 60 %' and 'am Stück: 6 von 6' in r['home']['sum'] and 'ganzer Song: 0 von 3' in r['home']['sum']),
+         'Übersicht vor dem Song': t(lambda: r['home']['go'] == 'Weiter: Ganzer Song · 60 %' and 'am Stück: 6 von 6' in r['home']['sum'] and 'jetzt: der ganze Song' in r['home']['sum']),
          'Ganzer Song: 8 Fehler verteilt → noch nicht; sauber → 80 % → 100 % → fertig': t(lambda: not r['song']['ok8'] and 'erlaubt sind 8' in r['song']['msg'] and 'fehlt noch: Zeile 1' in r['song']['sub'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.8 and r['song']['end']['song'] == 3 and r['song']['end']['next'] is None and r['song']['home']['go'] == 'Alles geschafft ⭐'),
          'Zurücksetzen löscht alles': t(lambda: r['reset'] == {'st': '00000000', 'bd': 0, 'bc': 0, 'kc': '00000000', 'song': 0, 'rep': None}),
          'Protokoll: block mit blk/tol/chk, kopf mit kc, nachüben': t(lambda: any(e[0] == 'block' and e[3] == '0-1' and e[2] == 2 and e[5] is not None for e in r['log']) and any(e[0] == 'kopf' and e[6] == 1 for e in r['log']) and any(e[0] == 'kopf' and e[4] == 1 for e in r['log']) and any(e[0] == 'song' and e[2] == 8 for e in r['log'])),
-         'Version 5.49': t(lambda: r['ver'].startswith('Version 5.49')),
+         'Version 5.50': t(lambda: r['ver'].startswith('Version 5.50')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
