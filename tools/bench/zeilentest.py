@@ -11,6 +11,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  const ns=S.fly_me,it={id:'fly_me',type:'midi',title:'Fly Me',artist:'x',data:b64FromBuf(writeMidi(ns.map(([m,s,d,h])=>({m,start:s,dur:d,hand:h}))))};LIB=[it];save('kt_lib',LIB);MEMS={};save('kt_v8log',[]);
  openMem(it);const gs=MEM.gs,R=()=>MEM.run,z=()=>zlState(),
    tick=(sec)=>{const r0=MEM.run;for(let t=0;t<sec;t+=0.02){const r=MEM.run;if(!r||r!==r0)break;zlTick(r,0.02)}},
+   noSpot=()=>{const r=MEM.run;if(r&&r.spot){const p={k:r.k,stage:r.spot.stage};if(r.spot.rep)p.rep=1;memStop();zlStart(p)}return MEM.run}, /* v5.44: Stellen-Übung hier überspringen (eigener Test: stelletest) */
    press=j=>{for(const m of gs[j].mids)memPress(m,'kb')},
    /* im Takt: jeweils warten, bis der Griff fällig ist */
    play=(r,from,to)=>{for(let j=from;j<=to;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}press(j)}},
@@ -22,25 +23,25 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  zlGo();o.s1={stage:R().stage,demo:!!R().demo,stat:$('#zlStat').textContent};demoEnd();o.s1b={stage:R().stage,st:z().st[0],run:R().run};
  /* Stufe 2 im Takt, sauber → ★★★ */
  let r=R();play(r,r.a,r.b);o.s2={stars:r.res.stars,ok:r.res.ok,next:r.next,slips:r.slips,fb:$('#zlFb').textContent};
- tick(2.5);r=R();o.s3start={stage:r.stage,fade:r.fade,demo:!!r.demo,a:r.a,b:r.b,txt:$('#zlStat').textContent};
+ tick(2.5);r=noSpot();o.s3start={stage:r.stage,fade:r.fade,demo:!!r.demo,a:r.a,b:r.b,txt:$('#zlStat').textContent};
  o.s3vis={a:zlVis(r,r.a),n:zlVis(r,r.a+1),al:zlAlpha(r,r.a+1)};
  /* Verblassen 1/3: einmal zu spät → ★★, trotzdem weiter */
  play(r,r.a,r.a+1);{let n=0;while(n++<300)zlTick(r,0.02)}o.late={late:r.late,vt:+(r.vt-gs[r.a+2].start).toFixed(3),pos:r.pos-r.a};play(r,r.a+2,r.b);
  o.e1={stars:r.res.stars,ok:r.res.ok,late:r.late,sub:r.res.sub,tim:r.res.tim,eh:z().eh[0],st:z().st[0]};
- tick(2.5);r=R();o.e2start={fade:r.fade,al:zlAlpha(r,r.a+1),demo:!!r.demo,txt:$('#zlStat').textContent};
+ tick(2.5);r=noSpot();o.e2start={fade:r.fade,al:zlAlpha(r,r.a+1),demo:!!r.demo,txt:$('#zlStat').textContent};
  /* Verblassen 2/3: zu früh gespielt → ★★ */
  press(r.a);for(let j=r.a+1;j<=r.b;j++)press(j);o.e2={stars:r.res.stars,early:r.early,ok:r.res.ok,st:z().st[0],eh:z().eh[0]};
- tick(2.5);r=R();o.e3start={fade:r.fade,odd:zlAlpha(r,r.la+1),even:zlAlpha(r,r.la+2)};
+ tick(2.5);r=noSpot();o.e3start={fade:r.fade,odd:zlAlpha(r,r.la+1),even:zlAlpha(r,r.la+2)};
  /* Verblassen 3/3: sauber → Stufe 3 fertig */
- play(r,r.a,r.b);o.e3={ok:r.res.ok,st:z().st[0],eh:z().eh[0],next:r.next};tick(2.5);r=R();
+ play(r,r.a,r.b);o.e3={ok:r.res.ok,st:z().st[0],eh:z().eh[0],next:r.next};tick(2.5);r=noSpot();
  /* Stufe 4: falscher Ton → ★, gleiche Stufe; Anker bleibt bis gespielt */
  o.s4={stage:r.stage,a:zlVis(r,r.a),n:zlVis(r,r.a+1)};tick(4);o.s4.after4=zlVis(r,r.a);
  press(r.a);o.s4.afterPlay=zlVis(r,r.a);memPress(30,'kb');memPress(31,'kb');o.s4.wrongStat=$('#zlStat').textContent.includes('Falsche Taste')||(zlUI(r),$('#zlStat').textContent.includes('Falsche Taste'));playBad(r,r.a+1,r.b,{[r.a+5]:1});o.s4.cnt={wrong:r.wrong,wraw:r.wraw};
- o.s4.res={stars:r.res.stars,ok:r.res.ok,next:r.next,msg:r.res.msg,kind:r.res.kind,hist:r.res.hist,head:$('#zlFb .zlFbH')?.textContent};tick(2.5);r=R();
+ o.s4.res={stars:r.res.stars,ok:r.res.ok,next:r.next,msg:r.res.msg,kind:r.res.kind,hist:r.res.hist,head:$('#zlFb .zlFbH')?.textContent};tick(2.5);r=noSpot();
  /* B: Hilfe → ★ */
- press(r.a);memPress(22,'kb');o.peek={help:r.help,vis:zlVis(r,r.pos)};tick(1.6);o.peek.after=zlVis(r,r.pos);play(r,r.pos,r.b);o.peek.stars=r.res.stars;o.peek.ok=r.res.ok;o.peek.sub=r.res.sub;o.peek.head=$('#zlFb .zlFbH')?.textContent;tick(2.5);r=R();
+ press(r.a);memPress(22,'kb');o.peek={help:r.help,vis:zlVis(r,r.pos)};tick(1.6);o.peek.after=zlVis(r,r.pos);play(r,r.pos,r.b);o.peek.stars=r.res.stars;o.peek.ok=r.res.ok;o.peek.sub=r.res.sub;o.peek.head=$('#zlFb .zlFbH')?.textContent;tick(2.5);r=noSpot();
  /* v5.41: sitzt erst nach 2× sauber aus dem Kopf */
-play(r,r.a,r.b);o.sits={stars:r.res.stars,st:z().st[0],best:z().stars[0],flash:$('#zlPathR').querySelector('.zlN.pop')?.dataset.k,next:r.next};tick(2.5);r=R();
+play(r,r.a,r.b);o.sits={stars:r.res.stars,st:z().st[0],best:z().stars[0],flash:$('#zlPathR').querySelector('.zlN.pop')?.dataset.k,next:r.next};tick(2.5);r=noSpot();
  o.l2={k:r.k,stage:r.stage,ov:r.la-r.a,pat:$('#zlPatR').textContent};
  /* A mitten im Versuch: vorspielen, nichts zählt */
  demoEnd();play(r,r.a,r.a+2);memPress(31,'kb');memPress(21,'kb');o.aKey={demo:!!r.demo,wrong:r.wrong,pos:r.pos-r.a,stage:r.stage,st:z().st[1]};
@@ -48,7 +49,7 @@ play(r,r.a,r.b);o.sits={stars:r.res.stars,st:z().st[0],best:z().stars[0],flash:$
  r=zlStart({k:1,stage:4});press(r.a);tick(0.02);press(r.a+1);o.flash={la:zlVis(r,r.la)};tick(1.0);o.flash.later=zlVis(r,r.la);
  /* ganzer Song: 60 → 80 → 100 % */
  /* v5.40: erst Zeilen 1–4 und 5–8 am Stück, dann der ganze Song; lange Stücke erlauben 1 Fehler je 10 Griffe */
- const zz=z();zz.st=zz.st.map(()=>4);for(const b of zlBlocks(zz.st.length))zz.bd[zlBK(b)]=1;r=zlStart(zlPick(zz));o.song={k:r.k,tempo:r.tempo,a:r.a,b:r.b};play(r,r.a,r.b);o.song.ok1=r.res.ok;o.song.s1=z().song;tick(2.5);r=R();o.song.tempo2=r.tempo;
+ const zz=z();zz.st=zz.st.map(()=>4);for(const b of zlBlocks(zz.st.length))zz.bd[zlBK(b)]=1;r=zlStart(zlPick(zz));o.song={k:r.k,tempo:r.tempo,a:r.a,b:r.b};play(r,r.a,r.b);o.song.ok1=r.res.ok;o.song.s1=z().song;tick(2.5);r=noSpot();o.song.tempo2=r.tempo;
 playBad(r,r.a,r.b,{3:1,13:1,23:1,33:1,43:1,53:1,63:1,73:1,83:1});o.song.bad=r.res.ok;o.song.s2=z().song;o.song.tol=r.res.msg;
  o.runText=$('#zlRun').innerText;
  /* App im Hintergrund / Klavier getrennt */
@@ -89,7 +90,7 @@ async def main():
          'zu früh: App folgt, ★★ → Verblassen 3/3: nur jeder 2. Griff': r['e2']['stars'] == 2 and r['e2']['early'] >= 1 and r['e2']['eh'] == 2 and r['e3start']['fade'] == 2 and r['e3start']['odd'] == 0 and r['e3start']['even'] == 0.3,
          'Verblassen 3/3 geschafft → Stufe 3 fertig, weiter Aus dem Kopf': r['e3']['ok'] and r['e3']['st'] == 3 and r['e3']['eh'] == 0 and r['e3']['next'] == {'k': 0, 'stage': 4},
          'Stufe 4: nur Anker, bleibt bis gespielt (auch nach 4 s)': r['s4']['stage'] == 4 and r['s4']['a'] == 1 and r['s4']['n'] == 0 and r['s4']['after4'] == 1 and r['s4']['afterPlay'] == 0,
-         'Fehler je Griff: 2× an einer Stelle + 1× woanders = 2 Fehler → ★, Knapp!': r['s4']['wrongStat'] and r['s4']['cnt'] == {'wrong': 2, 'wraw': 3} and r['s4']['res']['stars'] == 1 and not r['s4']['res']['ok'] and r['s4']['res']['next'] == {'k': 0, 'stage': 4, 't': 0} and r['s4']['res']['kind'] == 'near' and r['s4']['res']['head'] == 'Knapp!',
+         'Fehler je Griff: 2× an einer Stelle + 1× woanders = 2 Fehler → ★, Knapp!, danach Stelle üben': r['s4']['wrongStat'] and r['s4']['cnt'] == {'wrong': 2, 'wraw': 3} and r['s4']['res']['stars'] == 1 and not r['s4']['res']['ok'] and r['s4']['res']['next']['k'] == 0 and r['s4']['res']['next']['stage'] == 4 and r['s4']['res']['next'].get('spot') and r['s4']['res']['kind'] == 'near' and r['s4']['res']['head'] == 'Knapp!',
          'B: nächster Griff 1,5 s sichtbar, zählt als 1 Fehler → ★★ geschafft, Verlauf 2 → 1': r['peek']['help'] == 1 and r['peek']['vis'] == 1 and r['peek']['after'] == 0 and r['peek']['stars'] == 2 and r['peek']['ok'] and 'Noch 1×' in r['peek']['sub'] and r['peek']['head'] == 'Geschafft!',
          'sauber aus dem Kopf (2. Mal) → Zeile sitzt mit ★★★, Punkt springt, dann Zeile 2 Hören': r['sits']['stars'] == 3 and r['sits']['st'] == 4 and r['sits']['best'] == 3 and r['sits']['flash'] == '0' and r['sits']['next'] == {'k': 1, 'stage': 1},
          'Zeile 2: 2 Griffe Anlauf, Muster wird angezeigt': r['l2']['k'] == 1 and r['l2']['ov'] == 2 and r['l2']['pat'].startswith('Bass:'),
@@ -102,7 +103,7 @@ async def main():
          'Übernahme v5.36 → v5.37 ohne Verlust': '"st":[4,4,1,0,4,4,0,0]' in r['from536'] and '"cv":2' in r['from536'] and '"song":0' in r['from536'],
          'Übernahme alter Stand: 3 3 2 1 3 3 0 0 → 44004400': r['mig'] == '44004400',
          'Protokoll (lernauswertung.py): k, mode, ok, wrong, hints, n, dur, demos, waits, Sterne, Tempo': all(e[10] == 'number' for e in lg) and {e[1] for e in lg} >= {'noten', 'blass', 'kopf', 'song'} and any(e[11] == 2 and e[12] >= 1 for e in lg) and any(e[1] == 'song' and e[13] == 0.8 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'hoeren' for e in lg) and any(e[1] == 'noten' and e[7] >= 1 for e in lg),
-         'Version 5.43': r['ver'].startswith('Version 5.43'),
+         'Version 5.44': r['ver'].startswith('Version 5.44'),
          'keine Fehler': not errs}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)
