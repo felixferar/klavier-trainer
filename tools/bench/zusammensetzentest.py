@@ -23,25 +23,25 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  /* 2) Übernahme aus v5.40 mit geschafftem 1–4 */
  felix([1,0]);o.mig40={bd:Object.keys(z().bd).sort().join(','),pick:zlPick(z()),bl:z().bl};
  /* 3) Zeile 8 aus dem Kopf: 1× sauber → noch nicht; 2× → sitzt; danach Zeilen 1–2 am Stück */
- felix();z().st[7]=3;let r=zlStart({k:7,stage:4});play(r,r.a,r.b);o.kc1={ok:r.res.ok,sub:r.res.sub,st:z().st[7],kc:z().kc[7],next:r.next};tick(2.5);r=R();
- play(r,r.a,r.b);o.kc2={sub:r.res.sub,st:z().st[7],next:r.next};tick(2.5);r=R();
+ felix();z().st[7]=3;let r=zlStart({k:7,stage:4});play(r,r.a,r.b);o.kc1={ok:r.res.ok,sub:r.res.sub,st:z().st[7],kc:z().kc[7],next:r.next};tick(4);r=R();
+ play(r,r.a,r.b);o.kc2={sub:r.res.sub,st:z().st[7],next:r.next};tick(4);r=R();
  /* 4) 1–2 am Stück: 26 Griffe → 2 erlaubt; 3 Fehler in Zeile 2 → ✓ für Zeile 1 bleibt */
  o.b12={a:r.a,b:r.b,blk:r.blk,stat:$('#zlStat').textContent};play(r,r.a,r.b,{15:1,18:1,22:1});
- o.b12.f={ok:r.res.ok,sub:r.res.sub,bc:(z().bc['b0-1']||[]).join(','),chk:$('#zlPathR').querySelectorAll('.zlN.chk').length,blk:$('#zlPathR').querySelectorAll('.zlN.blk').length};tick(2.5);r=R();
+ o.b12.f={ok:r.res.ok,sub:r.res.sub,bc:(z().bc['b0-1']||[]).join(','),chk:$('#zlPathR').querySelectorAll('.zlN.chk').length,blk:$('#zlPathR').querySelectorAll('.zlN.blk').length};tick(4);r=R();
  /* 5) dann 1 Fehler in Zeile 1, Zeile 2 sauber → in der Toleranz, alle ✓ → geschafft; danach 3–4 */
- play(r,r.a,r.b,{3:1});o.b12.ok={ok:r.res.ok,stars:r.res.stars,sub:r.res.sub,bd:!!z().bd['0-1'],next:r.next};tick(2.5);r=R();
+ play(r,r.a,r.b,{3:1});o.b12.ok={ok:r.res.ok,stars:r.res.stars,sub:r.res.sub,bd:!!z().bd['0-1'],next:r.next};tick(4);r=R();
  /* 6) 3–4: 1 Fehler in Zeile 3 → in der Toleranz, aber Zeile 3 fehlt → „Fast“ */
- o.b34={a:r.a,la:r.la,b:r.b};play(r,r.a,r.b,{28:1,30:1});o.b34.f={ok:r.res.ok,stars:r.res.stars,sub:r.res.sub};tick(2.5);r=R();
+ o.b34={a:r.a,la:r.la,b:r.b};play(r,r.a,r.b,{28:1,30:1});o.b34.f={ok:r.res.ok,stars:r.res.stars,sub:r.res.sub};tick(4);r=R();
  /* 7) noch 2× gescheitert (Zeile 3) → Zeile 3 nachüben → zurück */
- play(r,r.a,r.b,{28:1,30:1});tick(2.5);r=R();play(r,r.a,r.b,{29:1,31:1,33:1});o.rep={sub:r.res.sub,rep:z().rep,next:r.next};tick(2.5);r=R();
- o.rep.run={k:r.k,rep:r.rep,stat:$('#zlStat').textContent};play(r,r.a,r.b);o.rep.ok={sub:r.res.sub,rep:z().rep,next:r.next};tick(2.5);r=R();
+ play(r,r.a,r.b,{28:1,30:1});tick(4);r=R();play(r,r.a,r.b,{29:1,31:1,33:1});o.rep={sub:r.res.sub,rep:z().rep,next:r.next};tick(4);r=R();
+ o.rep.run={k:r.k,rep:r.rep,stat:$('#zlStat').textContent};play(r,r.a,r.b);o.rep.ok={sub:r.res.sub,rep:z().rep,next:r.next};tick(4);r=R();
  play(r,r.a,r.b);o.b34.ok={ok:r.res.ok,next:r.next};memStop();
  /* 8) Reihenfolge danach: 1–4, dann (alles sitzt) 5–6, 7–8, 5–8, Song */
  const ord=[];{const c=JSON.parse(JSON.stringify(z()));for(let i=0;i<8;i++){const p=zlPick(c);if(!p)break;ord.push(p.blk||('s'+p.t));if(p.blk)c.bd[p.blk]=1;else c.song++}}o.order=ord;
  /* 9) Ganzer Song: 8 Fehler über 8 Zeilen → in der Toleranz, aber Zeilen fehlen; dann sauber → 80 % */
  const zz=z();for(const b of zlBlocks(8))zz.bd[zlBK(b)]=1;memSaveAll();zlHome();o.home={go:$('#zlGo').textContent,sum:$('#zlSum').textContent};
- r=zlStart(zlPick(z()));const b8={};[3,5,28,38,50,63,75,84].forEach(j=>b8[j]=1);play(r,r.a,r.b,b8);o.song={ok8:r.res.ok,msg:r.res.msg,sub:r.res.sub};tick(2.5);r=R();
- play(r,r.a,r.b);o.song.clean={ok:r.res.ok,song:z().song};tick(2.5);r=R();o.song.t2=r.tempo;play(r,r.a,r.b);tick(2.5);r=R();play(r,r.a,r.b);o.song.end={song:z().song,next:r.next};tick(2.5);
+ r=zlStart(zlPick(z()));const b8={};[3,5,28,38,50,63,75,84].forEach(j=>b8[j]=1);play(r,r.a,r.b,b8);o.song={ok8:r.res.ok,msg:r.res.msg,sub:r.res.sub};tick(4);r=R();
+ play(r,r.a,r.b);o.song.clean={ok:r.res.ok,song:z().song};tick(4);r=R();o.song.t2=r.tempo;play(r,r.a,r.b);tick(4);r=R();play(r,r.a,r.b);o.song.end={song:z().song,next:r.next};tick(4);
  o.song.home={go:$('#zlGo').textContent,sum:$('#zlSum').textContent};
  /* 10) Zurücksetzen */
  $('#zlReset').click();$('#zlReset').click();o.reset={st:z().st.join(''),bd:Object.keys(z().bd).length,bc:Object.keys(z().bc).length,kc:z().kc.join(''),song:z().song,rep:z().rep};
@@ -74,7 +74,7 @@ async def main():
          'Ganzer Song: 8 Fehler verteilt → noch nicht; sauber → 80 % → 100 % → fertig': t(lambda: not r['song']['ok8'] and 'erlaubt sind 8' in r['song']['msg'] and 'fehlt noch: Zeile 1' in r['song']['sub'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.8 and r['song']['end']['song'] == 3 and r['song']['end']['next'] is None and r['song']['home']['go'] == 'Alles geschafft ⭐'),
          'Zurücksetzen löscht alles': t(lambda: r['reset'] == {'st': '00000000', 'bd': 0, 'bc': 0, 'kc': '00000000', 'song': 0, 'rep': None}),
          'Protokoll: block mit blk/tol/chk, kopf mit kc, nachüben': t(lambda: any(e[0] == 'block' and e[3] == '0-1' and e[2] == 2 and e[5] is not None for e in r['log']) and any(e[0] == 'kopf' and e[6] == 1 for e in r['log']) and any(e[0] == 'kopf' and e[4] == 1 for e in r['log']) and any(e[0] == 'song' and e[2] == 8 for e in r['log'])),
-         'Version 5.44': t(lambda: r['ver'].startswith('Version 5.44')),
+         'Version 5.45': t(lambda: r['ver'].startswith('Version 5.45')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)

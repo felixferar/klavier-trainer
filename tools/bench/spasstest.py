@@ -19,14 +19,14 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  /* laufender Fortschritt: „noch x Griffe“ */
  play(r,r.a+1,r.a+3);zlUI(r);o.left=$('#zlStat').textContent;memStop();
  /* 2) Verlauf + „Besser!“: 4 → 2 Fehler */
- r=zlStart({k:7,stage:4});play(r,r.a,r.b,{80:1,82:1,84:1,86:1});o.h1={kind:r.res.kind,head:$('#zlFb .zlFbH').textContent};tick(3);r=noSpot();
- play(r,r.a,r.b,{81:1,85:1});o.h2={kind:r.res.kind,head:$('#zlFb .zlFbH').textContent,hist:$('#zlFb .zlHist')?.textContent,sub:r.res.sub,cls:$('#zlFb').className};tick(3);r=noSpot();
- memStop();r=zlStart({k:6,stage:4});play(r,r.a,r.b,{71:1,73:1,75:1,77:1,79:1});tick(3);r=noSpot();play(r,r.a,r.b,{72:1,74:1,76:1});o.h3={kind:r.res.kind,head:$('#zlFb .zlFbH').textContent,cls:$('#zlFb').className};memStop();r=zlStart({k:7,stage:4});
+ r=zlStart({k:7,stage:4});play(r,r.a,r.b,{80:1,82:1,84:1,86:1});o.h1={kind:r.res.kind,head:$('#zlFb .zlFbH').textContent};tick(4);r=noSpot();
+ play(r,r.a,r.b,{81:1,85:1});o.h2={kind:r.res.kind,head:$('#zlFb .zlFbH').textContent,hist:$('#zlFb .zlHist')?.textContent,sub:r.res.sub,cls:$('#zlFb').className};tick(4);r=noSpot();
+ memStop();r=zlStart({k:6,stage:4});play(r,r.a,r.b,{71:1,73:1,75:1,77:1,79:1});tick(4);r=noSpot();play(r,r.a,r.b,{72:1,74:1,76:1});o.h3={kind:r.res.kind,head:$('#zlFb .zlFbH').textContent,cls:$('#zlFb').className};memStop();r=zlStart({k:7,stage:4});
  /* 3) Geschafft: grüne Erfolgsanzeige, bleibt etwas länger stehen */
  play(r,r.a,r.b);o.win={kind:r.res.kind,cls:$('#zlFb').className,head:$('#zlFb .zlFbH').textContent,doneT:+r.doneT.toFixed(2)};memStop();
  /* 4) Verblassen: Stufe 2/3 dreimal nicht geschafft → wieder 1/3 */
  z().st[7]=2;z().eh[7]=1;r=zlStart({k:7,stage:3});o.f={start:r.fade};
- for(let i=0;i<3;i++){play(r,r.a,r.b,{81:1,83:1,85:1});o.f['s'+i]={ok:r.res.ok,eh:z().eh[7],sub:r.res.sub};tick(3);r=noSpot()}
+ for(let i=0;i<3;i++){play(r,r.a,r.b,{81:1,83:1,85:1});o.f['s'+i]={ok:r.res.ok,eh:z().eh[7],sub:r.res.sub};tick(4);r=noSpot()}
  o.f.after={fade:r.fade,stage:r.stage,txt:$('#zlStat').textContent};memStop();
  /* 5) Verblassen 1/3 ohne Vorspielen; B hilft auch bei halb sichtbaren Noten */
  z().eh[7]=0;r=zlStart({k:7,stage:3});o.f1={demo:!!r.demo};press(r.a);memPress(AW.helpKey,'kb');o.f1.help=r.help;o.f1.peek=zlVis(r,r.pos);memStop();
