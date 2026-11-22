@@ -44,7 +44,18 @@ body.desk #deskBar{display:flex}
 .zlFb{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(18,24,38,.94);border:1px solid #2a3346;border-radius:16px;padding:12px 22px;text-align:center;min-width:220px}
 .zlSt{font-size:34px;color:#FFC93C;letter-spacing:4px;line-height:1.1}.zlSt.no{color:#9aa4bf}.zlFbH{font-size:22px;font-weight:800;margin-top:2px}.zlFb.win{border-color:#22C58B;box-shadow:0 0 0 2px rgba(34,197,139,.35),0 0 28px rgba(34,197,139,.35);animation:zlWin .45s ease-out}.zlFb.win .zlFbH{color:#22C58B}.zlFb.near .zlFbH{color:#FFC93C}.zlFb.near{border-color:#FFC93C}.zlFb.better .zlFbH{color:#7FB2FF}
 .zlHist{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:6px;font-size:17px;color:#9aa4bf}.zlHist b{font-weight:700}.zlHist b.now{color:#fff;font-size:20px}.zlHist i{font-style:normal;opacity:.6}.zlHist span{font-size:12px;margin-left:6px}
-.zlLeft{color:#fff;font-weight:600}.zlStat .zlWhy{color:#fff;font-weight:600}@keyframes zlWin{0%{transform:translate(-50%,-50%) scale(.85);opacity:.4}60%{transform:translate(-50%,-50%) scale(1.06)}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}.zlFbM{font-size:18px;font-weight:700;margin-top:4px}
+.zlLeft{font-weight:800}
+.zlBarW{display:flex;align-items:center;gap:10px;min-height:48px;border-radius:12px;padding:0 4px 0 12px;background:#2EC4D6;color:#121826;transition:background .18s}
+.zlBarW .zlStat{flex:1;min-width:0;margin:0;color:#121826;font-size:18px;gap:12px}
+.zlBarW .zlStat b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zlBarW .zlStat span,.zlBarW .zlStat em,.zlBarW .zlStat .gold,.zlBarW .zlStat .zlWhy{color:#121826;font-size:14px;font-weight:600;font-style:normal;opacity:.92}
+.zlBarW .ib{color:#121826}.zlBarW .ib .i{stroke:#121826}
+.zlIc{display:flex;flex:0 0 auto}.zlIc svg{width:22px;height:22px}
+.zlSeg{display:flex;gap:3px;margin:8px 2px 6px}.zlSeg i{flex:1;height:8px;border-radius:4px;background:#2a3346}.zlSeg i.pre{opacity:.45}.zlSeg i.bad{background:#FF5A5F}
+.zlFoot{display:flex;align-items:center;gap:10px;margin-top:6px;min-height:26px}
+.zlChip{flex:0 0 auto;font-size:12px;font-weight:800;letter-spacing:.05em;padding:4px 10px;border-radius:999px;color:#121826;background:#2EC4D6;text-transform:uppercase}
+.zlPath.mini{flex:0 1 220px}.zlPath.mini .zlN{width:16px;height:16px;font-size:9px}.zlPath.mini .zlN.now{width:20px;height:20px;font-size:11px}
+#zlRun.w-noten{background:linear-gradient(180deg,#0c2329 0%,#121826 70%)}#zlRun.w-blass{background:linear-gradient(180deg,#1e1838 0%,#121826 70%)}#zlRun.w-kopf{background:linear-gradient(180deg,#2a1424 0%,#121826 70%)}#zlRun.w-stelle{background:linear-gradient(180deg,#26180c 0%,#121826 70%)}.zlStat .zlWhy{color:#fff;font-weight:600}@keyframes zlWin{0%{transform:translate(-50%,-50%) scale(.85);opacity:.4}60%{transform:translate(-50%,-50%) scale(1.06)}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}.zlFbM{font-size:18px;font-weight:700;margin-top:4px}
 .zlStat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:8px;font-size:18px}.zlStat b{font-weight:700}.zlStat span{color:#9aa4bf;font-size:15px;text-align:right}
 .zlStat.gold b,.zlStat .gold{color:#FFC93C}.zlStat em{color:#FF5A5F;font-style:normal;font-weight:700}
 #mem.running #zlRun{display:flex;flex-direction:column;height:calc(100vh - 12px);height:calc(100dvh - 12px)}#mem.running .zlCvW{flex:1 1 auto;min-height:0;display:flex}#mem.running #zlCv{flex:1 1 auto;height:auto}
@@ -635,7 +646,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.45</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.46</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -829,10 +840,11 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       </div>
     </div>
     <div id="zlRun" class="hidden"> <!-- v5.37: Übungsbildschirm im Design 4b -->
-      <div class="zlTop"><div class="zlPath" id="zlPathR"></div><button class="ib" id="zlEnd" title="Beenden"><svg class="i"><use href="#i-x"/></svg></button></div>
-      <div class="zlRow"><span class="zlDots" id="zlDots"></span><span class="zlPatR" id="zlPatR"></span><span class="zlSm" id="zlTempo"></span></div>
+      <!-- v5.46: Konzept D – oben eine farbige Leiste mit Klartext (Farbe = Situation), darunter je Griff ein Segment, Farbwelt je Stufe -->
+      <div class="zlBarW" id="zlBar"><span class="zlIc" id="zlIc"></span><div class="zlStat" id="zlStat"></div><button class="ib" id="zlEnd" title="Beenden" aria-label="Beenden"><svg class="i"><use href="#i-x"/></svg></button></div>
+      <div class="zlSeg" id="zlSeg"></div>
       <div class="zlCvW"><canvas id="zlCv"></canvas><div class="zlFb hidden" id="zlFb"></div></div>
-      <div class="zlStat" id="zlStat"></div>
+      <div class="zlFoot"><span class="zlChip" id="zlChip"></span><span class="zlDots" id="zlDots"></span><span class="zlPatR" id="zlPatR"></span><div class="zlPath mini" id="zlPathR"></div><span class="zlSm" id="zlTempo"></span></div>
     </div>
     <div id="memRunV" class="hidden">
       <div id="memHandR"></div><div class="mBar" id="memMapR"></div>
@@ -3109,6 +3121,8 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
+   v5.46: Farben (Konzept D): Leiste oben = Situation (blau vorspielen, gold du bist dran, rot falsche Taste, orange Stelle, grün geschafft),
+   Farbwelt je Stufe (Mit Noten türkis, Verblassen lila, Aus dem Kopf/am Stück pink, Stelle orange), Segmente je Griff.
    v5.45: die Stelle wird vorher erklärt („du hast A gespielt – richtig ist C“), rot markiert und einmal richtig vorgespielt.
    v5.44: gescheiterte Zeile → „Stelle üben“ (2 Griffe davor bis 1 danach, 1× sauber, dann ganze Zeile; Finger-Fehler mit sichtbaren Noten).
    v5.43: Fehler zählen je Griff (Frust-Drücken = 1 Fehler); jede Zeile erlaubt 1 Fehler; Ergebnis zeigt den Verlauf und feiert Erfolge.
@@ -3124,6 +3138,11 @@ const ZL={spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.
   col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
 const zlOn=()=>window.MEM_ZL!==false;
 const zlBlk=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
+/* v5.46: Farbwelt je Stufe und Farbe je Situation (jede Farbe hat genau eine Bedeutung) */
+const ZLW={noten:'#2EC4D6',blass:'#A78BFA',kopf:'#F472B6',stelle:'#FF9F43'},ZLS={hoeren:'#4C8DFF',dran:'#FFC93C',fehler:'#FF5A5F',win:'#22C58B'};
+function zlWorld(R){return R.spot?'stelle':R.k<0?'kopf':R.stage<=2?'noten':R.stage===3?'blass':'kopf'}
+const ZLI={ohr:'<path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5s-1 3-3 3-3-1-3-3"/><path d="M9 9a3 3 0 0 1 6 0"/>',hand:'<path d="M7 11V5a1.5 1.5 0 0 1 3 0v5"/><path d="M10 10V4a1.5 1.5 0 0 1 3 0v6"/><path d="M13 10V5a1.5 1.5 0 0 1 3 0v7"/><path d="M16 12V8a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a1.5 1.5 0 0 1 2.5-1.5L9 13"/>',play:'<path d="M7 5l12 7-12 7z"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',ziel:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',stern:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',atem:'<path d="M4 12h9a3 3 0 1 0-3-3"/><path d="M4 16h13a3 3 0 1 1-3 3"/>'};
+const zlSvg=(n,fill)=>`<svg viewBox="0 0 24 24" aria-hidden="true" ${fill?'fill="#121826" stroke="none"':'fill="none" stroke="#121826" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'}>${ZLI[n]}</svg>`;
 const ZLN=['C','Cis','D','Dis','E','F','Fis','G','Gis','A','B','H'],zlName=m=>ZLN[((m%12)+12)%12]+(m%12===0?Math.floor(m/12)-1:'');
 const zlKey=()=>'zl'+(MEM.hand==='LR'?'':MEM.hand);
 const zlBeat=()=>(MEM.takt&&MEM.takt.beat)||0.5;
@@ -3342,39 +3361,50 @@ function zlUI(R){const z=zlState();
   $('#zlPathR').innerHTML=zlPath(z,{k:R.k,blk:R.blk},{flash:R.res&&R.res.flash});
   $('#zlDots').innerHTML=R.k<0&&R.blk!=null?`<i class="${R.res&&R.res.ok?'d':'c'}"></i>`:R.k<0?ZL.songT.map((t,i)=>`<i class="${i<z.song?'d':i===R.st?'c':''}"></i>`).join(''):[1,2,3,4].map(s=>`<i class="${s<R.stage||(R.res&&R.res.ok&&s===R.stage&&!(R.stage===3&&(R.fade||0)<2))?'d':s===R.stage?'c':''}"></i>`).join('');
   $('#zlTempo').textContent=`Tempo ${Math.round(R.tempo*100)} %`;
-  const st=$('#zlStat'),fb=$('#zlFb');st.classList.toggle('gold',R.stage>=3&&!R.demo);
+  const st=$('#zlStat'),fb=$('#zlFb'),w=zlWorld(R),wc=ZLW[w],run=$('#zlRun');
+  run.classList.remove('w-noten','w-blass','w-kopf','w-stelle');run.classList.add('w-'+w);
+  const chip=$('#zlChip');chip.textContent=R.spot?'Stelle üben':R.k<0?(R.blk!=null?'Am Stück':'Ganzer Song'):ZL.names[R.stage];chip.style.background=wc;
+  /* Segmente: ein Strich je Griff, gespielt = Farbe der Stufe, Fehler = rot, Anlauf blass */
+  {let h='';for(let j=R.a;j<=R.b;j++){const pre=j<R.la,done=R.res&&R.res.ok||j<R.pos,bad=R.wset.has(j);h+=`<i class="${pre?'pre':''}${bad?' bad':''}" style="${done&&!bad?'background:'+(R.res&&R.res.ok?ZLS.win:wc):''}"></i>`}$('#zlSeg').innerHTML=h}
+  const bar=(col,icon,html,fill)=>{$('#zlBar').style.background=col;$('#zlIc').innerHTML=zlSvg(icon,fill);st.innerHTML=html};
   if(R.res){const q=R.res,head=R.spot&&q.ok?'Stelle sitzt!':q.ok?(q.stars===3?'Perfekt!':'Geschafft!'):q.kind==='near'?'Knapp!':q.kind==='better'?'Besser!':'Noch einmal';
     fb.className='zlFb '+q.kind;fb.innerHTML=`<div class="zlSt${q.ok?'':' no'}">${zlStars(q.stars)}</div><div class="zlFbH">${head}</div>${R.spot&&q.ok?'':`<div class="zlFbM">${q.msg}</div>`}`+
       (q.hist?`<div class="zlHist">${q.hist.map((v,i)=>`<b class="${i===q.hist.length-1?'now':''}">${v}</b>`).join('<i>→</i>')}<span>Fehler zuletzt</span></div>`:'')+
-      `<div class="zlSm">${[q.tim,q.sub].filter(Boolean).join(' · ')}</div>`;st.innerHTML=`<b>${zlStageTxt(R)}</b>`;return}
+      `<div class="zlSm">${[q.tim,q.sub].filter(Boolean).join(' · ')}</div>`;
+    if(q.ok)bar(ZLS.win,'stern',`<b>${head}</b><span>${zlStageTxt(R)}</span>`,1);else bar(wc,'play',`<b>${zlStageTxt(R)}</b><span>${head}</span>`,1);return}
   fb.classList.add('hidden');
-  if(R.demo&&R.spot){st.innerHTML=`<b>So geht's richtig</b><span class="zlWhy">${R.spot.why||''}</span>`;return}
-  if(R.demo){st.innerHTML=`<b>${zlStageTxt(R)}</b><span>Hör zu – danach: ${R.stage===1?ZL.names[2]:'du bist dran'}</span>`;return}
-  if(R.spot&&!R.run&&R.pos===R.a&&R.clock-R.lastWrong>=1.2&&R.clock>=R.calmT){st.innerHTML=`<b>${zlStageTxt(R)}</b><span class="gold">Jetzt du – nur diese Stelle</span>`;return}
+  if(R.demo&&R.spot){bar(ZLS.hoeren,'ohr',`<b>So geht's richtig</b><span class="zlWhy">${R.spot.why||''}</span>`);return}
+  if(R.demo){bar(ZLS.hoeren,'ohr',`<b>Hör zu</b><span>${zlStageTxt(R)} – danach: ${R.stage===1?ZL.names[2]:'du bist dran'}</span>`);return}
+  if(R.clock<R.calmT){bar(wc,'atem',`<b>Kurz durchatmen 🙂</b><span>tiefstes A spielt dir die Stelle vor</span>`);return}
+  if(R.clock-R.lastWrong<1.2){bar(ZLS.fehler,'x',`<b>Falsche Taste – das Lied wartet</b><span>${zlStageTxt(R)}</span>`);return}
+  if(R.spot&&!R.run&&R.pos===R.a){bar(ZLW.stelle,'ziel',`<b>Jetzt du – nur diese Stelle</b><span>${zlStageTxt(R)}</span>`);return}
+  if(!R.run){bar(ZLS.dran,'hand',`<b>Du bist dran</b><span>${zlStageTxt(R)} – fang an, wenn du bereit bist</span>`);return}
   const left=R.b-R.pos+1;
-  const msg=R.clock<R.calmT?'<span class="gold">Kurz durchatmen 🙂 – tiefstes A spielt dir die Stelle vor</span>':R.clock-R.lastWrong<1.2?'<em>Falsche Taste – das Lied wartet</em>':R.run&&left>0?`<span class="zlLeft">noch ${left} ${left===1?'Griff':'Griffe'}</span> · ${zlNextTxt(z,R)}`:!R.run?(R.stage>=3?'<span class="gold">Du bist dran – fang an, wenn du bereit bist</span>':'Fang an, wenn du bereit bist'):zlNextTxt(z,R);
-  st.innerHTML=`<b>${zlStageTxt(R)}</b><span>${msg}</span>`}
+  bar(wc,'play',`<b>${zlStageTxt(R)}</b><span><span class="zlLeft">noch ${left} ${left===1?'Griff':'Griffe'}</span> · ${zlNextTxt(z,R)}</span>`,1)}
 function zlKeyX(lo,hi,w){const wk=[];for(let m=lo;m<=hi;m++)if(!zlBlk(m))wk.push(m);const ww=w/wk.length,x={};wk.forEach((m,i)=>x[m]={x:i*ww,w:ww,b:0});
   for(let m=lo;m<=hi;m++)if(zlBlk(m)){const l=x[m-1];if(l)x[m]={x:l.x+ww*0.68,w:ww*0.64,b:1}}return x}
 function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p=prepCv(cv);if(!p)return;const c=p.c,now=performance.now(),gs=MEM.gs,C=ZL.col;
   if(!R.lastUI||now-R.lastUI>250){R.lastUI=now;zlUI(R)}
   let lo=127,hi=0;for(const n of MEM.notes){lo=Math.min(lo,n.midi);hi=Math.max(hi,n.midi)}lo-=2;hi+=2;while(zlBlk(lo))lo--;while(zlBlk(hi))hi++;if(hi-lo<24){lo=Math.max(21,lo-6);hi=lo+24;while(zlBlk(hi))hi++}
-  const kb=Math.min(90,p.h*0.32),hy=p.h-kb,X=zlKeyX(lo,hi,p.w),gold=R.stage>=3&&!R.demo&&!R.done;
+  const kb=Math.min(90,p.h*0.32),hy=p.h-kb,X=zlKeyX(lo,hi,p.w),gold=(R.stage>=3||R.spot)&&!R.demo&&!R.done,wc=ZLW[zlWorld(R)],errOn=!R.demo&&!R.done&&R.clock-R.lastWrong<1.2;
   c.clearRect(0,0,p.w,p.h);c.fillStyle=gold?C.dark:C.bg;c.fillRect(0,0,p.w,hy);
   /* Taktstriche (dezent), damit man den Puls sieht */
   {const bt=zlBeat(),t0=gs[R.a].start;c.strokeStyle='rgba(255,255,255,.05)';c.lineWidth=1;for(let i=Math.floor((R.vt-t0)/bt)-1;i<Math.floor((R.vt-t0)/bt)+12;i++){const y=hy-6-(t0+i*bt-R.vt)*ZL.pps;if(y<0||y>hy)continue;c.beginPath();c.moveTo(0,y);c.lineTo(p.w,y);c.stroke()}}
   const fr=R.demo?Math.min(1,Math.max(0,(R.demo.t-gs[R.a].start)/Math.max(0.1,gs[R.b].end-gs[R.a].start))):(Math.min(R.pos,R.b+1)-R.a)/(R.b-R.a+1);
-  c.fillStyle='rgba(255,255,255,.08)';c.fillRect(0,hy-8,p.w,8);c.fillStyle=R.demo?C.demo:gold?C.gold:C.ok;c.fillRect(0,hy-8,p.w*fr,8);
+  c.fillStyle='rgba(255,255,255,.08)';c.fillRect(0,hy-8,p.w,8);c.fillStyle=R.demo?C.demo:wc;c.fillRect(0,hy-8,p.w*fr,8);
   c.textAlign='center';c.textBaseline='bottom';
   for(let j=R.a;j<=R.b;j++){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=hy-6-(G.start-R.vt)*ZL.pps;if(y0<-40)break;
     const anchor=gold&&(j===R.a||j===R.la||R.peekJ===j),dim=j<R.la&&R.k>=0&&!anchor,cur=j===R.pos&&!R.demo;
     for(const m of G.mids){const k=X[m];if(!k)continue;const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2),len=Math.max(18,(n?n.dur:0.3)*ZL.pps);
-      c.globalAlpha=(dim?0.35:1)*(anchor?1:al);c.fillStyle=anchor?C.gold:G.hands.get(m)==='L'?C.lh:C.rh;c.beginPath();if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.w-2,len);c.fill();
+      c.globalAlpha=(dim?0.35:1)*(anchor?1:al);c.fillStyle=anchor?wc:G.hands.get(m)==='L'?C.lh:C.rh;c.beginPath();if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.w-2,len);c.fill();
       if(cur&&al>0.5){c.strokeStyle='#fff';c.lineWidth=2;c.stroke()}
       if(R.spot&&j===R.spot.c&&(R.demo||al>0.5)){c.save();c.globalAlpha=1;c.strokeStyle=C.bad;c.lineWidth=3;c.strokeRect(k.x-1,Math.max(1,y0-len)-1,k.w+2,Math.min(len,y0)+2);
         c.fillStyle=C.bad;c.font='700 14px Inter,system-ui';c.textAlign='left';c.textBaseline='bottom';c.fillText('← hier',k.x+k.w+5,y0-2);c.restore()} /* v5.45: Problemgriff rot markieren */
       c.fillStyle=anchor?'#121826':'#fff';c.font=`600 ${Math.max(10,Math.min(14,k.w*0.55))}px Inter,system-ui`;c.fillText(zlName(m),k.x+k.w/2,y0-3);c.globalAlpha=1}}
-  if(gold){c.strokeStyle=C.gold;c.lineWidth=3;c.strokeRect(1.5,1.5,p.w-3,hy-9)}
+  /* v5.46: Rahmen = Stufenfarbe; falsche Taste = rot mit Leuchten; Vorspielen = blau */
+  if(errOn){const g=c.createLinearGradient(0,0,0,hy);g.addColorStop(0,'rgba(255,90,95,.28)');g.addColorStop(.5,'rgba(255,90,95,0)');g.addColorStop(1,'rgba(255,90,95,.28)');c.fillStyle=g;c.fillRect(0,0,p.w,hy-8);c.strokeStyle=C.bad;c.lineWidth=4;c.strokeRect(2,2,p.w-4,hy-10)}
+  else if(R.demo){c.strokeStyle=C.demo;c.lineWidth=3;c.strokeRect(1.5,1.5,p.w-3,hy-9)}
+  else if(!R.done){c.strokeStyle=wc;c.lineWidth=gold?3:2;c.strokeRect(1.5,1.5,p.w-3,hy-9)}
   const lit=new Map();if(R.demo)for(const n of R.ns)if(n.start<=R.demo.t&&R.demo.t<=n.start+n.dur)lit.set(n.midi,C.demo);
   for(const [m,t] of R.good)if(now-t<350)lit.set(m,C.ok);for(const [m,t] of R.bad)if(now-t<600)lit.set(m,C.bad);
   const tgt=!R.demo&&!R.done&&R.pos<=R.b&&zlVis(R,R.pos)?gs[R.pos].mids:new Set();
@@ -4998,7 +5028,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.45 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.46 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
