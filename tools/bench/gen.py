@@ -43,6 +43,8 @@ R2 = random.Random(seed * 7919 + 1)
 bk_real = os.environ.get('BK', '1') != '0' and R2.random() < 0.7
 BKOFF = {1: -0.12, 3: 0.12, 6: -0.15, 8: 0.0, 10: 0.15}; bk_scale = R2.uniform(0.6, 1.3)
 style['bk_real'] = bk_real
+KBOX = os.environ.get('KBOX') == '1'   # v5.43: Namenskästchen wie KISHAKEYS (ändert nur das Zeichnen, keine Zufallswerte)
+if KBOX: style['kbox'] = True
 whites = [m for m in range(lo, hi + 1) if m % 12 in WPC]; ww = W / len(whites)
 pos = {}; wi = 0
 for m in range(lo, hi + 1):
@@ -157,7 +159,11 @@ for f in range(int(total * FPS)):
                 p0 = (int(x + inset), int(max(0, y0))); p1 = (int(x + w - inset), int(min(kbY - 1, y1)))
                 cv2.rectangle(img, p0, p1, shade(c, b), -1)
                 if bar_border: cv2.rectangle(img, p0, p1, tuple(int(v * 0.6) for v in c), 2)
-                if labels and p1[1] - p0[1] > 22: cv2.putText(img, NAMES[n['m'] % 12], (int(x + w / 2 - 7), p1[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5 if w < 40 else 0.9, (30, 30, 30) if label_dark else (255, 255, 255), 2)
+                if KBOX and p1[1] - p0[1] > 8:   # KISHAKEYS-Stil: weißes Namenskästchen unten am Balken, grauer Rand zum Rest des Balkens
+                    bh = min(p1[1] - p0[1], max(14, int(0.2 * pps))); by = p1[1] - bh
+                    cv2.rectangle(img, (p0[0], by), p1, (255, 255, 255), -1); cv2.line(img, (p0[0], by), (p1[0], by), (62, 62, 62), 2)
+                    cv2.putText(img, NAMES[n['m'] % 12], (int(x + w / 2 - 6), p1[1] - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.45 if w < 40 else 0.7, tuple(int(v * 0.25) for v in c), 2)
+                elif labels and p1[1] - p0[1] > 22: cv2.putText(img, NAMES[n['m'] % 12], (int(x + w / 2 - 7), p1[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5 if w < 40 else 0.9, (30, 30, 30) if label_dark else (255, 255, 255), 2)
             if n['s'] <= t < n['s'] + n['d']: on[n['m']] = shade(c, b)
         if hitline: cv2.line(img, (0, kbY - 2), (W, kbY - 2), hue_rgb(seed * 0.31, 0.6, 0.9), 3)
         kb = np.zeros((kbH, W, 3), np.uint8)
