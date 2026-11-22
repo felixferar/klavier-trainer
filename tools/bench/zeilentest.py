@@ -35,8 +35,8 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  o.s4.res={stars:r.res.stars,ok:r.res.ok,next:r.next,msg:r.res.msg};tick(1.7);r=R();
  /* B: Hilfe → ★ */
  press(r.a);memPress(22,'kb');o.peek={help:r.help,vis:zlVis(r,r.pos)};tick(1.6);o.peek.after=zlVis(r,r.pos);play(r,r.pos,r.b);o.peek.stars=r.res.stars;tick(1.7);r=R();
- /* sauber → Zeile sitzt */
- play(r,r.a,r.b);o.sits={stars:r.res.stars,st:z().st[0],best:z().stars[0],flash:$('#zlPathR').querySelector('.zlN.pop')?.dataset.k,next:r.next};tick(1.7);r=R();
+ /* v5.41: sitzt erst nach 2× sauber aus dem Kopf */
+ play(r,r.a,r.b);o.kc1=r.res.sub;tick(1.7);r=R();play(r,r.a,r.b);o.sits={stars:r.res.stars,st:z().st[0],best:z().stars[0],flash:$('#zlPathR').querySelector('.zlN.pop')?.dataset.k,next:r.next};tick(1.7);r=R();
  o.l2={k:r.k,stage:r.stage,ov:r.la-r.a,pat:$('#zlPatR').textContent};
  /* A mitten im Versuch: vorspielen, nichts zählt */
  demoEnd();play(r,r.a,r.a+2);memPress(31,'kb');memPress(21,'kb');o.aKey={demo:!!r.demo,wrong:r.wrong,pos:r.pos-r.a,stage:r.stage,st:z().st[1]};
@@ -44,7 +44,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  r=zlStart({k:1,stage:4});press(r.a);tick(0.02);press(r.a+1);o.flash={la:zlVis(r,r.la)};tick(1.0);o.flash.later=zlVis(r,r.la);
  /* ganzer Song: 60 → 80 → 100 % */
  /* v5.40: erst Zeilen 1–4 und 5–8 am Stück, dann der ganze Song; lange Stücke erlauben 1 Fehler je 10 Griffe */
- const zz=z();zz.st=zz.st.map(()=>4);zz.bl=zz.bl.map(()=>1);r=zlStart(zlPick(zz));o.song={k:r.k,tempo:r.tempo,a:r.a,b:r.b};play(r,r.a,r.b);o.song.ok1=r.res.ok;o.song.s1=z().song;tick(1.7);r=R();o.song.tempo2=r.tempo;
+ const zz=z();zz.st=zz.st.map(()=>4);for(const b of zlBlocks(zz.st.length))zz.bd[zlBK(b)]=1;r=zlStart(zlPick(zz));o.song={k:r.k,tempo:r.tempo,a:r.a,b:r.b};play(r,r.a,r.b);o.song.ok1=r.res.ok;o.song.s1=z().song;tick(1.7);r=R();o.song.tempo2=r.tempo;
  for(let i=0;i<9;i++)memPress(30,'kb');play(r,r.a,r.b);o.song.bad=r.res.ok;o.song.s2=z().song;o.song.tol=r.res.msg;
  o.runText=$('#zlRun').innerText;
  /* App im Hintergrund / Klavier getrennt */
@@ -98,7 +98,7 @@ async def main():
          'Übernahme v5.36 → v5.37 ohne Verlust': '"st":[4,4,1,0,4,4,0,0]' in r['from536'] and '"cv":2' in r['from536'] and '"song":0' in r['from536'],
          'Übernahme alter Stand: 3 3 2 1 3 3 0 0 → 44004400': r['mig'] == '44004400',
          'Protokoll (lernauswertung.py): k, mode, ok, wrong, hints, n, dur, demos, waits, Sterne, Tempo': all(e[10] == 'number' for e in lg) and {e[1] for e in lg} >= {'noten', 'echo', 'kopf', 'song'} and any(e[11] == 2 and e[12] >= 1 for e in lg) and any(e[1] == 'song' and e[13] == 0.8 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'hoeren' for e in lg) and any(e[1] == 'noten' and e[7] >= 1 for e in lg),
-         'Version 5.40': r['ver'].startswith('Version 5.40'),
+         'Version 5.41': r['ver'].startswith('Version 5.41'),
          'keine Fehler': not errs}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)
