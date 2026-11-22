@@ -633,7 +633,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.38</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.39</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3190,14 +3190,19 @@ function zlStart(p){memAutoOff();awUseL(false);const z=zlState(),gs=MEM.gs,g=zlR
 function zlVis(R,j){if(R.demo)return 1;if(R.peekJ===j&&R.clock<R.peekT)return 1;if(R.stage<=2)return 1;return (j===R.a&&R.pos===R.a)||(j===R.la&&R.clock<R.flashT)?1:0}
 function zlReset(R){const gs=MEM.gs;R.pos=R.a;R.hit.clear();R.pre.clear();R.wrong=0;R.help=0;R.slips=0;R.early=0;R.late=0;R.lateJ=-1;R.peekJ=-1;R.flashT=-1;R.waits=[];R.lastG=null;R.run=false;R.vt=gs[R.a].start;R.done=false;R.res=null;R.t0=Date.now()}
 function zlDemo(R,auto){if(!auto&&R.pos>R.a&&!R.done&&!R.demo){zlLog(R,0,{abort:1,why:'A'});R.demos=0}
-  R.demos++;const gs=MEM.gs;zlReset(R);R.demo={t:gs[R.a].start-0.4,end:gs[R.b].end+0.2,q:0,auto:!!auto};R.vt=R.demo.t;zlUI(R)}
+  R.demos++;const gs=MEM.gs,G=gs[R.b];zlReset(R);
+  /* v5.39: Das Vorspielen endet kurz nach dem letzten Anschlag (höchstens 2 Schläge Nachklang) – nicht erst, wenn der letzte Ton ausgeklungen ist.
+     Vorher: Zeile 8 von Fly Me endet mit einem 5,3 s langen Akkord → 9 s lang lief das „Vorspielen“ weiter und alles, was man spielte, zählte nicht. */
+  R.demo={t:gs[R.a].start-0.4,end:G.start+Math.min(G.end-G.start,2*zlBeat())+0.2,last:G.start,q:0,auto:!!auto};R.vt=R.demo.t;zlUI(R)}
+/* Vorspielen beenden (Zeit abgelaufen oder du fängst nach dem letzten vorgespielten Anschlag schon an) */
+function zlDemoEnd(R){R.demo=null;zlReset(R);
+  if(R.stage===1){const z=zlState();z.st[R.k]=Math.max(z.st[R.k],1);memSaveAll();R.stage=2;$('#zlPatR').textContent=zlPattern(R.k)}
+  zlUI(R)}
 function zlTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   if(R.kb0&&!kbOn()&&!R.done){if(R.pos>R.a&&!R.demo)zlLog(R,0,{abort:1,why:'kb'});memStop();zlHome();try{toast('Klavier getrennt – der Durchgang zählt nicht.',3500)}catch(e){}return}
   if(R.demo){const d=R.demo;d.t+=dt*R.tempo;R.vt=d.t;
     while(d.q<R.ns.length&&R.ns[d.q].start<=d.t){const n=R.ns[d.q++];try{playTone(n.midi,n.dur/R.tempo,n.vel||0.8)}catch(e){}}
-    if(d.t>d.end){R.demo=null;zlReset(R);
-      if(R.stage===1){const z=zlState();z.st[R.k]=Math.max(z.st[R.k],1);memSaveAll();R.stage=2;$('#zlPatR').textContent=zlPattern(R.k)}
-      zlUI(R)}return}
+    if(d.t>d.end)zlDemoEnd(R);return}
   if(R.done){R.doneT-=dt;if(R.doneT<=0){const p=R.next;if(p)zlStart(p);else{memStop();zlHome()}}return}
   if(!R.run||R.pos>R.b)return;
   /* der Takt läuft; ist der nächste Griff fällig und noch nicht gespielt, wartet das Lied (einmal „zu spät“) */
@@ -3207,6 +3212,8 @@ function zlTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   R.vt=nv}
 function zlPress(m){const R=MEM.run,gs=MEM.gs,now=performance.now();
   if(m===AW.restart){zlDemo(R,false);return}
+  /* v5.39: Ist der letzte Griff schon vorgespielt und du spielst den ersten Griff, bist du dran – der Durchgang beginnt sofort (statt deine Töne zu verschlucken) */
+  if(R.demo&&R.demo.t>=R.demo.last+0.4&&gs[R.a].mids.has(m))zlDemoEnd(R); /* +0,4 s: wer den letzten Griff mitspielt, bleibt beim Mitspielen */
   if(R.demo){if(R.ns.some(n=>n.midi===m&&Math.abs(n.start-R.demo.t)<0.4))R.good.set(m,now);else R.bad.set(m,now);return} /* mitspielen erlaubt, zählt nicht */
   if(R.done)return;
   if(m===AW.helpKey){if(R.pos<=R.b&&!zlVis(R,R.pos)){R.help++;R.peekJ=R.pos;R.peekT=R.clock+ZL.peek;zlUI(R)}return}
@@ -4891,7 +4898,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.38 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.39 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
