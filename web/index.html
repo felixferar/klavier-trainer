@@ -33,7 +33,7 @@ body.desk #deskBar{display:flex}
 .zlSm{color:#9aa4bf;font-size:14px}.zlPat{margin-top:10px;background:#1a2233;border-radius:10px;padding:8px 10px;color:#dfe5f5;font-size:15px}
 .zlGo{display:block;width:100%;height:54px;margin-top:14px;border:0;border-radius:14px;background:#22C58B;color:#0b2a1e;font:inherit;font-size:17px;font-weight:700}.zlGo:disabled{background:#2a3346;color:#9aa4bf}
 .zlPath{display:flex;align-items:center;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}.zlN{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#2a3346;color:#9aa4bf;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
-.zlN.ok{background:#22C58B;color:#121826}.zlN.now{background:#fff;color:#121826;width:30px;height:30px;font-size:14px}.zlN.song{background:#2a3346}.zlN.song.ok{background:#FFC93C;color:#121826}.zlN.pop{animation:zlPop .6s ease}
+.zlN.ok{background:#22C58B;color:#121826}.zlN.now{background:#fff;color:#121826;width:30px;height:30px;font-size:14px}.zlN.song{background:#2a3346}.zlN.blk{box-shadow:0 0 0 2px #FFC93C}.zlN.song.ok{background:#FFC93C;color:#121826}.zlN.pop{animation:zlPop .6s ease}
 .zlMore{flex:0 0 auto;color:#9aa4bf;font-size:12px;font-weight:700;padding:0 4px}.zlLn{flex:1 1 auto;min-width:4px;height:3px;background:#2a3346}.zlLn.ok{background:#22C58B}.zlPath.big .zlN{width:30px;height:30px;font-size:14px}.zlPath.big .zlN.now{width:36px;height:36px;font-size:16px}
 @keyframes zlPop{0%{transform:scale(1)}40%{transform:scale(1.45)}100%{transform:scale(1)}}
 .zlCut{flex:0 0 auto;width:16px;padding:0;border:0;background:none;color:#9aa4bf;font-size:18px}.zlCut.on{color:#FFC93C}
@@ -633,7 +633,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.39</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.40</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3111,8 +3111,10 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
    „Im Takt“ = höchstens eine Viertel-Zählzeit neben der Note. Sterne: ★★★ alle Töne richtig und im Takt · ★★ alle richtig, Timing wackelt · ★ falscher Ton oder Hilfe.
    Weiter ab ★★. Tiefstes A = vorspielen (zählt nie als Versuch) · B = nächsten Griff 1,5 s zeigen (= Hilfe).
    Jede Zeile ab 2 beginnt mit den letzten 2 Griffen der vorigen (blass). Am Ende der ganze Song in 60 % → 80 % → 100 %.
+   v5.40: Zusammensetzen – nach je 4 Zeilen diese am Stück (60 %), dann der ganze Song. Lange Stücke erlauben 1 Fehler je 10 Griffe;
+   nach 3 gescheiterten Versuchen kommt einmal die Zeile mit den meisten Fehlern „aus dem Kopf“ (nachüben), dann zurück zum Stück.
    Der alte Ablauf läuft weiter mit window.MEM_ZL=false. */
-const ZL={ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Echo','Aus dem Kopf'],
+const ZL={blk:4,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Echo','Aus dem Kopf'],
   col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
 const zlOn=()=>window.MEM_ZL!==false;
 const zlBlk=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
@@ -3120,15 +3122,27 @@ const ZLN=['C','Cis','D','Dis','E','F','Fis','G','Gis','A','B','H'],zlName=m=>ZL
 const zlKey=()=>'zl'+(MEM.hand==='LR'?'':MEM.hand);
 const zlBeat=()=>(MEM.takt&&MEM.takt.beat)||0.5;
 /* Lernstand: cuts = erster Griff jeder Zeile, st = geschaffte Stufen (4 = sitzt), eh = Echo-Hälfte (0/1), stars = beste Sterne aus dem Kopf, song = geschaffte Song-Tempi (0–3) */
+/* v5.40: Zusammensetzen – je 4 Zeilen am Stück (Rest unter 2 Zeilen wird angehängt), erst ab 6 Zeilen; danach der ganze Song */
+function zlBlocks(n){if(n<6)return [];const B=[];for(let s=0;s<n;s+=ZL.blk)B.push([s,Math.min(n,s+ZL.blk)-1]);const l=B[B.length-1];if(B.length>1&&l[1]-l[0]<1){B.pop();B[B.length-1][1]=l[1]}return B}
+function zlLineOf(z,j){let k=0;while(k+1<z.cuts.length&&z.cuts[k+1]<=j)k++;return k}
 function zlState(){awUseL(false); /* v5.38: Zeilen immer mit beiden Händen – nie einen Stand zu den Griffen der linken Hand anlegen */const rec=MEM.rec,N=MEM.gs.length;let z=rec[zlKey()];
   if(!z||z.n!==N||!Array.isArray(z.cuts)||z.cuts[0]!==0||z.cuts.some((c,i)=>i&&(c<=z.cuts[i-1]||c>=N))){
     const cuts=MEM.C.map(P=>P.a);let st=cuts.map(()=>0);
     try{const v=awState();if(v&&v.ch&&v.ch.length===cuts.length)st=v.ch.map(c=>c&&c.st>=3?4:0)}catch(e){} /* Übernahme: was saß, sitzt weiter */
     z=rec[zlKey()]={cv:2,n:N,cuts,st,eh:cuts.map(()=>0),stars:cuts.map((c,i)=>st[i]>=4?2:0),song:0};memSaveAll()}
   if(z.cv!==2){z.cv=2;z.eh=z.eh||z.cuts.map(()=>0);z.stars=z.stars||z.st.map(s=>s>=4?2:0);z.song=z.whole?3:(z.song||0);delete z.whole;memSaveAll()} /* v5.36 → v5.37 */
+  {const nb=zlBlocks(z.st.length).length;if(!Array.isArray(z.bl)||z.bl.length!==nb){z.bl=new Array(nb).fill(0);z.lf={};z.lw={};z.rep=null}if(!z.lf)z.lf={};if(!z.lw)z.lw={};if(z.rep===undefined)z.rep=null} /* v5.40 */
   return z}
 function zlLine(z,k){const N=MEM.gs.length;return {a:z.cuts[k],b:(k+1<z.cuts.length?z.cuts[k+1]:N)-1}}
-function zlPick(z){for(let k=0;k<z.st.length;k++)if(z.st[k]<4)return {k,stage:z.st[k]+1};return z.song<3?{k:-1,stage:4,t:z.song}:null}
+function zlPick(z){if(z.rep!=null&&z.st[z.rep]>=4)return {k:z.rep,stage:4,rep:1}; /* v5.40: nachüben – die Zeile, an der das lange Stück 3× gescheitert ist */
+  const B=zlBlocks(z.st.length);
+  if(B.length){for(let b=0;b<B.length;b++){for(let k=B[b][0];k<=B[b][1];k++)if(z.st[k]<4)return {k,stage:z.st[k]+1};if(!z.bl[b])return {k:-1,blk:b,stage:4,t:0}}}
+  else for(let k=0;k<z.st.length;k++)if(z.st[k]<4)return {k,stage:z.st[k]+1};
+  return z.song<3?{k:-1,stage:4,t:z.song}:null}
+function zlPickName(p,full){if(!p)return 'fertig ⭐';if(p.k<0){if(p.blk>=0){const B=zlBlocks(zlState().st.length)[p.blk];return `Zeilen ${B[0]+1}–${B[1]+1} am Stück`}return `Ganzer Song · ${Math.round(ZL.songT[p.t||0]*100)} %`}
+  return `Zeile ${p.k+1}`+(full?' · '+ZL.names[p.stage]+(p.rep?' (nachüben)':''):'')}
+/* Erlaubte Fehler: Zeilen 0, lange Stücke (am Stück / ganzer Song) 1 je 10 eigene Griffe */
+function zlTol(R){return R.k<0?Math.floor((R.b-R.la+1)/ZL.tolPer):0}
 /* Muster je Zeile: Bass der linken Hand; fällt er Schritt für Schritt um eine Quinte, wird das gesagt. Gleiche Zeile wie eine frühere → „wie Zeile x“. */
 function zlPattern(k){const z=zlState(),L=zlLine(z,k),gs=MEM.gs,sig=q=>{const M=zlLine(z,q),x=[];for(let j=M.a;j<=M.b;j++)x.push([...gs[j].mids].sort().join('.'));return x.join('|')};
   for(let q=0;q<k;q++)if(sig(q)===sig(k))return `Wie Zeile ${q+1} – die kennst du schon`;
@@ -3146,9 +3160,10 @@ function zlPath(z,cur,o){o=o||{};const n=z.st.length,W=o.cuts?n:o.big?6:9;let h=
   if(k0>0)h+=`<span class="zlMore">${k0} ✓</span>`;
   for(let k=k0;k<=k1;k++){const ok=z.st[k]>=4,now=cur&&cur.k===k;if(k>k0)h+=`<i class="zlLn${z.st[k-1]>=4&&(ok||now)?' ok':''}"></i>`;
     if(o.cuts&&k)h+=`<button class="zlCut${o.sel===k?' on':''}" data-c="${k}" aria-label="Grenze verschieben">┆</button>`;
-    h+=`<span class="zlN${ok?' ok':''}${now?' now':''}${o.flash===k?' pop':''}" data-k="${k}">${ok?'✓':k+1}</span>`}
+    const inB=cur&&cur.blk>=0&&(()=>{const B=zlBlocks(n)[cur.blk];return B&&k>=B[0]&&k<=B[1]})();
+    h+=`<span class="zlN${ok?' ok':''}${now?' now':''}${inB?' blk':''}${o.flash===k?' pop':''}" data-k="${k}">${ok?'✓':k+1}</span>`}
   if(k1<n-1)h+=`<i class="zlLn"></i><span class="zlMore">+${n-1-k1}</span>`;
-  h+=`<i class="zlLn${z.st.every(s=>s>=4)?' ok':''}"></i><span class="zlN song${z.song>=3?' ok':''}${cur&&cur.k<0?' now':''}">♪</span>`;return h}
+  h+=`<i class="zlLn${z.st.every(s=>s>=4)?' ok':''}"></i><span class="zlN song${z.song>=3?' ok':''}${cur&&cur.k<0&&!(cur.blk>=0)?' now':''}">♪</span>`;return h}
 
 /* --- Übersicht --- */
 function zlHome(){memStop();awUseL(false);$('#mem').classList.remove('running','blind');memKbChip();
@@ -3156,31 +3171,33 @@ function zlHome(){memStop();awUseL(false);$('#mem').classList.remove('running','
   const z=zlState(),p=zlPick(z),sel=MEM.zlSel||0,sits=z.st.filter(s=>s>=4).length,S0=zlStats();$('#zlSong').textContent=MEM.item.title;{const tt=$('#mem .topbar .ttl');if(tt)tt.textContent=MEM.item.title||'Auswendig'}
   $('#zlMeta').innerHTML=`<span><b class="zlFire">●</b> ${S0.n} ${S0.n===1?'Tag':'Tage'} in Folge</span><span>Heute ${S0.min} Min</span>`;
   $('#zlPathH').innerHTML=zlPath(z,p,{cuts:MEM.zlCuts,sel,big:1});
-  $('#zlSum').innerHTML=z.song>=3?'⭐ Der ganze Song sitzt – auch im Originaltempo.':`${sits} von ${z.st.length} Zeilen sitzen${sits===z.st.length?` · ganzer Song: ${z.song} von 3 Tempi`:''}`;
+  {const nb=z.bl.length,bd=z.bl.filter(Boolean).length;$('#zlSum').innerHTML=z.song>=3?'⭐ Der ganze Song sitzt – auch im Originaltempo.':`${sits} von ${z.st.length} Zeilen sitzen${nb&&(bd||sits>=ZL.blk)?` · am Stück: ${bd} von ${nb}`:''}${sits===z.st.length&&(!nb||bd===nb)?` · ganzer Song: ${z.song} von 3 Tempi`:''}`}
   const pt=p&&p.k>=0?zlPattern(p.k):'';$('#zlPat').textContent=pt;$('#zlPat').classList.toggle('hidden',!pt);
   $('#zlCutBox').innerHTML=MEM.zlCuts&&sel?`<div class="zlSm" style="margin:6px 0">Grenze zwischen Zeile ${sel} und ${sel+1}:</div><div style="display:flex;gap:8px"><button class="btn" data-mv="-1" style="flex:1;height:40px">◀ 1 Griff früher</button><button class="btn" data-mv="1" style="flex:1;height:40px">1 Griff später ▶</button></div>`:'';
   $('#zlPathH').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;MEM.zlSel=MEM.zlSel===c?0:c;zlHome()});
   $('#zlCutBox').querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>zlMoveCut(sel,+b.dataset.mv));
-  const go=$('#zlGo');go.disabled=!p;go.textContent=p?(p.k<0?`Weiter: Ganzer Song · ${Math.round(ZL.songT[p.t]*100)} %`:`Weiter: Zeile ${p.k+1} · ${ZL.names[p.stage]}`):'Alles geschafft ⭐';go.onclick=()=>zlGo();
+  const go=$('#zlGo');go.disabled=!p;go.textContent=p?'Weiter: '+zlPickName(p,1):'Alles geschafft ⭐';go.onclick=()=>zlGo();
   const ck=$('#zlClick');ck.textContent=S.zlClick===false?'Klick: aus':'Klick: an';ck.onclick=()=>{S.zlClick=S.zlClick===false;try{save('kt_settings',S)}catch(e){}zlHome()};
   const ct=$('#zlCutT');ct.textContent=MEM.zlCuts?'Fertig mit Anpassen':'Zeilen anpassen';ct.onclick=()=>{MEM.zlCuts=!MEM.zlCuts;MEM.zlSel=0;zlHome()};
   const b=$('#zlReset');b.textContent='↺ Lernstand zurücksetzen';delete b.dataset.sure;
   b.onclick=()=>{if(!b.dataset.sure){b.dataset.sure=1;b.textContent='Wirklich alles von vorn? Nochmal tippen';return}
-    const z2=zlState();z2.st=z2.st.map(()=>0);z2.eh=z2.eh.map(()=>0);z2.stars=z2.stars.map(()=>0);z2.song=0;memSaveAll();zlHome();try{toast('Lernstand zurückgesetzt – alles von vorn')}catch(e){}};
+    const z2=zlState();z2.st=z2.st.map(()=>0);z2.eh=z2.eh.map(()=>0);z2.stars=z2.stars.map(()=>0);z2.song=0;z2.bl=z2.bl.map(()=>0);z2.lf={};z2.lw={};z2.rep=null;memSaveAll();zlHome();try{toast('Lernstand zurückgesetzt – alles von vorn')}catch(e){}};
   memSaveAll();try{awLogSync()}catch(e){}}
 function zlMoveCut(k,d){const z=zlState(),N=MEM.gs.length,c=z.cuts[k]+d,lo=z.cuts[k-1]+2,hi=(k+1<z.cuts.length?z.cuts[k+1]:N)-2;
   if(c<lo||c>hi){try{toast('Eine Zeile braucht mindestens 2 Griffe',2000)}catch(e){}return}
-  z.cuts[k]=c;for(const q of [k-1,k]){z.st[q]=0;z.eh[q]=0;z.stars[q]=0}z.song=0;z.moved=(z.moved||0)+1;memSaveAll();zlHome()}
+  z.cuts[k]=c;for(const q of [k-1,k]){z.st[q]=0;z.eh[q]=0;z.stars[q]=0}z.song=0;z.bl=z.bl.map(()=>0);z.lf={};z.lw={};z.rep=null;z.moved=(z.moved||0)+1;memSaveAll();zlHome()}
 
 /* --- Durchgang --- */
 function zlGo(){const z=zlState(),p=zlPick(z);if(!p){zlHome();return}zlStart(p)}
 /* Bereich des Durchgangs: Stufe 3 übt eine Hälfte (zweite Hälfte mit 2 Griffen Anlauf aus der ersten) */
-function zlRange(z,p){const gs=MEM.gs,N=gs.length;if(p.k<0)return {a:0,la:0,b:N-1};const L=zlLine(z,p.k),pre=p.k>0?Math.max(0,L.a-ZL.ov):L.a;
+function zlRange(z,p){const gs=MEM.gs,N=gs.length;
+  if(p.k<0&&p.blk>=0){const B=zlBlocks(z.st.length)[p.blk],L1=zlLine(z,B[0]),L2=zlLine(z,B[1]);return {a:B[0]>0?Math.max(0,L1.a-ZL.ov):L1.a,la:L1.a,b:L2.b}} /* am Stück: mit Anlauf wie eine Zeile */
+  if(p.k<0)return {a:0,la:0,b:N-1};const L=zlLine(z,p.k),pre=p.k>0?Math.max(0,L.a-ZL.ov):L.a;
   if(p.stage===3){const mid=L.a+Math.ceil((L.b-L.a+1)/2);return z.eh[p.k]?{a:Math.max(L.a,mid-ZL.ov),la:mid,b:L.b,half:1}:{a:pre,la:L.a,b:mid-1,half:0}}
   return {a:pre,la:L.a,b:L.b}}
 function zlStart(p){memAutoOff();awUseL(false);const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=p.k<0?ZL.songT[p.t||0]:ZL.tempo;
   const ns=MEM.notes.filter(n=>n.start>=gs[g.a].start-0.001&&n.start<=gs[g.b].last+0.001).sort((x,y)=>x.start-y.start);
-  const R=MEM.run={zl:1,k:p.k,stage:p.stage,half:g.half,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
+  const R=MEM.run={zl:1,k:p.k,blk:p.blk>=0?p.blk:-1,rep:p.rep?1:0,wj:{},stage:p.stage,half:g.half,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
     peekJ:-1,peekT:0,flashT:-1,clock:0,vt:gs[g.a].start,run:false,lateJ:-1,recent:[],good:new Map(),bad:new Map(),demo:null,done:false,res:null,kb0:kbOn(),t0:Date.now(),
     lastWrong:-9,waits:[],lastG:null,ck:0};
   $('#zlHome').classList.add('hidden');$('#memHome').classList.add('hidden');$('#memRunV').classList.add('hidden');$('#zlRun').classList.remove('hidden');$('#mem').classList.add('running');
@@ -3216,12 +3233,12 @@ function zlPress(m){const R=MEM.run,gs=MEM.gs,now=performance.now();
   if(R.demo&&R.demo.t>=R.demo.last+0.4&&gs[R.a].mids.has(m))zlDemoEnd(R); /* +0,4 s: wer den letzten Griff mitspielt, bleibt beim Mitspielen */
   if(R.demo){if(R.ns.some(n=>n.midi===m&&Math.abs(n.start-R.demo.t)<0.4))R.good.set(m,now);else R.bad.set(m,now);return} /* mitspielen erlaubt, zählt nicht */
   if(R.done)return;
-  if(m===AW.helpKey){if(R.pos<=R.b&&!zlVis(R,R.pos)){R.help++;R.peekJ=R.pos;R.peekT=R.clock+ZL.peek;zlUI(R)}return}
+  if(m===AW.helpKey){if(R.pos<=R.b&&!zlVis(R,R.pos)){R.help++;{const q=zlLineOf(zlState(),R.pos);R.wj[q]=(R.wj[q]||0)+1}R.peekJ=R.pos;R.peekT=R.clock+ZL.peek;zlUI(R)}return}
   if(R.pos>R.b)return;const G=gs[R.pos];
   if(G.mids.has(m)){R.hit.add(m);R.good.set(m,now);zlAdv(R);return}
   if(R.recent.some(x=>R.clock-x.at<=0.25&&gs[x.j].mids.has(m))){R.good.set(m,now);return} /* später Ton desselben Akkords */
   const nx=gs[R.pos+1];if(nx&&R.pos<R.b&&nx.start-G.start<=0.16&&nx.mids.has(m)){R.pre.add(m);R.good.set(m,now);return} /* fast gleichzeitig notierter Nachbargriff */
-  R.wrong++;R.bad.set(m,now);R.lastWrong=R.clock;zlUI(R)}
+  R.wrong++;{const q=zlLineOf(zlState(),R.pos);R.wj[q]=(R.wj[q]||0)+1}R.bad.set(m,now);R.lastWrong=R.clock;zlUI(R)}
 function zlAdv(R){const gs=MEM.gs,tol=zlBeat()/4;while(R.pos<=R.b){const G=gs[R.pos];for(const m of G.mids)if(!R.hit.has(m))return;
   if(!R.run){R.run=true;R.vt=G.start} /* der erste Griff startet den Takt */
   else if(R.vt<G.start-tol){R.early++;R.slips++;R.vt=G.start} /* zu früh: die App folgt dir */
@@ -3229,26 +3246,37 @@ function zlAdv(R){const gs=MEM.gs,tol=zlBeat()/4;while(R.pos<=R.b){const G=gs[R.
   R.waits.push(R.lastG==null?0:Math.round((R.clock-R.lastG)*100)/100);R.lastG=R.clock;R.recent=R.recent.filter(x=>R.clock-x.at<=0.5);R.recent.push({j:R.pos,at:R.clock});
   R.pos++;if(R.pos===R.la&&R.la>R.a&&R.stage>=3)R.flashT=R.clock+ZL.flash;R.hit=R.pre;R.pre=new Set();if(R.peekJ>=0&&R.peekJ<R.pos)R.peekJ=-1}
   if(R.pos>R.b)zlFinish(R)}
-function zlFinish(R){const z=zlState(),stars=R.wrong||R.help?1:R.slips?2:3,ok=stars>=2;R.done=true;R.doneT=ZL.pause;R.stars=stars;let msg,sub='',flash=-1;
+function zlFinish(R){const z=zlState(),tol=zlTol(R),bad=R.wrong+R.help,stars=bad===0?(R.slips?2:3):bad<=tol?2:1,ok=stars>=2;R.done=true;R.doneT=ZL.pause;R.stars=stars;let msg,sub='',flash=-1,next=null;
   msg=R.wrong?(R.wrong===1?'1 falscher Ton':`${R.wrong} falsche Töne`):R.help?'Mit Hilfe':stars===3?'Perfekt im Takt':'Alle Töne richtig';
+  if(R.k<0&&bad)msg+=` – erlaubt ${tol===1?'ist 1':'sind '+tol}`; /* v5.40: lange Stücke mit Toleranz */
   const tim=R.slips?[R.late?`${R.late}× zu spät`:'',R.early?`${R.early}× zu früh`:''].filter(Boolean).join(' · '):'';
-  if(R.k<0){if(ok){z.song=Math.max(z.song,R.st+1);sub=z.song>=3?'Der ganze Song sitzt!':`Nächstes Tempo: ${Math.round(ZL.songT[z.song]*100)} %`}else sub='Noch einmal in diesem Tempo'}
+  if(R.k<0){const key=R.blk>=0?'b'+R.blk:'s'+R.st;
+    if(ok){z.lf[key]=0;delete z.lw[key];
+      if(R.blk>=0){z.bl[R.blk]=1;const B=zlBlocks(z.st.length)[R.blk];sub=`Zeilen ${B[0]+1}–${B[1]+1} sitzen am Stück!`}
+      else{z.song=Math.max(z.song,R.st+1);sub=z.song>=3?'Der ganze Song sitzt!':`Nächstes Tempo: ${Math.round(ZL.songT[z.song]*100)} %`}}
+    else{z.lf[key]=(z.lf[key]||0)+1;const w=z.lw[key]=z.lw[key]||{};for(const q in R.wj)w[q]=(w[q]||0)+R.wj[q];
+      if(z.lf[key]>=ZL.repAfter){let wk=-1,wv=0;for(const q in w)if(w[q]>wv){wv=w[q];wk=+q}
+        z.lf[key]=0;delete z.lw[key];if(wk>=0){z.rep=wk;sub=`Kurz Zeile ${wk+1} aus dem Kopf – dort hakt es am meisten`}else sub='Noch einmal'}
+      else sub=`Noch einmal${R.blk>=0?'':' in diesem Tempo'}`}}
   else if(ok){if(R.stage===3&&!R.half){z.eh[R.k]=1;sub='Jetzt die zweite Hälfte'}
-    else{z.st[R.k]=Math.max(z.st[R.k],R.stage);if(R.stage===3)z.eh[R.k]=0;if(R.stage>=4){z.stars[R.k]=Math.max(z.stars[R.k]||0,stars);sub=`Zeile ${R.k+1} sitzt!`;flash=R.k}else sub='Weiter: '+ZL.names[R.stage+1]}}
+    else{z.st[R.k]=Math.max(z.st[R.k],R.stage);if(R.stage===3)z.eh[R.k]=0;if(R.stage>=4){z.stars[R.k]=Math.max(z.stars[R.k]||0,stars);if(R.rep&&z.rep===R.k){z.rep=null;sub=`Zeile ${R.k+1} sitzt wieder – zurück zum Stück`}else sub=`Zeile ${R.k+1} sitzt!`;flash=R.k}else sub='Weiter: '+ZL.names[R.stage+1]}}
   else sub='Noch einmal: '+ZL.names[R.stage]+(R.stage===3?(R.half?' (2. Hälfte)':' (1. Hälfte)'):'');
-  memSaveAll();zlLog(R,ok?1:0,{stars});R.demos=0;R.res={ok,stars,msg,sub,tim,flash};R.next=ok?zlPick(z):{k:R.k,stage:R.stage,t:R.st};zlUI(R)}
+  next=ok||(R.k<0&&z.rep!=null)?zlPick(z):Object.assign({k:R.k,stage:R.stage,t:R.st},R.blk>=0?{blk:R.blk}:{},R.rep?{rep:1}:{});
+  memSaveAll();zlLog(R,ok?1:0,{stars,tol});R.demos=0;R.res={ok,stars,msg,sub,tim,flash};R.next=next;zlUI(R)}
 /* Protokoll: ein Eintrag je Durchgang im Format von tools/lernauswertung.py (t, song, k, mode, ok, abort, hints, wrong, n, dur in ms, demos, waits).
    Vorspielen zählt in „demos“; ein Abbruch erst, wenn schon ein Griff gespielt war (vorher = nur zuhören). */
 const ZL_MODE=['','hoeren','noten','echo','kopf'];
-function zlLog(R,ok,extra){try{const L=load('kt_v8log')||[];L.push(Object.assign({t:Date.now(),v:13,zl:1,song:MEM.item&&MEM.item.id,hand:MEM.hand,k:R.k,mode:R.k<0?'song':ZL_MODE[R.stage],line:R.k,stage:R.stage,half:R.half,tempo:R.tempo,ok:ok?1:0,
+function zlLog(R,ok,extra){try{const L=load('kt_v8log')||[];L.push(Object.assign({t:Date.now(),v:13,zl:1,song:MEM.item&&MEM.item.id,hand:MEM.hand,k:R.k,mode:R.k<0?(R.blk>=0?'block':'song'):ZL_MODE[R.stage],blk:R.blk>=0?R.blk:undefined,rep:R.rep||undefined,line:R.k,stage:R.stage,half:R.half,tempo:R.tempo,ok:ok?1:0,
   hints:R.help,wrong:R.wrong,slips:R.slips,late:R.late,early:R.early,n:R.b-R.a+1,pos:R.pos-R.a,dur:R.t0?Date.now()-R.t0:0,demos:R.demos,waits:R.waits.slice(),a:R.a,b:R.b,st:zlState().st.join('')},extra||{}));
   while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}}
-function zlStageTxt(R){if(R.k<0)return `Ganzer Song · ${Math.round(R.tempo*100)} %`;return `Zeile ${R.k+1} · ${ZL.names[R.stage]}${R.stage===3?(R.half?' 2/2':' 1/2'):''}`}
-function zlNextTxt(z,R){if(R.k<0)return R.st<2?`Danach: ${Math.round(ZL.songT[R.st+1]*100)} %`:'Danach: fertig ⭐';if(R.stage===3&&!R.half)return 'Danach: 2. Hälfte';
-  if(R.stage<4)return 'Danach: '+ZL.names[R.stage+1];for(let q=0;q<z.st.length;q++)if(q!==R.k&&z.st[q]<4)return 'Danach: Zeile '+(q+1);return 'Danach: Ganzer Song'}
+function zlStageTxt(R){if(R.k<0)return zlPickName({k:-1,blk:R.blk,t:R.st});return `Zeile ${R.k+1} · ${ZL.names[R.stage]}${R.rep?' (nachüben)':''}${R.stage===3?(R.half?' 2/2':' 1/2'):''}`}
+function zlNextTxt(z,R){if(R.k>=0&&R.stage===3&&!R.half)return 'Danach: 2. Hälfte';if(R.k>=0&&R.stage<4)return 'Danach: '+ZL.names[R.stage+1];
+  /* was käme nach einem geschafften Durchgang? */
+  const c=JSON.parse(JSON.stringify(z));if(R.k<0){if(R.blk>=0)c.bl[R.blk]=1;else c.song=Math.max(c.song,R.st+1)}else{c.st[R.k]=4;if(R.rep)c.rep=null}
+  const p=zlPick(c);return 'Danach: '+(p&&p.k>=0&&!p.rep?zlPickName(p):zlPickName(p))}
 function zlUI(R){const z=zlState();
-  $('#zlPathR').innerHTML=zlPath(z,{k:R.k},{flash:R.res&&R.res.flash});
-  $('#zlDots').innerHTML=R.k<0?ZL.songT.map((t,i)=>`<i class="${i<z.song?'d':i===R.st?'c':''}"></i>`).join(''):[1,2,3,4].map(s=>`<i class="${s<R.stage||(R.res&&R.res.ok&&s===R.stage&&!(R.stage===3&&!R.half))?'d':s===R.stage?'c':''}"></i>`).join('');
+  $('#zlPathR').innerHTML=zlPath(z,{k:R.k,blk:R.blk},{flash:R.res&&R.res.flash});
+  $('#zlDots').innerHTML=R.k<0&&R.blk>=0?`<i class="${R.res&&R.res.ok?'d':'c'}"></i>`:R.k<0?ZL.songT.map((t,i)=>`<i class="${i<z.song?'d':i===R.st?'c':''}"></i>`).join(''):[1,2,3,4].map(s=>`<i class="${s<R.stage||(R.res&&R.res.ok&&s===R.stage&&!(R.stage===3&&!R.half))?'d':s===R.stage?'c':''}"></i>`).join('');
   $('#zlTempo').textContent=`Tempo ${Math.round(R.tempo*100)} %`;
   const st=$('#zlStat'),fb=$('#zlFb');st.classList.toggle('gold',R.stage>=3&&!R.demo);
   if(R.res){fb.classList.remove('hidden');fb.innerHTML=`<div class="zlSt${R.res.ok?'':' no'}">${zlStars(R.res.stars)}</div><div class="zlFbM">${R.res.msg}</div><div class="zlSm">${[R.res.tim,R.res.sub].filter(Boolean).join(' · ')}</div>`;st.innerHTML=`<b>${zlStageTxt(R)}</b>`;return}
@@ -4898,7 +4926,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.39 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.40 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

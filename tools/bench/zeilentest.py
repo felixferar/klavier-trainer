@@ -43,8 +43,9 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  /* Stufe 4 mit Anlauf: erster eigener Griff blitzt kurz auf */
  r=zlStart({k:1,stage:4});press(r.a);tick(0.02);press(r.a+1);o.flash={la:zlVis(r,r.la)};tick(1.0);o.flash.later=zlVis(r,r.la);
  /* ganzer Song: 60 → 80 → 100 % */
- const zz=z();zz.st=zz.st.map(()=>4);r=zlStart(zlPick(zz));o.song={k:r.k,tempo:r.tempo,a:r.a,b:r.b};play(r,r.a,r.b);o.song.ok1=r.res.ok;o.song.s1=z().song;tick(1.7);r=R();o.song.tempo2=r.tempo;
- memPress(30,'kb');play(r,r.a,r.b);o.song.bad=r.res.ok;o.song.s2=z().song;
+ /* v5.40: erst Zeilen 1–4 und 5–8 am Stück, dann der ganze Song; lange Stücke erlauben 1 Fehler je 10 Griffe */
+ const zz=z();zz.st=zz.st.map(()=>4);zz.bl=zz.bl.map(()=>1);r=zlStart(zlPick(zz));o.song={k:r.k,tempo:r.tempo,a:r.a,b:r.b};play(r,r.a,r.b);o.song.ok1=r.res.ok;o.song.s1=z().song;tick(1.7);r=R();o.song.tempo2=r.tempo;
+ for(let i=0;i<9;i++)memPress(30,'kb');play(r,r.a,r.b);o.song.bad=r.res.ok;o.song.s2=z().song;o.song.tol=r.res.msg;
  o.runText=$('#zlRun').innerText;
  /* App im Hintergrund / Klavier getrennt */
  memStop();r=zlStart({k:0,stage:2});play(r,r.a,r.a+1);Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>'hidden'});document.dispatchEvent(new Event('visibilitychange'));delete document.visibilityState;
@@ -97,7 +98,7 @@ async def main():
          'Übernahme v5.36 → v5.37 ohne Verlust': '"st":[4,4,1,0,4,4,0,0]' in r['from536'] and '"cv":2' in r['from536'] and '"song":0' in r['from536'],
          'Übernahme alter Stand: 3 3 2 1 3 3 0 0 → 44004400': r['mig'] == '44004400',
          'Protokoll (lernauswertung.py): k, mode, ok, wrong, hints, n, dur, demos, waits, Sterne, Tempo': all(e[10] == 'number' for e in lg) and {e[1] for e in lg} >= {'noten', 'echo', 'kopf', 'song'} and any(e[11] == 2 and e[12] >= 1 for e in lg) and any(e[1] == 'song' and e[13] == 0.8 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'hoeren' for e in lg) and any(e[1] == 'noten' and e[7] >= 1 for e in lg),
-         'Version 5.39': r['ver'].startswith('Version 5.39'),
+         'Version 5.40': r['ver'].startswith('Version 5.40'),
          'keine Fehler': not errs}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)
