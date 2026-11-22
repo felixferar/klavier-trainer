@@ -31,7 +31,7 @@ body.desk #deskBar{display:flex}
 .hidden{display:none!important}
 .zlCard{background:#121826;border-radius:16px;padding:14px;color:#fff}.zlMeta{display:flex;justify-content:space-between;color:#9aa4bf;font-size:14px;margin:4px 0 12px}.zlFire{color:#FF9F43}
 .zlSm{color:#9aa4bf;font-size:14px}.zlPat{margin-top:10px;background:#1a2233;border-radius:10px;padding:8px 10px;color:#dfe5f5;font-size:15px}
-.zlGo{display:block;width:100%;height:54px;margin-top:14px;border:0;border-radius:14px;background:#22C58B;color:#0b2a1e;font:inherit;font-size:17px;font-weight:700}.zlGo:disabled{background:#2a3346;color:#9aa4bf}
+.zlGo{display:block;width:100%;height:54px;margin-top:14px;border:0;border-radius:14px;background:var(--ac);color:var(--ink);font:inherit;font-size:17px;font-weight:700}.zlGo:disabled{background:#2a3346;color:#9aa4bf}
 .zlPath{display:flex;align-items:center;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}.zlN{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#2a3346;color:#9aa4bf;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
 .zlN.ok{background:#22C58B;color:#121826}.zlN.now{background:#fff;color:#121826;width:30px;height:30px;font-size:14px}.zlN.song{background:#2a3346}.zlN.blk{box-shadow:0 0 0 2px #FFC93C}.zlN.chk{box-shadow:0 0 0 2px #fff}.zlN.song.ok{background:#FFC93C;color:#121826}.zlN.pop{animation:zlPop .6s ease}
 .zlMore{flex:0 0 auto;color:#9aa4bf;font-size:12px;font-weight:700;padding:0 4px}.zlLn{flex:1 1 auto;min-width:4px;height:3px;background:#2a3346}.zlLn.ok{background:#22C58B}.zlPath.big .zlN{width:30px;height:30px;font-size:14px}.zlPath.big .zlN.now{width:36px;height:36px;font-size:16px}
@@ -45,6 +45,10 @@ body.desk #deskBar{display:flex}
 .zlSt{font-size:34px;color:#FFC93C;letter-spacing:4px;line-height:1.1}.zlSt.no{color:#9aa4bf}.zlFbH{font-size:22px;font-weight:800;margin-top:2px}.zlFb.win{border-color:#22C58B;box-shadow:0 0 0 2px rgba(34,197,139,.35),0 0 28px rgba(34,197,139,.35);animation:zlWin .45s ease-out}.zlFb.win .zlFbH{color:#22C58B}.zlFb.near .zlFbH{color:#FFC93C}.zlFb.near{border-color:#FFC93C}.zlFb.better .zlFbH{color:#7FB2FF}
 .zlHist{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:6px;font-size:17px;color:#9aa4bf}.zlHist b{font-weight:700}.zlHist b.now{color:#fff;font-size:20px}.zlHist i{font-style:normal;opacity:.6}.zlHist span{font-size:12px;margin-left:6px}
 .zlLeft{font-weight:800}
+.zlHow{font-size:14px;color:#dfe5f5;line-height:1.5}.zlHow ul{margin:10px 0 0;padding-left:18px}.zlHow li{margin:4px 0}.zlHow b{color:#fff}
+.zlHowSt{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.zlHowSt span{color:#121826;font-weight:800;font-size:12px;padding:3px 9px;border-radius:999px}.zlHowSt i{font-style:normal;color:#9aa4bf}
+.zlHowLeg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:#9aa4bf}.zlHowLeg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.zlHowKeys{margin-top:10px;font-size:13px;color:#9aa4bf}
 .zlBarW{display:flex;align-items:center;gap:10px;min-height:48px;border-radius:12px;padding:0 4px 0 12px;background:#2EC4D6;color:#121826;transition:background .18s}
 .zlBarW .zlStat{flex:1;min-width:0;margin:0;color:#121826;font-size:18px;gap:12px}
 .zlBarW .zlStat b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -646,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.48</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.49</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -803,7 +807,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
     <button class="btn pri big" id="spGo"></button>
     <div class="spDuo"><button class="btn" id="spPlay">Anhören</button><button class="btn" id="spPract">Frei üben</button></div>
     <div class="spRows">
-      <div class="spRow" id="spWay"><div class="grow"><b>Lernweg</b><span>Alle Abschnitte, Stand und „So funktioniert's“</span></div><svg class="i"><use href="#i-chev"/></svg></div>
+      <div class="spRow" id="spWay"><div class="grow"><b>Lernweg</b><span>Alle Zeilen, dein Stand und „So geht's“</span></div><svg class="i"><use href="#i-chev"/></svg></div>
       <div class="spRow" id="spOct" style="cursor:default"><div class="grow"><b>Oktave</b><span id="spOctTxt">Liegt der Song zu hoch oder zu tief? Hier verschieben.</span></div><div class="stp"><button id="spOctM" aria-label="eine Oktave tiefer">−</button><span id="spOctV">0</span><button id="spOctP" aria-label="eine Oktave höher">+</button></div></div>
       <div class="spRow hidden" id="spCmp"><div class="grow"><b>Noten prüfen und bearbeiten</b><span>Video gegen erkannte Noten, Töne ändern, teilen, ergänzen</span></div><svg class="i"><use href="#i-chev"/></svg></div>
     </div>
@@ -833,8 +837,19 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
         <button class="zlGo" id="zlGo">Weiter lernen</button>
       </div>
       <div class="zlCard" style="margin-top:12px">
-        <div style="font-weight:700;margin-bottom:6px">So geht's</div>
-        <div class="zlSm" style="line-height:1.55">Jede Zeile in 4 Stufen: <b>Hören</b> → <b>Mit Noten</b> → <b>Verblassen</b> (die Noten werden mit jedem Durchgang blasser) → <b>Aus dem Kopf</b>. Du startest mit deinem ersten Ton, dann läuft der Takt – bist du zu spät, wartet das Lied.<br>★★★ alles richtig und im Takt · ★★ höchstens 1 Griff daneben (bei langen Stücken 1 je 10 Griffe) · ★ mehr Fehler. Weiter geht es ab ★★. Mehrmals an derselben Stelle daneben zählt als 1 Fehler. Klappt eine Zeile nicht, zeigt dir die App die Stelle, an der es hakt: was falsch war, einmal richtig vorgespielt – dann spielst du nur diese Stelle nach und danach wieder die ganze Zeile.<br>🎹 <b>Tiefstes A</b> = vorspielen · <b>B daneben</b> = nächsten Griff kurz zeigen.</div>
+        <div style="font-weight:700;margin-bottom:8px">So geht's</div>
+        <!-- v5.49: kurz gegliedert statt Textwand, mit derselben Farbsprache wie beim Üben -->
+        <div class="zlHow">
+          <div class="zlHowSt"><span style="background:#2EC4D6">Hören</span><i>→</i><span style="background:#2EC4D6">Mit Noten</span><i>→</i><span style="background:#A78BFA">Verblassen</span><i>→</i><span style="background:#F472B6">Aus dem Kopf</span></div>
+          <ul>
+            <li>Dein <b>erster Ton startet</b> den Takt. Bist du zu spät, <b>wartet das Lied</b>.</li>
+            <li><b>★★</b> = geschafft: höchstens 1 Griff daneben (lange Stücke: 1 je 10 Griffe). <b>★★★</b> = alles richtig im Takt.</li>
+            <li>Eine Zeile <b>sitzt</b>, wenn du sie 2× aus dem Kopf geschafft hast. Danach setzt du Zeilen <b>am Stück</b> zusammen, bis zum ganzen Song.</li>
+            <li>Klappt etwas nicht, <b>zeigt dir die App die Stelle</b>, spielt sie richtig vor, und du übst kurz nur sie.</li>
+          </ul>
+          <div class="zlHowLeg"><span><i style="background:#4C8DFF"></i>App spielt vor</span><span><i style="background:#FFC93C"></i>Du bist dran</span><span><i style="background:#FF5A5F"></i>Falsche Taste</span><span><i style="background:#FF9F43"></i>Stelle üben</span><span><i style="background:#22C58B"></i>Geschafft</span></div>
+          <div class="zlHowKeys">🎹 <b>Tiefstes A</b> = vorspielen · <b>B daneben</b> = nächsten Griff kurz zeigen</div>
+        </div>
         <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="zlClick" style="flex:1;height:40px">Klick: an</button><button class="btn" id="zlCutT" style="flex:1;height:40px">Zeilen anpassen</button></div>
         <button class="btn" id="zlReset" style="width:100%;height:40px;margin-top:8px;color:var(--bad)">↺ Lernstand zurücksetzen</button>
       </div>
@@ -2766,12 +2781,18 @@ function devSync(){document.body.classList.toggle('dev',isDev())}
 
 /* ================= v4.56 Studio: Heute, Song-Seite, Mascot ================= */
 function tastiSVG(sz){return `<svg class="tasti" width="${sz}" height="${Math.round(sz*1.15)}" viewBox="0 0 100 115" role="img" aria-label="Tasti"><rect x="26" y="0" width="22" height="34" rx="6" fill="#ECEBE6" opacity=".35"/><rect x="52" y="4" width="22" height="30" rx="6" fill="#ECEBE6" opacity=".35"/><rect x="8" y="26" width="84" height="84" rx="26" fill="#E9E4D8"/><circle cx="35" cy="54" r="5.5" fill="#0E0F13"/><circle cx="65" cy="54" r="5.5" fill="#0E0F13"/><path d="M40 68q10 6 20 0" fill="none" stroke="#0E0F13" stroke-width="3.2" stroke-linecap="round"/></svg>`}
-function memInfo(it){const r=MEMS[it.id],v6=r&&r.v10,v=v6||(r&&r.v9);if(!v||!v.ch||!v.ch.length)return null;const now=memNow(),rs=v.ch,n=rs.length; /* v6: Lernstand je Teil (st 3 = sitzt); v9 nur bis zum ersten Öffnen */
+/* v5.49: Startseite, Song-Seite und Songliste lesen den Lernstand des Zeilen-Modus (vorher den alten „Teil x von 8“-Stand) */
+function zlInfoOf(it){const r=MEMS[it.id],z0=r&&r.zl;if(!z0||!Array.isArray(z0.st)||!z0.st.length)return null;
+  const z=Object.assign({bd:{},bc:{},rep:null,song:0},JSON.parse(JSON.stringify(z0)));if(!z.bd||typeof z.bd!=='object')z.bd={};const n=z.st.length,learned=i=>z.st[i]>=4;
+  let p=null;try{p=zlPick(z)}catch(e){}const done=z.st.filter(x=>x>=4).length,started=z.st.some(x=>x>0)||done>0;if(!started)return null;
+  return {zl:1,n,done,next:p?(p.k>=0?p.k:n):null,due:[],rs:z.st.map(st=>({st})),learned,label:p?zlPickName(p,1):'alles geschafft',song:z.song||0}}
+function memInfo(it){if(zlOn())return zlInfoOf(it);const r=MEMS[it.id],v6=r&&r.v10,v=v6||(r&&r.v9);if(!v||!v.ch||!v.ch.length)return null;const now=memNow(),rs=v.ch,n=rs.length; /* v6: Lernstand je Teil (st 3 = sitzt); v9 nur bis zum ersten Öffnen */
   const learned=i=>v6?rs[i].st>=3:rs[i].box>=1,due=[];rs.forEach((x,i)=>{if(learned(i)&&x.box>=1&&x.due<=now)due.push(i)});
   let next=due.length?due[0]:rs.findIndex((x,i)=>!learned(i));const done=rs.filter((x,i)=>learned(i)).length;
   return {n,done,next:next<0?null:next,due,rs,learned}}
 function segsHTML(info){if(!info)return '<i></i>'.repeat(6);return info.rs.map((x,i)=>`<i class="${info.learned(i)?'d':(i===info.next?'c':'')}"></i>`).join('')}
 function memSub(it,info){if(!info)return it.type==='demo'?'Demo-Song':(it.artist&&it.artist!=='MIDI'?it.artist+' · ':'')+'Noch nicht auswendig gelernt';
+  if(info.zl)return info.next==null?'Auswendig · alles geschafft ⭐':`Auswendig · ${info.done} von ${info.n} Zeilen sitzen`;
   return info.next==null?'Auswendig · alles gelernt':`Auswendig · Teil ${info.next+1} von ${info.n}`}
 function renderStudio(){
   const d=new Date();$('#dateTxt').textContent=d.toLocaleDateString('de-DE',{weekday:'long'});$('#greet').textContent='Heute';
@@ -2805,11 +2826,11 @@ function renderSongPage(){const it=SP.item=fresh(SP.item);if(!it)return;const in
   const bars=$('#spBars'),num=$('#spNum');bars.innerHTML='';num.innerHTML='';
   $('#spLbl').style.display=can?'':'none';bars.style.display=num.style.display=can?'':'none';
   if(can){const rs=info?info.rs:null,n=info?info.n:6,H=[46,70,56,84,52,66];
-    for(let i=0;i<n;i++){const st=rs?(info.learned(i)?3:Math.min(2,rs[i].st||0)):0,cur=info&&i===info.next;
+    for(let i=0;i<n;i++){const st=rs?(info.learned(i)?3:Math.min(2,info.zl?Math.round((rs[i].st||0)*3/4):rs[i].st||0)):0,cur=info&&i===info.next;
       bars.insertAdjacentHTML('beforeend',`<div class="${cur?'cur':''}${st>=3?' full':''}"><div class="bx" style="height:${H[i%6]}px"><i style="height:${Math.round(H[i%6]*Math.min(1,st/3))}px"></i></div></div>`);
       num.insertAdjacentHTML('beforeend',`<span class="${cur?'cur':''}">${i+1}</span>`)}}
   const go=$('#spGo');go.style.display=can?'':'none';$('#spWay').style.display=can?'':'none';$('#spPract').style.display=it.type==='demo'?'none':'';
-  if(can)go.textContent=info?(info.next==null?'Ganzen Song wiederholen':(info.due.length?`Wiederholen: Teil ${info.next+1}`:`Weiter: Teil ${info.next+1}`)):'Auswendig lernen';
+  if(can)go.textContent=info?(info.zl?(info.next==null?'Ganzen Song wiederholen':`Weiter: ${info.label}`):info.next==null?'Ganzen Song wiederholen':(info.due.length?`Wiederholen: Teil ${info.next+1}`:`Weiter: Teil ${info.next+1}`)):'Auswendig lernen';
   $('#spCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));spOctUI(it)}
 /* v5.02: Oktave von Hand – für Songs, deren Oktave falsch erkannt wurde (gilt in Spielen, Üben und Auswendig; Lernstand bleibt) */
 function spOctUI(it){const ok=it&&it.type==='midi'&&!!it.data;$('#spOct').style.display=ok?'':'none';if(!ok)return;const v=(it.octShift||0)/12;
@@ -3200,7 +3221,8 @@ function zlPattern(k){const z=zlState(),L=zlLine(z,k),gs=MEM.gs,sig=q=>{const M=
   return bass.length>=3&&steps.every(s=>s===5||s===6)?`Bass: ${names} · immer 5 Töne runter`:`Bass: ${names}`}
 function zlStars(n){return '★'.repeat(n)+'☆'.repeat(3-n)}
 /* kleine Statistik aus dem Protokoll: heute geübt (Minuten) und Tage in Folge */
-function zlStats(){let L=[];try{L=(load('kt_v8log')||[]).filter(e=>e.zl)}catch(e){}const day=t=>{const d=new Date(t);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()},today=day(memNow());
+function zlStats(){return {min:Math.round((ST.days[dayKey()]||0)/60),n:streak()}} /* v5.49: dieselben Zahlen wie auf der Startseite */
+function zlStatsLog(){let L=[];try{L=(load('kt_v8log')||[]).filter(e=>e.zl)}catch(e){}const day=t=>{const d=new Date(t);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()},today=day(memNow());
   const min=Math.round(L.filter(e=>day(e.t)===today).reduce((s,e)=>s+(e.dur||0),0)/60000),days=new Set(L.map(e=>day(e.t)));let n=0;const d=new Date(memNow());
   if(!days.has(today))d.setDate(d.getDate()-1);while(days.has(day(d.getTime()))){n++;d.setDate(d.getDate()-1)}return {min,n}}
 function zlPath(z,cur,o){o=o||{};const n=z.st.length,W=o.cuts?n:o.big?6:9;let h='';
@@ -3348,7 +3370,8 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
 /* Protokoll: ein Eintrag je Durchgang im Format von tools/lernauswertung.py (t, song, k, mode, ok, abort, hints, wrong, n, dur in ms, demos, waits).
    Vorspielen zählt in „demos“; ein Abbruch erst, wenn schon ein Griff gespielt war (vorher = nur zuhören). */
 const ZL_MODE=['','hoeren','noten','blass','kopf'];
-function zlLog(R,ok,extra){try{const L=load('kt_v8log')||[];L.push(Object.assign({t:Date.now(),v:13,zl:1,song:MEM.item&&MEM.item.id,hand:MEM.hand,k:R.k,mode:R.spot?'stelle':R.k<0?(R.blk!=null?'block':'song'):ZL_MODE[R.stage],blk:R.blk!=null?R.blk:undefined,rep:R.rep||undefined,line:R.k,stage:R.stage,half:R.half,tempo:R.tempo,ok:ok?1:0,
+function zlLog(R,ok,extra){try{if(MEM.item&&R.t0){const sec=Math.min(600,(Date.now()-R.t0)/1000);if(sec>0)addTime(MEM.item.id,sec)} /* v5.49: Auswendig-Zeit zählt mit */
+  const L=load('kt_v8log')||[];L.push(Object.assign({t:Date.now(),v:13,zl:1,song:MEM.item&&MEM.item.id,hand:MEM.hand,k:R.k,mode:R.spot?'stelle':R.k<0?(R.blk!=null?'block':'song'):ZL_MODE[R.stage],blk:R.blk!=null?R.blk:undefined,rep:R.rep||undefined,line:R.k,stage:R.stage,half:R.half,tempo:R.tempo,ok:ok?1:0,
   hints:R.help,wrong:R.wrong,slips:R.slips,late:R.late,early:R.early,n:R.b-R.a+1,pos:R.pos-R.a,dur:R.t0?Date.now()-R.t0:0,demos:R.demos,waits:R.waits.slice(),a:R.a,b:R.b,st:zlState().st.join('')},extra||{}));
   while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}}
 function zlStageTxt(R){if(R.spot)return `Zeile ${R.k+1} · Stelle üben`;if(R.k<0)return zlPickName({k:-1,blk:R.blk,t:R.st});return `Zeile ${R.k+1} · ${ZL.names[R.stage]}${R.rep?' (nachüben)':''}${R.stage===3?' '+((R.fade||0)+1)+'/3':''}`}
@@ -5037,7 +5060,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.48 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.49 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -5975,6 +5998,8 @@ document.addEventListener('visibilitychange',()=>{try{
 }catch(e){}});
 applyDesk();renderHome();syncUI();requestAnimationFrame(tick);
 $('#onbAgain').onclick=openOnb;
+/* v5.49: einmalig die bisherige Auswendig-Zeit (Protokoll) ins Tagesziel/die Serie nachtragen */
+try{if(!load('kt_zlTime')){const L=(load('kt_v8log')||[]).filter(e=>e.zl&&e.dur>0);for(const e of L){const k=dayKey(new Date(e.t));ST.days[k]=(ST.days[k]||0)+Math.min(600,e.dur/1000)}if(L.length){const st=streak();if(st>ST.bestStreak)ST.bestStreak=st;stDirty=true;save("kt_stats",ST)}save('kt_zlTime',1)}}catch(e){}
 if(!load('kt_onb'))openOnb();
 </script>
 <script>setTimeout(()=>{const s=document.getElementById('splash');if(s){s.classList.add('out');setTimeout(()=>s.remove(),400)}},950)</script>

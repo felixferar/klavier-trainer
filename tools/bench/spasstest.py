@@ -32,7 +32,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  z().eh[7]=0;r=zlStart({k:7,stage:3});o.f1={demo:!!r.demo};press(r.a);memPress(AW.helpKey,'kb');o.f1.help=r.help;o.f1.peek=zlVis(r,r.pos);memStop();
  /* 6) Protokoll */
  o.log=(load('kt_v8log')||[]).filter(e=>e.zl).map(e=>({mode:e.mode,ok:e.ok,wrong:e.wrong,wraw:e.wraw,fade:e.fade,tol:e.tol}));
- o.help=document.body.innerHTML.includes('Verblassen</b> (die Noten werden')&&document.body.innerHTML.includes('höchstens 1 Griff daneben');
+ o.help=document.body.innerHTML.includes('Verblassen</span>')&&document.body.innerHTML.includes('höchstens 1 Griff daneben')&&document.body.innerHTML.includes('zeigt dir die App die Stelle');
  return o}"""
 async def main():
     async with async_playwright() as p:

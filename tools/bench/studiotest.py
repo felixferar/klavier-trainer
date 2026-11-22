@@ -4,6 +4,7 @@ from playwright.async_api import async_playwright
 JS="""async()=>{const o={};const wait=ms=>new Promise(z=>setTimeout(z,ms));
  navStack.length=0;navStack.push('home');show('home');
  const notes=[];let t=0;for(let i=0;i<60;i++){notes.push({m:60+(i%7)*2,start:t,dur:0.4,hand:'R'});t+=0.5;if(i%10===9)t+=0.6}
+ window.MEM_ZL=false; /* v5.49: prüft die Startseite mit dem alten Lernstand (Zeilen-Modus: uxtest) */
  const it={id:'w1',type:'midi',title:'Wake Me Up',artist:'Avicii',data:b64FromBuf(writeMidi(notes))};LIB=[it];
  const n=memGroups(notes.map(x=>({midi:x.m,start:x.start,dur:x.dur}))).length;
  openMem(it);const k=MEM.C.length;const ch=MEM.rec.v10.ch;ch[0].st=3;ch[0].box=1;ch[0].due=Date.now()-1000;ch[1].st=3;ch[1].box=2;ch[1].due=Date.now()+9e8;memSaveAll();back();
