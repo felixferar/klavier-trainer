@@ -37,7 +37,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  /* Stufe 4: falscher Ton → ★, gleiche Stufe; Anker bleibt bis gespielt */
  o.s4={stage:r.stage,a:zlVis(r,r.a),n:zlVis(r,r.a+1)};tick(4);o.s4.after4=zlVis(r,r.a);
  press(r.a);o.s4.afterPlay=zlVis(r,r.a);memPress(30,'kb');memPress(31,'kb');o.s4.wrongStat=$('#zlStat').textContent.includes('Falsche Taste')||(zlUI(r),$('#zlStat').textContent.includes('Falsche Taste'));playBad(r,r.a+1,r.b,{[r.a+5]:1});o.s4.cnt={wrong:r.wrong,wraw:r.wraw};
- o.s4.res={stars:r.res.stars,ok:r.res.ok,next:r.next,msg:r.res.msg,kind:r.res.kind,hist:r.res.hist,head:$('#zlFb .zlFbH')?.textContent};tick(4);r=noSpot();
+ o.s4.res={stars:r.res.stars,ok:r.res.ok,next:r.next,msg:r.res.msg,kind:r.res.kind,hist:r.res.hist,head:$('#zlFb .zlFbH')?.textContent,hint:!!(zlState().hint&&zlState().hint[0]),sub:r.res.sub};tick(4);r=noSpot();
  /* B: Hilfe → ★ */
  press(r.a);memPress(22,'kb');o.peek={help:r.help,vis:zlVis(r,r.pos)};tick(1.6);o.peek.after=zlVis(r,r.pos);play(r,r.pos,r.b);o.peek.stars=r.res.stars;o.peek.ok=r.res.ok;o.peek.sub=r.res.sub;o.peek.head=$('#zlFb .zlFbH')?.textContent;tick(4);r=noSpot();
  /* v5.41: sitzt erst nach 2× sauber aus dem Kopf */
@@ -90,7 +90,7 @@ async def main():
          'zu früh: App folgt, ★★ → Verblassen 3/3: nur jeder 2. Griff': r['e2']['stars'] == 2 and r['e2']['early'] >= 1 and r['e2']['eh'] == 2 and r['e3start']['fade'] == 2 and r['e3start']['odd'] == 0 and r['e3start']['even'] == 0.3,
          'Verblassen 3/3 geschafft → Stufe 3 fertig, weiter Aus dem Kopf': r['e3']['ok'] and r['e3']['st'] == 3 and r['e3']['eh'] == 0 and r['e3']['next'] == {'k': 0, 'stage': 4},
          'Stufe 4: nur Anker, bleibt bis gespielt (auch nach 4 s)': r['s4']['stage'] == 4 and r['s4']['a'] == 1 and r['s4']['n'] == 0 and r['s4']['after4'] == 1 and r['s4']['afterPlay'] == 0,
-         'Fehler je Griff: 2× an einer Stelle + 1× woanders = 2 Fehler → ★, Knapp!, danach Stelle üben': r['s4']['wrongStat'] and r['s4']['cnt'] == {'wrong': 2, 'wraw': 3} and r['s4']['res']['stars'] == 1 and not r['s4']['res']['ok'] and r['s4']['res']['next']['k'] == 0 and r['s4']['res']['next']['stage'] == 4 and r['s4']['res']['next'].get('spot') and r['s4']['res']['kind'] == 'near' and r['s4']['res']['head'] == 'Knapp!',
+         'Fehler je Griff: 2× an einer Stelle + 1× woanders = 2 Fehler → ★, Knapp!, danach Hilfe an der Stelle (v5.51)': r['s4']['wrongStat'] and r['s4']['cnt'] == {'wrong': 2, 'wraw': 3} and r['s4']['res']['stars'] == 1 and not r['s4']['res']['ok'] and r['s4']['res']['next'] == {'k': 0, 'stage': 4, 't': 0} and r['s4']['res']['hint'] and 'blasser Hinweis' in r['s4']['res']['sub'] and r['s4']['res']['kind'] == 'near' and r['s4']['res']['head'] == 'Knapp!',
          'B: nächster Griff 1,5 s sichtbar, zählt als 1 Fehler → ★★ geschafft, Verlauf 2 → 1': r['peek']['help'] == 1 and r['peek']['vis'] == 1 and r['peek']['after'] == 0 and r['peek']['stars'] == 2 and r['peek']['ok'] and 'Noch 1×' in r['peek']['sub'] and r['peek']['head'] == 'Geschafft!',
          'sauber aus dem Kopf (2. Mal) → Zeile sitzt mit ★★★, Punkt springt, dann Zeile 2 Hören': r['sits']['stars'] == 3 and r['sits']['st'] == 4 and r['sits']['best'] == 3 and r['sits']['flash'] == '0' and r['sits']['next'] == {'k': 1, 'stage': 1},
          'Zeile 2: 2 Griffe Anlauf, Muster wird angezeigt': r['l2']['k'] == 1 and r['l2']['ov'] == 2 and r['l2']['pat'].startswith('Bass:'),
@@ -103,7 +103,7 @@ async def main():
          'Übernahme v5.36 → v5.37 ohne Verlust': '"st":[4,4,1,0,4,4,0,0]' in r['from536'] and '"cv":2' in r['from536'] and '"song":0' in r['from536'],
          'Übernahme alter Stand: 3 3 2 1 3 3 0 0 → 44004400': r['mig'] == '44004400',
          'Protokoll (lernauswertung.py): k, mode, ok, wrong, hints, n, dur, demos, waits, Sterne, Tempo': all(e[10] == 'number' for e in lg) and {e[1] for e in lg} >= {'noten', 'blass', 'kopf', 'song'} and any(e[11] == 2 and e[12] >= 1 for e in lg) and any(e[1] == 'song' and e[13] == 0.8 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'hoeren' for e in lg) and any(e[1] == 'noten' and e[7] >= 1 for e in lg),
-         'Version 5.50': r['ver'].startswith('Version 5.50'),
+         'Version 5.51': r['ver'].startswith('Version 5.51'),
          'keine Fehler': not errs}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)
