@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.51</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.52</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3143,6 +3143,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
+   v5.52: Lernprotokolle kommen automatisch an – nach jedem Durchgang (höchstens 1×/min), jede Minute nachholen, sofort wenn die App in den Hintergrund geht; nicht mehr nur beim Zurückkehren in die Übersicht.
    v5.51: Hilfe im Fluss – keine eigene Stellen-Übung mehr; nach einem gescheiterten Durchgang zeigt der nächste Durchgang nur an der Problemstelle
    (Griff davor + Problemgriff) blasse Noten (45 %, rot gestrichelt), bis die Stelle 2× hintereinander sauber war.
    v5.50: weicher Einstieg ins Zusammensetzen – jedes lange Stück (und der Song) erst einmal mit blassen Noten (30 %), dann aus dem Kopf;
@@ -3391,7 +3392,7 @@ const ZL_MODE=['','hoeren','noten','blass','kopf'];
 function zlLog(R,ok,extra){try{if(MEM.item&&R.t0){const sec=Math.min(600,(Date.now()-R.t0)/1000);if(sec>0)addTime(MEM.item.id,sec)} /* v5.49: Auswendig-Zeit zählt mit */
   const L=load('kt_v8log')||[];L.push(Object.assign({t:Date.now(),v:13,zl:1,song:MEM.item&&MEM.item.id,hand:MEM.hand,k:R.k,mode:R.spot?'stelle':R.k<0?(R.blk!=null?'block':'song'):ZL_MODE[R.stage],blk:R.blk!=null?R.blk:undefined,rep:R.rep||undefined,line:R.k,stage:R.stage,half:R.half,tempo:R.tempo,ok:ok?1:0,
   hints:R.help,wrong:R.wrong,slips:R.slips,late:R.late,early:R.early,n:R.b-R.a+1,pos:R.pos-R.a,dur:R.t0?Date.now()-R.t0:0,demos:R.demos,waits:R.waits.slice(),a:R.a,b:R.b,st:zlState().st.join('')},extra||{}));
-  while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}}
+  while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}setTimeout(()=>{try{awLogSync()}catch(e){}},1500)} /* v5.52: nach jedem Durchgang hochladen (höchstens 1×/min) */
 function zlStageTxt(R){if(R.spot)return `Zeile ${R.k+1} · Stelle üben`;if(R.k<0)return zlPickName({k:-1,blk:R.blk,t:R.st,stage:R.stage,bonus:R.bonus});return `Zeile ${R.k+1} · ${ZL.names[R.stage]}${R.rep?' (nachüben)':''}${R.stage===3?' '+((R.fade||0)+1)+'/3':''}`}
 function zlNextTxt(z,R){if(R.spot)return 'Danach: ganze Zeile';if(R.k>=0&&R.stage===3&&(R.fade||0)<2)return 'Danach: noch blasser';if(R.k>=0&&R.stage<4)return 'Danach: '+ZL.names[R.stage+1];
   /* was käme nach einem geschafften Durchgang? */
@@ -3786,19 +3787,21 @@ $('#memCv').addEventListener('pointerdown',e=>{if(!MEM.run||!MEM.pos)return;if(!
   if(hit!==null)userPress(hit,true)});
 $('#smMem').onclick=()=>{if(smItem)openMem(smItem)};
 
-/* --- Lernprotokoll (v5.00): jeder Versuch in kt_v8log (bis 300), gebündelt nach diag/learn hochgeladen (höchstens alle 2 min, beim Zurückkommen in die Übersicht) --- */
+/* --- Lernprotokoll (v5.00): jeder Versuch in kt_v8log (bis 300), gebündelt nach diag/learn hochgeladen (v5.52: nach jedem Durchgang höchstens 1×/min, jede Minute nachholen, sofort beim Verlassen der App) --- */
 function awLog(R,ok,extra){try{const L=load('kt_v8log')||[],gs=MEM.gs,v=MEM.rec[awKey()],c=v.ch[R.k];L.push(Object.assign({t:Date.now(),v:11,song:MEM.item&&MEM.item.id,hand:MEM.hand,mode:R.mode,k:R.k,f:R.f!=null?R.f:undefined,ok:ok?1:0,hints:R.hints,wrong:R.wrong,miss:R.miss,tolW:R.tolW,sp:R.speed,
     st:c.st,h:c.h||undefined,box:c.box,n:R.b-R.a+1,a:R.a,b:R.b,t0:+gs[R.a].start.toFixed(2),t1:+gs[R.b].end.toFixed(2),dur:Math.round(R.clock*1000),waits:R.waits.map(x=>Math.round(x*1000)),lat:R.lat,demos:R.demos||undefined,
     helpAt:R.helpAt.length?R.helpAt.map(j=>j-R.a):undefined,slips:R.slips,off:R.off,ht:R.timed||R.mode==='whole'?Object.keys(R.ht).map(j=>[j-R.a,Math.round(R.ht[j]*1000)]):undefined,tempo:R.tempo?+R.tempo.toFixed(2):undefined},R.span?{span:[R.span.s,R.span.e]}:{},extra||{}));
   while(L.length>300)L.shift();save('kt_v8log',L)}catch(e){}}
 let V8LOG_BUSY=false;
 async function awLogSync(force){if(V8LOG_BUSY||!ghTok())return;const L=load('kt_v8log')||[],sent=load('kt_v8logsent')||0,neu=L.filter(e=>e.t>sent);if(!neu.length)return;
-  if(!force&&Date.now()-(load('kt_v8logat')||0)<120e3)return;V8LOG_BUSY=true;
+  if(!force&&Date.now()-(load('kt_v8logat')||0)<60e3)return;V8LOG_BUSY=true;
   try{const it=MEM.item||{},snap=MEM.rec&&MEM.rec[awKey()]?{song:it.id,title:it.title,videoId:it.videoId||it.fromYT,hand:MEM.hand,parts:MEM.C.map(c=>[c.a,c.b,+c.t0.toFixed(2),+c.t1.toFixed(2),c.n,c.twin,c.near,c.f,c.L]),forms:(MEM.F||[]).map(F=>[F.s,F.e,F.lab]),beat:MEM.beat,state:MEM.rec[awKey()],zl:MEM.rec[zlKey()]||null}:null;
     const body={kind:'learn',v:(document.body.innerHTML.match(/Version (\d+\.\d+)/)||[])[1]||'',ts:new Date().toISOString(),entries:neu,snap},ts=body.ts.replace(/[:.]/g,'-').slice(0,19),id=String(it.id||'song').replace(/[^\w-]/g,'_').slice(0,40);
     const r=await ghUpload(`diag/learn/${ts}_${id}.json`,btoa(unescape(encodeURIComponent(JSON.stringify(body)))),`Lernprotokoll ${id} (${neu.length} Versuche)`);
     if(r&&r.ok){save('kt_v8logsent',neu[neu.length-1].t);save('kt_v8logat',Date.now())}}catch(e){}V8LOG_BUSY=false}
 
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')try{awLogSync(true)}catch(e){}}); /* v5.52: App weg/zu → Rest sofort hoch */
+setInterval(()=>{try{awLogSync()}catch(e){}},60e3); /* v5.52: Nachzügler */
 function openSongMenu(it){it=fresh(it);smItem=it;$('#smMidi').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smCmp').classList.toggle('hidden',!(it.type==='midi'&&it.fromYT));$('#smMem').classList.toggle('hidden',!(it.type==='midi'&&it.data));$('#smName').value=it.title;const b=$('#smDel');delete b.dataset.c;b.textContent='Löschen';openSheet('#songMenu')}
 $('#smSave').onclick=()=>{if(!smItem)return;const v=$('#smName').value.trim();if(v){smItem.title=v;saveLib()}closeSheets();renderHome();if(navStack[navStack.length-1]==='songp')renderSongPage()};
 $('#smDel').onclick=()=>{const b=$('#smDel');if(!b.dataset.c){b.dataset.c=1;b.textContent='Wirklich löschen?';return}LIB=LIB.filter(x=>x.id!==smItem.id);saveLib();closeSheets();if(navStack[navStack.length-1]==='songp')back();renderHome();toast('Song gelöscht')};
@@ -5081,7 +5084,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.51 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.52 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

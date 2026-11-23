@@ -49,7 +49,7 @@ async def main():
          'Verblassen 3/3: Hilfe zeigt auch versteckte Griffe (mind. 45 %), Rest wie die Stufe': t(lambda: r['fade']['al84'] == 0.45 and r['fade']['al85'] == 0.45 and r['fade']['al86'] == 0),
          'Mit Noten und am Stück: keine Hilfe nötig/gesetzt': t(lambda: not r['noten']['hint'] and r['noten']['after'] and not r['blk']['hint'] and not (r['blk']['next'] or {}).get('spot')),
          'Protokoll: hint im Durchgang, kein mode „stelle“ mehr': t(lambda: any(e['hint'] == [84, 85] for e in r['log']) and 'stelle' not in r['modes']),
-         'Version 5.51': t(lambda: r['ver'].startswith('Version 5.51')),
+         'Version 5.52': t(lambda: r['ver'].startswith('Version 5.52')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
