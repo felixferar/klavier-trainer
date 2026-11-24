@@ -41,7 +41,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  /* 9) Ganzer Song: 8 Fehler über 8 Zeilen → in der Toleranz, aber Zeilen fehlen; dann sauber → 80 % */
  const zz=z();for(const b of zlBlocks(8))zz.bd[zlBK(b)]=1;memSaveAll();zlHome();o.home={go:$('#zlGo').textContent,sum:$('#zlSum').textContent};
  r=zlStart(zlPick(z()));const b8={};[3,5,28,38,50,63,75,84].forEach(j=>b8[j]=1);play(r,r.a,r.b,b8);o.song={ok8:r.res.ok,msg:r.res.msg,sub:r.res.sub};tick(4);r=R();
- play(r,r.a,r.b);o.song.clean={ok:r.res.ok,song:z().song};tick(4);r=R();o.song.t2=r.tempo;play(r,r.a,r.b);tick(4);r=R();play(r,r.a,r.b);o.song.end={song:z().song,next:r.next};tick(4);
+ play(r,r.a,r.b);o.song.clean={ok:r.res.ok,song:z().song};tick(4);r=R();o.song.t2=r.tempo;o.song.tl=[];for(let i=0;i<6&&r&&r.k<0;i++){o.song.tl.push(r.tempo);play(r,r.a,r.b);o.song.end={song:z().song,next:r.next};tick(4);r=R()}
  o.song.home={go:$('#zlGo').textContent,sum:$('#zlSum').textContent};
  /* 10) Zurücksetzen */
  $('#zlReset').click();$('#zlReset').click();o.reset={st:z().st.join(''),bd:Object.keys(z().bd).length,bc:Object.keys(z().bc).length,kc:z().kc.join(''),song:z().song,rep:z().rep};
@@ -69,9 +69,9 @@ async def main():
          'dann Toleranz + alle ✓ → 1–2 geschafft, weiter mit 3–4': t(lambda: r['b12']['ok']['ok'] and r['b12']['ok']['stars'] == 2 and r['b12']['ok']['bd'] and r['b12']['ok']['next'] == {'k': -1, 'blk': '2-3', 'stage': 4, 't': 0} and r['b34']['a'] == 24 and r['b34']['la'] == 26 and r['b34']['b'] == 45),
          'in der Toleranz, aber Zeile fehlt → „Fast“': t(lambda: not r['b34']['f']['ok'] and r['b34']['f']['stars'] == 2 and r['b34']['f']['sub'].startswith('Fast') and 'Zeile 3' in r['b34']['f']['sub']),
          '3× gescheitert → Zeile 3 nachüben → zurück zu 3–4': t(lambda: r['rep']['rep'] == 2 and 'Zeile 3' in r['rep']['sub'] and r['rep']['next'] == {'k': 2, 'stage': 4, 'rep': 1} and r['rep']['run']['rep'] == 1 and r['rep']['ok']['rep'] is None and r['rep']['ok']['next'] == {'k': -1, 'blk': '2-3', 'stage': 4, 't': 0} and r['b34']['ok']['ok'] and r['b34']['ok']['next'] == {'k': -1, 'blk': '0-3', 'stage': 4, 't': 0}),
-         'Reihenfolge: 1–4, 5–6, 7–8, 5–8, Song': t(lambda: r['order'] == ['0-3', '4-5', '6-7', '4-7', 's0', 's1', 's2']),
+         'Reihenfolge: 1–4, 5–6, 7–8, 5–8, Song': t(lambda: r['order'] == ['0-3', '4-5', '6-7', '4-7', 's0', 's1', 's1']),
          'Übersicht vor dem Song': t(lambda: r['home']['go'] == 'Weiter: Ganzer Song · 60 %' and 'am Stück: 6 von 6' in r['home']['sum'] and 'jetzt: der ganze Song' in r['home']['sum']),
-         'Ganzer Song: 8 Fehler verteilt → noch nicht; sauber → 80 % → 100 % → fertig': t(lambda: not r['song']['ok8'] and 'erlaubt sind 8' in r['song']['msg'] and 'fehlt noch: Zeile 1' in r['song']['sub'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.8 and r['song']['end']['song'] == 3 and r['song']['end']['next'] is None and r['song']['home']['go'] == 'Alles geschafft ⭐'),
+         'Ganzer Song: 8 Fehler verteilt → noch nicht; sauber → Tempo 70 → 80 → 90 → 100 % → fertig': t(lambda: not r['song']['ok8'] and 'erlaubt sind 8' in r['song']['msg'] and 'fehlt noch: Zeile 1' in r['song']['sub'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.7 and r['song']['tl'] == [0.7, 0.8, 0.9, 1.0] and r['song']['end']['song'] == 3 and r['song']['end']['next'] is None and r['song']['home']['go'] == 'Alles geschafft ⭐'),
          'Zurücksetzen löscht alles': t(lambda: r['reset'] == {'st': '00000000', 'bd': 0, 'bc': 0, 'kc': '00000000', 'song': 0, 'rep': None}),
          'Protokoll: block mit blk/tol/chk, kopf mit kc, nachüben': t(lambda: any(e[0] == 'block' and e[3] == '0-1' and e[2] == 2 and e[5] is not None for e in r['log']) and any(e[0] == 'kopf' and e[6] == 1 for e in r['log']) and any(e[0] == 'kopf' and e[4] == 1 for e in r['log']) and any(e[0] == 'song' and e[2] == 8 for e in r['log'])),
          'Version 5.53': t(lambda: r['ver'].startswith('Version 5.53')),

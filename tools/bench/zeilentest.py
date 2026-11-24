@@ -96,13 +96,13 @@ async def main():
          'Zeile 2: 2 Griffe Anlauf, Muster wird angezeigt': r['l2']['k'] == 1 and r['l2']['ov'] == 2 and r['l2']['pat'].startswith('Bass:'),
          'tiefstes A mitten im Versuch: vorspielen, nichts zählt': r['aKey']['demo'] and r['aKey']['wrong'] == 0 and r['aKey']['pos'] == 0 and r['aKey']['stage'] == 2 and r['aKey']['st'] == 1,
          'aus dem Kopf mit Anlauf: erster eigener Griff blitzt kurz auf': r['flash']['la'] == 1 and r['flash']['later'] == 0,
-         'ganzer Song: 60 % → geschafft → 80 %; mit 9 Griffen daneben nicht weiter': r['song']['k'] == -1 and r['song']['tempo'] == 0.6 and r['song']['a'] == 0 and r['song']['b'] == 88 and r['song']['ok1'] and r['song']['s1'] == 1 and r['song']['tempo2'] == 0.8 and not r['song']['bad'] and r['song']['s2'] == 1,
+         'ganzer Song: 60 % → flüssig geschafft → 70 %; mit 9 Griffen daneben nicht weiter': r['song']['k'] == -1 and r['song']['tempo'] == 0.6 and r['song']['a'] == 0 and r['song']['b'] == 88 and r['song']['ok1'] and r['song']['s1'] == 1 and r['song']['tempo2'] == 0.7 and not r['song']['bad'] and r['song']['s2'] == 1,
          'Übungsbildschirm ohne interne Begriffe': not any(w in r['runText'] for w in ['Häppchen', 'Formteil', 'Last', 'Anschl', 'Naht']),
          'App im Hintergrund / Klavier getrennt: Durchgang endet, Abbruch im Protokoll': not r['bg']['run'] and r['bg']['home'] and r['bg']['why'] == 'bg' and not r['kb']['run'] and r['kb']['why'] == 'kb',
          'Schnitt verschieben: beide Zeilen von vorn': r['cut']['to'] == r['cut']['from'] + 1 and r['cut']['st'][1:3] == '00' and r['cut']['moved'] == 1,
          'Übernahme v5.36 → v5.37 ohne Verlust': '"st":[4,4,1,0,4,4,0,0]' in r['from536'] and '"cv":2' in r['from536'] and '"song":0' in r['from536'],
          'Übernahme alter Stand: 3 3 2 1 3 3 0 0 → 44004400': r['mig'] == '44004400',
-         'Protokoll (lernauswertung.py): k, mode, ok, wrong, hints, n, dur, demos, waits, Sterne, Tempo': all(e[10] == 'number' for e in lg) and {e[1] for e in lg} >= {'noten', 'blass', 'kopf', 'song'} and any(e[11] == 2 and e[12] >= 1 for e in lg) and any(e[1] == 'song' and e[13] == 0.8 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'hoeren' for e in lg) and any(e[1] == 'noten' and e[7] >= 1 for e in lg),
+         'Protokoll (lernauswertung.py): k, mode, ok, wrong, hints, n, dur, demos, waits, Sterne, Tempo': all(e[10] == 'number' for e in lg) and {e[1] for e in lg} >= {'noten', 'blass', 'kopf', 'song'} and any(e[11] == 2 and e[12] >= 1 for e in lg) and any(e[1] == 'song' and e[13] == 0.7 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'hoeren' for e in lg) and any(e[1] == 'noten' and e[7] >= 1 for e in lg),
          'Version 5.53': r['ver'].startswith('Version 5.53'),
          'keine Fehler': not errs}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)

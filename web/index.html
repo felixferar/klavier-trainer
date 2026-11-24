@@ -845,7 +845,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
             <li>Dein <b>erster Ton startet</b> den Takt. Bist du zu spät, <b>wartet das Lied</b>.</li>
             <li><b>★★</b> = geschafft: höchstens 1 Griff daneben (lange Stücke: 1 je 10 Griffe). <b>★★★</b> = alles richtig im Takt.</li>
             <li>Eine Zeile <b>sitzt</b>, wenn du sie 2× aus dem Kopf geschafft hast. Danach setzt du Zeilen <b>am Stück</b> zusammen, jedes Stück erst einmal mit blassen Noten, dann aus dem Kopf, bis zum ganzen Song. Ab 60 % aus dem Kopf sitzt der Song, 80 % und 100 % sind Bonus.</li>
-            <li>Klappt etwas nicht, spielst du <b>einfach nochmal von vorne</b>, ohne Unterbrechung.</li><li>Beim Vorspielen: <b>„Überspringen“</b> oder <b>tiefes A</b>, dann bist du sofort dran.</li>
+            <li>Klappt etwas nicht, spielst du <b>einfach nochmal von vorne</b>, ohne Unterbrechung.</li><li><b>Tiefes A</b>: vorspielen · <b>gedrückt halten</b> = schneller · <b>2× schnell</b> = sofort selbst dran. Oder oben <b>„Überspringen“</b>.</li><li><b>Tempo</b>: Beim Lernen 60 %. Ab „Aus dem Kopf“ wird es nach jedem flüssigen Durchgang 10 % schneller (bis 100 %), nach 2 Fehlversuchen 10 % langsamer.</li>
           </ul>
           <div class="zlHowLeg"><span><i style="background:#4C8DFF"></i>App spielt vor</span><span><i style="background:#FFC93C"></i>Du bist dran</span><span><i style="background:#FF5A5F"></i>Falsche Taste</span><span><i style="background:#FF9F43"></i>Stelle üben</span><span><i style="background:#22C58B"></i>Geschafft</span></div>
           <div class="zlHowKeys">🎹 <b>Tiefstes A</b> = vorspielen · <b>B daneben</b> = nächsten Griff kurz zeigen</div>
@@ -3143,7 +3143,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
-   v5.53: Hilfe im Fluss aus (nach einem Fehler einfach nochmal, ohne Hinweis); Vorspielen überspringen – Knopf „Überspringen“ oder tiefes A während des Vorspielens.
+   v5.53: Hilfe im Fluss aus (nach einem Fehler einfach nochmal); Vorspielen überspringen (Knopf); tiefes A: vorspielen · halten = schneller · 2× = selbst dran; Tempo wächst mit (60 → 100 % in 10er-Schritten ab „Aus dem Kopf“).
    v5.52: Lernprotokolle kommen automatisch an – nach jedem Durchgang (höchstens 1×/min), jede Minute nachholen, sofort wenn die App in den Hintergrund geht; nicht mehr nur beim Zurückkehren in die Übersicht.
    v5.51: Hilfe im Fluss – keine eigene Stellen-Übung mehr; nach einem gescheiterten Durchgang zeigt der nächste Durchgang nur an der Problemstelle
    (Griff davor + Problemgriff) blasse Noten (45 %, rot gestrichelt), bis die Stelle 2× hintereinander sauber war.
@@ -3162,7 +3162,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
    Lange Stücke: 1 Fehler je 10 Griffe erlaubt, sauber gespielte Zeilen behalten ihr ✓; geschafft, wenn ein Durchgang in der Toleranz war und jede Zeile ✓ hat.
    Nach 3 gescheiterten Versuchen einmal die schwächste Zeile „aus dem Kopf“ (nachüben). Eine angefangene Zeile wird erst fertig gemacht.
    Der alte Ablauf läuft weiter mit window.MEM_ZL=false. */
-const ZL={hint:false,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
+const ZL={hint:false,aDbl:450,aHold:0.35,ffx:3,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
   col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
 const zlOn=()=>window.MEM_ZL!==false;
 const zlBlk=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
@@ -3205,8 +3205,19 @@ function zlPick(z){if(z.rep!=null&&z.st[z.rep]>=4)return {k:z.rep,stage:4,rep:1}
   for(const b of zlBlocks(z.st.length)){const key=zlBK(b);if(z.bd[key])continue;let all=true;for(let k=b[0];k<=b[1];k++)if(z.st[k]<4){all=false;break}if(all)return {k:-1,blk:key,stage:bh['b'+key]?4:3,t:0}}
   if(k0>=0)return {k:k0,stage:z.st[k0]+1};
   if(!z.song)return {k:-1,stage:bh.s0?4:3,t:0};
-  return z.song<3?{k:-1,stage:4,t:z.song,bonus:1}:null} /* v5.50: 80 % / 100 % sind Bonus – der Song sitzt schon ab 60 % aus dem Kopf */
-function zlPickName(p,full){if(!p)return 'fertig ⭐';if(p.k<0){const h=p.stage===3?' · mit blassen Noten':'';if(p.blk!=null){const B=zlBP(p.blk);return `Zeilen ${B[0]+1}–${B[1]+1} am Stück${h}`}return `${p.bonus?'Bonus: ':''}Ganzer Song · ${Math.round(ZL.songT[p.t||0]*100)} %${h}`}
+  return z.song<3?{k:-1,stage:4,t:1,bonus:1}:null} /* v5.50: 80 % / 100 % sind Bonus – der Song sitzt schon ab 60 % aus dem Kopf */
+/* v5.53: Tempo wächst mit, wenn es sitzt (Konzept 24.11.) – Lernen (Stufe ≤ 3) immer 60 %; ab „Aus dem Kopf“ hat jede Zeile (tp), jedes Stück (tb) und der Song (ts) ein eigenes Tempo in Zehnteln (6–10).
+   Flüssig geschafft (in der Toleranz, das Lied hat höchstens 1× gewartet) → nächstes Mal +10 %; 2× hintereinander nicht geschafft → −10 % (nie unter 60 %). Nie mitten im Durchgang. */
+function zlTpInit(z){const n=z.st.length;if(!z.tp||z.tp.length!==n)z.tp=Array.from({length:n},(_,i)=>(z.tp&&z.tp[i])||6);if(!z.tb)z.tb={};if(!z.tf)z.tf={};if(!z.tu)z.tu={};if(z.ts==null)z.ts=z.song>=3?10:z.song>=2?8:null}
+function zlTKey(p){return p.k>=0?'z'+p.k:p.blk!=null?'b'+p.blk:'s'}
+function zlTLines(z,p){if(p.k>=0)return [p.k,p.k];if(p.blk!=null)return zlBP(p.blk);return [0,z.st.length-1]}
+function zlTenth(z,p){zlTpInit(z);if(p.spot||p.stage<=3)return 6;if(p.k>=0)return z.tp[p.k];const [a,b]=zlTLines(z,p);let mn=10;for(let q=a;q<=b;q++)mn=Math.min(mn,z.tp[q]);const own=p.blk!=null?z.tb[p.blk]:z.ts;return own!=null?own:mn}
+function zlTempoFor(z,p){return zlTenth(z,p)/10}
+function zlTempoAfter(z,R,ok){if(R.spot||R.stage<=3)return '';zlTpInit(z);const p={k:R.k,blk:R.blk,stage:R.stage},cur=Math.round(R.tempo*10),key=zlTKey(p),set=v=>{if(R.k>=0)z.tp[R.k]=v;else if(R.blk!=null)z.tb[R.blk]=v;else z.ts=v};
+  if(ok){z.tf[key]=0;if(R.k<0){const [a,b]=zlTLines(z,p);for(let q=a;q<=b;q++)z.tp[q]=Math.max(z.tp[q],cur)} /* Stück flüssig bei x % → seine Zeilen mind. x % */
+    if(R.late<=1&&cur<10){set(cur+1);z.tu[key]=1;return ` · Flüssig! Nächstes Mal ${(cur+1)*10} %`}set(cur);return cur>=10?'':' · Noch etwas flüssiger, dann wird’s schneller'}
+  z.tf[key]=(z.tf[key]||0)+1;if(z.tf[key]>=2&&cur>6){z.tf[key]=0;set(cur-1);return ` · Nächstes Mal etwas langsamer: ${(cur-1)*10} %`}return ''}
+function zlPickName(p,full){if(!p)return 'fertig ⭐';if(p.k<0){const h=p.stage===3?' · mit blassen Noten':'';if(p.blk!=null){const B=zlBP(p.blk);return `Zeilen ${B[0]+1}–${B[1]+1} am Stück${h}`}return `${p.bonus?'Bonus: ':''}Ganzer Song · ${Math.round(zlTempoFor(zlState(),p)*100)} %${h}`}
   return `Zeile ${p.k+1}`+(full?' · '+ZL.names[p.stage]+(p.rep?' (nachüben)':''):'')}
 /* v5.44: Problemstelle eines gescheiterten Durchgangs – das Fenster aus 3 Griffen mit den meisten Fehlern.
    Geübt werden 2 Griffe davor bis 1 danach (mind. 4 Griffe), denn der Fehler sitzt meist im Übergang.
@@ -3251,7 +3262,7 @@ function zlHome(){memStop();awUseL(false);$('#mem').classList.remove('running','
   const z=zlState(),p=zlPick(z),sel=MEM.zlSel||0,sits=z.st.filter(s=>s>=4).length,S0=zlStats();$('#zlSong').textContent=MEM.item.title;{const tt=$('#mem .topbar .ttl');if(tt)tt.textContent=MEM.item.title||'Auswendig'}
   $('#zlMeta').innerHTML=`<span><b class="zlFire">●</b> ${S0.n} ${S0.n===1?'Tag':'Tage'} in Folge</span><span>Heute ${S0.min} Min</span>`;
   $('#zlPathH').innerHTML=zlPath(z,p,{cuts:MEM.zlCuts,sel,big:1});
-  {const nb=zlBlocks(z.st.length).length,bd=Object.keys(z.bd).length;$('#zlSum').innerHTML=z.song>=3?'⭐ Der ganze Song sitzt – auch im Originaltempo.':z.song>=1?`⭐ Der ganze Song sitzt auswendig · Bonus-Tempo: ${z.song-1} von 2`:`${sits} von ${z.st.length} Zeilen sitzen${nb&&(bd||sits>=2)?` · am Stück: ${bd} von ${nb}`:''}${sits===z.st.length&&bd>=nb?' · jetzt: der ganze Song':''}`}
+  {const nb=zlBlocks(z.st.length).length,bd=Object.keys(z.bd).length;$('#zlSum').innerHTML=z.song>=3?'⭐ Der ganze Song sitzt – auch im Originaltempo.':z.song>=1?`⭐ Der ganze Song sitzt auswendig · Bonus: Tempo ${zlTempoFor(z,{k:-1,stage:4,t:1})*100|0} % → 100 %`:`${sits} von ${z.st.length} Zeilen sitzen${nb&&(bd||sits>=2)?` · am Stück: ${bd} von ${nb}`:''}${sits===z.st.length&&bd>=nb?' · jetzt: der ganze Song':''}`}
   const pt=p&&p.k>=0?zlPattern(p.k):'';$('#zlPat').textContent=pt;$('#zlPat').classList.toggle('hidden',!pt);
   $('#zlCutBox').innerHTML=MEM.zlCuts&&sel?`<div class="zlSm" style="margin:6px 0">Grenze zwischen Zeile ${sel} und ${sel+1}:</div><div style="display:flex;gap:8px"><button class="btn" data-mv="-1" style="flex:1;height:40px">◀ 1 Griff früher</button><button class="btn" data-mv="1" style="flex:1;height:40px">1 Griff später ▶</button></div>`:'';
   $('#zlPathH').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;MEM.zlSel=MEM.zlSel===c?0:c;zlHome()});
@@ -3265,7 +3276,7 @@ function zlHome(){memStop();awUseL(false);$('#mem').classList.remove('running','
   memSaveAll();try{awLogSync()}catch(e){}}
 function zlMoveCut(k,d){const z=zlState(),N=MEM.gs.length,c=z.cuts[k]+d,lo=z.cuts[k-1]+2,hi=(k+1<z.cuts.length?z.cuts[k+1]:N)-2;
   if(c<lo||c>hi){try{toast('Eine Zeile braucht mindestens 2 Griffe',2000)}catch(e){}return}
-  z.cuts[k]=c;for(const q of [k-1,k]){z.st[q]=0;z.eh[q]=0;z.stars[q]=0}z.song=0;z.bd={};z.bc={};z.bh={};z.hint={};z.kc[k-1]=0;z.kc[k]=0;z.lf={};z.lw={};z.rep=null;z.moved=(z.moved||0)+1;memSaveAll();zlHome()}
+  z.cuts[k]=c;for(const q of [k-1,k]){z.st[q]=0;z.eh[q]=0;z.stars[q]=0}z.song=0;z.bd={};z.bc={};z.bh={};z.hint={};z.tb={};z.ts=null;z.tf={};z.tu={};if(z.tp){z.tp[k-1]=6;z.tp[k]=6}z.kc[k-1]=0;z.kc[k]=0;z.lf={};z.lw={};z.rep=null;z.moved=(z.moved||0)+1;memSaveAll();zlHome()}
 
 /* --- Durchgang --- */
 function zlGo(){const z=zlState(),p=zlPick(z);if(!p){zlHome();return}zlStart(p)}
@@ -3275,9 +3286,9 @@ function zlRange(z,p){const gs=MEM.gs,N=gs.length;
   if(p.k<0&&p.blk!=null){const B=zlBP(p.blk),L1=zlLine(z,B[0]),L2=zlLine(z,B[1]);return {a:B[0]>0?Math.max(0,L1.a-ZL.ov):L1.a,la:L1.a,b:L2.b}} /* am Stück: mit Anlauf wie eine Zeile */
   if(p.k<0)return {a:0,la:0,b:N-1};const L=zlLine(z,p.k),pre=p.k>0?Math.max(0,L.a-ZL.ov):L.a;
   return {a:pre,la:L.a,b:L.b}}
-function zlStart(p){memAutoOff();awUseL(false);const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=p.k<0?ZL.songT[p.t||0]:ZL.tempo;
+function zlStart(p){memAutoOff();awUseL(false);const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=zlTempoFor(z,p),tup=(zlTpInit(z),p.stage>=4&&!p.spot&&z.tu[zlTKey(p)]===1);if(tup)delete z.tu[zlTKey(p)];
   const ns=MEM.notes.filter(n=>n.start>=gs[g.a].start-0.001&&n.start<=gs[g.b].last+0.001).sort((x,y)=>x.start-y.start);
-  const R=MEM.run={zl:1,hint:(()=>{const z=zlState();return ZL.hint&&p.k>=0&&!p.spot&&p.stage>=3&&z.hint&&z.hint[p.k]?Object.assign({},z.hint[p.k]):null})(),bonus:p.bonus?1:0,spot:p.spot?Object.assign({},p.spot):null,k:p.k,blk:p.blk!=null?p.blk:null,rep:p.rep?1:0,wj:{},stage:p.stage,half:0,fade:p.stage===3&&p.k>=0?Math.min(2,z.eh[p.k]||0):0,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
+  const R=MEM.run={zl:1,hint:(()=>{const z=zlState();return ZL.hint&&p.k>=0&&!p.spot&&p.stage>=3&&z.hint&&z.hint[p.k]?Object.assign({},z.hint[p.k]):null})(),tup,bonus:p.bonus?1:0,spot:p.spot?Object.assign({},p.spot):null,k:p.k,blk:p.blk!=null?p.blk:null,rep:p.rep?1:0,wj:{},stage:p.stage,half:0,fade:p.stage===3&&p.k>=0?Math.min(2,z.eh[p.k]||0):0,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
     peekJ:-1,peekT:0,flashT:-1,clock:0,vt:gs[g.a].start,run:false,lateJ:-1,recent:[],good:new Map(),bad:new Map(),demo:null,done:false,res:null,kb0:kbOn(),t0:Date.now(),
     lastWrong:-9,waits:[],lastG:null,ck:0,hold:{},wkey:{},wset:new Set(),hset:new Set(),wraw:0,mash:[],calmT:-9};
   $('#zlHome').classList.add('hidden');$('#memHome').classList.add('hidden');$('#memRunV').classList.add('hidden');$('#zlRun').classList.remove('hidden');$('#mem').classList.add('running');
@@ -3299,10 +3310,11 @@ function zlDemo(R,auto){if(!auto&&R.pos>R.a&&!R.done&&!R.demo){zlLog(R,0,{abort:
 function zlDemoEnd(R){R.demo=null;zlReset(R);
   if(R.stage===1){const z=zlState();z.st[R.k]=Math.max(z.st[R.k],1);memSaveAll();R.stage=2;$('#zlPatR').textContent=zlPattern(R.k)}
   zlUI(R)}
+function zlFF(R){return !!(R.aDown&&R.clock-R.aT>=ZL.aHold)} /* v5.53: A gehalten → Vorspielen im Schnelldurchlauf */
 function zlTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   if(R.kb0&&!kbOn()&&!R.done){if(R.pos>R.a&&!R.demo)zlLog(R,0,{abort:1,why:'kb'});memStop();zlHome();try{toast('Klavier getrennt – der Durchgang zählt nicht.',3500)}catch(e){}return}
-  if(R.demo){const d=R.demo;d.t+=dt*R.tempo;R.vt=d.t;
-    while(d.q<R.ns.length&&R.ns[d.q].start<=d.t){const n=R.ns[d.q++];try{playTone(n.midi,n.dur/R.tempo,n.vel||0.8)}catch(e){}}
+  if(R.demo){const d=R.demo,ff=zlFF(R),sp=R.tempo*(ff?ZL.ffx:1);if(ff!==!!d.ff){d.ff=ff;zlUI(R)}d.t+=dt*sp;R.vt=d.t;
+    while(d.q<R.ns.length&&R.ns[d.q].start<=d.t){const n=R.ns[d.q++];try{playTone(n.midi,Math.min(n.dur/sp,ff?0.25:99),n.vel||0.8)}catch(e){}}
     if(d.t>d.end)zlDemoEnd(R);return}
   if(R.done){R.doneT-=dt;if(R.doneT<=0){const p=R.next;if(p)zlStart(p);else{memStop();zlHome()}}return}
   if(!R.run||R.pos>R.b)return;
@@ -3312,7 +3324,9 @@ function zlTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   if(S.zlClick!==false){const bt=zlBeat(),i0=Math.floor((R.vt-gs[R.a].start)/bt),i1=Math.floor((nv-gs[R.a].start)/bt);if(i1>i0&&i1>R.ck){R.ck=i1;try{playClick()}catch(e){}}}
   R.vt=nv}
 function zlPress(m){const R=MEM.run,gs=MEM.gs,now=performance.now();
-  if(m===AW.restart){if(R.demo){zlDemoEnd(R);return}zlDemo(R,false);return} /* v5.53: tiefes A während des Vorspielens = überspringen */
+  /* v5.53 (Felix): tiefes A = vorspielen · gedrückt halten = schneller vorspielen · 2× schnell hintereinander = sofort selbst dran */
+  if(m===AW.restart){const dbl=R.aLast&&now-R.aLast<ZL.aDbl;R.aLast=dbl?0:now;R.aDown=true;R.aT=R.clock;
+    if(dbl){if(R.demo)zlDemoEnd(R);return}if(!R.demo)zlDemo(R,false);return}
   /* v5.39: Ist der letzte Griff schon vorgespielt und du spielst den ersten Griff, bist du dran – der Durchgang beginnt sofort (statt deine Töne zu verschlucken) */
   if(R.demo&&R.demo.t>=R.demo.last+0.4&&gs[R.a].mids.has(m))zlDemoEnd(R); /* +0,4 s: wer den letzten Griff mitspielt, bleibt beim Mitspielen */
   if(R.demo){if(R.ns.some(n=>n.midi===m&&Math.abs(n.start-R.demo.t)<0.4))R.good.set(m,now);else R.bad.set(m,now);return} /* mitspielen erlaubt, zählt nicht */
@@ -3363,7 +3377,7 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
     ok=within&&!miss.length; /* geschafft: ein Durchgang innerhalb der Toleranz UND jede Zeile mindestens einmal sauber */
     if(ok){z.lf[key]=0;delete z.lw[key];delete z.bc[key];
       if(R.blk!=null){z.bd[R.blk]=1;const B=zlBP(R.blk);sub=`Zeilen ${B[0]+1}–${B[1]+1} sitzen am Stück!`}
-      else{z.song=Math.max(z.song,R.st+1);sub=z.song>=3?'Der ganze Song sitzt – auch im Originaltempo! ⭐':z.song===1?'Der ganze Song sitzt auswendig! ⭐ Bonus: schneller':`Bonus geschafft · nächstes Tempo: ${Math.round(ZL.songT[z.song]*100)} %`}}
+      else{const was=z.song,tc=Math.round(R.tempo*10);z.song=Math.max(z.song,tc>=10?3:tc>=8?2:1);sub=z.song>=3?'Der ganze Song sitzt – auch im Originaltempo! ⭐':!was?'Der ganze Song sitzt auswendig! ⭐ Bonus: bis zum Originaltempo':'Song geschafft'}}
     else{z.lf[key]=(z.lf[key]||0)+1;const w=z.lw[key]=z.lw[key]||{};for(const q in R.wj)w[q]=(w[q]||0)+R.wj[q];
       const ms=miss.length>3?`fehlt noch: ${miss.length} Zeilen (jede einmal sauber)`:'fehlt noch: Zeile '+miss.map(q=>q+1).join(', ');
       if(z.lf[key]>=ZL.repAfter){let wk=-1,wv=-1;for(const q of (miss.length?miss:Object.keys(w).map(Number)))if((w[q]||0)>wv){wv=w[q]||0;wk=+q}
@@ -3385,6 +3399,7 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
     if(H&&R.hint){let clean=true;for(let j=H.a;j<=H.b;j++)if(R.wset.has(j))clean=false;if(clean){H.ok=(H.ok||0)+1;if(H.ok>=2)delete z.hint[R.k]}else H.ok=0}
     if(!ok){const sp=zlFindSpot(R);if(sp&&!(z.hint[R.k]&&sp.c>=z.hint[R.k].a&&sp.c<=z.hint[R.k].b)){z.hint[R.k]={a:Math.max(R.a,sp.c-1),b:sp.c,c:sp.c,ok:0,why:sp.why};hintSet=true}else if(sp)hintSet=true;
       if(sp&&!/deutlicher/.test(sub))sub=`Hier hakt’s – ${sp.why}. Nochmal von vorne, an der Stelle hilft dir ein blasser Hinweis`}}
+  if(!(R.k<0&&R.stage===3)){const tt=zlTempoAfter(z,R,ok);if(tt)sub=(sub||'')+tt}
   next=ok||(R.k<0&&z.rep!=null)?zlPick(z):Object.assign({k:R.k,stage:R.stage,t:R.st},R.blk!=null?{blk:R.blk}:{},R.rep?{rep:1}:{},R.bonus?{bonus:1}:{});
   R.ok=ok;memSaveAll();zlLog(R,ok?1:0,{stars,tol,wraw:R.wraw,fade:R.stage===3&&R.k>=0?(R.fade||0):undefined,chk:R.k<0?(z.bc[R.blk!=null?'b'+R.blk:'s'+R.st]||[]).length:undefined,kc:R.k>=0?z.kc[R.k]:undefined,hint:R.hint?[R.hint.a,R.hint.b]:undefined});R.demos=0;R.res={ok,stars,msg,sub,tim,flash,kind,hist:hist.length>1?hist.slice():null};R.next=next;R.doneT=ok?ZL.pause+0.6:hintSet?ZL.pause+1.2:ZL.pause;zlUI(R)}
 /* Protokoll: ein Eintrag je Durchgang im Format von tools/lernauswertung.py (t, song, k, mode, ok, abort, hints, wrong, n, dur in ms, demos, waits).
@@ -3404,7 +3419,7 @@ function zlNextTxt(z,R){if(R.spot)return 'Danach: ganze Zeile';if(R.k>=0&&R.stag
 function zlUI(R){const z=zlState();
   $('#zlPathR').innerHTML=zlPath(z,{k:R.k,blk:R.blk},{flash:R.res&&R.res.flash});
   $('#zlDots').innerHTML=R.k<0&&R.blk!=null?`<i class="${R.res&&R.res.ok?'d':'c'}"></i>`:R.k<0?ZL.songT.map((t,i)=>`<i class="${i<z.song?'d':i===R.st?'c':''}"></i>`).join(''):[1,2,3,4].map(s=>`<i class="${s<R.stage||(R.res&&R.res.ok&&s===R.stage&&!(R.stage===3&&(R.fade||0)<2))?'d':s===R.stage?'c':''}"></i>`).join('');
-  $('#zlTempo').textContent=`Tempo ${Math.round(R.tempo*100)} %`;$('#zlSkip').classList.toggle('hidden',!R.demo);
+  $('#zlTempo').textContent=`Tempo ${Math.round(R.tempo*100)} %${R.tup?' ↑':''}`;$('#zlSkip').classList.toggle('hidden',!R.demo);
   const st=$('#zlStat'),fb=$('#zlFb'),w=zlWorld(R),wc=ZLW[w],run=$('#zlRun');
   run.classList.remove('w-noten','w-blass','w-kopf','w-stelle');run.classList.add('w-'+w);
   const chip=$('#zlChip');chip.textContent=R.spot?'Stelle üben':R.k<0?(R.blk!=null?'Am Stück':R.bonus?'Bonus':'Ganzer Song')+(R.stage===3?' · blass':''):ZL.names[R.stage];chip.style.background=wc;
@@ -3418,7 +3433,7 @@ function zlUI(R){const z=zlState();
     if(q.ok)bar(ZLS.win,'stern',`<b>${head}</b><span>${zlStageTxt(R)}</span>`,1);else bar(wc,'play',`<b>${zlStageTxt(R)}</b><span>${head}</span>`,1);return}
   fb.classList.add('hidden');
   if(R.demo&&R.spot){bar(ZLS.hoeren,'ohr',`<b>So geht's richtig</b><span class="zlWhy">${R.spot.why||''}</span>`);return}
-  if(R.demo){bar(ZLS.hoeren,'ohr',`<b>Hör zu</b><span>${zlStageTxt(R)} – danach: ${R.stage===1?ZL.names[2]:'du bist dran'}</span>`);return}
+  if(R.demo){bar(ZLS.hoeren,'ohr',`<b>Hör zu</b><span>${R.demo.ff?'⏩ schneller – A loslassen = normal':zlStageTxt(R)+' – danach: '+(R.stage===1?ZL.names[2]:'du bist dran')}</span>`);return}
   if(R.clock<R.calmT){bar(wc,'atem',`<b>Kurz durchatmen 🙂</b><span>tiefstes A spielt dir die Stelle vor</span>`);return}
   if(R.clock-R.lastWrong<1.2){bar(ZLS.fehler,'x',`<b>Falsche Taste – das Lied wartet</b><span>${zlStageTxt(R)}</span>`);return}
   if(R.spot&&!R.run&&R.pos===R.a){bar(ZLW.stelle,'ziel',`<b>Jetzt du – nur diese Stelle</b><span>${zlStageTxt(R)}</span>`);return}
@@ -3566,7 +3581,7 @@ function memPress(m,src){const R=MEM.run;if(!R)return;if(R.zl)return zlPress(m);
   if((R.recent||[]).some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m))){MEM.good.set(m,now);return}
   for(let j=R.pos+1;j<=Math.min(R.b,R.pos+2);j++)if(gs[j].mids.has(m)){R.miss+=j-R.pos;for(let q=R.pos;q<j;q++){awMk(R,q).miss=1;R.proc[q]=true}R.pos=j;R.ht[j]=R.clock;(R.hit[j]=new Set()).add(m);MEM.good.set(m,now);awAdvance(R);return}
   MEM.flash.set(m,now);R.wrong++;awWrong(R,R.pos,m);if((R.mode==='snow'||R.mode==='form'||R.sTimed)&&R.show==null)awShow(R)} /* v5.31: Fehlgriff am Stück → der gesuchte Griff erscheint und bleibt, bis du ihn spielst */
-function memRelease(m){} /* Loslassen wird nicht bewertet */
+function memRelease(m){const R=MEM.run;if(R&&R.zl&&m===AW.restart){R.aDown=false;zlUI(R)}} /* Loslassen wird nicht bewertet – außer tiefes A im Auswendig-Modus (v5.53: gehalten = schneller vorspielen) */
 /* Warte-Modus: Anschlag geschafft (genug Töne) → weiter; schon vorgegriffene Töne des nächsten Anschlags zählen mit */
 function awAdvance(R){const gs=MEM.gs,nd=R.mode==='learn'||R.sLearn?AW.needFind:AW.need;while(R.pos<=R.b){const G=gs[R.pos],h=R.hit[R.pos];if(!h||h.size<Math.ceil(G.mids.size*nd))return;
   const wt=R.waitT0!=null?R.clock-R.waitT0:0;R.waits.push(wt);if(wt>2&&R.mode!=='learn'&&R.pos>R.a)awMk(R,R.pos).slow=wt;R.waitT0=null;R.proc[R.pos]=true;R.lastProg=R.clock;if(R.ht[R.pos]==null)R.ht[R.pos]=R.clock;(R.recent=(R.recent||[]).filter(x=>R.clock-x.at<=0.5)).push({j:R.pos,at:R.clock});R.anchor=false;if(R.show===R.pos)R.show=null;
