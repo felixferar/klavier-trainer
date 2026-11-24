@@ -32,7 +32,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  z().eh[7]=0;r=zlStart({k:7,stage:3});o.f1={demo:!!r.demo};press(r.a);memPress(AW.helpKey,'kb');o.f1.help=r.help;o.f1.peek=zlVis(r,r.pos);memStop();
  /* 6) Protokoll */
  o.log=(load('kt_v8log')||[]).filter(e=>e.zl).map(e=>({mode:e.mode,ok:e.ok,wrong:e.wrong,wraw:e.wraw,fade:e.fade,tol:e.tol}));
- o.help=document.body.innerHTML.includes('Verblassen</span>')&&document.body.innerHTML.includes('höchstens 1 Griff daneben')&&document.body.innerHTML.includes('zeigt dir die App die Noten blass');
+ o.help=document.body.innerHTML.includes('Verblassen</span>')&&document.body.innerHTML.includes('höchstens 1 Griff daneben')&&document.body.innerHTML.includes('einfach nochmal von vorne</b>, ohne Unterbrechung')&&document.body.innerHTML.includes('tiefes A</b>');
  return o}"""
 async def main():
     async with async_playwright() as p:
@@ -48,7 +48,7 @@ async def main():
         except Exception: return False
     c = {'Frust-Drücken: 8 Tasten = 1 Fehler, Hinweis „Kurz durchatmen“, verschwindet wieder': t(lambda: r['mash']['wrong'] == 1 and r['mash']['wraw'] == 8 and 'Kurz durchatmen' in r['mash']['txt'] and 'Kurz durchatmen' not in r['mash']['later']),
          'beim Spielen: „noch x Griffe“': t(lambda: 'noch 6 Griffe' in r['left']),
-         'Verlauf: 4 → 2 Fehler = „Knapp!“, Verlauf 4 → 2 sichtbar': t(lambda: r['h1']['kind'] == 'again' and r['h1']['head'] == 'Noch einmal' and r['h2']['kind'] == 'near' and r['h2']['head'] == 'Knapp!' and r['h2']['hist'].startswith('4→2') and 'Hier hakt' in r['h2']['sub'] and 'near' in r['h2']['cls']),
+         'Verlauf: 4 → 2 Fehler = „Knapp!“, Verlauf 4 → 2 sichtbar': t(lambda: r['h1']['kind'] == 'again' and r['h1']['head'] == 'Noch einmal' and r['h2']['kind'] == 'near' and r['h2']['head'] == 'Knapp!' and r['h2']['hist'].startswith('4→2') and 'Hier hakt' not in r['h2']['sub'] and 'near' in r['h2']['cls']),
          'Verlauf: 5 → 3 Fehler = „Besser!“': t(lambda: r['h3']['kind'] == 'better' and r['h3']['head'] == 'Besser!' and 'better' in r['h3']['cls']),
          'Geschafft: grüne Erfolgsanzeige, bleibt länger stehen': t(lambda: r['win']['kind'] == 'win' and 'win' in r['win']['cls'] and r['win']['head'] in ('Geschafft!', 'Perfekt!') and r['win']['doneT'] > 2.0),
          'Verblassen 2/3: 3× nicht geschafft → zurück auf 1/3': t(lambda: r['f']['start'] == 1 and r['f']['s0']['eh'] == 1 and r['f']['s1']['eh'] == 1 and r['f']['s2']['eh'] == 0 and 'deutlicher' in r['f']['s2']['sub'] and r['f']['after']['fade'] == 0 and '1/3' in r['f']['after']['txt']),

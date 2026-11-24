@@ -53,7 +53,7 @@ body.desk #deskBar{display:flex}
 .zlBarW .zlStat{flex:1;min-width:0;margin:0;color:#121826;font-size:18px;gap:12px}
 .zlBarW .zlStat b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .zlBarW .zlStat span,.zlBarW .zlStat em,.zlBarW .zlStat .gold,.zlBarW .zlStat .zlWhy{color:#121826;font-size:14px;font-weight:600;font-style:normal;opacity:.92}
-.zlBarW .ib{color:#121826}.zlBarW .ib .i{stroke:#121826}
+.zlBarW .ib{color:#121826}.zlSkip{flex:none;height:34px;padding:0 12px;border-radius:17px;border:0;background:rgba(18,24,38,.85);color:#fff;font-weight:800;font-size:14px;cursor:pointer}.zlSkip.hidden{display:none}.zlBarW .ib .i{stroke:#121826}
 .zlIc{display:flex;flex:0 0 auto}.zlIc svg{width:22px;height:22px}
 .zlSeg{display:flex;gap:3px;margin:8px 2px 6px}.zlSeg i{flex:1;height:8px;border-radius:4px;background:#2a3346}.zlSeg i.pre{opacity:.45}.zlSeg i.bad{background:#FF5A5F}
 .zlFoot{display:flex;align-items:center;gap:10px;margin-top:6px;min-height:26px}
@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.52</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.53</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -845,7 +845,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
             <li>Dein <b>erster Ton startet</b> den Takt. Bist du zu spät, <b>wartet das Lied</b>.</li>
             <li><b>★★</b> = geschafft: höchstens 1 Griff daneben (lange Stücke: 1 je 10 Griffe). <b>★★★</b> = alles richtig im Takt.</li>
             <li>Eine Zeile <b>sitzt</b>, wenn du sie 2× aus dem Kopf geschafft hast. Danach setzt du Zeilen <b>am Stück</b> zusammen, jedes Stück erst einmal mit blassen Noten, dann aus dem Kopf, bis zum ganzen Song. Ab 60 % aus dem Kopf sitzt der Song, 80 % und 100 % sind Bonus.</li>
-            <li>Klappt etwas nicht, spielst du die Zeile <b>einfach nochmal von vorne</b>. Nur an der Stelle, an der es hakte, <b>zeigt dir die App die Noten blass</b>, bis du sie 2× richtig hattest.</li>
+            <li>Klappt etwas nicht, spielst du <b>einfach nochmal von vorne</b>, ohne Unterbrechung.</li><li>Beim Vorspielen: <b>„Überspringen“</b> oder <b>tiefes A</b>, dann bist du sofort dran.</li>
           </ul>
           <div class="zlHowLeg"><span><i style="background:#4C8DFF"></i>App spielt vor</span><span><i style="background:#FFC93C"></i>Du bist dran</span><span><i style="background:#FF5A5F"></i>Falsche Taste</span><span><i style="background:#FF9F43"></i>Stelle üben</span><span><i style="background:#22C58B"></i>Geschafft</span></div>
           <div class="zlHowKeys">🎹 <b>Tiefstes A</b> = vorspielen · <b>B daneben</b> = nächsten Griff kurz zeigen</div>
@@ -856,7 +856,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
     </div>
     <div id="zlRun" class="hidden"> <!-- v5.37: Übungsbildschirm im Design 4b -->
       <!-- v5.46: Konzept D – oben eine farbige Leiste mit Klartext (Farbe = Situation), darunter je Griff ein Segment, Farbwelt je Stufe -->
-      <div class="zlBarW" id="zlBar"><span class="zlIc" id="zlIc"></span><div class="zlStat" id="zlStat"></div><button class="ib" id="zlEnd" title="Beenden" aria-label="Beenden"><svg class="i"><use href="#i-x"/></svg></button></div>
+      <div class="zlBarW" id="zlBar"><span class="zlIc" id="zlIc"></span><div class="zlStat" id="zlStat"></div><button class="zlSkip hidden" id="zlSkip" title="Vorspielen überspringen – du bist sofort dran">Überspringen ⏭</button><button class="ib" id="zlEnd" title="Beenden" aria-label="Beenden"><svg class="i"><use href="#i-x"/></svg></button></div>
       <div class="zlSeg" id="zlSeg"></div>
       <div class="zlCvW"><canvas id="zlCv"></canvas><div class="zlFb hidden" id="zlFb"></div></div>
       <div class="zlFoot"><span class="zlChip" id="zlChip"></span><span class="zlDots" id="zlDots"></span><span class="zlPatR" id="zlPatR"></span><div class="zlPath mini" id="zlPathR"></div><span class="zlSm" id="zlTempo"></span></div>
@@ -3143,6 +3143,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
+   v5.53: Hilfe im Fluss aus (nach einem Fehler einfach nochmal, ohne Hinweis); Vorspielen überspringen – Knopf „Überspringen“ oder tiefes A während des Vorspielens.
    v5.52: Lernprotokolle kommen automatisch an – nach jedem Durchgang (höchstens 1×/min), jede Minute nachholen, sofort wenn die App in den Hintergrund geht; nicht mehr nur beim Zurückkehren in die Übersicht.
    v5.51: Hilfe im Fluss – keine eigene Stellen-Übung mehr; nach einem gescheiterten Durchgang zeigt der nächste Durchgang nur an der Problemstelle
    (Griff davor + Problemgriff) blasse Noten (45 %, rot gestrichelt), bis die Stelle 2× hintereinander sauber war.
@@ -3161,7 +3162,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
    Lange Stücke: 1 Fehler je 10 Griffe erlaubt, sauber gespielte Zeilen behalten ihr ✓; geschafft, wenn ein Durchgang in der Toleranz war und jede Zeile ✓ hat.
    Nach 3 gescheiterten Versuchen einmal die schwächste Zeile „aus dem Kopf“ (nachüben). Eine angefangene Zeile wird erst fertig gemacht.
    Der alte Ablauf läuft weiter mit window.MEM_ZL=false. */
-const ZL={spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
+const ZL={hint:false,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
   col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
 const zlOn=()=>window.MEM_ZL!==false;
 const zlBlk=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
@@ -3276,7 +3277,7 @@ function zlRange(z,p){const gs=MEM.gs,N=gs.length;
   return {a:pre,la:L.a,b:L.b}}
 function zlStart(p){memAutoOff();awUseL(false);const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=p.k<0?ZL.songT[p.t||0]:ZL.tempo;
   const ns=MEM.notes.filter(n=>n.start>=gs[g.a].start-0.001&&n.start<=gs[g.b].last+0.001).sort((x,y)=>x.start-y.start);
-  const R=MEM.run={zl:1,hint:(()=>{const z=zlState();return p.k>=0&&!p.spot&&p.stage>=3&&z.hint&&z.hint[p.k]?Object.assign({},z.hint[p.k]):null})(),bonus:p.bonus?1:0,spot:p.spot?Object.assign({},p.spot):null,k:p.k,blk:p.blk!=null?p.blk:null,rep:p.rep?1:0,wj:{},stage:p.stage,half:0,fade:p.stage===3&&p.k>=0?Math.min(2,z.eh[p.k]||0):0,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
+  const R=MEM.run={zl:1,hint:(()=>{const z=zlState();return ZL.hint&&p.k>=0&&!p.spot&&p.stage>=3&&z.hint&&z.hint[p.k]?Object.assign({},z.hint[p.k]):null})(),bonus:p.bonus?1:0,spot:p.spot?Object.assign({},p.spot):null,k:p.k,blk:p.blk!=null?p.blk:null,rep:p.rep?1:0,wj:{},stage:p.stage,half:0,fade:p.stage===3&&p.k>=0?Math.min(2,z.eh[p.k]||0):0,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
     peekJ:-1,peekT:0,flashT:-1,clock:0,vt:gs[g.a].start,run:false,lateJ:-1,recent:[],good:new Map(),bad:new Map(),demo:null,done:false,res:null,kb0:kbOn(),t0:Date.now(),
     lastWrong:-9,waits:[],lastG:null,ck:0,hold:{},wkey:{},wset:new Set(),hset:new Set(),wraw:0,mash:[],calmT:-9};
   $('#zlHome').classList.add('hidden');$('#memHome').classList.add('hidden');$('#memRunV').classList.add('hidden');$('#zlRun').classList.remove('hidden');$('#mem').classList.add('running');
@@ -3311,7 +3312,7 @@ function zlTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   if(S.zlClick!==false){const bt=zlBeat(),i0=Math.floor((R.vt-gs[R.a].start)/bt),i1=Math.floor((nv-gs[R.a].start)/bt);if(i1>i0&&i1>R.ck){R.ck=i1;try{playClick()}catch(e){}}}
   R.vt=nv}
 function zlPress(m){const R=MEM.run,gs=MEM.gs,now=performance.now();
-  if(m===AW.restart){zlDemo(R,false);return}
+  if(m===AW.restart){if(R.demo){zlDemoEnd(R);return}zlDemo(R,false);return} /* v5.53: tiefes A während des Vorspielens = überspringen */
   /* v5.39: Ist der letzte Griff schon vorgespielt und du spielst den ersten Griff, bist du dran – der Durchgang beginnt sofort (statt deine Töne zu verschlucken) */
   if(R.demo&&R.demo.t>=R.demo.last+0.4&&gs[R.a].mids.has(m))zlDemoEnd(R); /* +0,4 s: wer den letzten Griff mitspielt, bleibt beim Mitspielen */
   if(R.demo){if(R.ns.some(n=>n.midi===m&&Math.abs(n.start-R.demo.t)<0.4))R.good.set(m,now);else R.bad.set(m,now);return} /* mitspielen erlaubt, zählt nicht */
@@ -3380,7 +3381,7 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
   if(!ok&&R.k>=0&&!/deutlicher/.test(sub))sub=kind==='near'?'Nur 1 Fehler zu viel – gleich noch mal':imp?'Weniger Fehler als eben – weiter so':'Gleich noch mal – du schaffst das';
   /* v5.51: Hilfe im Fluss statt eigener Stellen-Übung – du spielst die Zeile wieder von vorne; nur an der Stelle, an der es eben hakte,
      tauchen die Noten blass auf. 2× hintereinander dort sauber → die Hilfe verschwindet. (Felix: „Ich werde aus dem Song rausgeschossen.“) */
-  let hintSet=false;if(R.k>=0&&R.stage>=3&&!R.rep){if(!z.hint)z.hint={};const H=z.hint[R.k];
+  let hintSet=false;if(z.hint)delete z.hint; /* v5.53: Hilfe im Fluss aus – Felix 24.11.: „bringt gar nichts, zerstört komplett den Flow“ */if(ZL.hint&&R.k>=0&&R.stage>=3&&!R.rep){if(!z.hint)z.hint={};const H=z.hint[R.k];
     if(H&&R.hint){let clean=true;for(let j=H.a;j<=H.b;j++)if(R.wset.has(j))clean=false;if(clean){H.ok=(H.ok||0)+1;if(H.ok>=2)delete z.hint[R.k]}else H.ok=0}
     if(!ok){const sp=zlFindSpot(R);if(sp&&!(z.hint[R.k]&&sp.c>=z.hint[R.k].a&&sp.c<=z.hint[R.k].b)){z.hint[R.k]={a:Math.max(R.a,sp.c-1),b:sp.c,c:sp.c,ok:0,why:sp.why};hintSet=true}else if(sp)hintSet=true;
       if(sp&&!/deutlicher/.test(sub))sub=`Hier hakt’s – ${sp.why}. Nochmal von vorne, an der Stelle hilft dir ein blasser Hinweis`}}
@@ -3403,7 +3404,7 @@ function zlNextTxt(z,R){if(R.spot)return 'Danach: ganze Zeile';if(R.k>=0&&R.stag
 function zlUI(R){const z=zlState();
   $('#zlPathR').innerHTML=zlPath(z,{k:R.k,blk:R.blk},{flash:R.res&&R.res.flash});
   $('#zlDots').innerHTML=R.k<0&&R.blk!=null?`<i class="${R.res&&R.res.ok?'d':'c'}"></i>`:R.k<0?ZL.songT.map((t,i)=>`<i class="${i<z.song?'d':i===R.st?'c':''}"></i>`).join(''):[1,2,3,4].map(s=>`<i class="${s<R.stage||(R.res&&R.res.ok&&s===R.stage&&!(R.stage===3&&(R.fade||0)<2))?'d':s===R.stage?'c':''}"></i>`).join('');
-  $('#zlTempo').textContent=`Tempo ${Math.round(R.tempo*100)} %`;
+  $('#zlTempo').textContent=`Tempo ${Math.round(R.tempo*100)} %`;$('#zlSkip').classList.toggle('hidden',!R.demo);
   const st=$('#zlStat'),fb=$('#zlFb'),w=zlWorld(R),wc=ZLW[w],run=$('#zlRun');
   run.classList.remove('w-noten','w-blass','w-kopf','w-stelle');run.classList.add('w-'+w);
   const chip=$('#zlChip');chip.textContent=R.spot?'Stelle üben':R.k<0?(R.blk!=null?'Am Stück':R.bonus?'Bonus':'Ganzer Song')+(R.stage===3?' · blass':''):ZL.names[R.stage];chip.style.background=wc;
@@ -3776,6 +3777,7 @@ function memAutoGo(){if(!MEM.autoT)return;memAutoOff();$('#memNext').click()}
 function memAuto(){memAutoOff();const n=$('#memNext');if(!kbOn()||n.textContent==='Zur Übersicht')return;n.dataset.t=n.textContent;let k=3;const sh=()=>{n.textContent=`${n.dataset.t} (${k})`};sh();$('#memHold').classList.remove('hidden');
   MEM.autoT=setInterval(()=>{k--;if(k<=0)memAutoGo();else sh()},1000)}
 $('#memStop').onclick=()=>{memStop();back()};
+$('#zlSkip').onclick=()=>{const R=MEM.run;if(R&&R.zl&&R.demo)zlDemoEnd(R)}; /* v5.53 */
 $('#zlEnd').onclick=()=>{const R=MEM.run;if(R&&R.zl&&!R.done&&!R.demo&&R.pos>R.a)zlLog(R,0,{abort:1,why:'end'});memStop();zlHome()}; /* v5.21: Beenden = zurück, wo du herkamst */
 $('#memHold').onclick=()=>memAutoOff();
 $('#memNext').onclick=()=>{memAutoOff();awNext()};
@@ -5084,7 +5086,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.52 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.53 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

@@ -1,4 +1,4 @@
-"""v5.52: Lernprotokolle kommen automatisch an – nach jedem Durchgang (höchstens 1×/min), jede Minute nachholen,
+"""v5.53: Lernprotokolle kommen automatisch an – nach jedem Durchgang (höchstens 1×/min), jede Minute nachholen,
 sofort wenn die App in den Hintergrund geht. Felix 23.11.: „Kannst du einstellen, dass du ständig automatisch an alle Daten kommst?“
 usage: python3 tools/bench/uploadtest.py $PWD/web/index.html"""
 import sys, asyncio, json, os
@@ -29,7 +29,7 @@ async def main():
     c = {'nach dem ersten Durchgang automatisch hochgeladen (ohne Übersicht)': t(lambda: r['a'] == 1 and r['an'] >= 1),
          'höchstens 1× pro Minute': t(lambda: r['b'] == 1),
          'App in den Hintergrund → Rest sofort hoch, nichts fehlt': t(lambda: r['c'] == 2 and r['cn'] >= 1 and r['sentAll']),
-         'Version 5.52': t(lambda: r['ver'].startswith('Version 5.52')),
+         'Version 5.53': t(lambda: r['ver'].startswith('Version 5.53')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
