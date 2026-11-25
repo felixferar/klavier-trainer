@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.53</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.54</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2786,7 +2786,7 @@ function zlInfoOf(it){const r=MEMS[it.id],z0=r&&r.zl;if(!z0||!Array.isArray(z0.s
   const z=Object.assign({bd:{},bc:{},rep:null,song:0},JSON.parse(JSON.stringify(z0)));if(!z.bd||typeof z.bd!=='object')z.bd={};const n=z.st.length,learned=i=>z.st[i]>=4;
   let p=null;try{p=zlPick(z)}catch(e){}const done=z.st.filter(x=>x>=4).length,started=z.st.some(x=>x>0)||done>0;if(!started)return null;
   if(z.song>=1)p=null; /* v5.50: ab 60 % aus dem Kopf sitzt der Song */
-  return {zl:1,n,done,next:p?(p.k>=0?p.k:n):null,due:[],rs:z.st.map(st=>({st})),learned,label:p?zlPickName(p,1):'alles geschafft',song:z.song||0}}
+  return {zl:1,n,done,next:p?(p.k>=0?p.k:n):null,due:[],rs:z.st.map(st=>({st})),learned,label:p?(()=>{try{return zlPickName(p,1,z)}catch(e){return ''}})():'alles geschafft',song:z.song||0}}
 function memInfo(it){if(zlOn())return zlInfoOf(it);const r=MEMS[it.id],v6=r&&r.v10,v=v6||(r&&r.v9);if(!v||!v.ch||!v.ch.length)return null;const now=memNow(),rs=v.ch,n=rs.length; /* v6: Lernstand je Teil (st 3 = sitzt); v9 nur bis zum ersten Öffnen */
   const learned=i=>v6?rs[i].st>=3:rs[i].box>=1,due=[];rs.forEach((x,i)=>{if(learned(i)&&x.box>=1&&x.due<=now)due.push(i)});
   let next=due.length?due[0]:rs.findIndex((x,i)=>!learned(i));const done=rs.filter((x,i)=>learned(i)).length;
@@ -3144,6 +3144,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
    v5.53: Hilfe im Fluss aus (nach einem Fehler einfach nochmal); Vorspielen überspringen (Knopf); tiefes A: vorspielen · halten = schneller · 2× = selbst dran; Tempo wächst mit (60 → 100 % in 10er-Schritten ab „Aus dem Kopf“).
+   v5.54: Bugfix – Startseite und Songliste waren leer, sobald ein Song beim „Ganzen Song“ stand (Tempo-Anzeige las den Stand des offenen Songs, beim App-Start gibt es keinen).
    v5.52: Lernprotokolle kommen automatisch an – nach jedem Durchgang (höchstens 1×/min), jede Minute nachholen, sofort wenn die App in den Hintergrund geht; nicht mehr nur beim Zurückkehren in die Übersicht.
    v5.51: Hilfe im Fluss – keine eigene Stellen-Übung mehr; nach einem gescheiterten Durchgang zeigt der nächste Durchgang nur an der Problemstelle
    (Griff davor + Problemgriff) blasse Noten (45 %, rot gestrichelt), bis die Stelle 2× hintereinander sauber war.
@@ -3217,7 +3218,7 @@ function zlTempoAfter(z,R,ok){if(R.spot||R.stage<=3)return '';zlTpInit(z);const 
   if(ok){z.tf[key]=0;if(R.k<0){const [a,b]=zlTLines(z,p);for(let q=a;q<=b;q++)z.tp[q]=Math.max(z.tp[q],cur)} /* Stück flüssig bei x % → seine Zeilen mind. x % */
     if(R.late<=1&&cur<10){set(cur+1);z.tu[key]=1;return ` · Flüssig! Nächstes Mal ${(cur+1)*10} %`}set(cur);return cur>=10?'':' · Noch etwas flüssiger, dann wird’s schneller'}
   z.tf[key]=(z.tf[key]||0)+1;if(z.tf[key]>=2&&cur>6){z.tf[key]=0;set(cur-1);return ` · Nächstes Mal etwas langsamer: ${(cur-1)*10} %`}return ''}
-function zlPickName(p,full){if(!p)return 'fertig ⭐';if(p.k<0){const h=p.stage===3?' · mit blassen Noten':'';if(p.blk!=null){const B=zlBP(p.blk);return `Zeilen ${B[0]+1}–${B[1]+1} am Stück${h}`}return `${p.bonus?'Bonus: ':''}Ganzer Song · ${Math.round(zlTempoFor(zlState(),p)*100)} %${h}`}
+function zlPickName(p,full,zz){if(!p)return 'fertig ⭐';if(p.k<0){const h=p.stage===3?' · mit blassen Noten':'';if(p.blk!=null){const B=zlBP(p.blk);return `Zeilen ${B[0]+1}–${B[1]+1} am Stück${h}`}return `${p.bonus?'Bonus: ':''}Ganzer Song · ${Math.round(zlTempoFor(zz||zlState(),p)*100)} %${h}`} /* v5.54: Liste/Startseite geben ihren Stand mit – ohne offenen Song gibt es kein zlState() */
   return `Zeile ${p.k+1}`+(full?' · '+ZL.names[p.stage]+(p.rep?' (nachüben)':''):'')}
 /* v5.44: Problemstelle eines gescheiterten Durchgangs – das Fenster aus 3 Griffen mit den meisten Fehlern.
    Geübt werden 2 Griffe davor bis 1 danach (mind. 4 Griffe), denn der Fehler sitzt meist im Übergang.
@@ -5101,7 +5102,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.53 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.54 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

@@ -55,7 +55,7 @@ async def main():
          'A loslassen → normal weiter': t(lambda: 0.9 < r['a']['back'] < 1.1),
          'A 2× schnell → sofort selbst dran': t(lambda: r['a']['dbl'] and r['a']['start']),
          'A 2× schnell mitten im Durchgang → von vorne, ohne Vorspielen': t(lambda: r['a']['restart']),
-         'Version 5.53': t(lambda: r['ver'].startswith('Version 5.53')),
+         'Version 5.54': t(lambda: r['ver'].startswith('Version 5.54')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
