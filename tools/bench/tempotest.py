@@ -8,7 +8,7 @@ JS = r"""async (S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=(
  openMem(it);const gs=MEM.gs,R=()=>MEM.run,z=()=>zlState(),
    tick=(sec)=>{const r0=MEM.run;for(let t=0;t<sec;t+=0.02){const r=MEM.run;if(!r||r!==r0)break;zlTick(r,0.02)}},
    press=j=>{for(const m of gs[j].mids)memPress(m,'kb')},
-   play=(r,bad,slow)=>{bad=bad||{};{let n=0;while(r.demo&&n++<5000)zlTick(r,0.02)}for(let j=r.pos;j<=r.b;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}if(slow&&slow[j]){for(let i=0;i<50;i++)zlTick(r,0.02)}for(let i=0;i<(bad[j]||0);i++)memPress(30,'kb');press(j)}};
+   play=(r,bad,slow,st)=>{bad=bad||{};{let n=0;while(r.demo&&n++<5000)zlTick(r,0.02)}for(let j=r.pos;j<=r.b;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}if(slow&&slow[j]){for(let i=0;i<50;i++)zlTick(r,0.02)}if(st&&st[j]){for(let i=0;i<300;i++)zlTick(r,0.02)} /* v5.59: Stocken = 6 s */for(let i=0;i<(bad[j]||0);i++)memPress(30,'kb');press(j)}};
  /* Lernstufen immer 60 % */
  let r=zlStart({k:0,stage:2});o.noten=r.tempo;memStop();r=zlStart({k:0,stage:3});o.blass=r.tempo;memStop();
  /* v5.55: Zeilen und Stücke immer 60 % – kein Tempo-Jo-Jo beim Lernen */
@@ -20,7 +20,7 @@ JS = r"""async (S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=(
  r=zlStart({k:-1,blk:'0-1',stage:3,t:0});o.blkBlass=r.tempo;memStop();
  /* Song: 60 %, bis er einmal geschafft ist; danach Bonus (flüssig → +10 %) */
  {const y=z();y.song=0;y.ts=null;y.tf={};for(let q=1;q<8;q++)y.nd[q]=1;for(const bb of zlBlocks(8))y.bd[zlBK(bb)]=1;y.bh={s0:1};memSaveAll()}
- r=zlStart({k:-1,stage:4,t:0});o.song={t0:r.tempo};play(r,{3:1,10:1,20:1,30:1,40:1,50:1,60:1,70:1,80:1,85:1});o.song.f={ok:r.res.ok,sub:r.res.sub};memStop();
+ r=zlStart({k:-1,stage:4,t:0});o.song={t0:r.tempo};play(r,{},null,{10:1,30:1,50:1,70:1});o.song.f={ok:r.res.ok,sub:r.res.sub};memStop();
  r=zlStart({k:-1,stage:4,t:0});o.song.t1=r.tempo;play(r);o.song.ok={ok:r.res.ok,song:z().song,sub:r.res.sub};memStop();
  r=zlStart(zlPick(z()));o.song.t2=r.tempo;memStop();
  /* tiefes A */
@@ -58,7 +58,7 @@ async def main():
          'A 2× schnell mitten im Durchgang → von vorne, ohne Vorspielen': t(lambda: r['a']['restart']),
          'A kurz getippt während des Vorspielens → Vorspielen von vorne (v5.55)': t(lambda: r['tap']['demo'] and r['tap']['before'] > r['tap']['t0'] + 1 and abs(r['tap']['after'] - r['tap']['t0']) < 0.3),
          'A gehalten während des Vorspielens → schneller ab hier, kein Neustart': t(lambda: r['tap']['hold']['h1'] > r['tap']['hold']['h0'] + 0.5),
-         'Version 5.57': t(lambda: r['ver'].startswith('Version 5.57')),
+         'Version 5.59': t(lambda: r['ver'].startswith('Version 5.59')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)

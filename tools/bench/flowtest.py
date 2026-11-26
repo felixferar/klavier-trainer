@@ -14,8 +14,8 @@ JS = r"""async (SG)=>{window.toast=(m)=>{(window.TOASTS=window.TOASTS||[]).push(
  openMem(it);const gs=MEM.gs,R=()=>MEM.run,z=()=>zlState();o.N=gs.length;
  const press=j=>{for(const m of gs[j].mids)memPress(m,'kb')},
    tick=(r,sec)=>{for(let t=0;t<sec;t+=0.02){if(MEM.run!==r)break;zlTick(r,0.02)}},
-   play=(r,bad,upto,wait)=>{bad=bad||{};{let n=0;while(r.demo&&n++<5000)zlTick(r,0.02)}const end=upto==null?r.b:upto;
-     for(let j=r.pos;j<=end;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}if(wait)for(let i=0;i<60;i++)zlTick(r,0.02);for(let i=0;i<(bad[j]||0);i++)memPress(30,'kb');press(j)}};
+   play=(r,bad,upto,wait,st)=>{bad=bad||{};st=st||{};{let n=0;while(r.demo&&n++<5000)zlTick(r,0.02)}const end=upto==null?r.b:upto;
+     for(let j=r.pos;j<=end;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}if(wait)for(let i=0;i<60;i++)zlTick(r,0.02);if(st[j])for(let i=0;i<300;i++)zlTick(r,0.02); /* v5.59: Stocken = 6 s */for(let i=0;i<(bad[j]||0);i++)memPress(30,'kb');press(j)}};
  /* --- 1. kein Metronom: Zeile aus dem Kopf und Song, auch mit alter Einstellung „Klick: an“ --- */
  S.zlClick=true;z().st=[4,4,4,4,4,4,4,4];memSaveAll();
  let r=zlStart({k:2,stage:4});play(r,{},null,true);o.clickLine=CNT.click;memStop();
@@ -30,8 +30,8 @@ JS = r"""async (SG)=>{window.toast=(m)=>{(window.TOASTS=window.TOASTS||[]).push(
  {const y=z();y.song=1;y.ts=6;y.tf={s:1};y.tu={};y.bc={};y.nq=null;y.rep=null;for(let q=1;q<8;q++)y.nd[q]=1;for(const bb of zlBlocks(8))y.bd[zlBK(bb)]=1;y.bh={s0:1};memSaveAll()}
  CNT.big=0;r=zlStart(zlPick(z()));o.t0=r.tempo;play(r,{},null,true);o.okLate={ok:r.res.ok,late:r.late,sub:r.res.sub,big:CNT.big};memStop();
  r=zlStart(zlPick(z()));o.t1=r.tempo;
- const many={};for(let j=3;j<89;j+=4)many[j]=1;play(r,many);o.fail1=r.res.ok;memStop();
- r=zlStart(zlPick(z()));o.t2=r.tempo;play(r,many);memStop();r=zlStart(zlPick(z()));o.t3=r.tempo;memStop();
+ const many={};for(let j=3;j<89;j+=4)many[j]=1;play(r,{},null,false,many);o.fail1=r.res.ok;memStop();
+ r=zlStart(zlPick(z()));o.t2=r.tempo;play(r,{},null,false,many);memStop();r=zlStart(zlPick(z()));o.t3=r.tempo;memStop();
  /* Leiter bis 100 % */
  z().bc={};z().lf={};z().nq=null;z().rep=null;memSaveAll();const lad=[];
  for(let i=0;i<5;i++){const p=zlPick(z());if(!p){lad.push('fertig');break}r=zlStart(p);lad.push(r.tempo);play(r);memStop()}
@@ -40,7 +40,7 @@ JS = r"""async (SG)=>{window.toast=(m)=>{(window.TOASTS=window.TOASTS||[]).push(
  {const y=z();y.song=1;y.ts=6;y.bc={};y.lf={};y.nj={};y.nq=null;y.rep=null;memSaveAll()}
  const cuts=z().cuts.slice();o.cuts=cuts;
  const badL4={};for(let j=cuts[4];j<cuts[5];j+=2)badL4[j]=1;for(let j=cuts[6];j<cuts[7];j+=3)badL4[j]=1;for(let j=cuts[7];j<89;j+=3)badL4[j]=1;
- r=zlStart(zlPick(z()));o.r1={a:r.a,from:r.from};play(r,badL4);o.r1.ok=r.res.ok;o.r1.sub=r.res.sub;o.r1.bc=(z().bc.s1||[]).slice().sort();memStop();
+ r=zlStart(zlPick(z()));o.r1={a:r.a,from:r.from};play(r,{},null,false,badL4);o.r1.ok=r.res.ok;o.r1.sub=r.res.sub;o.r1.bc=(z().bc.s1||[]).slice().sort();memStop();
  let p=zlPick(z());o.p2={from:p.from,name:zlPickName(p,1)};r=zlStart(p);o.p2.a=r.a;o.p2.la=r.la;o.p2.tol=zlTol(r);
  CNT.big=0;play(r);o.p2.ok=r.res.ok;o.p2.song=z().song;o.p2.sub=r.res.sub;o.p2.bc=z().bc.s1||null;o.p2.big=CNT.big;o.p2.ts=z().ts;memStop();
  o.p3=zlPick(z());r=zlStart(o.p3);o.p3t=r.tempo;o.p3a=r.a;play(r);o.p3ok=r.res.ok;o.p3sub=r.res.sub;memStop();o.p4t=zlTempoFor(z(),zlPick(z()));
@@ -74,8 +74,8 @@ async def main():
          'Töne schweigen bei Klavierklang aus / Töne aus': t(lambda: r['fxMuted1'] and r['fxMuted2'] and r['fxOnNow']),
          'echte WebAudio-Töne laufen ohne Fehler': t(lambda: r['realFx'] is True),
          'Song geschafft mit vielen „zu spät“ → trotzdem +10 % und voller Akkord': t(lambda: r['t0'] == 0.6 and r['okLate']['ok'] and r['okLate']['late'] > 1 and 'Nächstes Mal 70 %' in r['okLate']['sub'] and r['okLate']['big'] == 1 and r['t1'] == 0.7),
-         '2× nicht geschafft → Tempo bleibt (kein Rückfall)': t(lambda: not r['fail1'] and r['t2'] == 0.7 and r['t3'] == 0.7),
-         'Leiter 70 → 80 → 90 → 100 %, dann fertig': t(lambda: r['ladder'][:4] == [0.7, 0.8, 0.9, 1] and r['songLvl'] == 3 and r['pickEnd'] is None),
+         '2× gestockt (v5.59) → Tempo bleibt (kein Rückfall)': t(lambda: not r['fail1'] and r['t2'] == 0.7 and r['t3'] == 0.7),
+         'Leiter 70 → 80 → 90 → 100 %, danach bleibt der Song spielbar (v5.59)': t(lambda: r['ladder'][:4] == [0.7, 0.8, 0.9, 1] and r['songLvl'] == 3 and r['pickEnd'] is not None and r['pickEnd']['k'] == -1),
          'Fehlschlag hinten → nächster Versuch ab Zeile 4 (1 Zeile vor der ersten ohne ✓), 2 Griffe Anlauf': t(lambda: not r['r1']['ok'] and r['r1']['bc'][:4] == [0, 1, 2, 3] and r['p2']['from'] == 3 and r['p2']['la'] == r['cuts'][3] and r['p2']['a'] == r['cuts'][3] - 2 and 'ab Zeile 4' in r['p2']['name'] and 'weiter ab Zeile' in r['r1']['sub']),
          'Rest sauber → Song geschafft, nächstes Mal wieder ab Griff 1': t(lambda: r['p2']['ok'] and r['p2']['bc'] is None and 'from' not in r['p3'] and r['p3']['k'] == -1),
          'Teildurchgang ab Zeile x: geschafft + Akkord, aber kein +10 %; danach ab Griff 1 bei gleichem Tempo': t(lambda: r['p2']['ok'] and r['p2']['big'] == 1 and r['p2']['ts'] == 6 and 'Nächstes Mal' not in r['p2']['sub'] and 'ab Griff 1' in r['p2']['sub'] and r['p3t'] == 0.6 and r['p3a'] == 0),
@@ -83,7 +83,7 @@ async def main():
          'A mitten im Song → neuer Anlauf vor der Stelle, Vorspielen ab dort': t(lambda: r['ab']['newRun'] and r['ab']['from'] == 4 and r['ab']['a'] == r['cuts'][4] - 2 and r['ab']['demo'] and 'Zeile 5' in r['ab']['toast'] and r['ab']['bc'] == [0, 1, 2, 3, 4] and r['ab']['log']['abort'] == 1),
          'nach dem Neuansatz: A 2× schnell = sofort selbst dran': t(lambda: r['ab']['dbl']),
          'kurzer Song (≤ 40 Griffe) → immer ab Griff 1': t(lambda: r['shortN'] <= 40 and r['shortFrom'] == 0),
-         'Version 5.57': t(lambda: r['ver'].startswith('Version 5.57')),
+         'Version 5.59': t(lambda: r['ver'].startswith('Version 5.59')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)

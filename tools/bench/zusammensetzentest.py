@@ -37,7 +37,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  o.rep.run={k:r.k,rep:r.rep,stat:$('#zlStat').textContent};play(r,r.a,r.b);o.rep.ok={sub:r.res.sub,rep:z().rep,next:r.next};tick(4);r=R();
  play(r,r.a,r.b);o.b34.ok={ok:r.res.ok,next:r.next};memStop();
  /* 8) Reihenfolge danach: 1–4, dann (alles sitzt) 5–6, 7–8, 5–8, Song */
- const ord=[];{const c=JSON.parse(JSON.stringify(z()));for(let i=0;i<8;i++){const p=zlPick(c);if(!p)break;ord.push(p.blk||('s'+p.t));if(p.blk)c.bd[p.blk]=1;else c.song++}}o.order=ord;
+ const ord=[];{const c=JSON.parse(JSON.stringify(z()));for(let i=0;i<8;i++){const p=zlPick(c);if(!p||c.song>=3)break; /* v5.59: bei 100 % bleibt der Song spielbar */ord.push(p.blk||('s'+p.t));if(p.blk)c.bd[p.blk]=1;else c.song++}}o.order=ord;
  /* 9) Ganzer Song: 8 Fehler über 8 Zeilen → in der Toleranz, aber Zeilen fehlen; dann sauber → 80 % */
  const zz=z();for(const b of zlBlocks(8))zz.bd[zlBK(b)]=1;memSaveAll();zlHome();o.home={go:$('#zlGo').textContent,sum:$('#zlSum').textContent};
  r=zlStart(zlPick(z()));const b8={};[3,5,28,38,50,63,75,84].forEach(j=>b8[j]=1);play(r,r.a,r.b,b8);o.song={ok8:r.res.ok,msg:r.res.msg,sub:r.res.sub};tick(4);r=R();
@@ -71,10 +71,10 @@ async def main():
          '3× gescheitert → Zeile 3 nachüben → zurück zu 3–4': t(lambda: r['rep']['rep'] == 2 and 'Zeile 3' in r['rep']['sub'] and r['rep']['next'] == {'k': 2, 'stage': 4, 'rep': 1} and r['rep']['run']['rep'] == 1 and r['rep']['ok']['rep'] is None and r['rep']['ok']['next'] == {'k': -1, 'blk': '2-3', 'stage': 4, 't': 0} and r['b34']['ok']['ok'] and r['b34']['ok']['next'] == {'k': -1, 'blk': '0-3', 'stage': 4, 't': 0}),
          'Reihenfolge: 1–4, 5–6, 7–8, 5–8, Song': t(lambda: r['order'] == ['0-3', '4-5', '6-7', '4-7', 's0', 's1', 's1']),
          'Übersicht vor dem Song': t(lambda: r['home']['go'] == 'Weiter: Ganzer Song · 60 %' and 'am Stück: 6 von 6' in r['home']['sum'] and 'jetzt: der ganze Song' in r['home']['sum']),
-         'Ganzer Song: 8 Fehler verteilt → noch nicht; sauber → Tempo 70 → 80 → 90 → 100 % → fertig': t(lambda: not r['song']['ok8'] and 'erlaubt sind 8' in r['song']['msg'] and 'fehlt noch: Zeile 1' in r['song']['sub'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.7 and r['song']['tl'] == [0.7, 0.8, 0.9, 1.0] and r['song']['end']['song'] == 3 and r['song']['end']['next'] is None and r['song']['home']['go'] == 'Alles geschafft ⭐'),
+         'Ganzer Song (v5.59): 8 Griffe daneben, aber flüssig → geschafft; Tempo steigt je Durchgang bis 100 %; danach bleibt der Song spielbar': t(lambda: r['song']['ok8'] and 'Durchgespielt' in r['song']['msg'] and '8 Griffe daneben' in r['song']['msg'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.8 and r['song']['tl'][:3] == [0.8, 0.9, 1.0] and r['song']['end']['song'] == 3 and r['song']['end']['next'] is not None and r['song']['end']['next']['k'] == -1),
          'Zurücksetzen löscht alles': t(lambda: r['reset'] == {'st': '00000000', 'bd': 0, 'bc': 0, 'kc': '00000000', 'song': 0, 'rep': None}),
          'Protokoll: block mit blk/tol/chk, kopf mit kc, nachüben': t(lambda: any(e[0] == 'block' and e[3] == '0-1' and e[2] == 2 and e[5] is not None for e in r['log']) and any(e[0] == 'kopf' and e[6] == 1 for e in r['log']) and any(e[0] == 'kopf' and e[4] == 1 for e in r['log']) and any(e[0] == 'song' and e[2] == 8 for e in r['log'])),
-         'Version 5.57': t(lambda: r['ver'].startswith('Version 5.57')),
+         'Version 5.59': t(lambda: r['ver'].startswith('Version 5.59')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
