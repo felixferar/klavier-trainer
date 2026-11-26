@@ -16,7 +16,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
    press=j=>{for(const m of gs[j].mids)memPress(m,'kb')},
    demoEnd=()=>{let n=0;while(R()&&R().demo&&n++<5000)zlTick(R(),0.02)},
    play=(r,from,to,bad)=>{bad=bad||{};for(let j=from;j<=to;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}for(let i=0;i<(bad[j]||0);i++)memPress(30,'kb');press(j)}},
-   felix=bl=>{const v={cv:2,n:89,cuts:[0,13,26,35,46,59,72,81],st:[4,4,4,4,4,4,4,2],eh:[0,0,0,0,0,0,0,0],stars:[2,2,2,2,2,2,2,0],song:0};if(bl)v.bl=bl;v.bh={'b0-1':1,'b2-3':1,'b0-3':1,'b4-5':1,'b6-7':1,'b4-7':1,s0:1}; /* v5.50: Hilfe-Durchgänge als erledigt – hier geht es um die Kopf-Regeln (weichtest prüft den Einstieg) */MEM.rec[zlKey()]=v;memSaveAll()};
+   felix=bl=>{const v={cv:2,n:89,cuts:[0,13,26,35,46,59,72,81],st:[4,4,4,4,4,4,4,2],eh:[0,0,0,0,0,0,0,0],stars:[2,2,2,2,2,2,2,0],song:0};if(bl)v.bl=bl;v.nd={1:1,2:1,3:1,4:1,5:1,6:1,7:1}; /* v5.55: Übergänge als geschafft – nahttest prüft sie */v.bh={'b0-1':1,'b2-3':1,'b0-3':1,'b4-5':1,'b6-7':1,'b4-7':1,s0:1}; /* v5.50: Hilfe-Durchgänge als erledigt – hier geht es um die Kopf-Regeln (weichtest prüft den Einstieg) */MEM.rec[zlKey()]=v;memSaveAll()};
  o.blocks8=zlBlocks(8);o.blocks={9:zlBlocks(9),5:zlBlocks(5),3:zlBlocks(3),4:zlBlocks(4),54:zlBlocks(54).length};
  /* 1) Felix' Stand: Zeile 8 im Echo → erst Zeile 8 fertig, nicht 1–4 */
  felix();zlHome();o.felix={pick:zlPick(z()),go:$('#zlGo').textContent,sum:$('#zlSum').textContent,kc:z().kc.join('')};
@@ -74,7 +74,7 @@ async def main():
          'Ganzer Song: 8 Fehler verteilt → noch nicht; sauber → Tempo 70 → 80 → 90 → 100 % → fertig': t(lambda: not r['song']['ok8'] and 'erlaubt sind 8' in r['song']['msg'] and 'fehlt noch: Zeile 1' in r['song']['sub'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.7 and r['song']['tl'] == [0.7, 0.8, 0.9, 1.0] and r['song']['end']['song'] == 3 and r['song']['end']['next'] is None and r['song']['home']['go'] == 'Alles geschafft ⭐'),
          'Zurücksetzen löscht alles': t(lambda: r['reset'] == {'st': '00000000', 'bd': 0, 'bc': 0, 'kc': '00000000', 'song': 0, 'rep': None}),
          'Protokoll: block mit blk/tol/chk, kopf mit kc, nachüben': t(lambda: any(e[0] == 'block' and e[3] == '0-1' and e[2] == 2 and e[5] is not None for e in r['log']) and any(e[0] == 'kopf' and e[6] == 1 for e in r['log']) and any(e[0] == 'kopf' and e[4] == 1 for e in r['log']) and any(e[0] == 'song' and e[2] == 8 for e in r['log'])),
-         'Version 5.54': t(lambda: r['ver'].startswith('Version 5.54')),
+         'Version 5.55': t(lambda: r['ver'].startswith('Version 5.55')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)

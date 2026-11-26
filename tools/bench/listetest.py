@@ -1,4 +1,4 @@
-"""v5.54: Startseite und Songliste bleiben gefüllt, wenn ein Song beim „Ganzen Song“ steht (v5.53 warf beim App-Start einen Fehler → alle Listen leer).
+"""v5.55: Startseite und Songliste bleiben gefüllt, wenn ein Song beim „Ganzen Song“ steht (v5.53 warf beim App-Start einen Fehler → alle Listen leer).
 usage: python3 tools/bench/listetest.py $PWD/web/index.html"""
 import sys, asyncio, json, os
 from playwright.async_api import async_playwright
@@ -28,7 +28,7 @@ async def main():
     c = {'Startseite zeigt die Songs': t(lambda: r['recent'] >= 3),
          'Songs-Tab zeigt alle Songs': t(lambda: r['songs'] >= 3),
          'Fly Me mit Stand „Am Lernen“': t(lambda: 'Am Lernen' in r['fly']),
-         'Version 5.54': t(lambda: r['ver'].startswith('Version 5.54')),
+         'Version 5.55': t(lambda: r['ver'].startswith('Version 5.55')),
          'keine JS-Fehler beim Start': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     sys.exit(0 if all(c.values()) else 1)

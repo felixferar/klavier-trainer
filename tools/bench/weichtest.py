@@ -12,7 +12,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
    tick=(sec)=>{const r0=MEM.run;for(let t=0;t<sec;t+=0.02){const r=MEM.run;if(!r||r!==r0)break;zlTick(r,0.02)}},
    press=j=>{for(const m of gs[j].mids)memPress(m,'kb')},
    play=(r,bad)=>{bad=bad||{};{let n=0;while(r.demo&&n++<5000)zlTick(r,0.02)}for(let j=r.pos;j<=r.b;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}for(let i=0;i<(bad[j]||0);i++)memPress(30,'kb');press(j)}};
- MEM.rec[zlKey()]={cv:2,n:89,cuts:[0,13,26,35,46,59,72,81],st:[4,4,4,4,4,4,4,4],eh:[0,0,0,0,0,0,0,0],stars:[2,2,2,2,2,2,2,2],song:0,kc:[2,2,2,2,2,2,2,2]};memSaveAll();
+ MEM.rec[zlKey()]={cv:2,n:89,cuts:[0,13,26,35,46,59,72,81],st:[4,4,4,4,4,4,4,4],eh:[0,0,0,0,0,0,0,0],stars:[2,2,2,2,2,2,2,2],song:0,kc:[2,2,2,2,2,2,2,2],nd:{1:1,2:1,3:1,4:1,5:1,6:1,7:1}};memSaveAll(); /* v5.55: Übergänge als geschafft – hier geht es um den weichen Einstieg (nahttest prüft die Übergänge) */
  zlHome();o.home={go:$('#zlGo').textContent};
  /* 1) 1–2 am Stück: erst mit blassen Noten */
  let r=zlStart(zlPick(z()));o.b1={stage:r.stage,blk:r.blk,alpha:zlAlpha(r,r.la+3),tgt:zlVis(r,r.la+3),chip:$('#zlChip').textContent,txt:(zlUI(r),$('#zlStat').textContent),world:$('#zlRun').className};
@@ -53,7 +53,7 @@ async def main():
          'Song: blass 60 % → Kopf 60 % → „sitzt auswendig ⭐“': t(lambda: r['song']['stage'] == 3 and r['song']['tempo'] == 0.6 and r['song']['a'] == 0 and r['song']['b'] == 88 and r['song']['help']['ok'] and r['song']['kopf'] == {'stage': 4, 'tempo': 0.6} and r['song']['ok']['ok'] and r['song']['ok']['song'] == 1 and 'sitzt auswendig' in r['song']['ok']['sub']),
          'danach Bonus 70 % – flüssig geschafft → +10 % (als Bonus gekennzeichnet)': t(lambda: r['song']['ok']['next'] == {'k': -1, 'stage': 4, 't': 1, 'bonus': 1} and r['song']['bonusRun']['bonus'] == 1 and r['song']['bonusRun']['tempo'] == 0.7 and r['song']['bonusRun']['chip'] == 'Bonus'),
          'Übersicht/Startseite: Song sitzt ⭐, Bonus angeboten': t(lambda: r['after']['go'] == 'Weiter: Bonus: Ganzer Song · 70 %' and 'sitzt auswendig' in r['after']['sum'] and 'alles geschafft' in r['after']['info'] and r['after']['state'] == 2),
-         'Version 5.54': t(lambda: r['ver'].startswith('Version 5.54')),
+         'Version 5.55': t(lambda: r['ver'].startswith('Version 5.55')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
