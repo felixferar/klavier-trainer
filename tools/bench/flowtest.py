@@ -83,7 +83,7 @@ async def main():
          'A mitten im Song → neuer Anlauf vor der Stelle, Vorspielen ab dort': t(lambda: r['ab']['newRun'] and r['ab']['from'] == 4 and r['ab']['a'] == r['cuts'][4] - 2 and r['ab']['demo'] and 'Zeile 5' in r['ab']['toast'] and r['ab']['bc'] == [0, 1, 2, 3, 4] and r['ab']['log']['abort'] == 1),
          'nach dem Neuansatz: A 2× schnell = sofort selbst dran': t(lambda: r['ab']['dbl']),
          'kurzer Song (≤ 40 Griffe) → immer ab Griff 1': t(lambda: r['shortN'] <= 40 and r['shortFrom'] == 0),
-         'Version 5.57': t(lambda: r['ver'].startswith('Version 5.57')),
+         'Version 5.58': t(lambda: r['ver'].startswith('Version 5.58')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
