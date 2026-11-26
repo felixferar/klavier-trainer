@@ -5589,7 +5589,9 @@ function finishCore(raw,preview){
                (gehaltener Ton, der nur flackert). Ohne solchen Balken – kurze Notenkästchen werden in der Lesezeile oft gar nicht oder nur 1 Bild lang gesehen –
                ist eine Taste, die ≥ 0,1 s ganz in Ruhe war, losgelassen: zwei Anschläge, nicht einer. */
             const held=d!==null&&ons.some((o,i)=>Math.abs(o+dk(cur)-cur.start)<0.15&&(offs[i]==null||offs[i]+dk(cur)>=e.start-0.05)&&!(offs[i]!=null&&offs[i]-o<0.045));
-            if(gap<=(held?0.25:0.1)&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
+            /* v5.58b: und nur Lücken unter 0,035 s (≈ 1 Bild) – auch unter einem durchgehenden Balken ist eine Taste, die 2+ Bilder lang aus war, losgelassen
+               (Videos mit lückenlos aneinanderstoßenden Balken bei Tonwiederholungen). Kanal-MIDI-Test 21 Videos: F1@100 Mittel 0,9423 → 0,9472 (V7dy +6,4, L_uwuf +2,3, 8MmO +1,0; Kg8z −0,08). */
+            if(gap<=(held?0.25:0.1)&&gap<0.035&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
       ev=out.sort((a,b)=>a.start-b.start)}
     if(d!==null){const out=[];for(const e of ev){const L=SCAN.lane[kIdx.get(e.m)],own=L.ons.some(o=>Math.abs(o+dk(e)-e.start)<0.12)||!!(L.pre&&(L.pre.off==null||e.start-dk(e)<=L.pre.off+0.1)),
       ons=L.ons.filter((o,i)=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)).map(o=>o+dk(e)).filter(x=>x>e.start+(own?SPLIT_MIN:SPLIT_OWN)&&x<e.end-0.05); /* v5.43: not at a one-frame piece (rim at the top of a pill) */
