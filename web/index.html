@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.57</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.59</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3166,6 +3166,8 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
+   v5.59: ganzer Song aus dem Kopf = geschafft, wenn er bis zum Ende durchgespielt wurde und höchstens 1 Stocker je 40 Griffe hatte (Stocker = 2,5 s länger als das Lied dort dauert, oder Hilfe).
+          Falsche Töne werden gezeigt, entscheiden beim ganzen Song aber nichts mehr. Bei 100 % bleibt der Song spielbar. Zeilen und Stücke unverändert.
    v5.54: tiefes A während des Vorspielens kurz getippt = Vorspielen von vorne (Halten bleibt schneller, 2× bleibt selbst dran).
    v5.53: Hilfe im Fluss aus (nach einem Fehler einfach nochmal); Vorspielen überspringen (Knopf); tiefes A: vorspielen · halten = schneller · 2× = selbst dran; Tempo wächst mit (60 → 100 % in 10er-Schritten ab „Aus dem Kopf“).
    v5.54: Bugfix – Startseite und Songliste waren leer, sobald ein Song beim „Ganzen Song“ stand (Tempo-Anzeige las den Stand des offenen Songs, beim App-Start gibt es keinen).
@@ -3187,7 +3189,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
    Lange Stücke: 1 Fehler je 10 Griffe erlaubt, sauber gespielte Zeilen behalten ihr ✓; geschafft, wenn ein Durchgang in der Toleranz war und jede Zeile ✓ hat.
    Nach 3 gescheiterten Versuchen einmal die schwächste Zeile „aus dem Kopf“ (nachüben). Eine angefangene Zeile wird erst fertig gemacht.
    Der alte Ablauf läuft weiter mit window.MEM_ZL=false. */
-const ZL={resumeMin:40,naht:3,nahtNeed:2,stallX:1.0,minG:6,hint:false,aDbl:450,aHold:0.35,ffx:3,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
+const ZL={stall:2.5,stallPer:40,resumeMin:40,naht:3,nahtNeed:2,stallX:1.0,minG:6,hint:false,aDbl:450,aHold:0.35,ffx:3,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
   col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
 const zlOn=()=>window.MEM_ZL!==false;
 const zlBlk=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
@@ -3246,13 +3248,14 @@ function zlPick(z){if(z.nq!=null&&z.nq>0&&z.nq<z.st.length)return zlNahtP(z,z.nq
   if(k0>=0){const tw=z.tw?z.tw[k0]:-1;return {k:k0,stage:tw!=null&&tw>=0&&z.st[tw]>=4?3:z.st[k0]+1}} /* v5.55: gleiche Zeile wie eine, die schon sitzt → gleich Verblassen */
   if(!z.song)for(let q=1;q<z.st.length;q++)if(!zlNahtDone(z,q))return zlNahtP(z,q); /* v5.55: vor dem ganzen Song die restlichen Übergänge – v5.56 (Felix 26.11.): nicht mehr, wenn der Song schon sitzt; dann nur, wenn es im Song an einem Übergang hakt */
   if(!z.song)return bh.s0?zlSongP(z,{k:-1,stage:4,t:0}):{k:-1,stage:3,t:0};
-  return z.song<3?zlSongP(z,{k:-1,stage:4,t:1,bonus:1}):null}
+  return zlSongP(z,z.song<3?{k:-1,stage:4,t:1,bonus:1}:{k:-1,stage:4,t:1})} /* v5.59: auch bei 100 % bleibt der ganze Song spielbar (bis v5.57: „fertig“ – kein Durchgang mehr möglich) */
 /* v5.57: langer Song (> 40 Griffe) – nach einem Fehlschlag oder Abbruch nicht wieder ab Griff 1. Einstieg 1 Zeile vor der ersten Zeile, die in diesem Song-Anlauf
    noch kein ✓ hat (alle Zeilen davor waren schon einmal sauber, z.bc). Geschafft ist der Song, wenn der Rest in der Toleranz sitzt und jede Zeile ihr ✓ hat. */
 function zlSongFrom(z,key){if(MEM.gs.length<=ZL.resumeMin)return 0;const ck=(z.bc&&z.bc[key])||[];let f=0;while(f<z.st.length&&ck.includes(f))f++;return f>=z.st.length?0:Math.max(0,f-1)}
 function zlSongP(z,p){const f=zlSongFrom(z,'s'+p.t);if(f>0)p.from=f;return p}
+function zlStalls(z,R){const st=new Set();let n=0;for(let i=1;i<R.waits.length;i++){const j=R.a+i;if(R.waits[i]>ZL.stall+(MEM.gs[j].start-MEM.gs[j-1].start)/(R.tempo||1)){st.add(zlLineOf(z,j));n++}}for(const j of R.hset){st.add(zlLineOf(z,j));n++}R.stall=n;return st} /* v5.59: Zeilen, in denen du gestockt hast (> 2,5 s länger, als das Lied dort im aktuellen Tempo dauert) oder Hilfe geholt hast; R.stall = Anzahl der Stocker */
 function zlAbortSong(R){if(!(R.k<0&&R.blk==null&&R.stage>=4&&!R.spot)||MEM.gs.length<=ZL.resumeMin)return null;const z=zlState(),key='s'+R.st,ck=z.bc[key]=z.bc[key]||[];
-  const L0=zlLineOf(z,R.la),Lc=zlLineOf(z,Math.min(R.pos,R.b));for(let q=L0;q<Lc;q++)if((R.wj[q]||0)<=1&&!ck.includes(q))ck.push(q);memSaveAll(); /* sauber gespielte Zeilen behalten ihr ✓ auch beim Abbruch */
+  const L0=zlLineOf(z,R.la),Lc=zlLineOf(z,Math.min(R.pos,R.b)),stl=zlStalls(z,R);for(let q=L0;q<Lc;q++)if(!stl.has(q)&&!ck.includes(q))ck.push(q);memSaveAll(); /* ohne Stocken gespielte Zeilen behalten ihr ✓ auch beim Abbruch (v5.59: Stocken statt falscher Töne) */
   const f=zlSongFrom(z,key);return f>(R.from||0)?Object.assign({k:-1,stage:R.stage,t:R.st,from:f},R.bonus?{bonus:1}:{}):null} /* v5.50: 80 % / 100 % sind Bonus – der Song sitzt schon ab 60 % aus dem Kopf */
 /* v5.53: Tempo wächst mit, wenn es sitzt (Konzept 24.11.) – Lernen (Stufe ≤ 3) immer 60 %; ab „Aus dem Kopf“ hat jede Zeile (tp), jedes Stück (tb) und der Song (ts) ein eigenes Tempo in Zehnteln (6–10).
    v5.57: nur noch der Song (Bonus) steigt: geschafft → nächstes Mal +10 %; nie wieder langsamer. Nie mitten im Durchgang. */
@@ -3431,7 +3434,7 @@ function zlSeams(R,z){const gs=MEM.gs,o={},L0=zlLineOf(z,R.la),L1=zlLineOf(z,R.b
     const w=R.waits[c-R.a],exp=(gs[c].start-gs[c-1].start)/(R.tempo||0.6);let s=0;if(w!=null&&w-exp>ZL.stallX)s++;if(R.wset.has(c)||R.wset.has(c-1))s++;if(s)o[q]=s}return o}
 function zlSeamAdd(z,key,R){const o=zlSeams(R,z),w=z.nj[key]=z.nj[key]||{};for(const q in o)w[q]=(w[q]||0)+o[q]}
 function zlSeamPick(z,key){const w=z.nj[key]||{};let bq=-1,bv=0;for(const q in w)if(w[q]>bv){bv=w[q];bq=+q}delete z.nj[key];return bq}
-function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTol(R),bad=R.wrong+R.help,within=bad<=tol,stars=bad===0?(R.slips?2:3):within?2:1;let ok=stars>=2;R.done=true;R.doneT=ZL.pause;R.stars=stars;let msg,sub='',flash=-1,next=null;
+function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTol(R),bad=R.wrong+R.help,within=bad<=tol;let stars=bad===0?(R.slips?2:3):within?2:1,ok=stars>=2;R.done=true;R.doneT=ZL.pause;R.stars=stars;let msg,sub='',flash=-1,next=null;
   msg=R.wrong?(R.wrong===1?'1 Griff daneben':`${R.wrong} Griffe daneben`)+(R.help?' + Hilfe':''):R.help?'Mit Hilfe':stars===3?'Perfekt im Takt':'Alle Töne richtig';
   if(bad)msg+=` – erlaubt ${tol===1?'ist 1':'sind '+tol}`;
   /* v5.43: Verlauf derselben Aufgabe (letzte 4 Versuche), damit man sieht, dass es besser wird */
@@ -3446,14 +3449,21 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
       else sub='Noch einmal mit blassen Noten'}}
   else if(R.k<0){const key=R.blk!=null?'b'+R.blk:'s'+R.st,ck=z.bc[key]=z.bc[key]||[],L0=zlLineOf(z,R.la),L1=zlLineOf(z,R.b);
     /* v5.41: Fortschritt bleibt – jede Zeile, die in diesem Durchgang sauber war, bekommt ihr ✓ für dieses Stück */
-    for(let q=L0;q<=L1;q++)if((R.wj[q]||0)<=1&&!ck.includes(q))ck.push(q);
+    /* v5.59 (Felix 26.11.): ganzer Song aus dem Kopf = geschafft, wenn du ihn ohne langes Stocken durchspielst. Falsche Töne werden gezeigt, entscheiden aber nichts mehr.
+       Stocken = mehr als ZL.stall (2,5 s) länger an einem Griff, als das Lied dort im aktuellen Tempo dauert (lange Töne im Lied sind kein Stocken), oder Hilfe (B) geholt.
+       Erlaubt ist 1 Stocker je ZL.stallPer (40) Griffe: Felix' 27 ganze Durchgänge (25./26.11.) hatten meist 1–3 Stocker an Zeilenanfängen – ganz ohne wären nur 6 von 27 geschafft (alt: 7), mit 2 erlaubten sind es 21. */
+    const song=R.blk==null,stl=song?zlStalls(z,R):new Set();
+    for(let q=L0;q<=L1;q++)if((song?!stl.has(q):(R.wj[q]||0)<=1)&&!ck.includes(q))ck.push(q);
     const miss=[];for(let q=R.blk==null?0:L0;q<=L1;q++)if(!ck.includes(q))miss.push(q); /* v5.57: Song ab Zeile x – die Zeilen davor zählen mit ihrem ✓ */
-    ok=within&&!miss.length; /* geschafft: ein Durchgang innerhalb der Toleranz UND jede Zeile mindestens einmal sauber */
+    const stN=R.stall||0,stMax=Math.max(1,Math.round((R.b-R.la+1)/ZL.stallPer));
+    ok=song?stN<=stMax:within&&!miss.length; /* Stück: ein Durchgang innerhalb der Toleranz UND jede Zeile mindestens einmal sauber · v5.59 ganzer Song: bis zum Ende mit höchstens stMax Stockern */
+    if(song){stars=ok?(bad||stN?2:3):1;R.stars=stars;const fl=R.wrong?` · ${R.wrong===1?'1 Griff':R.wrong+' Griffe'} daneben`:'',wo=stN?`${stN}× gestockt (Zeile ${[...stl].sort((x,y)=>x-y).map(q=>q+1).join(', ')})`:'';
+      msg=ok?(bad||stN?'Durchgespielt'+(wo?' · '+wo:'')+fl:'Durchgespielt – flüssig und alle Töne richtig'):wo+` – erlaubt ${stMax===1?'ist 1':'sind '+stMax}`+fl}
     if(ok){z.lf[key]=0;delete z.lw[key];delete z.bc[key];delete z.nj[key];
       if(R.blk!=null){z.bd[R.blk]=1;const B=zlBP(R.blk);sub=`Zeilen ${B[0]+1}–${B[1]+1} sitzen am Stück!`}
       else{const was=z.song,tc=Math.round(R.tempo*10);z.song=Math.max(z.song,tc>=10?3:tc>=8?2:1);sub=z.song>=3?'Der ganze Song sitzt – auch im Originaltempo! ⭐':!was?'Der ganze Song sitzt auswendig! ⭐ Bonus: bis zum Originaltempo':'Song geschafft'}}
     else{z.lf[key]=(z.lf[key]||0)+1;const w=z.lw[key]=z.lw[key]||{};for(const q in R.wj)w[q]=(w[q]||0)+R.wj[q];zlSeamAdd(z,key,R);
-      const ms=miss.length>3?`fehlt noch: ${miss.length} Zeilen (jede einmal sauber)`:'fehlt noch: Zeile '+miss.map(q=>q+1).join(', ');
+      const ms=miss.length>3?`fehlt noch: ${miss.length} Zeilen (jede einmal ${song?'ohne Stocken':'sauber'})`:'fehlt noch: Zeile '+miss.map(q=>q+1).join(', ');
       if(z.lf[key]>=ZL.repAfter){let wk=-1,wv=-1;for(const q of (miss.length?miss:Object.keys(w).map(Number)))if((w[q]||0)>wv){wv=w[q]||0;wk=+q}
         z.lf[key]=0;delete z.lw[key];const nq=zlSeamPick(z,key);
         if(nq>0){z.nq=nq;z.nd[nq]=0;sub=`Kurz der Übergang Zeile ${nq} → ${nq+1} – dort hakt es am meisten`}else if(wk>=0){z.rep=wk;sub=`Kurz Zeile ${wk+1} aus dem Kopf – dort hakt es am meisten`}else sub='Noch einmal'}
@@ -3465,7 +3475,7 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
   else{sub='Noch einmal: '+ZL.names[R.stage];
     /* Verblassen: 3× hintereinander nicht geschafft → eine Stufe deutlicher */
     if(R.stage===3&&(R.fade||0)>0){z.ef=z.ef||{};z.ef[R.k]=(z.ef[R.k]||0)+1;if(z.ef[R.k]>=3){z.eh[R.k]=(R.fade||0)-1;z.ef[R.k]=0;sub='Die Noten werden wieder etwas deutlicher'}}}
-  const kind=ok?'win':(bad===tol+1||(R.k<0&&within))?'near':prev!=null&&bad<prev?'better':'again';
+  const kind=ok?'win':(R.k<0&&R.blk==null&&R.stage>=4)?(prev!=null&&bad<prev?'better':'again'):(bad===tol+1||(R.k<0&&within))?'near':prev!=null&&bad<prev?'better':'again';
   const imp=prev!=null&&bad<prev?`Besser als eben (${prev} → ${bad})`:'';
   /* kurze, freundliche Zeile – Überschrift und Verlauf sagen den Rest */
   if(!ok&&R.k>=0&&!/deutlicher/.test(sub))sub=kind==='near'?'Nur 1 Fehler zu viel – gleich noch mal':imp?'Weniger Fehler als eben – weiter so':'Gleich noch mal – du schaffst das';
@@ -3478,7 +3488,7 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
   if(!(R.k<0&&R.stage===3)){const tt=zlTempoAfter(z,R,ok);if(tt)sub=(sub||'')+tt}
   next=ok||(R.k<0&&(z.rep!=null||z.nq!=null))?zlPick(z):Object.assign({k:R.k,stage:R.stage,t:R.st},R.blk!=null?{blk:R.blk}:{},R.rep?{rep:1}:{},R.bonus?{bonus:1}:{});if(!ok&&next&&next.k<0&&next.blk==null&&next.stage>=4&&!next.spot)zlSongP(z,next);
   if(ok)try{(R.k<0&&R.stage>=4?fxBig:fxLine)()}catch(e){} /* v5.57: Zeile → kurzes Arpeggio · Stück/ganzer Song (inkl. neues Tempo) → voller Akkord */
-  R.ok=ok;memSaveAll();zlLog(R,ok?1:0,{from:R.from||undefined,stars,tol,wraw:R.wraw,fade:R.stage===3&&R.k>=0?(R.fade||0):undefined,chk:R.k<0?(z.bc[R.blk!=null?'b'+R.blk:'s'+R.st]||[]).length:undefined,kc:R.k>=0?z.kc[R.k]:undefined,hint:R.hint?[R.hint.a,R.hint.b]:undefined});R.demos=0;R.res={ok,stars,msg,sub,tim,flash,kind,hist:hist.length>1?hist.slice():null};R.next=next;R.doneT=ok?ZL.pause+0.6:hintSet?ZL.pause+1.2:ZL.pause;zlUI(R)}
+  R.ok=ok;memSaveAll();zlLog(R,ok?1:0,{from:R.from||undefined,stall:R.stall,stars,tol,wraw:R.wraw,fade:R.stage===3&&R.k>=0?(R.fade||0):undefined,chk:R.k<0?(z.bc[R.blk!=null?'b'+R.blk:'s'+R.st]||[]).length:undefined,kc:R.k>=0?z.kc[R.k]:undefined,hint:R.hint?[R.hint.a,R.hint.b]:undefined});R.demos=0;R.res={ok,stars,msg,sub,tim,flash,kind,hist:hist.length>1?hist.slice():null};R.next=next;R.doneT=ok?ZL.pause+0.6:hintSet?ZL.pause+1.2:ZL.pause;zlUI(R)}
 /* Protokoll: ein Eintrag je Durchgang im Format von tools/lernauswertung.py (t, song, k, mode, ok, abort, hints, wrong, n, dur in ms, demos, waits).
    Vorspielen zählt in „demos“; ein Abbruch erst, wenn schon ein Griff gespielt war (vorher = nur zuhören). */
 const ZL_MODE=['','hoeren','noten','blass','kopf'];
@@ -5178,7 +5188,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.57 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.59 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

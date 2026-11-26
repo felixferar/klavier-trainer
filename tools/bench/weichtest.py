@@ -22,7 +22,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  play(r);o.b1.ok={ok:r.res.ok,sub:r.res.sub,next:r.next,bh:!!z().bh['b0-1'],bd:!!z().bd['0-1'],bc:(z().bc['b0-1']||[]).length};tick(4);r=R();
  o.b1.kopf={stage:r.stage,alpha:zlAlpha(r,r.la+3),chip:$('#zlChip').textContent};play(r);o.b1.done={ok:r.res.ok,bd:!!z().bd['0-1'],next:r.next};memStop();
  /* 2) Reihenfolge danach: jeweils erst blass, dann Kopf */
- const ord=[];{const c=JSON.parse(JSON.stringify(z()));for(let i=0;i<20;i++){const p=zlPick(c);if(!p)break;ord.push((p.blk||'song'+(p.t||0))+':'+p.stage+(p.bonus?'b':''));
+ const ord=[];{const c=JSON.parse(JSON.stringify(z()));for(let i=0;i<20;i++){const p=zlPick(c);if(!p||c.song>=3)break; /* v5.59: bei 100 % bleibt der Song spielbar */ord.push((p.blk||'song'+(p.t||0))+':'+p.stage+(p.bonus?'b':''));
    if(p.stage===3)(c.bh=c.bh||{})[p.blk?'b'+p.blk:'s0']=1;else if(p.blk)c.bd[p.blk]=1;else c.song++}}o.order=ord;
  /* 3) Song: blass → Kopf 60 % = sitzt; Startseite/Song-Seite „sitzt“; Bonus 80 % angeboten */
  const zz=z();for(const b of zlBlocks(8)){zz.bd[zlBK(b)]=1;zz.bh['b'+zlBK(b)]=1}memSaveAll();zlHome();o.preSong={go:$('#zlGo').textContent,sum:$('#zlSum').textContent};
@@ -53,7 +53,7 @@ async def main():
          'Song: blass 60 % → Kopf 60 % → „sitzt auswendig ⭐“': t(lambda: r['song']['stage'] == 3 and r['song']['tempo'] == 0.6 and r['song']['a'] == 0 and r['song']['b'] == 88 and r['song']['help']['ok'] and r['song']['kopf'] == {'stage': 4, 'tempo': 0.6} and r['song']['ok']['ok'] and r['song']['ok']['song'] == 1 and 'sitzt auswendig' in r['song']['ok']['sub']),
          'danach Bonus 70 % – flüssig geschafft → +10 % (als Bonus gekennzeichnet)': t(lambda: r['song']['ok']['next'] == {'k': -1, 'stage': 4, 't': 1, 'bonus': 1} and r['song']['bonusRun']['bonus'] == 1 and r['song']['bonusRun']['tempo'] == 0.7 and r['song']['bonusRun']['chip'] == 'Bonus'),
          'Übersicht/Startseite: Song sitzt ⭐, Bonus angeboten': t(lambda: r['after']['go'] == 'Weiter: Bonus: Ganzer Song · 70 %' and 'sitzt auswendig' in r['after']['sum'] and 'alles geschafft' in r['after']['info'] and r['after']['state'] == 2),
-         'Version 5.57': t(lambda: r['ver'].startswith('Version 5.57')),
+         'Version 5.59': t(lambda: r['ver'].startswith('Version 5.59')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
