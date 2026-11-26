@@ -33,6 +33,8 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  const all={};for(const b of zlBlocks(8))all[zlBK(b)]=1;
  y=set([4,4,4,4,4,4,4,4],{bd:all,bh:{s0:1},nd:{1:1,2:1,3:1,4:1,6:1,7:1}});o.song=zlPick(y);
  y=set([4,4,4,4,4,4,4,4],{bd:all,bh:{s0:1},nd:{1:1,2:1,3:1,5:1,6:1,7:1}});o.song4=zlPick(y).spot?.q;
+ /* 5b) v5.56: Song sitzt schon → keine Übergänge vorab, gleich der Song (Bonus) */
+ y=set([4,4,4,4,4,4,4,4],{bd:all,bh:{s0:1},song:1});o.songSitzt=zlPick(y);
  /* 6) Stück 1–2 hakt 3× am Übergang (Lied wartet am Griff 13) → Übergang nachüben, nicht Zeile */
  y=set([4,4,0,0,0,0,0,0],{nd:{1:1}});r=zlStart(zlPick(y));o.blk=r.blk;for(let i=0;i<3;i++){play(r,{3:1,5:1,8:1},{13:1});if(i<2){tick(4);r=R()}}
  o.stall={sub:r.res.sub,nq:z().nq,next:r.next&&r.next.spot&&r.next.spot.q,rep:z().rep};tick(4);r=R();o.stall.run=r.spot&&r.spot.type;play(r);tick(4);r=R();play(r);o.stall.back={nq:z().nq,next:r.next&&r.next.blk};memStop();
@@ -66,13 +68,14 @@ async def main():
          '2× sauber → „Übergang sitzt!“, weiter mit Zeilen 1–2 am Stück': t(lambda: r['run2']['head'] == 'Übergang sitzt!' and r['run2']['nd'] == 1 and r['run2']['res']['next']['blk'] == '0-1'),
          '4× nicht geschafft → Noten deutlicher, dann weiter zum Stück': t(lambda: r['fail']['fl'][1]['sv'] == 0.5 and r['fail']['fl'][2]['sv'] == 0.5 and r['fail']['nd'] == -1 and r['fail']['next'] == '0-1' and 'kommt wieder' in r['fail']['fl'][3]['sub']),
          'vor dem Song: gleicher Übergang (5→6 = 1→2) zählt als geschafft, fehlender kommt': t(lambda: r['song']['k'] == -1 and not r['song'].get('spot') and r['song4'] == 4),
+         'Song sitzt schon → keine Übergänge vorab, direkt der Song': t(lambda: r['songSitzt']['k'] == -1 and not r['songSitzt'].get('spot') and r['songSitzt'].get('bonus') == 1),
          'Stück hakt 3× am Zeilenanfang → Übergang nachüben, nicht Zeile': t(lambda: r['blk'] == '0-1' and r['stall']['nq'] == 1 and r['stall']['rep'] is None and 'Übergang Zeile 1 → 2' in r['stall']['sub'] and r['stall']['next'] == 1 and r['stall']['run'] == 'naht'),
          'Übergang sitzt wieder → zurück zum Stück': t(lambda: r['stall']['back']['nq'] is None and r['stall']['back']['next'] == '0-1'),
          'ohne Stocker an der Grenze → schwächste Zeile wie bisher': t(lambda: r['noStall']['nq'] is None and r['noStall']['rep'] == 0),
          'Mini-Zeile (4 Griffe) wird angehängt, aber nicht, wenn die Zeile zu lang würde': t(lambda: r['mini'] == ['0-12', '13-25', '26-88'] and r['miniLong'][0] == '0-3'),
          'Zurücksetzen löscht die Übergänge': t(lambda: r['reset'] == {'nd': 0, 'nq': None}),
          'Protokoll: mode „naht“ mit Übergang und 60 %': t(lambda: r['log'][0][1] == 1 and r['log'][0][3] == 0.6),
-         'Version 5.55': t(lambda: r['ver'].startswith('Version 5.55')),
+         'Version 5.56': t(lambda: r['ver'].startswith('Version 5.56')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)

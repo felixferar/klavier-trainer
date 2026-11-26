@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.55</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.56</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3228,7 +3228,7 @@ function zlPick(z){if(z.nq!=null&&z.nq>0&&z.nq<z.st.length)return zlNahtP(z,z.nq
   for(const b of zlBlocks(z.st.length)){const key=zlBK(b);if(z.bd[key])continue;let all=true;for(let k=b[0];k<=b[1];k++)if(z.st[k]<4){all=false;break}if(all){for(let q=b[0]+1;q<=b[1];q++)if(!zlNahtDone(z,q))return zlNahtP(z,q); /* v5.55: vor dem Stück jeden Übergang darin 2× aus dem Kopf */
     return {k:-1,blk:key,stage:bh['b'+key]?4:3,t:0}}}
   if(k0>=0){const tw=z.tw?z.tw[k0]:-1;return {k:k0,stage:tw!=null&&tw>=0&&z.st[tw]>=4?3:z.st[k0]+1}} /* v5.55: gleiche Zeile wie eine, die schon sitzt → gleich Verblassen */
-  for(let q=1;q<z.st.length;q++)if(!zlNahtDone(z,q))return zlNahtP(z,q); /* v5.55: vor dem ganzen Song die restlichen Übergänge */
+  if(!z.song)for(let q=1;q<z.st.length;q++)if(!zlNahtDone(z,q))return zlNahtP(z,q); /* v5.55: vor dem ganzen Song die restlichen Übergänge – v5.56 (Felix 26.11.): nicht mehr, wenn der Song schon sitzt; dann nur, wenn es im Song an einem Übergang hakt */
   if(!z.song)return {k:-1,stage:bh.s0?4:3,t:0};
   return z.song<3?{k:-1,stage:4,t:1,bonus:1}:null} /* v5.50: 80 % / 100 % sind Bonus – der Song sitzt schon ab 60 % aus dem Kopf */
 /* v5.53: Tempo wächst mit, wenn es sitzt (Konzept 24.11.) – Lernen (Stufe ≤ 3) immer 60 %; ab „Aus dem Kopf“ hat jede Zeile (tp), jedes Stück (tb) und der Song (ts) ein eigenes Tempo in Zehnteln (6–10).
@@ -5146,7 +5146,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.55 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.56 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
