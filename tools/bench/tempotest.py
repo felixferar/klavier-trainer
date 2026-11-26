@@ -58,7 +58,7 @@ async def main():
          'A 2× schnell mitten im Durchgang → von vorne, ohne Vorspielen': t(lambda: r['a']['restart']),
          'A kurz getippt während des Vorspielens → Vorspielen von vorne (v5.55)': t(lambda: r['tap']['demo'] and r['tap']['before'] > r['tap']['t0'] + 1 and abs(r['tap']['after'] - r['tap']['t0']) < 0.3),
          'A gehalten während des Vorspielens → schneller ab hier, kein Neustart': t(lambda: r['tap']['hold']['h1'] > r['tap']['hold']['h0'] + 0.5),
-         'Version 5.56': t(lambda: r['ver'].startswith('Version 5.56')),
+         'Version 5.57': t(lambda: r['ver'].startswith('Version 5.57')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
