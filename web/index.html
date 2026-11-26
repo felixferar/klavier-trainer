@@ -856,7 +856,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
     </div>
     <div id="zlRun" class="hidden"> <!-- v5.37: Übungsbildschirm im Design 4b -->
       <!-- v5.46: Konzept D – oben eine farbige Leiste mit Klartext (Farbe = Situation), darunter je Griff ein Segment, Farbwelt je Stufe -->
-      <div class="zlBarW" id="zlBar"><span class="zlIc" id="zlIc"></span><div class="zlStat" id="zlStat"></div><button class="zlSkip hidden" id="zlSkip" title="Vorspielen überspringen – du bist sofort dran">Überspringen ⏭</button><button class="ib" id="zlEnd" title="Beenden" aria-label="Beenden"><svg class="i"><use href="#i-x"/></svg></button></div>
+      <div class="zlBarW" id="zlBar"><span class="zlIc" id="zlIc"></span><div class="zlStat" id="zlStat"></div><button class="zlSkip hidden" id="zlSkip" title="Vorspielen überspringen – du bist sofort dran">Überspringen ⏭</button><button class="zlSkip" id="zlFlag" title="Hier stimmt ein Ton nicht – Stelle an Claude melden" style="padding:0 10px">🚩</button><button class="ib" id="zlEnd" title="Beenden" aria-label="Beenden"><svg class="i"><use href="#i-x"/></svg></button></div>
       <div class="zlSeg" id="zlSeg"></div>
       <div class="zlCvW"><canvas id="zlCv"></canvas><div class="zlFb hidden" id="zlFb"></div></div>
       <div class="zlFoot"><span class="zlChip" id="zlChip"></span><span class="zlDots" id="zlDots"></span><span class="zlPatR" id="zlPatR"></span><div class="zlPath mini" id="zlPathR"></div><span class="zlSm" id="zlTempo"></span></div>
@@ -3880,6 +3880,20 @@ function memAuto(){memAutoOff();const n=$('#memNext');if(!kbOn()||n.textContent=
   MEM.autoT=setInterval(()=>{k--;if(k<=0)memAutoGo();else sh()},1000)}
 $('#memStop').onclick=()=>{memStop();back()};
 $('#zlSkip').onclick=()=>{const R=MEM.run;if(R&&R.zl&&R.demo)zlDemoEnd(R)}; /* v5.53 */
+/* v5.60: „Hier stimmt was nicht“ – beim Üben oder Vorspielen die Stelle melden, an der die umgewandelten Noten falsch sind (Ton fehlt, zu viel, zu lang, falsche Hand).
+   Gespeichert in kt_lflags, hochgeladen nach diag/flags/…_lern.json (wie die Flaggen der Vergleichsansicht) mit den Noten ±4 s um die Stelle; ohne Netz später nachgeholt. */
+function zlFlagAdd(R){const it=MEM.item||{},gs=MEM.gs,j=Math.max(R.a,Math.min(R.b,R.pos)),T=R.demo?Math.max(gs[R.a].start,R.demo.t-0.3):gs[j].start;
+  const near=MEM.notes.filter(n=>n.start>=T-4&&n.start<=T+4).map(n=>[n.midi,+n.start.toFixed(3),+n.dur.toFixed(3),n.hand||'']);
+  const f={kind:'lernflag',v:(document.body.innerHTML.match(/Version (\d+\.\d+)/)||[])[1]||'',ts:new Date().toISOString(),title:it.title||'',videoId:it.videoId||it.fromYT||'',itemId:it.id,
+    T:+T.toFixed(2),video:it.video?+(T+(it.video.first||0)-1).toFixed(2):null,griff:j,demo:R.demo?1:0,line:R.k,stage:R.stage,notes:MEM.notes.length,near};
+  const L=load('kt_lflags')||[];L.push(f);while(L.length>50)L.shift();save('kt_lflags',L);try{toast(ghTok()?'🚩 Stelle gemerkt – geht an Claude':'🚩 Stelle gemerkt',1800,true)}catch(e){}zlFlagSync();return f}
+let LFLAG_BUSY=false;
+async function zlFlagSync(){if(LFLAG_BUSY||!ghTok())return;const L=load('kt_lflags')||[];if(!L.length)return;LFLAG_BUSY=true;
+  try{const f=L[0],ts=f.ts.replace(/[:.]/g,'-').slice(0,19),vid=String(f.videoId||f.itemId||'song').replace(/[^\w-]/g,'_');
+    const r=await ghUpload(`diag/flags/${ts}_${vid}_lern.json`,btoa(unescape(encodeURIComponent(JSON.stringify(f)))),'Lern-Flagge '+vid);
+    if(r&&r.ok){const M=(load('kt_lflags')||[]).filter(x=>x.ts!==f.ts);save('kt_lflags',M);LFLAG_BUSY=false;if(M.length)zlFlagSync();return}}catch(e){}LFLAG_BUSY=false}
+setInterval(()=>{try{zlFlagSync()}catch(e){}},60e3);
+$('#zlFlag').onclick=()=>{const R=MEM.run;if(R&&R.zl)zlFlagAdd(R)};
 $('#zlEnd').onclick=()=>{const R=MEM.run;if(R&&R.zl&&!R.done&&!R.demo&&R.pos>R.a)zlLog(R,0,{abort:1,why:'end'});memStop();zlHome()}; /* v5.21: Beenden = zurück, wo du herkamst */
 $('#memHold').onclick=()=>memAutoOff();
 $('#memNext').onclick=()=>{memAutoOff();awNext()};
