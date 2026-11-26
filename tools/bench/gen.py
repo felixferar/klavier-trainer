@@ -45,6 +45,13 @@ BKOFF = {1: -0.12, 3: 0.12, 6: -0.15, 8: 0.0, 10: 0.15}; bk_scale = R2.uniform(0
 style['bk_real'] = bk_real
 KBOX = os.environ.get('KBOX') == '1'   # v5.43: Namenskästchen wie KISHAKEYS (ändert nur das Zeichnen, keine Zufallswerte)
 if KBOX: style['kbox'] = True
+# v5.58: SING=1 – Fälle aus „Sing – I'm Still Standing“ (Piano Monkeys): kurze Notenschilder mit Namen, linke Hand tippt eine Taste kurz und schnell,
+# YouTube-Feld „Weitere Videos“ in den ersten ~2,7 s über den Tasten, Endkarte über den Tasten, während die linke Hand weiterspielt. Eigener Zufallsgenerator.
+SING = os.environ.get('SING') == '1'
+R4 = random.Random(seed * 31337 + 3)
+if SING:
+    pills = True; labels = True; style['pills'] = True; style['labels'] = True; style['sing'] = True
+    sing_mv = R4.uniform(2.4, 3.0); sing_x0 = R4.uniform(0.35, 0.6); sing_ec = R4.uniform(3.5, 5.5)
 whites = [m for m in range(lo, hi + 1) if m % 12 in WPC]; ww = W / len(whites)
 pos = {}; wi = 0
 for m in range(lo, hi + 1):
@@ -70,6 +77,12 @@ while t < song_len:
     gap = R.choice([0.04, 0.06, 0.08, 0.12, 0.2]) if step == 0 else R.choice([0, 0.03, 0.08, 0.15])
     notes.append(dict(m=m, s=round(t, 3), d=round(d, 3), h='R')); t += d + gap
 t = first
+if SING:   # linke Hand: dieselbe Taste kurz antippen (0,13–0,2 s), Abstand 0,38–0,45 s, alle paar Takte ein neuer Ton
+    per = R4.uniform(0.38, 0.45); root = inr(center_l); k = 0; sing_lh = root
+    while t < song_len:
+        if k % 8 == 0: root = inr(center_l + R4.choice([0, 2, 5, 7, -3]))
+        notes.append(dict(m=root, s=round(t, 3), d=round(R4.uniform(0.13, 0.2), 3), h='L')); sing_lh = min(sing_lh, root); t += per; k += 1
+    t = song_len
 while t < song_len:
     root = inr(center_l + R.choice([0, 2, 5, 7, -3]))
     shape = R.choice([[0, 7], [0, 4, 7], [0, 7, 12], [0, 3, 7], [0], [0, 1]])  # [0,1] = cluster of two neighbour keys
@@ -115,9 +128,21 @@ if STOER:
     wm_x = R3.randint(80, 500); wm_y = int(kbY * R3.uniform(0.3, 0.8))
     ec_len = min(6.0, song_dur * 0.35); ec_cols = [hue_rgb(R3.random(), 0.7, 0.85) for _ in range(3)]
     hand_y = kbY + int(kbH * 0.25); hand_x0 = R3.uniform(0.2, 0.6) * W
-style['stoer'] = stoer
+style['stoer'] = stoer + (['sing'] if SING else [])
 def overlay(img, tv):
     t = tv - intro
+    if SING and 0 <= t < sing_mv:   # „Weitere Videos“: dunkle, halb durchsichtige Pille unten über den Tasten, rechts darin ein helles Vorschaubild
+        x0 = int(W * sing_x0); x1 = min(W - 10, x0 + int(W * 0.25)); y0 = kbY + int(kbH * 0.35); y1 = min(H - 4, kbY + int(kbH * 0.92))
+        ov = img.copy(); cv2.rectangle(ov, (x0, y0), (x1, y1), (60, 60, 60), -1); img[:] = cv2.addWeighted(ov, 0.7, img, 0.3, 0)
+        cv2.putText(img, 'Weitere Videos', (x0 + 12, (y0 + y1) // 2 + 8), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (235, 235, 235), 2)
+        tx0 = x1 - int((y1 - y0) * 1.4); cv2.rectangle(img, (tx0, y0 + 3), (x1 - 3, y1 - 3), (255, 255, 255), 3)
+        rs = np.random.RandomState(seed + 9); th = (rs.rand(4, 6, 3) * 255).astype(np.uint8); img[y0 + 6:y1 - 6, tx0 + 3:x1 - 6] = cv2.resize(th, (x1 - 6 - tx0 - 3, y1 - 12 - y0))
+    if SING and song_dur - sing_ec <= t < song_dur:   # Endkarte links über Tastatur und Balken: grau-weißer Rahmen, grünliches Bild
+        x0 = int(W * 0.04); x1 = int(W * 0.30); y0 = int(kbY - kbH * 0.9); y1 = min(H - 2, kbY + int(kbH * 0.75)); ym = kbY + int(kbH * 0.3)
+        # halb durchsichtig wie beim Einblenden der YouTube-Endkarte: schwarze Tasten werden farblos grau, Töne darunter bleiben farbig, oben ein grünliches Bild bis in die Tastenreihe
+        ov = img.copy(); cv2.rectangle(ov, (x0, y0), (x1, y1), (232, 232, 232), -1)
+        rs = np.random.RandomState(seed + 11); th = (rs.rand(5, 8, 3) * 255 * np.array([0.6, 1.0, 0.4])).astype(np.uint8); ov[y0 + 8:ym, x0 + 8:x1 - 8] = cv2.resize(th, (x1 - x0 - 16, ym - y0 - 8))
+        img[:] = cv2.addWeighted(ov, 0.6, img, 0.4, 0)
     if 'banner' in stoer and 0 <= t < 3.0:
         img[:ban_h] = ban_c; cv2.putText(img, 'PIANO TUTORIAL - EASY', (40, int(ban_h * 0.7)), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (255, 255, 255), 4)
     if 'watermark' in stoer and 0 <= t < song_dur:
@@ -191,7 +216,7 @@ for f in range(int(total * FPS)):
             for mm in on:
                 x, w, b = pos[mm]
                 for _ in range(6): cv2.circle(img, (int(x + w / 2 + rs.randn() * ww), int(kbY + rs.randn() * kbH * 0.3)), rs.randint(1, 4), (255, 255, 230), -1)
-    if stoer: img = overlay(img, tv)
+    if stoer or SING: img = overlay(img, tv)
     p.stdin.write(img.tobytes())
 p.stdin.close(); p.wait()
 json.dump(dict(style=style, notes=notes, intro=intro), open(f'{out}/{seed}.json', 'w'))
