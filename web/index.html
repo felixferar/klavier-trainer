@@ -5624,8 +5624,15 @@ function finishCore(raw,preview){
   const twoHands=hs.length>=4&&hueDist(c1,c2)>35&&ev.filter(e=>grp(e)===1).length>0&&ev.filter(e=>grp(e)===2).length>0;
   const leftG=avg(1)<avg(2)?1:2;
   SCAN.oneColor=!twoHands;
+  /* v5.55: Farben ≠ Hände (z. B. KISHAKEYS/Runaway: Rot = tiefes UND hohes E, Blau = Mitte). Liegt eine Farbe (10.–90. Perzentil) ganz innerhalb der anderen
+     und reicht die andere über ≥ 30 Halbtöne, ist die Farbe keine Hand → Tonhöhen-Trennung (2 Gruppen nach Tonhöhe, Grenze dazwischen). */
+  SCAN.handFix=null;if(twoHands){const P=g=>ev.filter(e=>grp(e)===g).map(e=>e.m).sort((x,y)=>x-y),q=(x,f)=>x[Math.min(x.length-1,Math.floor(f*(x.length-1)))],A=P(1),B=P(2),a0=q(A,0.1),a1=q(A,0.9),b0=q(B,0.1),b1=q(B,0.9);
+    const enc=(o0,o1,i0,i1)=>o0<=i0&&o1>=i1&&o1-o0>=30;SCAN.handFix={a:[a0,a1],b:[b0,b1],split:null};
+    if(enc(a0,a1,b0,b1)||enc(b0,b1,a0,a1)){const ms=ev.map(e=>e.m).sort((x,y)=>x-y);let lo=ms[0],hi=ms[ms.length-1];for(let it=0;it<20;it++){const t=(lo+hi)/2,L=ms.filter(m=>m<t),H=ms.filter(m=>m>=t);if(!L.length||!H.length)break;lo=L.reduce((x,y)=>x+y,0)/L.length;hi=H.reduce((x,y)=>x+y,0)/H.length}
+      SCAN.handFix.split=Math.round((lo+hi)/2)}}
+  const hSplit=SCAN.handFix&&SCAN.handFix.split;
   // notes without a clear colour: the hand whose notes are nearest in pitch at that time
-  const handOf=e=>{if(!twoHands)return 'R';const g=grp(e);if(g!=null)return g===leftG?'L':'R';let best=null,bd=1e9;for(const o of ev){const og=grp(o);if(og==null)continue;const d=Math.abs(o.m-e.m)+Math.abs(o.start-e.start)*4;if(d<bd){bd=d;best=og}}return best==null?'R':(best===leftG?'L':'R')};
+  const handOf=e=>{if(!twoHands)return 'R';if(hSplit)return e.m<hSplit?'L':'R';const g=grp(e);if(g!=null)return g===leftG?'L':'R';let best=null,bd=1e9;for(const o of ev){const og=grp(o);if(og==null)continue;const d=Math.abs(o.m-e.m)+Math.abs(o.start-e.start)*4;if(d<bd){bd=d;best=og}}return best==null?'R':(best===leftG?'L':'R')};
   // intro: the first note starts after 1 s
   const off=ev.length?Math.max(0,Math.min(...ev.map(e=>e.start))-1):0;SCAN.firstNote=SCAN.start+off+1;
   return ev.map(e=>({m:e.m,start:e.start-off,dur:Math.max(0.05,e.end-e.start),hand:handOf(e)}));
