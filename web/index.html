@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.59</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.60</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -5188,7 +5188,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.59 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.60 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -5559,11 +5559,18 @@ function finishScan(preview){
   if(!preview)SCAN.events.push(...open);
   const lanes0=SCAN.lane;if(preview&&lanes0)SCAN.lane=lanes0.map(l=>({...l,ons:l.ons.slice(),offs:l.offs.slice(),pre:l.pre?{...l.pre}:l.pre}));
   try{return finishCore(preview?SCAN.events.concat(open):SCAN.events,preview)}finally{if(preview)SCAN.lane=lanes0}}
+/* v5.58: frühestens so lange nach dem Anschlag darf ein neuer Balken einen gehaltenen Ton teilen (0,2 s wie bisher). Hat der Ton selbst keinen Balken an
+   seinem Anfang, ist ein Balken bis 0,3 s danach sein eigener, nur spät gelesener (Notenschild „F#“ unten im Balken) – Sing: F#5 wurde in 0,19 s + 1,2 s
+   zerschnitten. Pauschal 0,27 s kostete bei schnellen Wiederholungen (Kanal-MIDI-Test: 4 Videos −0,1 bis −0,2 Punkte). */
+const SPLIT_MIN=0.2,SPLIT_OWN=0.3;
 function finishCore(raw,preview){
   let ev=raw.filter(e=>e.end-e.start>=0.04&&(SCAN.okT==null||e.end>=SCAN.okT+0.05)).map(e=>SCAN.okT!=null&&e.start<SCAN.okT?{...e,start:SCAN.okT-0.07}:{...e}).sort((a,b)=>a.start-b.start); // copies: the raw data stays untouched
   {const rs=SCAN.oddR||[],last=rs[rs.length-1];SCAN.cut=last&&last.to==null?last.from:null;
     for(const r of rs)if(r.to!=null)ev=ev.filter(e=>!(e.start>=r.from&&e.start<=r.to))}  // phases where the keyboard was hidden for a moment: nothing read there
   if(SCAN.cut!=null)ev=ev.filter(e=>e.start<SCAN.cut).map(e=>({...e,end:Math.min(e.end,SCAN.cut)}));
+  /* v5.58: Einblendungen über der Tastatur erkennen, solange alle Rohtöne noch da sind (Anwendung weiter unten, vor den Ein-Bild-Tönen) */
+  const ovCl=e=>e.hue==null&&!(e.ch>0.05),zones=[];{const bk=ev.filter(e=>ovCl(e)&&!isWhitePC(e.m%12));
+    for(const e of bk){const g=bk.filter(o=>Math.abs(o.start-e.start)<=0.15);if(g.length>=2&&!zones.some(z=>Math.abs(z.t-e.start)<=0.15&&e.m>=z.lo&&e.m<=z.hi))zones.push({t:Math.min(...g.map(o=>o.start)),lo:Math.min(...g.map(o=>o.m))-2,hi:Math.max(...g.map(o=>o.m))+2})}}
   // outro: drop everything after a long pause at the very end (≥ 4 s and less than 10 % of the notes)
   for(let i=ev.length-1;i>0;i--){const gap=ev[i].start-Math.max(...ev.slice(0,i).map(e=>e.end));if(gap>=4&&ev.length-i<=Math.max(3,ev.length*0.1)){ev=ev.slice(0,i);break}}
   // split repeated notes: a new falling bar reached the keys while the key still looked pressed
@@ -5578,10 +5585,24 @@ function finishCore(raw,preview){
     {const byKey=new Map();for(const e of ev){if(!byKey.has(e.m))byKey.set(e.m,[]);byKey.get(e.m).push(e)}const out=[];
       for(const [m,list] of byKey){list.sort((a,b)=>a.start-b.start);const ons=SCAN.lane[kIdx.get(m)].ons,offs=SCAN.lane[kIdx.get(m)].offs;let cur=null;
         for(const e of list){if(cur){const gap=e.start-cur.end,newBar=d!==null&&ons.some((o,i)=>Math.abs(o+dk(e)-e.start)<0.12&&!(offs[i]!=null&&offs[i]-o<0.045)); /* v5.43: a one-frame bar piece (the rim at the top of a pill) is no new bar */
-            if(gap<=(d!==null?0.25:0.1)&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
+            /* v5.58 (Felix 26.11., „Sing“: das Bb wird oft als langer Ton erkannt): bis 0,25 s Lücke nur verbinden, wenn der Balken dieses Tons die Lücke wirklich überdeckt
+               (gehaltener Ton, der nur flackert). Ohne solchen Balken – kurze Notenkästchen werden in der Lesezeile oft gar nicht oder nur 1 Bild lang gesehen –
+               ist eine Taste, die ≥ 0,1 s ganz in Ruhe war, losgelassen: zwei Anschläge, nicht einer. */
+            const held=d!==null&&ons.some((o,i)=>Math.abs(o+dk(cur)-cur.start)<0.15&&(offs[i]==null||offs[i]+dk(cur)>=e.start-0.05)&&!(offs[i]!=null&&offs[i]-o<0.045));
+            if(gap<=(held?0.25:0.1)&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
       ev=out.sort((a,b)=>a.start-b.start)}
-    if(d!==null){const out=[];for(const e of ev){const L=SCAN.lane[kIdx.get(e.m)],ons=L.ons.filter((o,i)=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)).map(o=>o+dk(e)).filter(x=>x>e.start+0.2&&x<e.end-0.05); /* v5.43: not at a one-frame piece (rim at the top of a pill) */
+    if(d!==null){const out=[];for(const e of ev){const L=SCAN.lane[kIdx.get(e.m)],own=L.ons.some(o=>Math.abs(o+dk(e)-e.start)<0.12)||!!(L.pre&&(L.pre.off==null||e.start-dk(e)<=L.pre.off+0.1)),
+      ons=L.ons.filter((o,i)=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)).map(o=>o+dk(e)).filter(x=>x>e.start+(own?SPLIT_MIN:SPLIT_OWN)&&x<e.end-0.05); /* v5.43: not at a one-frame piece (rim at the top of a pill) */
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
+  /* v5.58 (Felix 26.11., „Sing“ – Anfang): ein Akkord, der schon beim Lesestart in der Balken-Zeile stand (lane.pre), aber an einer Taste nichts zeigt,
+     weil dort etwas über der Tastatur lag (YouTube-Feld „Weitere Videos“ nach dem Start): endet der Balken genau mit den Balken der anderen Akkordtöne (±0,06 s)
+     und haben diese Töne einen Anschlag, bekommt die verdeckte Taste denselben Ton. Gemessen: Sing – F5 im ersten Akkord. */
+  if(SCAN.lane&&SCAN.barDelay!=null){const K=SCAN.keys,d=SCAN.barDelay,add=[];
+    for(let k=0;k<K.length;k++){const P=SCAN.lane[k]&&SCAN.lane[k].pre;if(!P||P.off==null)continue;const de=SCAN.dK&&SCAN.dK[K[k].black?1:0],end=P.off+(de!=null?de:d);
+      if(ev.some(e=>e.m===K[k].m&&e.start<end+0.1))continue;
+      const sib=[];for(let j=0;j<K.length;j++){if(j===k)continue;const Q=SCAN.lane[j]&&SCAN.lane[j].pre;if(!Q||Q.off==null||Math.abs(Q.off-P.off)>0.06)continue;const e=ev.find(x=>x.m===K[j].m&&x.start<end&&Math.abs(x.end-end)<0.25);if(e)sib.push(e)}
+      if(sib.length){const st=sib.map(e=>e.start).sort((p,q)=>p-q)[sib.length>>1];if(end-st>=0.1)add.push({m:K[k].m,start:st,end,hue:sib[0].hue,ch:sib[0].ch,sa:sib[0].sa,fromBar:true})}}
+    if(add.length){SCAN.dbgPreAdd=add.map(e=>e.m);ev=ev.concat(add).sort((a,b)=>a.start-b.start)}}
   // ghost notes: a key next to a real note only lights up from its glow / a slightly misplaced sample point. A real note always has its own bar
   // falling onto exactly this key – so a note without its own bar is dropped if a neighbouring key has a real note at the same moment.
   if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
@@ -5635,6 +5656,11 @@ function finishCore(raw,preview){
       {const hb=new Array(36).fill(0);let nb=0;for(const e of ev)if(e.bar&&e.hue!=null){hb[Math.floor(e.hue/10)%36]++;nb++}
         const major=[];for(let k=0;k<36;k++)if(nb&&hb[k]+hb[(k+35)%36]+hb[(k+1)%36]>=0.1*nb)major.push(k*10+5);
         if(major.length){const endT=Math.max(...ev.map(e=>e.end));ev=ev.filter(e=>e.bar||e.early||e.hue==null||e.end-e.start<2||e.end<endT-0.15||major.some(h=>hueDist(h,e.hue)<=30))}}}}  // also drops short bar-less notes that start together with such an overlay (e.g. the last 'B' of an end screen)
+  /* v5.58 (Felix 26.11., „Sing“ – Ende): YouTube-Endkarte / Einblendung über der Tastatur. Werden ≥ 2 schwarze Tasten im selben Moment (±0,15 s) farblos hell
+     (grau/weiß – ein echter Ton färbt eine schwarze Taste, macht sie nie weiß), liegt dort etwas über den Tasten. In diesem Bereich (±2 Halbtöne) fallen ab
+     diesem Moment alle farblosen Töne und alle, die ≥ 2 s dauern, weg (das Vorschaubild färbt Tasten lange und gleichmäßig). Kurze Töne in Liedfarbe bleiben
+     (die linke Hand spielte bei Sing unter der Karte weiter). Gemessen: Sing – G#3 4,95 s, F#3 4,35 s, C#3/D#3/Bb3 1,2 s weg, F3-Anschläge bleiben. */
+  if(zones.length){SCAN.dbgZones=zones;ev=ev.filter(e=>!zones.some(z=>e.m>=z.lo&&e.m<=z.hi&&e.start>=z.t-0.15&&(ovCl(e)||e.end-e.start>=2)))}
   // v4.64: very short notes (one video frame lit) – real when the key's own bar arrived exactly then (Golden Hour: fast F#4 in the G#/F# figure was lost)
   if(SCAN.lane&&SCAN.barDelay!=null&&raw.single&&raw.single.length){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay,add=[];
     const first=ev.length?ev[0].start:0,lastE=ev.length?Math.max(...ev.map(e=>e.end)):0;
