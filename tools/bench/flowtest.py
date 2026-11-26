@@ -42,8 +42,8 @@ JS = r"""async (SG)=>{window.toast=(m)=>{(window.TOASTS=window.TOASTS||[]).push(
  const badL4={};for(let j=cuts[4];j<cuts[5];j+=2)badL4[j]=1;for(let j=cuts[6];j<cuts[7];j+=3)badL4[j]=1;for(let j=cuts[7];j<89;j+=3)badL4[j]=1;
  r=zlStart(zlPick(z()));o.r1={a:r.a,from:r.from};play(r,badL4);o.r1.ok=r.res.ok;o.r1.sub=r.res.sub;o.r1.bc=(z().bc.s1||[]).slice().sort();memStop();
  let p=zlPick(z());o.p2={from:p.from,name:zlPickName(p,1)};r=zlStart(p);o.p2.a=r.a;o.p2.la=r.la;o.p2.tol=zlTol(r);
- play(r);o.p2.ok=r.res.ok;o.p2.song=z().song;o.p2.sub=r.res.sub;o.p2.bc=z().bc.s1||null;memStop();
- o.p3=zlPick(z());
+ CNT.big=0;play(r);o.p2.ok=r.res.ok;o.p2.song=z().song;o.p2.sub=r.res.sub;o.p2.bc=z().bc.s1||null;o.p2.big=CNT.big;o.p2.ts=z().ts;memStop();
+ o.p3=zlPick(z());r=zlStart(o.p3);o.p3t=r.tempo;o.p3a=r.a;play(r);o.p3ok=r.res.ok;o.p3sub=r.res.sub;memStop();o.p4t=zlTempoFor(z(),zlPick(z()));
  /* --- 5. Abbruch mit A mitten im Song → neuer Anlauf kurz vor der Stelle (Vorspielen ab dort) --- */
  {const y=z();y.bc={};y.lf={};y.nq=null;y.rep=null;memSaveAll()}
  r=zlStart(zlPick(z()));play(r,{},cuts[5]+2);await sl(500);memPress(AW.restart,'kb');memRelease(AW.restart);
@@ -78,6 +78,8 @@ async def main():
          'Leiter 70 → 80 → 90 → 100 %, dann fertig': t(lambda: r['ladder'][:4] == [0.7, 0.8, 0.9, 1] and r['songLvl'] == 3 and r['pickEnd'] is None),
          'Fehlschlag hinten → nächster Versuch ab Zeile 4 (1 Zeile vor der ersten ohne ✓), 2 Griffe Anlauf': t(lambda: not r['r1']['ok'] and r['r1']['bc'][:4] == [0, 1, 2, 3] and r['p2']['from'] == 3 and r['p2']['la'] == r['cuts'][3] and r['p2']['a'] == r['cuts'][3] - 2 and 'ab Zeile 4' in r['p2']['name'] and 'weiter ab Zeile' in r['r1']['sub']),
          'Rest sauber → Song geschafft, nächstes Mal wieder ab Griff 1': t(lambda: r['p2']['ok'] and r['p2']['bc'] is None and 'from' not in r['p3'] and r['p3']['k'] == -1),
+         'Teildurchgang ab Zeile x: geschafft + Akkord, aber kein +10 %; danach ab Griff 1 bei gleichem Tempo': t(lambda: r['p2']['ok'] and r['p2']['big'] == 1 and r['p2']['ts'] == 6 and 'Nächstes Mal' not in r['p2']['sub'] and 'ab Griff 1' in r['p2']['sub'] and r['p3t'] == 0.6 and r['p3a'] == 0),
+         'danach in einem Rutsch ab Griff 1 geschafft → +10 % (70 %)': t(lambda: r['p3ok'] and 'Nächstes Mal 70 %' in r['p3sub'] and r['p4t'] == 0.7),
          'A mitten im Song → neuer Anlauf vor der Stelle, Vorspielen ab dort': t(lambda: r['ab']['newRun'] and r['ab']['from'] == 4 and r['ab']['a'] == r['cuts'][4] - 2 and r['ab']['demo'] and 'Zeile 5' in r['ab']['toast'] and r['ab']['bc'] == [0, 1, 2, 3, 4] and r['ab']['log']['abort'] == 1),
          'nach dem Neuansatz: A 2× schnell = sofort selbst dran': t(lambda: r['ab']['dbl']),
          'kurzer Song (≤ 40 Griffe) → immer ab Griff 1': t(lambda: r['shortN'] <= 40 and r['shortFrom'] == 0),
