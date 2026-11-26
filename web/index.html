@@ -845,7 +845,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
             <li>Dein <b>erster Ton startet</b> den Takt. Bist du zu spät, <b>wartet das Lied</b>.</li>
             <li><b>★★</b> = geschafft: höchstens 1 Griff daneben (lange Stücke: 1 je 10 Griffe). <b>★★★</b> = alles richtig im Takt.</li>
             <li>Eine Zeile <b>sitzt</b>, wenn du sie 2× aus dem Kopf geschafft hast. Danach setzt du Zeilen <b>am Stück</b> zusammen, jedes Stück erst einmal mit blassen Noten, dann aus dem Kopf, bis zum ganzen Song. Ab 60 % aus dem Kopf sitzt der Song, 80 % und 100 % sind Bonus.</li>
-            <li>Klappt etwas nicht, spielst du <b>einfach nochmal von vorne</b>, ohne Unterbrechung.</li><li><b>Tiefes A</b>: vorspielen · <b>gedrückt halten</b> = schneller · <b>2× schnell</b> = sofort selbst dran. Oder oben <b>„Überspringen“</b>.</li><li><b>Tempo</b>: Beim Lernen 60 %. Ab „Aus dem Kopf“ wird es nach jedem flüssigen Durchgang 10 % schneller (bis 100 %), nach 2 Fehlversuchen 10 % langsamer.</li>
+            <li>Klappt etwas nicht, spielst du <b>einfach nochmal von vorne</b>, ohne Unterbrechung.</li><li><b>Tiefes A</b>: vorspielen (auch mittendrin: wieder von vorne) · <b>gedrückt halten</b> = schneller · <b>2× schnell</b> = sofort selbst dran. Oder oben <b>„Überspringen“</b>.</li><li><b>Tempo</b>: Beim Lernen 60 %. Ab „Aus dem Kopf“ wird es nach jedem flüssigen Durchgang 10 % schneller (bis 100 %), nach 2 Fehlversuchen 10 % langsamer.</li>
           </ul>
           <div class="zlHowLeg"><span><i style="background:#4C8DFF"></i>App spielt vor</span><span><i style="background:#FFC93C"></i>Du bist dran</span><span><i style="background:#FF5A5F"></i>Falsche Taste</span><span><i style="background:#FF9F43"></i>Stelle üben</span><span><i style="background:#22C58B"></i>Geschafft</span></div>
           <div class="zlHowKeys">🎹 <b>Tiefstes A</b> = vorspielen · <b>B daneben</b> = nächsten Griff kurz zeigen</div>
@@ -3143,6 +3143,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
+   v5.54: tiefes A während des Vorspielens kurz getippt = Vorspielen von vorne (Halten bleibt schneller, 2× bleibt selbst dran).
    v5.53: Hilfe im Fluss aus (nach einem Fehler einfach nochmal); Vorspielen überspringen (Knopf); tiefes A: vorspielen · halten = schneller · 2× = selbst dran; Tempo wächst mit (60 → 100 % in 10er-Schritten ab „Aus dem Kopf“).
    v5.54: Bugfix – Startseite und Songliste waren leer, sobald ein Song beim „Ganzen Song“ stand (Tempo-Anzeige las den Stand des offenen Songs, beim App-Start gibt es keinen).
    v5.52: Lernprotokolle kommen automatisch an – nach jedem Durchgang (höchstens 1×/min), jede Minute nachholen, sofort wenn die App in den Hintergrund geht; nicht mehr nur beim Zurückkehren in die Übersicht.
@@ -3326,8 +3327,9 @@ function zlTick(R,dt){R.clock+=dt;const gs=MEM.gs;
   R.vt=nv}
 function zlPress(m){const R=MEM.run,gs=MEM.gs,now=performance.now();
   /* v5.53 (Felix): tiefes A = vorspielen · gedrückt halten = schneller vorspielen · 2× schnell hintereinander = sofort selbst dran */
-  if(m===AW.restart){const dbl=R.aLast&&now-R.aLast<ZL.aDbl;R.aLast=dbl?0:now;R.aDown=true;R.aT=R.clock;
-    if(dbl){if(R.demo)zlDemoEnd(R);return}if(!R.demo)zlDemo(R,false);return}
+  /* v5.54: während des Vorspielens kurz tippen = Vorspielen von vorne (entschieden beim Loslassen, damit Halten = schneller ab der aktuellen Stelle bleibt) */
+  if(m===AW.restart){const dbl=R.aLast&&now-R.aLast<ZL.aDbl;R.aLast=dbl?0:now;R.aDown=true;R.aT=R.clock;R.aInDemo=!!R.demo&&!dbl;
+    if(dbl){R.aInDemo=false;if(R.demo)zlDemoEnd(R);return}if(!R.demo)zlDemo(R,false);return}
   /* v5.39: Ist der letzte Griff schon vorgespielt und du spielst den ersten Griff, bist du dran – der Durchgang beginnt sofort (statt deine Töne zu verschlucken) */
   if(R.demo&&R.demo.t>=R.demo.last+0.4&&gs[R.a].mids.has(m))zlDemoEnd(R); /* +0,4 s: wer den letzten Griff mitspielt, bleibt beim Mitspielen */
   if(R.demo){if(R.ns.some(n=>n.midi===m&&Math.abs(n.start-R.demo.t)<0.4))R.good.set(m,now);else R.bad.set(m,now);return} /* mitspielen erlaubt, zählt nicht */
@@ -3582,7 +3584,7 @@ function memPress(m,src){const R=MEM.run;if(!R)return;if(R.zl)return zlPress(m);
   if((R.recent||[]).some(x=>R.clock-x.at<=0.5&&gs[x.j].mids.has(m))){MEM.good.set(m,now);return}
   for(let j=R.pos+1;j<=Math.min(R.b,R.pos+2);j++)if(gs[j].mids.has(m)){R.miss+=j-R.pos;for(let q=R.pos;q<j;q++){awMk(R,q).miss=1;R.proc[q]=true}R.pos=j;R.ht[j]=R.clock;(R.hit[j]=new Set()).add(m);MEM.good.set(m,now);awAdvance(R);return}
   MEM.flash.set(m,now);R.wrong++;awWrong(R,R.pos,m);if((R.mode==='snow'||R.mode==='form'||R.sTimed)&&R.show==null)awShow(R)} /* v5.31: Fehlgriff am Stück → der gesuchte Griff erscheint und bleibt, bis du ihn spielst */
-function memRelease(m){const R=MEM.run;if(R&&R.zl&&m===AW.restart){R.aDown=false;zlUI(R)}} /* Loslassen wird nicht bewertet – außer tiefes A im Auswendig-Modus (v5.53: gehalten = schneller vorspielen) */
+function memRelease(m){const R=MEM.run;if(R&&R.zl&&m===AW.restart){const tap=R.aInDemo&&R.demo&&R.clock-R.aT<ZL.aHold;R.aDown=false;R.aInDemo=false;if(tap)zlDemo(R,false);zlUI(R)}} /* Loslassen wird nicht bewertet – außer tiefes A im Auswendig-Modus (v5.53: gehalten = schneller vorspielen) */
 /* Warte-Modus: Anschlag geschafft (genug Töne) → weiter; schon vorgegriffene Töne des nächsten Anschlags zählen mit */
 function awAdvance(R){const gs=MEM.gs,nd=R.mode==='learn'||R.sLearn?AW.needFind:AW.need;while(R.pos<=R.b){const G=gs[R.pos],h=R.hit[R.pos];if(!h||h.size<Math.ceil(G.mids.size*nd))return;
   const wt=R.waitT0!=null?R.clock-R.waitT0:0;R.waits.push(wt);if(wt>2&&R.mode!=='learn'&&R.pos>R.a)awMk(R,R.pos).slow=wt;R.waitT0=null;R.proc[R.pos]=true;R.lastProg=R.clock;if(R.ht[R.pos]==null)R.ht[R.pos]=R.clock;(R.recent=(R.recent||[]).filter(x=>R.clock-x.at<=0.5)).push({j:R.pos,at:R.clock});R.anchor=false;if(R.show===R.pos)R.show=null;

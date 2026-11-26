@@ -29,6 +29,9 @@ JS = r"""async (S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=(
  await sl(500);memPress(AW.restart,'kb');tick(0.4);const v1=r.demo.t;tick(1);const n2=r.demo.t-v1;zlUI(r);o.a.ffbar=$('#zlStat').textContent;o.a.ratio=n2/n1;o.a.stillDemo=!!r.demo;
  memRelease(AW.restart);const v2=r.demo.t;tick(1);o.a.back=(r.demo.t-v2)/n1;
  await sl(500);memPress(AW.restart,'kb');memRelease(AW.restart);memPress(AW.restart,'kb');memRelease(AW.restart);o.a.dbl=!r.demo&&r.pos===r.a;press(r.a);o.a.start=r.pos>r.a;memStop();
+ /* v5.54: während des Vorspielens kurz tippen = von vorne; halten = schneller ab hier (kein Neustart) */
+ r=zlStart({k:1,stage:4});memPress(AW.restart,'kb');memRelease(AW.restart);const t0=r.demo.t;tick(3);const before=r.demo.t;await sl(500);memPress(AW.restart,'kb');tick(0.1);memRelease(AW.restart);o.tap={t0,before,after:r.demo&&r.demo.t,demo:!!r.demo};
+ await sl(500);tick(2);const h0=r.demo.t;memPress(AW.restart,'kb');tick(0.6);memRelease(AW.restart);o.tap.hold={h0,h1:r.demo&&r.demo.t};memStop();
  /* außerhalb des Vorspielens: 2× schnell = Neustart ohne Vorspielen */
  r=zlStart({k:1,stage:4});press(r.a);press(r.a+1);await sl(500);memPress(AW.restart,'kb');memRelease(AW.restart);memPress(AW.restart,'kb');memRelease(AW.restart);o.a.restart=!r.demo&&r.pos===r.a;memStop();
  o.ver=$('#verTxt').textContent;return o}"""
@@ -55,6 +58,8 @@ async def main():
          'A loslassen → normal weiter': t(lambda: 0.9 < r['a']['back'] < 1.1),
          'A 2× schnell → sofort selbst dran': t(lambda: r['a']['dbl'] and r['a']['start']),
          'A 2× schnell mitten im Durchgang → von vorne, ohne Vorspielen': t(lambda: r['a']['restart']),
+         'A kurz getippt während des Vorspielens → Vorspielen von vorne (v5.54)': t(lambda: r['tap']['demo'] and r['tap']['before'] > r['tap']['t0'] + 1 and abs(r['tap']['after'] - r['tap']['t0']) < 0.3),
+         'A gehalten während des Vorspielens → schneller ab hier, kein Neustart': t(lambda: r['tap']['hold']['h1'] > r['tap']['hold']['h0'] + 0.5),
          'Version 5.54': t(lambda: r['ver'].startswith('Version 5.54')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
