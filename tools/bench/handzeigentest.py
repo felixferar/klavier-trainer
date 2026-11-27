@@ -45,7 +45,7 @@ async def main():
          'Hand versetzt eine Oktave höher: neue Lage': r['nR'] >= 2 and r['showAfterMove'],
          'Zahl am Anfang der Lage, keine Zahl auf den Tönen dazwischen': r['showFirst'] and r['hideInside'],
          'Akkord: Zahlen beim ersten Mal, nicht bei der direkten Wiederholung': r['chord1'] and r['chord2'],
-         'Handlage mit R gekennzeichnet (Streifen im Feld, keine Klammer auf der Klaviatur)': r['lab'] and r['labR'],
+         'Klammer auf der Klaviatur, R-Schild oben am Feldrand': r['lab'] and r['labR'],
          'Schild „rechte Hand hierher“ vor dem Versetzen, genau einmal': r['inLine'] and r['hier'] == 1,
          'Warnzeichen: Grund steht als Text da (brechen, springen)': r['warn'] and r['warn2'] and r['warnTxt'].startswith('Weiter Griff'),
          '„hier anders“ zeigt keinen Hinweis': r['anders'],

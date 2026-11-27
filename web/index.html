@@ -637,7 +637,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
     <details class="werk" id="werk"><summary>Werkstatt (Entwicklung)</summary>
     <div class="list">
       <div class="li"><div class="grow"><b>Lehrbuch-Fingersatz</b><small>Aus = einfach: Hand in Ruhe versetzen statt Daumen untersetzen (nur schnelle Läufe wie im Buch)</small></div><input type="checkbox" class="sw" id="fingBook"></div>
-      <div class="li"><div class="grow"><b>Hand zeigen (Auswendig-Modus)</b><small>Farbiger Streifen über den Tasten, auf denen die Hand liegt, und ein Pfeil, wenn sie versetzen muss. Zahlen nur am Anfang einer Handlage, bei neuem Akkord und beim Übersetzen. Aus = Zahl auf jedem Ton.</small></div><input type="checkbox" class="sw" id="handShow"></div>
+      <div class="li"><div class="grow"><b>Hand zeigen (Auswendig-Modus)</b><small>Klammer über den Tasten, auf denen die Hand liegt, und ein Pfeil, wenn sie versetzen muss. Zahlen nur am Anfang einer Handlage, bei neuem Akkord und beim Übersetzen. Aus = Zahl auf jedem Ton.</small></div><input type="checkbox" class="sw" id="handShow"></div>
       <div class="li"><div class="grow"><b>Fingerzahl auf jedem Ton</b><small>Standard an. Aus = nur Orientierung: Zahl nur dort, wo die Hand neu greift (Phrasenanfang, Untersetzen, Lagenwechsel, Akkord-Ankerton)</small></div><input type="checkbox" class="sw" id="fingAll"></div>
       <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
       <div class="li"><div class="grow"><b>Mikrofon testen</b><small id="micInfo2">Zeigt den Ton, den die App gerade hört</small></div><button class="btn sm" id="micTest2">Test</button></div>
@@ -3753,7 +3753,10 @@ function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p
   /* Taktstriche (dezent), damit man den Puls sieht */
   {const bt=zlBeat(),t0=gs[R.a].start;c.strokeStyle='rgba(255,255,255,.05)';c.lineWidth=1;for(let i=Math.floor((R.vt-t0)/bt)-1;i<Math.floor((R.vt-t0)/bt)+12;i++){const y=hy-6-(t0+i*bt-R.vt)*ZL.pps;if(y<0||y>hy)continue;c.beginPath();c.moveTo(0,y);c.lineTo(p.w,y);c.stroke()}}
   const fr=R.demo?Math.min(1,Math.max(0,(R.demo.t-gs[R.a].start)/Math.max(0.1,gs[R.b].end-gs[R.a].start))):(Math.min(R.pos,R.b+1)-R.a)/(R.b-R.a+1);
-  c.fillStyle='rgba(255,255,255,.08)';c.fillRect(0,hy-8,p.w,8);c.fillStyle=R.demo?C.demo:wc;c.fillRect(0,hy-8,p.w*fr,8);
+  /* v5.72 (Felix 27.11. 21:44, Foto 21:45 „Zeile 2 · Verblassen“: „da ist so ein komischer Balken im Weg“): Der 8 px dicke Fortschritts-Streifen lag am unteren Rand des Felds,
+     genau dort, wo die Balken landen und Name und Fingerzahl stehen – bei kurzen und blassen Balken war beides kaum zu lesen. Er ist weg.
+     Den Fortschritt der Zeile zeigen weiter die Striche über dem Feld und „noch n Griffe“ in der Kopfzeile. */
+  void fr;
   const LG=S.fingers===true&&!R.done&&S.handShow!==false?zlLagen():null,lgOn=LG&&(!gold||(R.pos<=R.b&&zlVis(R,R.pos))),lgNow={},tNow=gs[Math.min(R.pos,R.b)].start,lgX=sg=>{let a=sg.lo,b=sg.hi;while(!X[a]&&a<b)a++;while(!X[b]&&b>a)b--;return X[a]&&X[b]?[X[a].x,X[b].x+X[b].w]:null};
   if(lgOn)for(const H of ['L','R']){const col=H==='L'?C.lh:C.rh,L=LG[H];let cur=null;for(const sg of L){if(sg.t0<=tNow+0.03)cur=sg;else break}if(!cur&&L.length&&L[0].t0<=gs[R.b].last+0.03)cur=L[0];lgNow[H]=cur;
     if(cur){const x=lgX(cur);if(x){c.fillStyle=col;c.globalAlpha=0.10;c.fillRect(x[0],0,x[1]-x[0],hy-8);c.globalAlpha=1}}
@@ -3798,11 +3801,11 @@ if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.
       if(S.fingers===true){const G=gs[R.pos],n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2);if(n&&n.fing){const d=Math.min(20,Math.max(13,k.w*0.6)),cx=k.x+k.w/2,cy=hy+h-d/2-5;c.beginPath();c.arc(cx,cy,d/2,0,Math.PI*2);c.fillStyle=G.hands.get(m)==='L'?C.lh:C.rh;c.fill();c.fillStyle='#fff';c.font=`800 ${Math.round(d*0.68)}px Inter,system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5)}}}}
   if(S.fingers===true&&!R.done&&!R.demo&&R.pos<=R.b&&zlVis(R,R.pos)){let wt='';for(const m of gs[R.pos].mids){const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-gs[R.pos].start)<0.2);if(n&&ZL_WARN[n.fingMark]){wt=ZL_WARN[n.fingMark];break}}
     if(wt){c.save();c.font='700 13px Inter,system-ui';const tw=c.measureText(wt).width+34,bx=(p.w-tw)/2,by=8; /* oben im Feld, damit die ankommenden Balken frei bleiben */c.fillStyle=C.gold;c.beginPath();if(c.roundRect)c.roundRect(bx,by,tw,26,13);else c.rect(bx,by,tw,26);c.fill();c.fillStyle='#121826';c.textAlign='left';c.textBaseline='middle';c.fillText('⚠',bx+10,by+13.5);c.fillText(wt,bx+26,by+13.5);c.restore();R.warnTxt=wt}else R.warnTxt=''}
-  /* v5.72 (Felix 27.11. 21:44: „da ist jetzt so ein komischer Balken im Weg, so ein Rahmen – mach das weg“): Die Klammer lag quer über dem oberen Rand der Klaviatur,
-     genau dort, wo die Balken landen und Name und Fingerzahl stehen; ihr L/R-Schild verdeckte den Balken in der Mitte der Hand. Sie ist entfernt.
-     Die Handlage zeigt jetzt nur noch der Streifen im Feld; L/R steht oben am Rand des Felds, weit weg von der Stelle, an der gespielt wird. */
-  if(lgOn)for(const H of ['L','R']){const sg=lgNow[H];if(!sg)continue;const x=lgX(sg);if(!x)continue;const col=H==='L'?C.lh:C.rh,lx=(x[0]+x[1])/2,y=11;
-    c.save();c.fillStyle=col;c.globalAlpha=0.9;c.beginPath();if(c.roundRect)c.roundRect(lx-11,y-8,22,16,8);else c.rect(lx-11,y-8,22,16);c.fill();c.globalAlpha=1;c.fillStyle='#fff';c.font='800 11px Inter,system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(H,lx,y+0.5);c.restore()}}
+  /* Klammer = hier liegt die Hand: Linie mit zwei Enden am oberen Rand der Tasten. Das L/R-Schild steht seit v5.72 oben am Feldrand
+     (vorher saß es mitten in der Landezone und verdeckte den unteren Rand eines Balkens). */
+  if(lgOn)for(const H of ['L','R']){const sg=lgNow[H];if(!sg)continue;const x=lgX(sg);if(!x)continue;const col=H==='L'?C.lh:C.rh,y=hy+3,lx=(x[0]+x[1])/2;
+    c.save();c.strokeStyle=col;c.lineWidth=4;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(x[0]+3,y+9);c.lineTo(x[0]+3,y);c.lineTo(x[1]-3,y);c.lineTo(x[1]-3,y+9);c.stroke();
+    c.fillStyle=col;c.globalAlpha=0.9;c.beginPath();if(c.roundRect)c.roundRect(lx-11,3,22,16,8);else c.rect(lx-11,3,22,16);c.fill();c.globalAlpha=1;c.fillStyle='#fff';c.font='800 11px Inter,system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(H,lx,11.5);c.restore()}}
 
 /* --- Durchgang starten --- */
 function awSecNotes(a,b){const t0=MEM.gs[a].start-0.001,t1=MEM.gs[b].last+0.001;return MEM.notes.filter(n=>n.start>=t0&&n.start<=t1)}
