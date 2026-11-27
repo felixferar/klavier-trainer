@@ -7,8 +7,10 @@
   const keyX = m => { let w = 0; for (let k = 21; k < m; k++) if (!BLK(k)) w++; return BLK(m) ? w : w + 0.5; };
   const MM = 23.5, ST = 164.5 / 12 / MM;   // ein Halbton im Schnitt in w (Oktave = 7 weiße Tasten)
   // Spannen je Fingerpaar in Halbtönen: [bequem, sicher maximal]. Gilt für beide Hände (Felix 27.11.2026: „geht bei beiden Händen gleich“). gemessen = von Felix am Klavier (14.11.2026), sonst geschätzt (Parncutt, an 1–5 skaliert).
-  const HAND = { '1-2': [7, 11, 'gemessen'], '1-3': [9, 12, 'geschätzt'], '1-4': [11, 13, 'geschätzt'], '1-5': [12, 14, 'gemessen'], '2-3': [3, 5, 'geschätzt'], '2-4': [5, 7, 'geschätzt'], '2-5': [7, 9, 'geschätzt'],
-    '3-4': [2, 4, 'geschätzt'], '3-5': [5, 7, 'geschätzt'], '4-5': [3, 5, 'geschätzt'] };
+  // 27.11.2026 nachgemessen (erster Finger auf C, zweiter auf der weitesten Taste): 2–3 bequem G / gerade so A; 3–4 nur F (G verkrampft, nicht sauber);
+  // 4–5 locker F / gerade so G; 2–5 locker H / gerade so C. 2–4 und 3–5 daraus abgeleitet (zwischen den Nachbarwerten).
+  const HAND = { '1-2': [7, 11, 'gemessen'], '1-3': [9, 12, 'geschätzt'], '1-4': [11, 13, 'geschätzt'], '1-5': [12, 14, 'gemessen'], '2-3': [7, 9, 'gemessen'], '2-4': [9, 11, 'abgeleitet'], '2-5': [11, 12, 'gemessen'],
+    '3-4': [5, 5, 'gemessen'], '3-5': [7, 9, 'abgeleitet'], '4-5': [5, 7, 'gemessen'] };
   // so weit geht jeder Finger bequem zur Seite, gemessen von seiner Ruhelage in w: [zur Daumenseite, zur Kleinfingerseite] (Daumen kann untersetzen, kleiner Finger abspreizen)
   const REACH = { 1: [-2.2, 2.5], 2: [-1.0, 1.2], 3: [-0.7, 0.7], 4: [-0.7, 0.7], 5: [-0.6, 1.5] };
   const T = { GRIFF: 0.05, LAGE: 1.0, SPRUNG: 2.5, ZEIT0: 0.15, ZEIT_W: 0.035 };   // ab 1 w = Hand versetzt, ab 2,5 w = Sprung; Zeit, die ein Weg braucht
