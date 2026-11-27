@@ -14,5 +14,10 @@ async def main():
           seed();b.click();b.click();await sl(4300);o.zeit2={txt:b.textContent,lib:LIB.length};
           seed();SCAN.on=true;b.click();o.gesperrt={lib:LIB.length,txt:b.textContent};SCAN.on=false;
           LIB=[];b.click();o.leer={txt:b.textContent};return o}""")
-        print(json.dumps(r,ensure_ascii=False)); print('pageerrors',errs); await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r,ensure_ascii=False)); globals().__setitem__('_E',errs);print('pageerrors',errs); await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'erste Bestätigung nennt die Zahl der Songs':'Wirklich alle 3' in r['nach1'],'zweite Bestätigung':'Letzte Chance' in r['nach2'],'vor dem dritten Tippen ist nichts gelöscht':r['libZwischen']==3,'danach ist alles gelöscht und gespeichert':r['libEnde']==0 and r['gespeichert']==0 and r['btn']=='Löschen','Statistik bleibt':r['statsBleiben']>0,'Zeitablauf setzt zurück, nichts gelöscht':r['nachZeit']=={'txt':'Löschen','lib':3} and r['zeit2']['lib']==3,'während einer Umwandlung gesperrt':r['gesperrt']['lib']==3,'leere Bibliothek: Knopf bleibt ruhig':r['leer']['txt']=='Löschen'}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

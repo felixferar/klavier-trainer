@@ -16,5 +16,10 @@ async def main():
           fail=false;DIAG.meta={};calls=0;await run(15);out.kurz={calls};
           DIAG.meta={};calls=0;(async()=>{for(let vt=0;vt<=60;vt+=0.3){diagMidTick(vt,200);if(vt>=50)DIAG.meta=null;await new Promise(r=>setTimeout(r,0))}})();await new Promise(r=>setTimeout(r,600));out.metaNull='ok';
           return out}""")
-        print(json.dumps(r)); print('pageerrors',errs); await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r)); globals().__setitem__('_E',errs);print('pageerrors',errs); await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'4 Standbilder bei etwa 25/50/75 % und kurz vor Ende':r['normal']['calls']==4 and [round(x) for x in r['normal']['t']]==[50,100,150,195],'Datei-Scan: keine':r['datei']=={'calls':0,'has':False},'Diagnose aus: keine':r['diagAus']['calls']==0,'Fehler beim Bildholen stören nicht':r['fehler']=={'calls':4,'n':4},'kurzes Video: keine':r['kurz']['calls']==0,'ohne Meta kein Absturz':r['metaNull']=='ok'}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

@@ -21,5 +21,10 @@ async def main():
           LV.chk=0;file=mk('klick Löschen','a3');await lvTick();o.loeschenFrage=document.querySelector('#smDel').textContent;
           LV.chk=0;file=mk('klick Wirklich','a4');await lvTick();o.songNoch=LIB.some(x=>x.id==='t1');
           return o}""")
-        print(json.dumps(r,ensure_ascii=False,indent=1)); print('pageerrors',errs); await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r,ensure_ascii=False,indent=1)); globals().__setitem__('_E',errs);print('pageerrors',errs); await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'aus: kein Abruf':r['aus']==0,'Befehle ausgeführt (Tab, Menü)':'ok tab songs' in r['result'] and 'ok menue testsong' in r['result'] and r['menueOffen'],'unbekannter Knopf und Befehl sind harmlos':'kein Knopf umbenennen-gibts-nicht' in r['result'] and 'unbekannt: blabla' in r['result'],'Bildschirmbericht geschrieben':'Tab: songs' in r['screen'] and 'OFFEN songMenu' in r['screen'],'gleiche Datei nicht nochmal':r['gleicheDateiNeuePuts']==0,'Löschen fragt nach':r['loeschenFrage']=='Wirklich löschen?'}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

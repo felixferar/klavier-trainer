@@ -16,5 +16,10 @@ async def main():
           RQ={ver:'v',n:1,force:false,res:[],t0:'t'};
           const [a,b]=await Promise.all([ghUpload('diag/x.ktd.gz','AAAA','m'),rqPut('queue/status.txt','hallo','s')]);
           o.upload=a;o.puts=o.puts.sort();return o}""")
-        print(json.dumps(r));print('pageerrors',errs);await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r));globals().__setitem__('_E',errs);print('pageerrors',errs);await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'Upload und Status sind beide angekommen':r['puts']==['diag/x.ktd.gz','queue/status.txt'],'der 409-Konflikt wurde wiederholt':r['conflicts']>=1,'Upload meldet ok':r['upload'].get('ok') is True}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

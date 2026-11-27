@@ -24,5 +24,10 @@ async def main():
           file=mk('kein link hier','sha2');await rqPoll();o.ohneLinks={started:started.length,sha:load('kt_rq_sha')};
           const many=Array.from({length:60},(_,i)=>'https://youtu.be/'+String(i).padStart(11,'x')).join('\\n');file=mk(many,'sha3');await rqPoll();o.viele=started[started.length-1].split('\\n').length;
           return o}""")
-        print(json.dumps(r,ensure_ascii=False)); print('pageerrors',errs); await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r,ensure_ascii=False)); globals().__setitem__('_E',errs);print('pageerrors',errs); await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'aus / kürzlich benutzt / beschäftigt: kein Abruf':r['aus']==0 and r['kuerzlichBenutzt']==0 and r['beschaeftigt']==0,'404: nichts gestartet':r['n404']=={'started':0,'sha':None},'neue Datei: einmal gestartet, beide Links, Status geschrieben':r['neu']['started']==1 and r['neu']['text'].count('youtu.be')==2 and r['neu']['sha']=='sha1' and r['neu']['puts']>=1,'gleiche Datei: nicht nochmal':r['gleicheDatei']==0,'Datei ohne Links: nichts gestartet, aber gemerkt':r['ohneLinks']=={'started':1,'sha':'sha2'},'höchstens 40 Links auf einmal':r['viele']==40}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

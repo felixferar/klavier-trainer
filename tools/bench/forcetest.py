@@ -23,5 +23,10 @@ async def main():
           o.mitNeu={opened:window.__op.slice(),force:Q.force};
           const last=puts[puts.length-1];o.status=atob(last.content);o.statusDecoded=decodeURIComponent(escape(atob(last.content)));
           delete o.status;return o}""")
-        print(json.dumps(r,ensure_ascii=False,indent=1)); print('pageerrors',errs); await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r,ensure_ascii=False,indent=1)); globals().__setitem__('_E',errs);print('pageerrors',errs); await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'ohne #neu wird der vorhandene Song übersprungen':r['ohneNeu']=={'opened':['BBBBBBBBBBB'],'force':False},'mit #neu werden beide umgewandelt':r['mitNeu']=={'opened':['AAAAAAAAAAA','BBBBBBBBBBB'],'force':True},'Status nennt Fortschritt und den Fehler':'2 von 2 verarbeitet' in r['statusDecoded'] and 'BBBBBBBBBBB – kaputt' in r['statusDecoded'] and 'AAAAAAAAAAA – ok' in r['statusDecoded']}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

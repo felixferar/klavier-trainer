@@ -13,5 +13,10 @@ async def main():
           convShowTitle(null);o.nullItem=t();Q.on=false;
           document.getElementById('yt').classList.add('convL');document.body.classList.add('convL');const el=document.getElementById('convTitle');o.querformat={sichtbar:getComputedStyle(el).display!=='none',nowrap:getComputedStyle(el).whiteSpace};
           return o}""")
-        print(json.dumps(r,ensure_ascii=False)); print('pageerrors',errs); await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r,ensure_ascii=False)); globals().__setitem__('_E',errs);print('pageerrors',errs); await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'einzeln: Titel im Panel':r['einzeln'].endswith('Secret Garden – Piano'),'Warteschlange: Zähler und Titel':r['queue']=='1 von 3 fertig · Fly' and r['queueErster']=='0 von 3 fertig · Erster','ohne Titel bleibt kein alter Titel stehen':r['ohneTitel'].endswith('Song wird erstellt …') and r['nullItem'].endswith('Song wird erstellt …'),'im Querformat sichtbar, einzeilig':r['querformat']=={'sichtbar':True,'nowrap':'nowrap'}}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

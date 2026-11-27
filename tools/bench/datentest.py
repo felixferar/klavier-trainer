@@ -55,6 +55,11 @@ async def main():
           return {libAdded:LIB.length-n0,persisted:JSON.parse(localStorage.getItem('kt_lib')||'[]').length,resultLeft:!!SCAN.result}}""")
         res['T10 normaler Auto-Pfad (soll 1 Song)'] = r
         res['pageerrors'] = errs
-        print(json.dumps(res, ensure_ascii=False, indent=1))
+        globals().__setitem__('_R',res);print(json.dumps(res, ensure_ascii=False, indent=1))
         await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'Speicher voll (manuell): nichts gespeichert, Ergebnis bleibt, klare Meldung':r['T1 Speicher voll (manuell)']['libAfter']==0 and r['T1 Speicher voll (manuell)']['persistedSame'] and r['T1 Speicher voll (manuell)']['resultKept'] and 'NICHT gespeichert' in r['T1 Speicher voll (manuell)']['toasts'][0],'Speicher voll (Warteschlange): Fehler gemeldet, Abbruch':r['T2 Speicher voll (Warteschlange)']['queueResult']['ok'] is False and r['T2 Speicher voll (Warteschlange)']['cancel'] and r['T2 Speicher voll (Warteschlange)']['libAfter']==0,'Update bei offenem Ergebnis lädt nicht neu':r['T3 Update bei offenem Ergebnis']['reloads']==0,'Update ohne offenes Ergebnis lädt neu':r['T3b Update ohne offenes Ergebnis (soll laden)']['reloads']==1,'Abbrechen im 500-ms-Fenster speichert nichts':r['T5 Abbrechen im 500-ms-Fenster']['libAdded']==0 and not r['T5 Abbrechen im 500-ms-Fenster']['resultLeft'],'normaler Weg speichert genau einen Song':r['T10 normaler Auto-Pfad (soll 1 Song)']=={'libAdded':1,'persisted':1,'resultLeft':False},'keine JS-Fehler':not r.get('pageerrors')}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

@@ -11,5 +11,10 @@ async def main():
                setPlaybackRate:x=>{rate=x;log.push(['rate',x,Math.round(performance.now()-t0)])},playVideo:()=>{},pauseVideo:()=>{},mute:()=>{},unMute:()=>{}};
           const t1=performance.now();const ok=await waitMainVideo(20000);
           return {ok,videoTimeAtReturn:+vt.toFixed(2),realMs:Math.round(performance.now()-t1),log}}""")
-        print(json.dumps(r)); print('pageerrors',errs); await br.close()
+        globals().__setitem__('_R',r);print(json.dumps(r)); globals().__setitem__('_E',errs);print('pageerrors',errs); await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'wartet erfolgreich':r['ok'] is True,'Video steht danach am Anfang':r['videoTimeAtReturn']<0.5,'dauert etwa eine Sekunde':500<r['realMs']<6000,'Tempo wurde zum Warten gedrosselt':any(x[0]=='rate' for x in r['log'])}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)

@@ -18,5 +18,10 @@ async def main():
             pg=await br.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
             await pg.goto('file://'+sys.argv[1]);await pg.wait_for_timeout(400)
             out['queue' if q else 'einzeln']=await run(pg,q);out['err_'+str(q)]=errs;await pg.close()
-        print(json.dumps(out,ensure_ascii=False,indent=1));await br.close()
+        globals().__setitem__('_R',out);print(json.dumps(out,ensure_ascii=False,indent=1));await br.close()
 asyncio.run(main())
+# _URTEIL (27.11.2026): Dieser Test gab bisher nur Werte aus und urteilte nicht. Die Sollwerte stammen aus dem Kopfkommentar bzw. der Testbeschreibung.
+r=_R;_c={'Warteschlange: keine Tastatur = Fehler, keine Rückfrage':r['queue']['mark']==0 and 'keine Klaviertastatur' in (r['queue']['err'] or ''),'Einzelumwandlung fragt weiter nach':r['einzeln']['mark']==1 and r['einzeln']['err'] is None,'keine JS-Fehler':not r['err_True'] and not r['err_False']}
+if '_E' in globals(): _c['keine JS-Fehler']=not _E
+for _k,_v in _c.items(): print(('OK   ' if _v else 'FEHL ')+_k)
+sys.exit(0 if all(_c.values()) else 1)
