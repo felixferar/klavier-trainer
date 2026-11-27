@@ -54,7 +54,7 @@ function modell(roh, stand) {
   M.abschnitte.forEach((s, k) => {
     const w = stand && stand.wie && stand.wie.length === cuts.length ? stand.wie[k] : sigs.indexOf(sigs[k]);
     s.wie = w >= 0 && w < k ? w : -1;
-    s.name = s.wie >= 0 ? M.abschnitte[s.wie].name : String.fromCharCode(65 + (buchst++ % 26));
+    s.name = s.wie >= 0 ? M.abschnitte[s.wie].name : String.fromCharCode(65 + buchst % 26) + (buchst >= 26 ? Math.floor(buchst / 26) + 1 : ''); if (s.wie < 0) buchst++;
     // Überlappung: 1 Takt früher beginnen (ohne Raster: 3 Griffe), nie vor dem Anfang des vorigen Abschnitts
     let a0 = s.a; if (k > 0) { const lim = M.abschnitte[k - 1].a, ab = G[s.a].q - M.bpb - 1e-6; while (a0 > lim && (M.rasterOk ? G[a0 - 1].q >= ab : s.a - a0 < 3)) a0--; }
     s.a0 = a0;
@@ -137,9 +137,13 @@ function akkordBei(M, j) { let r = null; for (const a of M.akkorde) { if (a.g <=
 
 function neu(M) { return { cuts: M.abschnitte.map(s => s.a), wie: M.abschnitte.map(s => s.wie), pos: M.abschnitte.map(() => 0), tempo: null, ivl: 0, due: null, stern: 0 }; }
 
+/* Einen Abschnitt gezielt üben (angetippt): sein nächster offener Schritt, sonst „Im Takt, beide Hände“. */
+function abschnittUeben(M, st, k) { if (M.abschnitte[k].wie >= 0) k = M.abschnitte[k].wie; const sch = schritteVon(M, k), s = sch.find(x => x.nr > st.pos[k]) || sch[sch.length - 1]; return Object.assign({ k, tempo: tempoVon(st) }, s); }
+
 /* Übernahme aus dem alten Zeilen-Modus: Abschnitt, dessen Zeilen alle „sitzen“ (Stufe 4) → Zeigen und Aus dem Kopf sind erledigt, weiter mit Im Takt. */
 function uebernahme(M, alt) {
   const st = neu(M); if (!alt || !alt.cuts || !alt.st) return st;
+  if (alt.song >= 1) { st.pos = st.pos.map(() => 6); if (alt.tempo) st.tempo = alt.tempo; return st; } // der ganze Song sitzt schon → direkt der ganze Song im Takt, kein Abschnitt wird neu gelernt
   M.abschnitte.forEach((s, k) => { let alle = true, eine = false; alt.cuts.forEach((c, q) => { const e = (q + 1 < alt.cuts.length ? alt.cuts[q + 1] : M.n) - 1; if (c <= s.b && e >= s.a) { eine = true; if ((alt.st[q] || 0) < 4) alle = false; } }); if (eine && alle) st.pos[k] = 4; });
   return st;
 }
@@ -254,12 +258,11 @@ function abschluss(M, st, A, r, heute, sitz) {
       if ((st.tempo || 6) < K.tempoMax) { st.tempo = (st.tempo || 6) + 1; text += ` · nächstes Mal ${st.tempo * 10} %`; }
       if (r.meister && !st.stern) { st.stern = 1; text += ' · Meisterprüfung bestanden'; }
     } else {
-      // nur der Abschnitt mit den meisten Stockern geht zurück auf „Im Takt, beide Hände“
-      const z = {}; for (const j of r.wo) { let k = abschnittVon(M, j); if (M.abschnitte[k].wie >= 0) k = M.abschnitte[k].wie; z[k] = (z[k] || 0) + 1; }
-      let bk = -1; for (const k in z) if (bk < 0 || z[k] > z[bk]) bk = +k;
-      if (bk >= 0) { st.pos[bk] = Math.min(st.pos[bk], 5); zurueck = bk; }
+      // Kein Absprung zu einem Abschnitt (Felix 27.11.: das zerstört den Fluss) – der ganze Song kommt einfach wieder. zurueck = wo es am meisten hakte, nur als Hinweis; gezielt üben kann er per Antippen.
+      const z = {}; for (const j of r.wo) { const k = abschnittVon(M, j); z[k] = (z[k] || 0) + 1; }
+      let bk = -1; for (const k in z) if (bk < 0 || z[k] > z[bk]) bk = +k; zurueck = bk >= 0 ? bk : null;
       if (wdh) { const i = K.leiter.indexOf(st.ivl); st.ivl = K.leiter[Math.max(0, i - 1)]; st.due = tagPlus(heute, 1); }
-      text = `${sto} – erlaubt sind ${r.erlaubt}` + (bk >= 0 ? `. Kurz Abschnitt ${M.abschnitte[bk].name} im Takt` : '');
+      text = `${sto} – erlaubt sind ${r.erlaubt}. Gleich noch einmal`;
       if (fehl >= 2 && (st.tempo || 6) > K.tempoMin) { st.tempo = (st.tempo || 6) - 1; sitz.reihe = 0; text += ` · nächstes Mal ${st.tempo * 10} %`; }
     }
   }
@@ -297,5 +300,5 @@ function aufhoeren(sitz, jetzt) {
   return { titel: 'Gute Stelle zum Aufhören', text: t.join(' '), grund: min >= K.pauseMin ? 'zeit' : 'fehl' };
 }
 
-return { K, modell, neu, uebernahme, naechstes, ganzerSong, schritteVon, fortschritt, titel, lauf, vorspiel, abschluss, los, sitzung, aufhoeren, erlaubt, akkordBei, tagPlus, TON };
+return { K, modell, neu, uebernahme, abschnittUeben, naechstes, ganzerSong, schritteVon, fortschritt, titel, lauf, vorspiel, abschluss, los, sitzung, aufhoeren, erlaubt, akkordBei, tagPlus, TON };
 });

@@ -20,14 +20,19 @@ function v6AltTempo(id) {
 function v6Laden(id) {
   const it = LIB.find(x => x.id === id); if (!it || !memLoad(it)) return false;
   const S = v6Store(); let st = S.songs[id]; const M = Lernen.modell(v6Roh(), st);
-  if (!st) { let alt = null; try { alt = MEM.rec[zlKey()] || null; } catch (e) {} st = Lernen.uebernahme(M, alt); if (st.pos.some(p => p >= 4)) st.tempo = v6AltTempo(id); S.songs[id] = st; save('kt_l6', S); }
+  let alt = null; try { alt = MEM.rec[zlKey()] || null; } catch (e) {}
+  if (!st) { st = Lernen.uebernahme(M, alt); if (st.pos.some(p => p >= 4)) st.tempo = v6AltTempo(id); S.songs[id] = st; save('kt_l6', S); }
+  else if (alt && alt.song >= 1 && st.ivl === 0 && st.pos.some(p => p < 6)) { st.pos = st.pos.map(() => 6); S.songs[id] = st; save('kt_l6', S); } // v5.62: Song sitzt im alten Modus → auch hier direkt der ganze Song
   V6.M = M; V6.st = st; V6.id = id; V6.item = it; return true;
 }
 function v6Sichern() { const S = v6Store(); S.songs[V6.id] = V6.st; if (V6.art === 'wdh') S.app.wdhTag = v6Heute(); else if (V6.art === 'weiter') S.app.aktuell = V6.id; save('kt_l6', S); }
 
+/* Welcher Song ist „der aktuelle“? Der zuletzt geöffnete; solange noch keiner gemerkt ist: der, den du zuletzt im alten Auswendig-Modus geübt hast. */
+function v6App(S) { const a = Object.assign({}, S.app); if (!a.aktuell || !LIB.some(x => x.id === a.aktuell)) { try { const L = (load('kt_v8log') || []).filter(e => LIB.some(x => x.id === e.song)); if (L.length) a.aktuell = L[L.length - 1].song; } catch (e) {} } return a; }
+function v6Aktuell(id) { if (!v6On()) return; const S = v6Store(); S.app.aktuell = id; save('kt_l6', S); }
 /* „Los“: fällige Wiederholung (höchstens 1 am Tag), sonst weiter am aktuellen Song */
 function v6Los() {
-  const S = v6Store(), songs = LIB.filter(x => x.type === 'midi').map(it => ({ id: it.id, stand: S.songs[it.id] })), p = Lernen.los(songs, S.app, v6Heute());
+  const S = v6Store(), songs = LIB.filter(x => x.type === 'midi').map(it => ({ id: it.id, stand: S.songs[it.id] })), p = Lernen.los(songs, v6App(S), v6Heute());
   if (!p) { toast('Noch kein Song in der Bibliothek'); return; }
   if (!V6.sitz) V6.sitz = Lernen.sitzung(Date.now() / 1000);
   if (!v6Laden(p.id)) return; V6.art = p.art; v6Bild(); show('v6');
@@ -52,8 +57,9 @@ function v6Fertig() {
   try { if (r.ok) (A.k < 0 || A.nr === 6 ? fxBig : fxLine)(); } catch (e) {}
   // was kommt danach?
   let weiter;
-  if (V6.art === 'wdh') weiter = res.zurueck != null ? () => { V6.art = 'nach'; V6.A = Lernen.naechstes(V6.M, V6.st); v6Start(); } : v6Los;
-  else if (V6.art === 'nach' || V6.art === 'frei') weiter = V6.art === 'nach' ? v6Los : null;
+  if (V6.art === 'wdh') weiter = v6Los;
+  else if (V6.art === 'frei') weiter = null;
+  else if (V6.art === 'wahl') weiter = () => { V6.art = V6.artVor || 'weiter'; V6.A = Lernen.naechstes(V6.M, V6.st) || Lernen.ganzerSong(V6.st); v6Start(); }; // nach dem gezielten Abschnitt zurück zum normalen Ablauf
   else weiter = () => { const n = Lernen.naechstes(V6.M, V6.st); if (!n) { v6Los(); return; } V6.A = n; v6Start(); };
   const stop = Lernen.aufhoeren(V6.sitz, Date.now() / 1000), box = $('#v6Res'); box.classList.remove('hidden');
   $('#v6ResT').textContent = (r.ok ? '✓ ' : '') + res.text; $('#v6Stop').classList.toggle('hidden', !stop); if (stop) $('#v6Stop').innerHTML = '<b>' + stop.titel + '</b><br>' + stop.text;
@@ -65,19 +71,22 @@ function v6Vor() { if (!V6.A) return; clearTimeout(V6.auto); const was = V6.run;
   for (const t of T) { ende = Math.max(ende, t.nach + t.d); setTimeout(() => { if (!V6.run) { try { playTone(t.m, Math.min(3, t.d), 0.7); } catch (e) {} V6.held.set(-t.m, performance.now()); v6Zeichne(); } }, t.nach * 1000); }
   $('#v6Stat').textContent = 'Hör zu …'; V6.auto = setTimeout(v6Start, ende * 1000 + 600); }
 
+/* Abschnitt in der Leiste angetippt → genau den üben (einmal), danach geht es normal weiter */
+function v6Wahl(k) { if (!V6.M) return; clearTimeout(V6.auto); if (V6.art !== 'wahl') V6.artVor = V6.art; V6.art = 'wahl'; V6.A = Lernen.abschnittUeben(V6.M, V6.st, k); v6Start(); }
 /* Bildschirm: wird einmal gebaut */
 function v6Bild() {
   if ($('#v6')) return; const d = document.createElement('div'); d.id = 'v6'; d.className = 'screen hidden';
   d.innerHTML = '<div style="display:flex;flex-direction:column;height:100%;padding:14px 16px;box-sizing:border-box;gap:10px">' +
     '<div style="display:flex;align-items:center;gap:10px"><button class="btn sm" id="v6X">✕</button><div id="v6Head" class="mu" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div><button class="btn sm" id="v6Play">Vorspielen</button></div>' +
-    '<div id="v6Bar" style="display:flex;gap:6px;flex-wrap:wrap"></div>' +
+    '<div id="v6Bar" style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap"></div>' +
     '<div id="v6T" style="font-size:20px;font-weight:800"></div><div id="v6Stat" class="mu" style="min-height:20px"></div>' +
     '<div id="v6Ak" style="font-size:44px;font-weight:800;min-height:54px;text-align:center"></div>' +
     '<div style="flex:1"></div><div id="v6Res" class="hidden" style="background:var(--s2);border-radius:14px;padding:14px"><div id="v6ResT" style="font-weight:700;margin-bottom:8px"></div><div id="v6Stop" class="hidden mu" style="margin-bottom:10px"></div><div style="display:flex;gap:8px"><button class="btn pri" id="v6Next" style="flex:1">Weiter</button><button class="btn" id="v6End">Fertig für heute</button></div></div>' +
     '<canvas id="v6C" style="width:100%;height:120px;border-radius:8px"></canvas></div>';
   $('#app').appendChild(d); $('#v6X').onclick = v6Zu; $('#v6End').onclick = v6Zu; $('#v6Play').onclick = v6Vor;
 }
-function v6Leiste() { const f = Lernen.fortschritt(V6.M, V6.st); $('#v6Bar').innerHTML = f.abschnitte.map((s, k) => `<span style="padding:3px 9px;border-radius:9px;font-weight:700;background:${s.pos >= 6 ? 'var(--ac)' : 'var(--s3)'};color:${s.pos >= 6 ? 'var(--ink)' : 'var(--tx)'};outline:${V6.A && V6.A.k === k ? '2px solid var(--ac)' : 'none'};opacity:${s.wie >= 0 ? 0.6 : 1}">${s.name}${s.pos >= 6 ? '' : ' ' + '●'.repeat(Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0)) + '○'.repeat(3 - Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0))}</span>`).join('') + `<span style="padding:3px 9px;border-radius:9px;font-weight:700;background:${f.fertig ? 'var(--ac)' : 'var(--s3)'};color:${f.fertig ? 'var(--ink)' : 'var(--tx)'}">♪${V6.st.stern ? ' ★' : ''}</span>`; }
+function v6Leiste() { const f = Lernen.fortschritt(V6.M, V6.st), n = f.abschnitte.length, akt = V6.A && V6.A.k >= 0 ? V6.A.k : n - 1, von = n <= 8 ? 0 : Math.max(0, Math.min(n - 6, akt - 2)), bis = n <= 8 ? n : von + 6, pill = t => `<span class="mu" style="padding:3px 4px">${t}</span>`; // lange Songs: nur 6 Abschnitte um den aktuellen, eine Zeile
+  $('#v6Bar').innerHTML = (von > 0 ? pill('…') : '') + f.abschnitte.map((s, k) => k < von || k >= bis ? '' : `<span onclick="v6Wahl(${k})" style="cursor:pointer;padding:3px 9px;border-radius:9px;font-weight:700;background:${s.pos >= 6 ? 'var(--ac)' : 'var(--s3)'};color:${s.pos >= 6 ? 'var(--ink)' : 'var(--tx)'};outline:${V6.A && V6.A.k === k ? '2px solid var(--ac)' : 'none'};opacity:${s.wie >= 0 ? 0.6 : 1}">${s.name}${s.pos >= 6 ? '' : ' ' + '●'.repeat(Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0)) + '○'.repeat(3 - Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0))}</span>`).join('') + (bis < n ? pill('…') : '') + (n > 8 ? pill(`${f.abschnitte.filter(s => s.pos >= 6).length} von ${n}`) : '') + `<span style="padding:3px 9px;border-radius:9px;font-weight:700;background:${f.fertig ? 'var(--ac)' : 'var(--s3)'};color:${f.fertig ? 'var(--ink)' : 'var(--tx)'}">♪${V6.st.stern ? ' ★' : ''}</span>`; }
 function v6Zeichne() {
   const R = V6.run, B = R ? R.bild() : null, c = $('#v6C'); if (!c) return;
   if (B) { $('#v6T').textContent = B.titel; $('#v6Ak').textContent = B.einzaehlen ? String(B.einzaehlen) : B.akkord; $('#v6Stat').textContent = B.einzaehlen ? 'Einzählen …' : `Griff ${B.griff} von ${B.von}` + (B.stufe > 1 ? ` · Stocker ${B.stocker}` : '') + (B.falsch ? ` · daneben ${B.falsch}` : '') + (B.hilfe ? ' · Hilfe' : ''); if (V6.lb !== V6.A) { V6.lb = V6.A; v6Leiste(); } }
@@ -92,5 +101,6 @@ function v6Home() {
   { const sw = $('#v6Sw'); if (sw) sw.textContent = v6On() ? 'An' : 'Aus'; }
   let b = $('#v6Go'); if (!v6On()) { if (b) b.remove(); return; }
   if (!b) { b = document.createElement('button'); b.id = 'v6Go'; b.className = 'btn pri'; b.style.cssText = 'width:100%;height:64px;font-size:22px;font-weight:800;margin:10px 0 14px'; b.onclick = v6Los; const s = $('#vStart'); s.insertBefore(b, s.children[1] || null); }
-  const S = v6Store(), h = v6Heute(), due = LIB.some(it => { const st = S.songs[it.id]; return st && st.ivl > 0 && st.due && st.due <= h; }) && S.app.wdhTag !== h; b.textContent = due ? 'Los · erst 1 Song aufwärmen' : 'Los';
+  const S = v6Store(), h = v6Heute(), due = LIB.some(it => { const st = S.songs[it.id]; return st && st.ivl > 0 && st.due && st.due <= h; }) && S.app.wdhTag !== h; const p = Lernen.los(LIB.filter(x => x.type === 'midi').map(it => ({ id: it.id, stand: S.songs[it.id] })), v6App(S), h), it = p && LIB.find(x => x.id === p.id), name = it ? String(it.title || '').replace(/\s*[-–|(].*$/, '').slice(0, 22) : '';
+  b.innerHTML = 'Los' + (name ? `<small style="display:block;font-size:13px;font-weight:600;opacity:.75">${due ? 'erst aufwärmen: ' : ''}${name}</small>` : '');
 }

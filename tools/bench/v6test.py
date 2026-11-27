@@ -11,7 +11,7 @@ JS = r"""async (SG)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=
  /* 1. Schalter aus: kein Knopf */
  localStorage.removeItem('kt_v6on');renderHome();o.aus={on:v6On(),btn:!!$('#v6Go'),kern:typeof Lernen};
  /* alter Lernstand: Fly Me sitzt komplett */
- openMem(it);{const y=zlState();y.st=y.st.map(()=>4);y.song=1;memSaveAll()}memStop();show('home');
+ openMem(it);{const y=zlState();y.st=y.st.map(()=>4);y.song=0;memSaveAll()}memStop();show('home');
  /* 2. Schalter an */
  $('#v6Sw').click();o.an={on:v6On(),btn:!!$('#v6Go'),txt:$('#v6Go')&&$('#v6Go').textContent,sw:$('#v6Sw').textContent};
  /* 3. Los → Fly Me, Übernahme → Abschnitt A im Takt, rechte Hand */
@@ -23,6 +23,10 @@ JS = r"""async (SG)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=
  $('#v6Next').click();await sl(50);o.d2={A:V6.A,titel:V6.run.bild().titel};
  /* nichts spielen → nicht geschafft, Stand bleibt */
  treibe(()=>false);clearTimeout(V6.auto);o.d3={res:$('#v6ResT').textContent,pos:V6.st.pos.slice()};
+ /* 3b. Song sitzt im alten Modus → direkt der ganze Song; Abschnitt antippen → einmal gezielt, danach wieder der ganze Song; gestockt → kein Absprung */
+ v6Zu();openMem(it);{const y=zlState();y.song=1;memSaveAll()}memStop();$('#v6Go').click();await sl(100);o.sitzt={A:V6.A,pos:V6.st.pos.slice(),bar:$('#v6Bar').children.length};
+ $('#v6Bar').children[1].click();await sl(50);o.sitzt.wahl=Object.assign({},V6.A);treibe();clearTimeout(V6.auto);$('#v6Next').click();await sl(50);o.sitzt.danach=Object.assign({},V6.A);
+ treibe(()=>false);clearTimeout(V6.auto);o.sitzt.res=$('#v6ResT').textContent;$('#v6Next').click();await sl(50);o.sitzt.nachFehl=Object.assign({},V6.A);o.sitzt.pos2=V6.st.pos.slice();
  /* 4. Warte-Stufe über die Anbindung: zweiter Song ist neu → Zeigen */
  v6Zu();save('kt_l6',Object.assign(load('kt_l6'),{app:{aktuell:'elise'}}));$('#v6Go').click();await sl(100);cancelAnimationFrame(V6.raf);
  o.neu={id:V6.id,A:V6.A,leuchten:V6.run.bild().leuchten.length,haendeOk:V6.M.haendeOk};
@@ -45,11 +49,14 @@ async def main():
         except Exception: return False
     c = {'eingebauter Kern = tools/v6/lernen.js': KERN in src,
          'Schalter aus: kein „Los“-Knopf, Kern geladen': t(lambda: not r['aus']['on'] and not r['aus']['btn'] and r['aus']['kern'] == 'object'),
-         'Schalter an: „Los“ auf der Startseite': t(lambda: r['an']['on'] and r['an']['btn'] and r['an']['txt'] == 'Los' and r['an']['sw'] == 'An'),
+         'Schalter an: „Los“ auf der Startseite': t(lambda: r['an']['on'] and r['an']['btn'] and r['an']['txt'].startswith('Los') and r['an']['sw'] == 'An'),
          'Los → Fly Me; alter Stand übernommen → Abschnitt A · Im Takt · rechts, die App spielt links': t(lambda: r['los']['screen'] and r['los']['id'] == 'fly_me' and r['los']['art'] == 'weiter' and r['los']['pos'] == [4] * 6 and r['los']['A']['stufe'] == 3 and r['los']['A']['hand'] == 'R' and 'Abschnitt A · Im Takt' in r['los']['titel'] and 'die App spielt links' in r['los']['titel'] and r['los']['namen'] == 'A B C A B D'),
          'im Takt gespielt (über die Klavier-Eingabe) → geschafft, gespeichert, protokolliert': t(lambda: r['d1']['res'].startswith('✓') and r['d1']['pos'][0] == 5 and r['d1']['saved'][0] == 5 and r['d1']['log']['v6'] == 1 and r['d1']['log']['ok'] == 1 and r['d1']['log']['stocker'] == 0),
          '„Weiter“ → derselbe Abschnitt, beide Hände im Takt': t(lambda: r['d2']['A']['k'] == 0 and r['d2']['A']['nr'] == 6 and r['d2']['A']['hand'] == 'LR'),
          'nichts gespielt → nicht geschafft, Stand bleibt': t(lambda: not r['d3']['res'].startswith('✓') and 'gestockt' in r['d3']['res'] and r['d3']['pos'][0] == 5),
+         'Song sitzt schon → direkt „Ganzer Song · Im Takt“': t(lambda: r['sitzt']['A']['k'] == -1 and r['sitzt']['pos'] == [6] * 6),
+         'Abschnitt B antippen → B im Takt, danach wieder der ganze Song': t(lambda: r['sitzt']['wahl']['k'] == 1 and r['sitzt']['wahl']['stufe'] == 3 and r['sitzt']['danach']['k'] == -1),
+         'ganzer Song gestockt → kein Absprung: wieder der ganze Song, Stand bleibt': t(lambda: 'gestockt' in r['sitzt']['res'] and r['sitzt']['nachFehl']['k'] == -1 and r['sitzt']['pos2'] == [6] * 6),
          'neuer Song → Abschnitt A · Zeigen · eine Hand, Taste leuchtet; durchgespielt → weiter': t(lambda: r['neu']['id'] == 'elise' and r['neu']['A']['stufe'] == 1 and r['neu']['leuchten'] >= 1 and r['neu']['res'].startswith('✓') and r['neu']['pos'][0] >= 1),
          'alter Auswendig-Modus läuft daneben unverändert': t(lambda: r['alt']['zl'] and r['alt']['v6run'] is None),
          'keine JS-Fehler': not errs and 'crash' not in r}

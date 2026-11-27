@@ -76,14 +76,14 @@ async def main():
          'Song geschafft mit vielen „zu spät“ → trotzdem +10 % und voller Akkord': t(lambda: r['t0'] == 0.6 and r['okLate']['ok'] and r['okLate']['late'] > 1 and 'Nächstes Mal 70 %' in r['okLate']['sub'] and r['okLate']['big'] == 1 and r['t1'] == 0.7),
          '2× gestockt (v5.59) → Tempo bleibt (kein Rückfall)': t(lambda: not r['fail1'] and r['t2'] == 0.7 and r['t3'] == 0.7),
          'Leiter 70 → 80 → 90 → 100 %, danach bleibt der Song spielbar (v5.59)': t(lambda: r['ladder'][:4] == [0.7, 0.8, 0.9, 1] and r['songLvl'] == 3 and r['pickEnd'] is not None and r['pickEnd']['k'] == -1),
-         'Fehlschlag hinten → nächster Versuch ab Zeile 4 (1 Zeile vor der ersten ohne ✓), 2 Griffe Anlauf': t(lambda: not r['r1']['ok'] and r['r1']['bc'][:4] == [0, 1, 2, 3] and r['p2']['from'] == 3 and r['p2']['la'] == r['cuts'][3] and r['p2']['a'] == r['cuts'][3] - 2 and 'ab Zeile 4' in r['p2']['name'] and 'weiter ab Zeile' in r['r1']['sub']),
+         'v5.62: Song sitzt, Fehlschlag hinten → kein Absprung, nächster Versuch wieder ab Griff 1': t(lambda: not r['r1']['ok'] and r['p2']['from'] is None and r['p2']['a'] == 0 and 'von vorn' in r['r1']['sub']),
          'Rest sauber → Song geschafft, nächstes Mal wieder ab Griff 1': t(lambda: r['p2']['ok'] and r['p2']['bc'] is None and 'from' not in r['p3'] and r['p3']['k'] == -1),
-         'Teildurchgang ab Zeile x: geschafft + Akkord, aber kein +10 %; danach ab Griff 1 bei gleichem Tempo': t(lambda: r['p2']['ok'] and r['p2']['big'] == 1 and r['p2']['ts'] == 6 and 'Nächstes Mal' not in r['p2']['sub'] and 'ab Griff 1' in r['p2']['sub'] and r['p3t'] == 0.6 and r['p3a'] == 0),
-         'danach in einem Rutsch ab Griff 1 geschafft → +10 % (70 %)': t(lambda: r['p3ok'] and 'Nächstes Mal 70 %' in r['p3sub'] and r['p4t'] == 0.7),
-         'A mitten im Song → neuer Anlauf vor der Stelle, Vorspielen ab dort': t(lambda: r['ab']['newRun'] and r['ab']['from'] == 4 and r['ab']['a'] == r['cuts'][4] - 2 and r['ab']['demo'] and 'Zeile 5' in r['ab']['toast'] and r['ab']['bc'] == [0, 1, 2, 3, 4] and r['ab']['log']['abort'] == 1),
+         'v5.62: der nächste ganze Durchgang geschafft → Akkord und +10 % (70 %)': t(lambda: r['p2']['ok'] and r['p2']['big'] == 1 and r['p2']['ts'] == 7 and 'Nächstes Mal 70 %' in r['p2']['sub'] and r['p3t'] == 0.7 and r['p3a'] == 0),
+         'danach wieder geschafft → +10 % (80 %)': t(lambda: r['p3ok'] and 'Nächstes Mal 80 %' in r['p3sub'] and r['p4t'] == 0.8),
+         'v5.62: A mitten im Song (Song sitzt) → neuer Anlauf von vorn, kein Sprung zur Stelle': t(lambda: not r['ab']['from'] and r['ab']['a'] == 0 and r['ab']['log']['abort'] == 1),
          'nach dem Neuansatz: A 2× schnell = sofort selbst dran': t(lambda: r['ab']['dbl']),
          'kurzer Song (≤ 40 Griffe) → immer ab Griff 1': t(lambda: r['shortN'] <= 40 and r['shortFrom'] == 0),
-         'Version 5.61': t(lambda: r['ver'].startswith('Version 5.61')),
+         'Version 5.62': t(lambda: r['ver'].startswith('Version 5.62')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)

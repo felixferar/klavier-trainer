@@ -59,12 +59,12 @@ async def main():
          'langer Ton im Lied bei 60 % ausgehalten (+2 s) → kein Stocken': t(lambda: r['longGap'] > 2 and r['c']['ok'] and r['c']['stall'] == 0),
          '1× 4 s gestockt → geschafft (2 Stocker erlaubt bei 89 Griffen), Zeile wird genannt, 2 Sterne, +10 %': t(lambda: r['max'] == 2 and r['d0']['ok'] and '1× gestockt (Zeile 3)' in r['d0']['msg'] and r['d0']['stars'] == 2 and r['d0']['stall'] == 1 and r['d0']['ts'] == 7),
          '4× gestockt → nicht geschafft, Zeilen 3, 5, 6, 7 genannt, Tempo bleibt': t(lambda: not r['d']['ok'] and '4× gestockt (Zeile 3, 5, 6, 7)' in r['d']['msg'] and 'erlaubt sind 2' in r['d']['msg'] and r['d']['stall'] == 4 and r['d']['ts'] == 6),
-         'gestockte Zeilen ohne ✓ → nächster Anlauf ab Zeile 2 (1 Zeile vor der ersten)': t(lambda: r['d']['bc'] == [0, 1, 3, 7] and r['d']['from'] == 1),
-         'Rest ohne Stocken (auch mit falschen Tönen) → geschafft, aber kein +10 % (Teildurchgang)': t(lambda: r['d2']['ok'] and r['d2']['ts'] == 6),
+         'v5.62: Song sitzt → nach dem Fehlschlag kein Absprung, wieder ab Griff 1': t(lambda: not r['d'].get('from')),
+         'nächster ganzer Durchgang ohne Stocken (auch mit falschen Tönen) → geschafft, +10 %': t(lambda: r['d2']['ok'] and r['d2']['ts'] == 7),
          'Hilfe (B) geholt → zählt als 1 Stocker': t(lambda: r['e']['ok'] and r['e']['stall'] == 1),
          'Stück „am Stück“ unverändert streng (Toleranz)': t(lambda: r['f']['blk'] is not None and r['f']['stage'] == 4 and not r['f']['ok']),
          'bei 100 % bleibt der ganze Song spielbar': t(lambda: r['g']['k'] == -1 and r['g']['blk'] is None and r['g']['tempo'] == 1),
-         'Version 5.61': t(lambda: r['ver'].startswith('Version 5.61')),
+         'Version 5.62': t(lambda: r['ver'].startswith('Version 5.62')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)

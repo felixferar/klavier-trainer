@@ -45,7 +45,7 @@ async def main():
          'alles geschafft: Status „sitzt“, „Ganzen Song wiederholen“': t(lambda: r['doneState'] == 2 and 'alles geschafft' in r['doneSub'] and r['doneGo'] == 'Ganzen Song wiederholen'),
          'Hauptknopf im Auswendig-Bereich in der App-Farbe (wie überall)': t(lambda: r['goColor'] == r['priColor']),
          "„So geht's“: 4 Stufen-Chips, 5 Farben in der Legende, 4 Punkte": t(lambda: r['how'] == {'stages': 4, 'legend': 5, 'items': 6}),
-         'Version 5.61': t(lambda: r['ver'].startswith('Version 5.61')),
+         'Version 5.62': t(lambda: r['ver'].startswith('Version 5.62')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)

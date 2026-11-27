@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.61</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.62</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li"><div class="grow"><b>Neuer Lernmodus (Test)</b><small>Prototyp v6: ein „Los“-Knopf auf der Startseite. Der bisherige Auswendig-Modus bleibt.</small></div><button class="btn sm" id="v6Sw" onclick="try{localStorage.setItem('kt_v6on',localStorage.getItem('kt_v6on')==='1'?'0':'1');this.textContent=localStorage.getItem('kt_v6on')==='1'?'An':'Aus';renderHome()}catch(e){}">Aus</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
@@ -2580,7 +2580,7 @@ function modell(roh, stand) {
   M.abschnitte.forEach((s, k) => {
     const w = stand && stand.wie && stand.wie.length === cuts.length ? stand.wie[k] : sigs.indexOf(sigs[k]);
     s.wie = w >= 0 && w < k ? w : -1;
-    s.name = s.wie >= 0 ? M.abschnitte[s.wie].name : String.fromCharCode(65 + (buchst++ % 26));
+    s.name = s.wie >= 0 ? M.abschnitte[s.wie].name : String.fromCharCode(65 + buchst % 26) + (buchst >= 26 ? Math.floor(buchst / 26) + 1 : ''); if (s.wie < 0) buchst++;
     // Überlappung: 1 Takt früher beginnen (ohne Raster: 3 Griffe), nie vor dem Anfang des vorigen Abschnitts
     let a0 = s.a; if (k > 0) { const lim = M.abschnitte[k - 1].a, ab = G[s.a].q - M.bpb - 1e-6; while (a0 > lim && (M.rasterOk ? G[a0 - 1].q >= ab : s.a - a0 < 3)) a0--; }
     s.a0 = a0;
@@ -2663,9 +2663,13 @@ function akkordBei(M, j) { let r = null; for (const a of M.akkorde) { if (a.g <=
 
 function neu(M) { return { cuts: M.abschnitte.map(s => s.a), wie: M.abschnitte.map(s => s.wie), pos: M.abschnitte.map(() => 0), tempo: null, ivl: 0, due: null, stern: 0 }; }
 
+/* Einen Abschnitt gezielt üben (angetippt): sein nächster offener Schritt, sonst „Im Takt, beide Hände“. */
+function abschnittUeben(M, st, k) { if (M.abschnitte[k].wie >= 0) k = M.abschnitte[k].wie; const sch = schritteVon(M, k), s = sch.find(x => x.nr > st.pos[k]) || sch[sch.length - 1]; return Object.assign({ k, tempo: tempoVon(st) }, s); }
+
 /* Übernahme aus dem alten Zeilen-Modus: Abschnitt, dessen Zeilen alle „sitzen“ (Stufe 4) → Zeigen und Aus dem Kopf sind erledigt, weiter mit Im Takt. */
 function uebernahme(M, alt) {
   const st = neu(M); if (!alt || !alt.cuts || !alt.st) return st;
+  if (alt.song >= 1) { st.pos = st.pos.map(() => 6); if (alt.tempo) st.tempo = alt.tempo; return st; } // der ganze Song sitzt schon → direkt der ganze Song im Takt, kein Abschnitt wird neu gelernt
   M.abschnitte.forEach((s, k) => { let alle = true, eine = false; alt.cuts.forEach((c, q) => { const e = (q + 1 < alt.cuts.length ? alt.cuts[q + 1] : M.n) - 1; if (c <= s.b && e >= s.a) { eine = true; if ((alt.st[q] || 0) < 4) alle = false; } }); if (eine && alle) st.pos[k] = 4; });
   return st;
 }
@@ -2780,12 +2784,11 @@ function abschluss(M, st, A, r, heute, sitz) {
       if ((st.tempo || 6) < K.tempoMax) { st.tempo = (st.tempo || 6) + 1; text += ` · nächstes Mal ${st.tempo * 10} %`; }
       if (r.meister && !st.stern) { st.stern = 1; text += ' · Meisterprüfung bestanden'; }
     } else {
-      // nur der Abschnitt mit den meisten Stockern geht zurück auf „Im Takt, beide Hände“
-      const z = {}; for (const j of r.wo) { let k = abschnittVon(M, j); if (M.abschnitte[k].wie >= 0) k = M.abschnitte[k].wie; z[k] = (z[k] || 0) + 1; }
-      let bk = -1; for (const k in z) if (bk < 0 || z[k] > z[bk]) bk = +k;
-      if (bk >= 0) { st.pos[bk] = Math.min(st.pos[bk], 5); zurueck = bk; }
+      // Kein Absprung zu einem Abschnitt (Felix 27.11.: das zerstört den Fluss) – der ganze Song kommt einfach wieder. zurueck = wo es am meisten hakte, nur als Hinweis; gezielt üben kann er per Antippen.
+      const z = {}; for (const j of r.wo) { const k = abschnittVon(M, j); z[k] = (z[k] || 0) + 1; }
+      let bk = -1; for (const k in z) if (bk < 0 || z[k] > z[bk]) bk = +k; zurueck = bk >= 0 ? bk : null;
       if (wdh) { const i = K.leiter.indexOf(st.ivl); st.ivl = K.leiter[Math.max(0, i - 1)]; st.due = tagPlus(heute, 1); }
-      text = `${sto} – erlaubt sind ${r.erlaubt}` + (bk >= 0 ? `. Kurz Abschnitt ${M.abschnitte[bk].name} im Takt` : '');
+      text = `${sto} – erlaubt sind ${r.erlaubt}. Gleich noch einmal`;
       if (fehl >= 2 && (st.tempo || 6) > K.tempoMin) { st.tempo = (st.tempo || 6) - 1; sitz.reihe = 0; text += ` · nächstes Mal ${st.tempo * 10} %`; }
     }
   }
@@ -2823,7 +2826,7 @@ function aufhoeren(sitz, jetzt) {
   return { titel: 'Gute Stelle zum Aufhören', text: t.join(' '), grund: min >= K.pauseMin ? 'zeit' : 'fehl' };
 }
 
-return { K, modell, neu, uebernahme, naechstes, ganzerSong, schritteVon, fortschritt, titel, lauf, vorspiel, abschluss, los, sitzung, aufhoeren, erlaubt, akkordBei, tagPlus, TON };
+return { K, modell, neu, uebernahme, abschnittUeben, naechstes, ganzerSong, schritteVon, fortschritt, titel, lauf, vorspiel, abschluss, los, sitzung, aufhoeren, erlaubt, akkordBei, tagPlus, TON };
 });
 
 /* LERNEN-END */</script>
@@ -3409,7 +3412,7 @@ function awWhen(t){const d=t-memNow();if(d<=0)return 'jetzt';if(d<36e5)return `i
 const awPct=x=>Math.round(x*100)+' %';
 
 /* --- Laden --- */
-function openMem(it){it=fresh(it);if(memLoad(it)){closeSheets();navStack.push('mem');show('mem');memHome()}}
+function openMem(it){try{if(typeof v6Aktuell==='function')v6Aktuell(it.id)}catch(e){}it=fresh(it);if(memLoad(it)){closeSheets();navStack.push('mem');show('mem');memHome()}}
 function memLoad(it,keepSess){it=fresh(it);let s;try{s=songForItem(it)}catch(e){toast('Fehler: '+e.message);return false}
   for(const n of s.notes){n.hand=S.swap?(n.hand0==='R'?'L':'R'):(n.hand0||n.hand);n.midi=foldKey(n.midi)} // genau wie beim Abspielen/Üben (applySwap)
   s.notes.sort((a,b)=>a.start-b.start||a.midi-b.midi);try{audio();loadSamples()}catch(e){}
@@ -3471,6 +3474,8 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
+   v5.62: Sitzt der ganze Song (einmal geschafft), läuft er immer von vorn durch: kein Neustart „ab Zeile x“, kein Nachüben, keine Übergänge nach Stockern.
+          v6: gleiches Prinzip (kein Zurück zu einem Abschnitt), Abschnitt antippen = gezielt üben; lange Songs: Abschnitts-Leiste einzeilig; „Los“ nimmt den zuletzt geöffneten Song.
    v5.61: neuer Lernmodus v6 als Prototyp hinter dem Schalter „Neuer Lernmodus (Test)“ in den Einstellungen (Standard: aus). Quelle: tools/v6/. Ohne Schalter unverändert.
    v5.59: ganzer Song aus dem Kopf = geschafft, wenn er bis zum Ende durchgespielt wurde und höchstens 1 Stocker je 40 Griffe hatte (Stocker = 2,5 s länger als das Lied dort dauert, oder Hilfe).
           Falsche Töne werden gezeigt, entscheiden beim ganzen Song aber nichts mehr. Bei 100 % bleibt der Song spielbar. Zeilen und Stücke unverändert.
@@ -3544,7 +3549,7 @@ function zlNahtDone(z,q){const nd=z.nd||{};if(nd[q])return true; /* 1 = sitzt, -
   if(z.nsig&&z.nsig[q])for(let p=1;p<z.cuts.length;p++)if(p!==q&&nd[p]===1&&z.nsig[p]===z.nsig[q])return true;return false}
 function zlNahtP(z,q){const r=zlNahtR(z,q);return {k:q,stage:4,spot:{a:r.a,b:r.b,c:-1,stage:4,fails:0,ok:0,sv:0,type:'naht',q,why:`Übergang Zeile ${q} → ${q+1}`}}}
 function zlLine(z,k){const N=MEM.gs.length;return {a:z.cuts[k],b:(k+1<z.cuts.length?z.cuts[k+1]:N)-1}}
-function zlPick(z){if(z.nq!=null&&z.nq>0&&z.nq<z.st.length)return zlNahtP(z,z.nq); /* v5.55: Übergang nachüben – dort hakte das lange Stück am meisten */
+function zlPick(z){if(z.song>=1){z.nq=null;z.rep=null} /* v5.62: Song sitzt → nichts mehr vorschalten */if(z.nq!=null&&z.nq>0&&z.nq<z.st.length)return zlNahtP(z,z.nq); /* v5.55: Übergang nachüben – dort hakte das lange Stück am meisten */
   if(z.rep!=null&&z.st[z.rep]>=4)return {k:z.rep,stage:4,rep:1}; /* nachüben – die Zeile, an der das lange Stück 3× gescheitert ist */
   const k0=z.st.findIndex(x=>x<4);
   if(k0>=0&&z.st[k0]>0)return {k:k0,stage:z.st[k0]+1}; /* v5.41: eine angefangene Zeile wird erst fertig gemacht */
@@ -3557,7 +3562,7 @@ function zlPick(z){if(z.nq!=null&&z.nq>0&&z.nq<z.st.length)return zlNahtP(z,z.nq
   return zlSongP(z,z.song<3?{k:-1,stage:4,t:1,bonus:1}:{k:-1,stage:4,t:1})} /* v5.59: auch bei 100 % bleibt der ganze Song spielbar (bis v5.57: „fertig“ – kein Durchgang mehr möglich) */
 /* v5.57: langer Song (> 40 Griffe) – nach einem Fehlschlag oder Abbruch nicht wieder ab Griff 1. Einstieg 1 Zeile vor der ersten Zeile, die in diesem Song-Anlauf
    noch kein ✓ hat (alle Zeilen davor waren schon einmal sauber, z.bc). Geschafft ist der Song, wenn der Rest in der Toleranz sitzt und jede Zeile ihr ✓ hat. */
-function zlSongFrom(z,key){if(MEM.gs.length<=ZL.resumeMin)return 0;const ck=(z.bc&&z.bc[key])||[];let f=0;while(f<z.st.length&&ck.includes(f))f++;return f>=z.st.length?0:Math.max(0,f-1)}
+function zlSongFrom(z,key){if(MEM.gs.length<=ZL.resumeMin||z.song>=1)return 0; /* v5.62 (Felix 27.11.): sitzt der Song, geht es immer von vorn durch – kein Absprung zu einer Stelle */const ck=(z.bc&&z.bc[key])||[];let f=0;while(f<z.st.length&&ck.includes(f))f++;return f>=z.st.length?0:Math.max(0,f-1)}
 function zlSongP(z,p){const f=zlSongFrom(z,'s'+p.t);if(f>0)p.from=f;return p}
 function zlStalls(z,R){const st=new Set();let n=0;for(let i=1;i<R.waits.length;i++){const j=R.a+i;if(R.waits[i]>ZL.stall+(MEM.gs[j].start-MEM.gs[j-1].start)/(R.tempo||1)){st.add(zlLineOf(z,j));n++}}for(const j of R.hset){st.add(zlLineOf(z,j));n++}R.stall=n;return st} /* v5.59: Zeilen, in denen du gestockt hast (> 2,5 s länger, als das Lied dort im aktuellen Tempo dauert) oder Hilfe geholt hast; R.stall = Anzahl der Stocker */
 function zlAbortSong(R){if(!(R.k<0&&R.blk==null&&R.stage>=4&&!R.spot)||MEM.gs.length<=ZL.resumeMin)return null;const z=zlState(),key='s'+R.st,ck=z.bc[key]=z.bc[key]||[];
@@ -3770,7 +3775,8 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
       else{const was=z.song,tc=Math.round(R.tempo*10);z.song=Math.max(z.song,tc>=10?3:tc>=8?2:1);sub=z.song>=3?'Der ganze Song sitzt – auch im Originaltempo! ⭐':!was?'Der ganze Song sitzt auswendig! ⭐ Bonus: bis zum Originaltempo':'Song geschafft'}}
     else{z.lf[key]=(z.lf[key]||0)+1;const w=z.lw[key]=z.lw[key]||{};for(const q in R.wj)w[q]=(w[q]||0)+R.wj[q];zlSeamAdd(z,key,R);
       const ms=miss.length>3?`fehlt noch: ${miss.length} Zeilen (jede einmal ${song?'ohne Stocken':'sauber'})`:'fehlt noch: Zeile '+miss.map(q=>q+1).join(', ');
-      if(z.lf[key]>=ZL.repAfter){let wk=-1,wv=-1;for(const q of (miss.length?miss:Object.keys(w).map(Number)))if((w[q]||0)>wv){wv=w[q]||0;wk=+q}
+      if(song&&z.song>=1){z.lf[key]=0;delete z.lw[key];sub='Gleich noch einmal von vorn'} /* v5.62: Song sitzt → kein Nachüben, kein Übergang, einfach wieder der ganze Song */
+      else if(z.lf[key]>=ZL.repAfter){let wk=-1,wv=-1;for(const q of (miss.length?miss:Object.keys(w).map(Number)))if((w[q]||0)>wv){wv=w[q]||0;wk=+q}
         z.lf[key]=0;delete z.lw[key];const nq=zlSeamPick(z,key);
         if(nq>0){z.nq=nq;z.nd[nq]=0;sub=`Kurz der Übergang Zeile ${nq} → ${nq+1} – dort hakt es am meisten`}else if(wk>=0){z.rep=wk;sub=`Kurz Zeile ${wk+1} aus dem Kopf – dort hakt es am meisten`}else sub='Noch einmal'}
       else sub=within?`Fast – ${ms}`:(ck.length?`✓ bleibt · ${ms}`:'Noch einmal');
@@ -5494,7 +5500,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.61 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.62 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -6466,14 +6472,19 @@ function v6AltTempo(id) {
 function v6Laden(id) {
   const it = LIB.find(x => x.id === id); if (!it || !memLoad(it)) return false;
   const S = v6Store(); let st = S.songs[id]; const M = Lernen.modell(v6Roh(), st);
-  if (!st) { let alt = null; try { alt = MEM.rec[zlKey()] || null; } catch (e) {} st = Lernen.uebernahme(M, alt); if (st.pos.some(p => p >= 4)) st.tempo = v6AltTempo(id); S.songs[id] = st; save('kt_l6', S); }
+  let alt = null; try { alt = MEM.rec[zlKey()] || null; } catch (e) {}
+  if (!st) { st = Lernen.uebernahme(M, alt); if (st.pos.some(p => p >= 4)) st.tempo = v6AltTempo(id); S.songs[id] = st; save('kt_l6', S); }
+  else if (alt && alt.song >= 1 && st.ivl === 0 && st.pos.some(p => p < 6)) { st.pos = st.pos.map(() => 6); S.songs[id] = st; save('kt_l6', S); } // v5.62: Song sitzt im alten Modus → auch hier direkt der ganze Song
   V6.M = M; V6.st = st; V6.id = id; V6.item = it; return true;
 }
 function v6Sichern() { const S = v6Store(); S.songs[V6.id] = V6.st; if (V6.art === 'wdh') S.app.wdhTag = v6Heute(); else if (V6.art === 'weiter') S.app.aktuell = V6.id; save('kt_l6', S); }
 
+/* Welcher Song ist „der aktuelle“? Der zuletzt geöffnete; solange noch keiner gemerkt ist: der, den du zuletzt im alten Auswendig-Modus geübt hast. */
+function v6App(S) { const a = Object.assign({}, S.app); if (!a.aktuell || !LIB.some(x => x.id === a.aktuell)) { try { const L = (load('kt_v8log') || []).filter(e => LIB.some(x => x.id === e.song)); if (L.length) a.aktuell = L[L.length - 1].song; } catch (e) {} } return a; }
+function v6Aktuell(id) { if (!v6On()) return; const S = v6Store(); S.app.aktuell = id; save('kt_l6', S); }
 /* „Los“: fällige Wiederholung (höchstens 1 am Tag), sonst weiter am aktuellen Song */
 function v6Los() {
-  const S = v6Store(), songs = LIB.filter(x => x.type === 'midi').map(it => ({ id: it.id, stand: S.songs[it.id] })), p = Lernen.los(songs, S.app, v6Heute());
+  const S = v6Store(), songs = LIB.filter(x => x.type === 'midi').map(it => ({ id: it.id, stand: S.songs[it.id] })), p = Lernen.los(songs, v6App(S), v6Heute());
   if (!p) { toast('Noch kein Song in der Bibliothek'); return; }
   if (!V6.sitz) V6.sitz = Lernen.sitzung(Date.now() / 1000);
   if (!v6Laden(p.id)) return; V6.art = p.art; v6Bild(); show('v6');
@@ -6498,8 +6509,9 @@ function v6Fertig() {
   try { if (r.ok) (A.k < 0 || A.nr === 6 ? fxBig : fxLine)(); } catch (e) {}
   // was kommt danach?
   let weiter;
-  if (V6.art === 'wdh') weiter = res.zurueck != null ? () => { V6.art = 'nach'; V6.A = Lernen.naechstes(V6.M, V6.st); v6Start(); } : v6Los;
-  else if (V6.art === 'nach' || V6.art === 'frei') weiter = V6.art === 'nach' ? v6Los : null;
+  if (V6.art === 'wdh') weiter = v6Los;
+  else if (V6.art === 'frei') weiter = null;
+  else if (V6.art === 'wahl') weiter = () => { V6.art = V6.artVor || 'weiter'; V6.A = Lernen.naechstes(V6.M, V6.st) || Lernen.ganzerSong(V6.st); v6Start(); }; // nach dem gezielten Abschnitt zurück zum normalen Ablauf
   else weiter = () => { const n = Lernen.naechstes(V6.M, V6.st); if (!n) { v6Los(); return; } V6.A = n; v6Start(); };
   const stop = Lernen.aufhoeren(V6.sitz, Date.now() / 1000), box = $('#v6Res'); box.classList.remove('hidden');
   $('#v6ResT').textContent = (r.ok ? '✓ ' : '') + res.text; $('#v6Stop').classList.toggle('hidden', !stop); if (stop) $('#v6Stop').innerHTML = '<b>' + stop.titel + '</b><br>' + stop.text;
@@ -6511,19 +6523,22 @@ function v6Vor() { if (!V6.A) return; clearTimeout(V6.auto); const was = V6.run;
   for (const t of T) { ende = Math.max(ende, t.nach + t.d); setTimeout(() => { if (!V6.run) { try { playTone(t.m, Math.min(3, t.d), 0.7); } catch (e) {} V6.held.set(-t.m, performance.now()); v6Zeichne(); } }, t.nach * 1000); }
   $('#v6Stat').textContent = 'Hör zu …'; V6.auto = setTimeout(v6Start, ende * 1000 + 600); }
 
+/* Abschnitt in der Leiste angetippt → genau den üben (einmal), danach geht es normal weiter */
+function v6Wahl(k) { if (!V6.M) return; clearTimeout(V6.auto); if (V6.art !== 'wahl') V6.artVor = V6.art; V6.art = 'wahl'; V6.A = Lernen.abschnittUeben(V6.M, V6.st, k); v6Start(); }
 /* Bildschirm: wird einmal gebaut */
 function v6Bild() {
   if ($('#v6')) return; const d = document.createElement('div'); d.id = 'v6'; d.className = 'screen hidden';
   d.innerHTML = '<div style="display:flex;flex-direction:column;height:100%;padding:14px 16px;box-sizing:border-box;gap:10px">' +
     '<div style="display:flex;align-items:center;gap:10px"><button class="btn sm" id="v6X">✕</button><div id="v6Head" class="mu" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div><button class="btn sm" id="v6Play">Vorspielen</button></div>' +
-    '<div id="v6Bar" style="display:flex;gap:6px;flex-wrap:wrap"></div>' +
+    '<div id="v6Bar" style="display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap"></div>' +
     '<div id="v6T" style="font-size:20px;font-weight:800"></div><div id="v6Stat" class="mu" style="min-height:20px"></div>' +
     '<div id="v6Ak" style="font-size:44px;font-weight:800;min-height:54px;text-align:center"></div>' +
     '<div style="flex:1"></div><div id="v6Res" class="hidden" style="background:var(--s2);border-radius:14px;padding:14px"><div id="v6ResT" style="font-weight:700;margin-bottom:8px"></div><div id="v6Stop" class="hidden mu" style="margin-bottom:10px"></div><div style="display:flex;gap:8px"><button class="btn pri" id="v6Next" style="flex:1">Weiter</button><button class="btn" id="v6End">Fertig für heute</button></div></div>' +
     '<canvas id="v6C" style="width:100%;height:120px;border-radius:8px"></canvas></div>';
   $('#app').appendChild(d); $('#v6X').onclick = v6Zu; $('#v6End').onclick = v6Zu; $('#v6Play').onclick = v6Vor;
 }
-function v6Leiste() { const f = Lernen.fortschritt(V6.M, V6.st); $('#v6Bar').innerHTML = f.abschnitte.map((s, k) => `<span style="padding:3px 9px;border-radius:9px;font-weight:700;background:${s.pos >= 6 ? 'var(--ac)' : 'var(--s3)'};color:${s.pos >= 6 ? 'var(--ink)' : 'var(--tx)'};outline:${V6.A && V6.A.k === k ? '2px solid var(--ac)' : 'none'};opacity:${s.wie >= 0 ? 0.6 : 1}">${s.name}${s.pos >= 6 ? '' : ' ' + '●'.repeat(Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0)) + '○'.repeat(3 - Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0))}</span>`).join('') + `<span style="padding:3px 9px;border-radius:9px;font-weight:700;background:${f.fertig ? 'var(--ac)' : 'var(--s3)'};color:${f.fertig ? 'var(--ink)' : 'var(--tx)'}">♪${V6.st.stern ? ' ★' : ''}</span>`; }
+function v6Leiste() { const f = Lernen.fortschritt(V6.M, V6.st), n = f.abschnitte.length, akt = V6.A && V6.A.k >= 0 ? V6.A.k : n - 1, von = n <= 8 ? 0 : Math.max(0, Math.min(n - 6, akt - 2)), bis = n <= 8 ? n : von + 6, pill = t => `<span class="mu" style="padding:3px 4px">${t}</span>`; // lange Songs: nur 6 Abschnitte um den aktuellen, eine Zeile
+  $('#v6Bar').innerHTML = (von > 0 ? pill('…') : '') + f.abschnitte.map((s, k) => k < von || k >= bis ? '' : `<span onclick="v6Wahl(${k})" style="cursor:pointer;padding:3px 9px;border-radius:9px;font-weight:700;background:${s.pos >= 6 ? 'var(--ac)' : 'var(--s3)'};color:${s.pos >= 6 ? 'var(--ink)' : 'var(--tx)'};outline:${V6.A && V6.A.k === k ? '2px solid var(--ac)' : 'none'};opacity:${s.wie >= 0 ? 0.6 : 1}">${s.name}${s.pos >= 6 ? '' : ' ' + '●'.repeat(Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0)) + '○'.repeat(3 - Math.min(3, s.pos >= 4 ? 2 : s.pos >= 3 ? 1 : 0))}</span>`).join('') + (bis < n ? pill('…') : '') + (n > 8 ? pill(`${f.abschnitte.filter(s => s.pos >= 6).length} von ${n}`) : '') + `<span style="padding:3px 9px;border-radius:9px;font-weight:700;background:${f.fertig ? 'var(--ac)' : 'var(--s3)'};color:${f.fertig ? 'var(--ink)' : 'var(--tx)'}">♪${V6.st.stern ? ' ★' : ''}</span>`; }
 function v6Zeichne() {
   const R = V6.run, B = R ? R.bild() : null, c = $('#v6C'); if (!c) return;
   if (B) { $('#v6T').textContent = B.titel; $('#v6Ak').textContent = B.einzaehlen ? String(B.einzaehlen) : B.akkord; $('#v6Stat').textContent = B.einzaehlen ? 'Einzählen …' : `Griff ${B.griff} von ${B.von}` + (B.stufe > 1 ? ` · Stocker ${B.stocker}` : '') + (B.falsch ? ` · daneben ${B.falsch}` : '') + (B.hilfe ? ' · Hilfe' : ''); if (V6.lb !== V6.A) { V6.lb = V6.A; v6Leiste(); } }
@@ -6538,7 +6553,8 @@ function v6Home() {
   { const sw = $('#v6Sw'); if (sw) sw.textContent = v6On() ? 'An' : 'Aus'; }
   let b = $('#v6Go'); if (!v6On()) { if (b) b.remove(); return; }
   if (!b) { b = document.createElement('button'); b.id = 'v6Go'; b.className = 'btn pri'; b.style.cssText = 'width:100%;height:64px;font-size:22px;font-weight:800;margin:10px 0 14px'; b.onclick = v6Los; const s = $('#vStart'); s.insertBefore(b, s.children[1] || null); }
-  const S = v6Store(), h = v6Heute(), due = LIB.some(it => { const st = S.songs[it.id]; return st && st.ivl > 0 && st.due && st.due <= h; }) && S.app.wdhTag !== h; b.textContent = due ? 'Los · erst 1 Song aufwärmen' : 'Los';
+  const S = v6Store(), h = v6Heute(), due = LIB.some(it => { const st = S.songs[it.id]; return st && st.ivl > 0 && st.due && st.due <= h; }) && S.app.wdhTag !== h; const p = Lernen.los(LIB.filter(x => x.type === 'midi').map(it => ({ id: it.id, stand: S.songs[it.id] })), v6App(S), h), it = p && LIB.find(x => x.id === p.id), name = it ? String(it.title || '').replace(/\s*[-–|(].*$/, '').slice(0, 22) : '';
+  b.innerHTML = 'Los' + (name ? `<small style="display:block;font-size:13px;font-weight:600;opacity:.75">${due ? 'erst aufwärmen: ' : ''}${name}</small>` : '');
 }
 
 /* LERNEN-UI-END */</script>

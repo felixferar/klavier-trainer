@@ -53,7 +53,7 @@ async def main():
          'Song: blass 60 % → Kopf 60 % → „sitzt auswendig ⭐“': t(lambda: r['song']['stage'] == 3 and r['song']['tempo'] == 0.6 and r['song']['a'] == 0 and r['song']['b'] == 88 and r['song']['help']['ok'] and r['song']['kopf'] == {'stage': 4, 'tempo': 0.6} and r['song']['ok']['ok'] and r['song']['ok']['song'] == 1 and 'sitzt auswendig' in r['song']['ok']['sub']),
          'danach Bonus 70 % – flüssig geschafft → +10 % (als Bonus gekennzeichnet)': t(lambda: r['song']['ok']['next'] == {'k': -1, 'stage': 4, 't': 1, 'bonus': 1} and r['song']['bonusRun']['bonus'] == 1 and r['song']['bonusRun']['tempo'] == 0.7 and r['song']['bonusRun']['chip'] == 'Bonus'),
          'Übersicht/Startseite: Song sitzt ⭐, Bonus angeboten': t(lambda: r['after']['go'] == 'Weiter: Bonus: Ganzer Song · 70 %' and 'sitzt auswendig' in r['after']['sum'] and 'alles geschafft' in r['after']['info'] and r['after']['state'] == 2),
-         'Version 5.61': t(lambda: r['ver'].startswith('Version 5.61')),
+         'Version 5.62': t(lambda: r['ver'].startswith('Version 5.62')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
