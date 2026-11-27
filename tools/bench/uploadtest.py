@@ -29,7 +29,7 @@ async def main():
     c = {'nach dem ersten Durchgang automatisch hochgeladen (ohne Übersicht)': t(lambda: r['a'] == 1 and r['an'] >= 1),
          'höchstens 1× pro Minute': t(lambda: r['b'] == 1),
          'App in den Hintergrund → Rest sofort hoch, nichts fehlt': t(lambda: r['c'] == 2 and r['cn'] >= 1 and r['sentAll']),
-         'Version 5.68': t(lambda: r['ver'].startswith('Version 5.68')),
+         'Version 5.69': t(lambda: r['ver'].startswith('Version 5.69')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)

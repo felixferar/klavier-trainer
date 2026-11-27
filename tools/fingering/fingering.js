@@ -20,7 +20,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.8.0';
+  const VERSION = '0.8.1';
   const INF = Infinity;
 
   // ===================================================================
@@ -130,7 +130,12 @@
   // 3. Hand
   // ===================================================================
   const PROFILES = {
-    meine:    { name: 'meine Werte', span15: { comf: 12, max: 14 }, span12: { comf: 7, max: 11 } },
+    // v0.8.1: Felix hat am 27.11.2026 vier Paare ohne Daumen am Klavier nachgemessen (erster Finger auf C, zweiter auf der weitesten Taste; beide Hände gleich):
+    //   2–3 bequem G (7) / gerade so A (9) · 3–4 nur F (5), G verkrampft und unsauber · 4–5 locker F (5) / gerade so G (7) · 2–5 locker H (11) / gerade so C (12).
+    // „gerade so“ ist die harte Grenze (max). „bequem“ steht hier eine weiße Taste UNTER seinem Wert, weil er zwei Finger allein gespreizt hat –
+    // im Akkord liegen andere Finger dazwischen. 2–4 und 3–5 sind aus den Nachbarpaaren abgeleitet. Vorher (geschätzt): 2–3 3/5, 2–4 5/7, 2–5 7/9, 3–4 2/4, 3–5 5/7, 4–5 3/5.
+    meine:    { name: 'meine Werte', span15: { comf: 12, max: 14 }, span12: { comf: 7, max: 11 },
+                pairs: { '2-3': { comf: 5, max: 9 }, '2-4': { comf: 7, max: 11 }, '2-5': { comf: 9, max: 12 }, '3-4': { comf: 4, max: 5 }, '3-5': { comf: 6, max: 9 }, '4-5': { comf: 4, max: 7 } } },
     standard: { name: 'Standard',    span15: { comf: 12, max: 14 } },
     klein:    { name: 'kleine Hand', span15: { comf: 10, max: 12 } },
   };
@@ -164,6 +169,8 @@
       if (lo === 1) {
         maxComf = Math.round(s12.comf + frac[hi] * (s15.comf - s12.comf));
         maxPrac = Math.floor(s12.max + frac[hi] * (s15.max - s12.max) + 1e-9);
+      } else if (profile.pairs && profile.pairs[key]) {   // gemessen
+        maxComf = profile.pairs[key].comf; maxPrac = profile.pairs[key].max;
       } else {
         maxComf = Math.round(maxComf0 * rc);
         maxPrac = Math.round(maxPrac0 * r);

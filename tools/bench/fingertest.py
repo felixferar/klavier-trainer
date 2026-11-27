@@ -102,7 +102,7 @@ async def main():
         inline = r.pop('inline'); body = re.sub(r'^/\* FINGERING-BEGIN[^\n]*\n', '', inline); body = re.sub(r'\n/\* FINGERING-END \*/$', '', body)
         checks = {
             'standard_aus': r['stdAus'] is True,
-            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.8.0',
+            'modul_gleich_quelle': body == SRC, 'version': r['version'] == '0.8.1',
             'rechts_tonleiter_12312345': r['rh'] == '12312345', 'links_akkord_531': r['lh'] == '531' and r['lhH'] == 'LLL',
             'einfarbig_bass_links': r['bassH'] == 'L' and r['melH'] == 'R', 'schalter_aus': r['offNoCalc'],
             'flagge_rot': f1['red'] != '', 'flagge_upload': f2['n'] == 1 and (f2['path'] or '').startswith('diag/fingerflags/') and fi.get('kind') == 'fingerflags',
