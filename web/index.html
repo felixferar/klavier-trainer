@@ -651,7 +651,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.74</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.75</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3763,7 +3763,13 @@ function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p
      a) Kurze Balken (unter ~35 px) bekamen gar keine Zahl. Jetzt ist jeder Balken mindestens so hoch, dass Zahl UND Name hineinpassen.
      b) Wartete das Lied auf den Griff, rutschte der Balken noch bis zu einem Viertelschlag hinter die Tasten – ein kurzer Balken war dann fast weg. Jetzt hält er an der Tastenkante an.
      c) Gezeichnet wird von hinten nach vorn: der nächste Griff liegt immer obenauf und ist ganz zu lesen, auch wenn derselbe Ton schnell wiederholt wird. */
-  for(let j=R.b;j>=R.a;j--){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=R.demo?hy-6-(G.start-R.vt)*ZL.pps:Math.min(hy-9,hy-6-(G.start-R.vt)*ZL.pps);if(y0<-40)continue;
+  /* v5.75 (Felix 27.11. 22:38: „die Noten bleiben stehen, aber die darüber schieben noch kurz nach – sieht falsch aus“): In v5.74 hielt nur der fällige Balken an der Tastenkante,
+     die Zeit lief aber noch einen Viertelschlag weiter – die Balken darüber rückten so lange nach. Jetzt hält das ganze Bild gemeinsam an (Anzeige-Zeit vd).
+     Kommt der Griff spät, springt die Lied-Zeit ein Stück vor; dieses Stück wird in ~0,2 s weich nachgeholt statt als Ruck. */
+  let vd=R.vt;if(!R.demo&&!R.done&&R.pos<=R.b){const tg=Math.min(R.vt,gs[R.pos].start-3/ZL.pps),D=R.dv;let off=0;
+    if(D&&D.a===R.a&&D.k===R.k){const dt=Math.max(0,Math.min(0.1,(now-D.now)/1000)),d=tg-D.tg;off=D.off;if(d<-1e-6||d>0.6)off=0;else if(d>dt*R.tempo+0.02)off+=d-dt*R.tempo;off*=Math.exp(-dt/0.07);if(off<0.002)off=0}
+    R.dv={tg,now,off,a:R.a,k:R.k};vd=tg-off}else R.dv=null;
+  for(let j=R.b;j>=R.a;j--){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=hy-6-(G.start-vd)*ZL.pps;if(y0<-40)continue;
     const anchor=gold&&(j===R.a||j===R.la||R.peekJ===j),dim=j<R.la&&R.k>=0&&!anchor,cur=j===R.pos&&!R.demo;
     for(const m of G.mids){const k=X[m];if(!k)continue;const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2),fs=Math.max(10,Math.min(14,k.w*0.55)),fd=Math.min(20,Math.max(14,k.w*0.62)),fOn=S.fingers===true&&!!(n&&n.fing),len=Math.max(fs+10+(fOn?fd+3:0),(n?n.dur:0.3)*ZL.pps);
       c.globalAlpha=(dim?0.35:1)*(anchor?1:al);c.fillStyle=anchor?wc:k.b?(G.hands.get(m)==='L'?C.lhB:C.rhB):G.hands.get(m)==='L'?C.lh:C.rh;c.beginPath(); /* v5.67: Balken auf schwarzen Tasten in dunklerem Ton der Handfarbe */
@@ -5481,7 +5487,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.74 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.75 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
