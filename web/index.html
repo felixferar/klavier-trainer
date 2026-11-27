@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.64</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.65</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -5205,7 +5205,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.64 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.65 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -5425,7 +5425,19 @@ function scanCore(px,w,n,f){
           // a real gap between two bars shows the dark background (not letters) – and it moves down through the rows one after another
           // v5.43: …but not the dark rim right after a note-name box: the box is the bottom of the SAME bar (box → rim → rest of the bar);
           // one mixed frame between box and rim (blur, 60 fps) still counts as the box
-          if(o[k]&&st.prev[k]===2)st.tr[k]=SCAN.fi;st.prev[k]=o[k]?1:(o.bgK[k]&&!st.box[k]?2:0);if(o.boxK[k])st.box[k]=2;else if(o[k]&&st.box[k])st.box[k]--}trs.push(st.tr)}
+          if(o[k]&&st.prev[k]===2)st.tr[k]=SCAN.fi;
+          /* v5.65: die Naht zwischen zwei Balken derselben Taste (Tonwiederholung) ist oft keine echte Lücke, sondern nur eine dunkle Linie – unscharf bleibt sie „Balkenfarbe“
+             und wurde nicht gesehen (Kanal-MIDI-Test: „verschmolzen“ = 29 % aller Fehler, in 24 von 29 Videos). Jetzt relativ gemessen: die Helligkeit über die ganze
+             Balkenmitte fällt für 1–2 Bilder auf ≤ 70 % und ist danach wieder da. max() über drei Punkte: Buchstaben im Balken sind schmal, die Naht geht über die ganze Breite.
+             Wie bisher zählt sie erst, wenn sie nacheinander durch ≥ 3 der Lesezeilen wandert. */
+          if(window.SEAM_DIP!==false){const h=st.h||(st.h=new Float32Array(K*8)),dx=Math.max(1,Math.round((SCAN.kw||0.02)*(w-1)*0.12)),cx=Math.round(kp[k]);let v=0,vl=0; /* v = hellster Punkt in Balkenfarbe (0 = keiner), vl = hellster Punkt überhaupt */
+            for(let j=-1;j<=1;j++){const q=px(r,Math.min(w-1,Math.max(0,cx+j*dx))),l=q[0]+q[1]+q[2],hs=rgb2hsv(q[0],q[1],q[2]);if(l>vl)vl=l;if(hs[1]>0.3&&hs[2]>0.3&&l>v)v=l}
+            const b=k*8,seam=(lo,Pa,Pb)=>{const P=Math.max(Pa,Pb),a=Math.min(P,v),q=Math.min(Pa,Pb)/P,z=a/Math.max(P,v);return a>0&&((q>=0.85&&lo<=SEAM_DEPTH*a&&z>=0.6)||(q>=0.95&&lo<=SEAM_FLAT*a&&z>=0.88))}; /* tief (≤ 70 %) – oder flach (≤ 85 %, unscharfe Videos: die Naht ist nur ein Schatten), dann aber vorher ganz ruhig (±5 %) und nachher dieselbe Helligkeit (±12 %) */ /* vorher (P) und nachher (v) Balkenfarbe – auch in zwei Helligkeiten –, dazwischen 1 oder 2 Bilder, in denen ALLE drei Punkte dunkel sind.
+               Weiße Buchstaben zählen weder als Balken noch als dunkel: Notenname → dunkler Buchstabenrand → Balken ist keine Naht (Messung 9Pbx: sonst 256 Töne zerschnitten).
+               Die zwei Bilder vor dem Dunkel müssen gleich hell sein (±15 %): ein ruhiger Balken – kein Namensschild mit dunklem Grund und hellen Buchstaben (9Pbx: sonst noch 38). */
+            if(o[k]&&!st.box[k]&&v>90&&(seam(h[b+4],h[b+1],h[b+2])||seam(Math.max(h[b+4],h[b+5]),h[b+2],h[b+3])))st.tr[k]=SCAN.fi;
+            h[b+3]=h[b+2];h[b+2]=h[b+1];h[b+1]=h[b];h[b]=v;h[b+6]=h[b+5];h[b+5]=h[b+4];h[b+4]=vl}
+          st.prev[k]=o[k]?1:(o.bgK[k]&&!st.box[k]?2:0);if(o.boxK[k])st.box[k]=2;else if(o[k]&&st.box[k])st.box[k]--}trs.push(st.tr)}
       SCAN.gapMin=SCAN.gapMin||new Int32Array(K);for(let k=0;k<K;k++){let c=0,ok=true,last=-1e9,mn=1e9;for(const tr of trs){if(SCAN.fi-tr[k]<=4){c++;if(tr[k]<last)ok=false;last=tr[k];mn=Math.min(mn,tr[k])}}if(c>=3&&ok){gap[k]=c;SCAN.gapMin[k]=mn}}
       const need=Math.max(1,n-3-1);laneOcc=Array.from(cnt,c=>c>=need);SCAN.laneGap=gap;SCAN.laneBgc=bgc}else laneOcc=laneBars(px,w,2,0)}
   let nPressed=0,nLit=0;
@@ -5581,6 +5593,7 @@ function finishScan(preview){
    zerschnitten. Pauschal 0,27 s kostete bei schnellen Wiederholungen (Kanal-MIDI-Test: 4 Videos −0,1 bis −0,2 Punkte). */
 const SPLIT_MIN=0.2,SPLIT_OWN=0.3;
 const CHORD_BAR_T=4;
+const SEAM_DEPTH=0.7,SEAM_FLAT=0.85,SPLIT_SEAM=0.1;
 function finishCore(raw,preview){
   let ev=raw.filter(e=>e.end-e.start>=0.04&&(SCAN.okT==null||e.end>=SCAN.okT+0.05)).map(e=>SCAN.okT!=null&&e.start<SCAN.okT?{...e,start:SCAN.okT-0.07}:{...e}).sort((a,b)=>a.start-b.start); // copies: the raw data stays untouched
   {const rs=SCAN.oddR||[],last=rs[rs.length-1];SCAN.cut=last&&last.to==null?last.from:null;
@@ -5612,7 +5625,7 @@ function finishCore(raw,preview){
             if(gap<=(held?0.25:0.1)&&gap<0.035&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
       ev=out.sort((a,b)=>a.start-b.start)}
     if(d!==null){const out=[];for(const e of ev){const L=SCAN.lane[kIdx.get(e.m)],own=L.ons.some(o=>Math.abs(o+dk(e)-e.start)<0.12)||!!(L.pre&&(L.pre.off==null||e.start-dk(e)<=L.pre.off+0.1)),
-      ons=L.ons.filter((o,i)=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)).map(o=>o+dk(e)).filter(x=>x>e.start+(own?SPLIT_MIN:SPLIT_OWN)&&x<e.end-0.05); /* v5.43: not at a one-frame piece (rim at the top of a pill) */
+      ons=L.ons.map((o,i)=>[o,i]).filter(([o,i])=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)).map(([o,i])=>[o+dk(e),i>0&&L.offs[i-1]!=null&&Math.abs(L.offs[i-1]-o)<0.001]).filter(([x,seam])=>x>e.start+(seam&&window.SEAM_DIP!==false?SPLIT_SEAM:own?SPLIT_MIN:SPLIT_OWN)&&x<e.end-0.05).map(q=>q[0]); /* v5.65: eine Naht mitten im Balken (voriger Balken endet genau hier) ist ein sicherer Neuanschlag – schon ab 0,1 s nach dem Tonanfang */ /* v5.43: not at a one-frame piece (rim at the top of a pill) */
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
   /* v5.58 (Felix 26.11., „Sing“ – Anfang): ein Akkord, der schon beim Lesestart in der Balken-Zeile stand (lane.pre), aber an einer Taste nichts zeigt,
      weil dort etwas über der Tastatur lag (YouTube-Feld „Weitere Videos“ nach dem Start): endet der Balken genau mit den Balken der anderen Akkordtöne (±0,06 s)

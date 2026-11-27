@@ -28,6 +28,7 @@ async def main():
             got = await pg.evaluate('async ([u,js])=>{const rec=await (await fetch(u)).json();if(!rec.meta.scanDet){try{rec.meta.scanDet=(await (await fetch(u.replace("rec.json","meta.json"))).json()).scanDet}catch(e){}}return (eval(js))(rec)}', [f'http://127.0.0.1:8766/{i}/rec.json', JS])
             octfix = await pg.evaluate('SCAN.octFix||0'); hj = await pg.evaluate('[SCAN.headJ||0,SCAN.headR==null?null:+SCAN.headR.toFixed(2)]')
             r = R.evaluate(os.path.join(HERE, 'refs/echt', ref[i]), got)
+            if os.environ.get('NOTES'): json.dump(got, open(f"{root}/{i}/{os.environ['NOTES']}.json", 'w'))  # NOTES=name: erkannte Noten je Video ablegen (für fehlerarten.py)
             res[i] = {k: v for k, v in r.items() if not k.startswith('_')}; res[i]['octFix'] = octfix
             print(f"{i} {ref[i][:30]:30} F1@50 {r.get('F1@50')} F1@100 {r.get('F1@100')} midi_oct {r.get('midi_oct')} octFix {octfix} kopf {hj} z {r.get('zerschnitten')} v {r.get('verschmolzen')} {r.get('warnung','')}", flush=True)
         if errs: print('PAGEERRORS', errs[:3])
