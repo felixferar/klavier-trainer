@@ -28,7 +28,7 @@ async def main():
     c = {'Startseite zeigt die Songs': t(lambda: r['recent'] >= 3),
          'Songs-Tab zeigt alle Songs': t(lambda: r['songs'] >= 3),
          'Fly Me mit Stand „Am Lernen“': t(lambda: 'Am Lernen' in r['fly']),
-         'Version 5.72': t(lambda: r['ver'].startswith('Version 5.72')),
+         'Version 5.73': t(lambda: r['ver'].startswith('Version 5.73')),
          'keine JS-Fehler beim Start': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     sys.exit(0 if all(c.values()) else 1)

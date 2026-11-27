@@ -83,7 +83,7 @@ async def main():
          'v5.62: A mitten im Song (Song sitzt) → neuer Anlauf von vorn, kein Sprung zur Stelle': t(lambda: not r['ab']['from'] and r['ab']['a'] == 0 and r['ab']['log']['abort'] == 1),
          'nach dem Neuansatz: A 2× schnell = sofort selbst dran': t(lambda: r['ab']['dbl']),
          'kurzer Song (≤ 40 Griffe) → immer ab Griff 1': t(lambda: r['shortN'] <= 40 and r['shortFrom'] == 0),
-         'Version 5.72': t(lambda: r['ver'].startswith('Version 5.72')),
+         'Version 5.73': t(lambda: r['ver'].startswith('Version 5.73')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
