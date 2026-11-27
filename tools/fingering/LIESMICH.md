@@ -1,4 +1,4 @@
-# Fingersatz-Kern (v0.4.0: beide Hände, Akkorde, Hand-Zuordnung, Stil „einfach“)
+# Fingersatz-Kern (v0.8.0: beide Hände, Akkorde, Hand-Zuordnung, Stil „einfach“, gleich vor bequem)
 
 In der App eingebettet (`web/index.html`, Block `fingering-js`). Nach jeder Änderung hier: `python3 tools/fingering/einbauen.py`, dann `python3 tools/bench/fingertest.py`.
 
@@ -24,6 +24,30 @@ const r2 = Fingering.withFixed(r, 12, 3);   // Korrektur setzen, Rest wird neu b
 ```
 
 `noten` = `[{ midi, start, dur }, …]` in Sekunden.
+
+## Gleich vor bequem, ehrliche Marken, gespeicherter Fingersatz (neu in 0.8.0, App v5.68)
+
+Rangfolge fürs Auswendiglernen: **spielbar → gleich → fest → bequem**.
+
+```js
+const r = Fingering.computeHand(noten, { hand: 'R', style: 'einfach', keep: { 12: 3 } });
+r.mark[i]     // '' | 'anders' | 'brechen' | 'springen' | 'zuviel'
+r.gleich      // { akkorde, figuren, anders, grund } – was angeglichen wurde und warum der Rest nicht ging
+```
+- **Griff-Verzeichnis:** jede Akkord-Art (gleiche Tasten) bekommt einen Griff. **Figuren-Verzeichnis:** jede wiederkehrende Folge von 4 Griffen
+  (nur Tasten, Rhythmus egal) bekommt einen Fingersatz. Angeglichen wird nur, wo es spielbar bleibt und kein einzelner Übergang um mehr als
+  `GL.MEHR` (4 Punkte = ein Lagenwechsel) schlechter wird. `{ gleich: false }` schaltet das ab (Vergleichswert), `{ gleichMehr: n }` ändert die Grenze.
+- **`anders`:** eine Stelle von mindestens 8 gleichen Griffen (`GL.MARKE`) oder ein Akkord weicht trotzdem ab – sichtbar statt still.
+- **`zuviel`:** mehr als 5 Töne in einer Hand → kein Finger (0). Früher brach hier die ganze Rechnung ab.
+  **`brechen`:** Griff zu weit. **`springen`:** Wechsel in der Zeit nicht machbar. Bei beiden bleibt die Zahl stehen (womit man landet).
+- **`keep`:** gespeicherte Finger (App: `it.fing`). Zählen beim Rechnen wie eine Vorgabe, aber ohne Status `fest`.
+  Die App liest den gespeicherten Fingersatz und ruft das Modul nur noch auf, wenn sich Noten geändert haben.
+
+Prüfstand über alle Songs (98 Handy-Scans, 40 Kanal-MIDIs, Fly Me, Für Elise):
+```
+node tools/bench/fingerpruef.js [--stabil] [--ziel] [--detail] [--ohnegleich] [--mehr N] [--json DATEI]
+```
+Stände liegen in `pruefstand/` (vorher 0.7.0, 0.8.0 ohne/mit Gleichheit). Zahlen und Grenzen: Projekt-Dokument `claude/fix-v5.68-fingersatz-fest.md`.
 
 ## Stil (neu in 0.4.0)
 

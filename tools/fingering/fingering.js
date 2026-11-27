@@ -20,7 +20,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const VERSION = '0.7.0';
+  const VERSION = '0.8.0';
   const INF = Infinity;
 
   // ===================================================================
@@ -1162,6 +1162,7 @@
     let c = 0, ok = true;
     const add = (p, code, txt) => { c += p; if (det) det.push({ p, code, txt }); };
     const ns = g.notes;
+    if (ns.length > 5) { if (det) det.push({ p: INF, code: 'too-many', txt: `${ns.length} Töne gleichzeitig – zu viel für eine Hand` }); return { c: KC.ROLL, ok: false }; }   // v0.8
     const std = STD_GRIPS[ns.slice(1).map((x, i) => x.midi - ns[i].midi).join(',')];
     if (std && F.join('') !== std) add(KC.NONSTD, 'nonstd', `üblicher Griff für diese Akkordform wäre ${std.split('').join('-')}`);
     for (let i = 0; i < ns.length; i++) {
@@ -1223,8 +1224,10 @@
   function solveChords(groups, P, fixedBySrc) {
     const G = groups.length;
     const cands = groups.map(g => {
-      let list = (COMBOS[Math.min(g.k, 5)] || []).map(F => ({ F, ...chordShape(g, F, P) }));
-      if (g.k > 5) list = [];
+      // v0.8: mehr als 5 Töne in einer Hand (falsche Hand-Zuordnung, Pedal-Arrangement): früher Abbruch der ganzen Rechnung.
+      // Jetzt ein Platzhalter-Griff (Finger von unten nach oben verteilt), der Griff gilt als ungreifbar und bekommt später die Marke „zuviel“.
+      if (g.k > 5) { g.over = true; g.rolled = true; return [{ F: g.notes.map((_, i) => 1 + Math.round(i * 4 / (g.k - 1))), c: KC.ROLL, ok: false }]; }
+      let list = COMBOS[g.k].map(F => ({ F, ...chordShape(g, F, P) }));
       const fx = g.notes.map(nt => fixedBySrc[nt.src]);
       if (fx.some(Boolean)) { const l2 = list.filter(x => fx.every((f, i) => !f || x.F[i] === f)); if (l2.length) list = l2; }
       const okList = list.filter(x => x.ok);
@@ -1266,6 +1269,8 @@
     const Fs = groups.map(g => g.notes.map(nt => fingers[nt.src]));
     groups.forEach((g, gi) => {
       const F = Fs[gi], bad = txt => v.push({ index: g.notes[g.k - 1].src, text: txt });
+      if (g.k > 5) { bad('mehr als 5 Töne in einer Hand'); return; }
+      if (gi > 0 && groups[gi - 1].k > 5) return;
       if (F.some(f => !(f >= 1 && f <= 5))) { bad('kein gültiger Finger'); return; }
       if (new Set(F).size !== F.length) { bad('ein Finger auf zwei Tasten im selben Griff'); return; }
       for (let i = 1; i < F.length; i++) if (F[i] < F[i - 1]) { bad('Finger im Griff verdreht'); return; }
@@ -1314,7 +1319,7 @@
    *  opts.hand: 'R' | 'L', opts.profile, opts.fixed: { notenIndex: finger }, opts.patterns, opts.repeats
    * Rückgabe wie computeFingering, dazu chords (Griffe) und status 'akkord' für Akkordtöne.
    */
-  function computeHand(notesIn, opts) {
+  function computeHandKern(notesIn, opts) {
     opts = opts || {};
     MODE.easy = opts.style === 'einfach';
     const hand = opts.hand === 'L' ? 'L' : 'R', profile = opts.profile || PROFILES.meine, P = pairTable(profile);
@@ -1329,6 +1334,7 @@
     for (const k of Object.keys(fixed)) fixedBySrc[+k] = +fixed[k];
     const S = solveChords(groups, P, fixedBySrc);
     const chordF = groups.map((g, i) => S.cands[i][S.pick[i]].F);
+    groups.forEach((g, i) => { g.relaxed = !!S.relaxed[i]; });
 
     // Verfeinerung: Linie aus Einzeltönen + äußerem Akkordton (rechts oben, links unten = gespiegelt oben)
     const line = [], lineSrc = [], anchor = {};
@@ -1375,7 +1381,7 @@
     }
     // Gleiche Akkorde = gleicher Griff (wenn überall spielbar und kaum teurer)
     const byKey = new Map();
-    groups.forEach((g, i) => { if (g.k < 2) return; const key = g.notes.map(x => x.midi).join(','); if (!byKey.has(key)) byKey.set(key, []); byKey.get(key).push(i); });
+    groups.forEach((g, i) => { if (g.k < 2 || g.k > 5) return; const key = g.notes.map(x => x.midi).join(','); if (!byKey.has(key)) byKey.set(key, []); byKey.get(key).push(i); });
     const chordRepeats = [];
     for (const idx of byKey.values()) {
       if (idx.length < 2) continue;
@@ -1441,6 +1447,178 @@
       return s;
     };
     return result;
+  }
+
+  // ===================================================================
+  // 12b. Gleich vor bequem (v0.8)
+  // ===================================================================
+  // Rangfolge für das Auswendiglernen: spielbar → gleich → (fest: in der App gespeichert) → bequem.
+  // Der Kern oben sucht den bequemsten Weg durch den ganzen Song; gleiche Stellen gleicht er nur nach, mit vielen Ausnahmen.
+  // Messung 27.11. (139 Songs): dieselbe Folge von 4 Griffen bekam in 9,8 % der Vorkommen andere Finger, 486 Akkord-Arten hatten mehrere Griffe.
+  // Hier wird nachgezogen – aber nur, wo es spielbar bleibt (dieselbe Prüfung wie checkHand):
+  //   1. Griff-Verzeichnis: jede Akkord-Art (gleiche Tasten) bekommt EINEN Griff.
+  //   2. Figuren-Verzeichnis: jede wiederkehrende Folge von 4 Griffen (nur Tasten, Rhythmus egal) bekommt EINEN Fingersatz.
+  //   3. Was sich nicht angleichen lässt, bekommt die Marke 'anders' – sichtbar statt still.
+  // Dazu ehrliche Marken für Stellen, die laut Noten nicht greifbar sind: 'zuviel' (> 5 Töne, kein Finger), 'brechen' (Griff zu weit), 'springen' (Wechsel in der Zeit nicht machbar).
+  const GL = {
+    W: 4,            // Länge einer Figur in Griffen
+    TOP: 4,          // so viele der häufigsten Varianten werden als gemeinsamer Fingersatz probiert
+    PASSES: 3,
+    MARKE: 8,        // ab so vielen gleichen Griffen in Folge gilt eine Stelle als „dieselbe Stelle“ (Marke 'anders', wenn sie trotzdem abweicht)
+    LAENGEN: [4],    // Figuren-Längen in Griffen. Gemessen 27.11.: lange zuerst ([32,16,8,4]) macht es schlechter (7,0 % statt 3,6 % Abweichung), weil lange Stellen dann häufige kurze Figuren überstimmen.
+    MEHR: 4,         // so viele Punkte darf eine Stelle durch das Angleichen unbequemer werden (4 = ein Lagenwechsel)
+    VERBOTEN: 20,    // Übergang ab so vielen Punkten gilt als „praktisch verboten“ (z. B. derselbe Finger ohne Pause, 25) und wird nicht erzwungen
+  };
+  function computeHand(notesIn, opts) {
+    opts = opts || {};
+    // opts.keep = { notenIndex: finger }: gespeicherter Fingersatz (App: „fest“). Zählt beim Rechnen wie eine Vorgabe,
+    // gilt aber nicht als „von dir festgelegt“ (kein Status 'fest', keine Marke 'vorgabe').
+    const keep = {}; for (const k of Object.keys(opts.keep || {})) if (opts.keep[k] >= 1 && opts.keep[k] <= 5) keep[+k] = +opts.keep[k];
+    const hasKeep = Object.keys(keep).length > 0;
+    const r = computeHandKern(notesIn, hasKeep ? Object.assign({}, opts, { fixed: Object.assign({}, keep, opts.fixed || {}) }) : opts);
+    if (hasKeep) for (const k in keep) if (!(opts.fixed && opts.fixed[k]) && r.status[k] === 'fest') r.status[k] = 'gespeichert';
+    MODE.easy = opts.style === 'einfach';
+    const hand = opts.hand === 'L' ? 'L' : 'R', P = pairTable(opts.profile || PROFILES.meine);
+    const groups = groupNotes(makeNotes(notesIn, hand)), G = groups.length, W = GL.W;
+    const mark = new Array(notesIn.length).fill('');
+    r.mark = mark; r.gleich = { akkorde: 0, figuren: 0, anders: 0, grund: {} };
+    if (!G) return r;
+    const fixed = {}; for (const k of Object.keys(opts.fixed || {})) fixed[+k] = +opts.fixed[k];
+    const Fs = groups.map(g => g.notes.map(nt => r.fingers[nt.src]));
+    const key = groups.map(g => g.notes.map(x => x.midi).join('.'));
+    const frozen = groups.map(g => g.k > 5 || g.notes.some(nt => fixed[nt.src] || keep[nt.src]));   // deine Vorgaben und Platzhalter-Griffe bleiben
+    const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+    const shapeOk = (i, F) => groups[i].k === 1 || (groups[i].k <= 5 && chordShape(groups[i], F, P).ok);
+    // Bleibt es spielbar, wenn die Griffe a..b die Finger get(k) bekommen? Geprüft werden alle Übergänge, die sich ändern.
+    // Dazu eine Obergrenze: Angleichen darf die Stelle um höchstens GL.MEHR Punkte unbequemer machen. Ohne sie wurde in Fly Me
+    // „H A G F E“ zu 4-5-4-3-2 (Finger 5 unter 4 verdreht), nur weil „A G F E“ woanders 5-4-3-2 ist – eine ⚑-Stelle von Felix.
+    const MEHR = opts.gleichMehr == null ? GL.MEHR : opts.gleichMehr;
+    const tryWin = (a, b, get) => {
+      let dOld = 0, dNew = 0;
+      for (let k = Math.max(1, a); k <= Math.min(G - 1, b + 1); k++) {
+        const o = chordTrans(groups[k - 1], Fs[k - 1], groups[k], Fs[k], P), n = chordTrans(groups[k - 1], get(k - 1), groups[k], get(k), P);
+        if (n === INF && o !== INF) return false;
+        if (n !== INF && n >= GL.VERBOTEN && o < GL.VERBOTEN) return false;
+        if (n !== INF && o !== INF) { if (n - o > MEHR) return false; dOld += o; dNew += n; }   // kein einzelner Übergang darf deutlich schlechter werden (eine Ersparnis woanders gleicht das nicht aus)
+      }
+      return dNew - dOld <= MEHR;
+    };
+    const touched = new Uint8Array(G);
+    const set = (i, F) => { if (!same(Fs[i], F)) { Fs[i] = F.slice(); touched[i] = 1; } };
+    // Passt der Fingersatz T auf die Griffe i..i+n-1? Rückgabe: {} = ja, { griff: finger } = ja, wenn die Einzeltöne direkt davor/danach
+    // dafür einen anderen Finger bekommen (wie im Kern, v0.7 – sonst verhindert „nie derselbe Finger ohne Pause“ das Angleichen), null = nein.
+    const locked = new Uint8Array(G);
+    const fit = (i, n, T) => {
+      for (let w = 0; w < n; w++) if (!same(Fs[i + w], T[w]) && (locked[i + w] || frozen[i + w] || !shapeOk(i + w, T[w]))) return null;
+      const base = k => (k >= i && k < i + n ? T[k - i] : Fs[k]);
+      if (tryWin(i, i + n - 1, base)) return {};
+      const nb = [i - 1, i + n].filter(j => j >= 0 && j < G && groups[j].k === 1 && !frozen[j] && !locked[j]);
+      if (!nb.length) return null;
+      let best = null; const cur = {};
+      const rec = q => {
+        if (q === nb.length) {
+          const get = k => (cur[k] ? [cur[k]] : base(k));
+          if (!tryWin(i - 1, i + n, get)) return;
+          let c = 0; for (let k = Math.max(1, i - 1); k <= Math.min(G - 1, i + n + 1); k++) { const v = chordTrans(groups[k - 1], get(k - 1), groups[k], get(k), P); c += v === INF ? 1000 : v; }
+          if (!best || c < best.c) best = { c, cur: Object.assign({}, cur) };
+          return;
+        }
+        for (let f = 1; f <= 5; f++) { cur[nb[q]] = f; rec(q + 1); } delete cur[nb[q]];
+      };
+      rec(0);
+      return best ? best.cur : null;
+    };
+    const put = (i, n, T, pl) => { for (const j in pl) set(+j, [pl[j]]); for (let w = 0; w < n; w++) set(i + w, T[w]); };
+    if (opts.gleich !== false) {
+      // ---- 1. Griff-Verzeichnis ----
+      const byKey = new Map();
+      groups.forEach((g, i) => { if (g.k < 2 || g.k > 5) return; if (!byKey.has(key[i])) byKey.set(key[i], []); byKey.get(key[i]).push(i); });
+      for (const idx of byKey.values()) {
+        if (idx.length < 2) continue;
+        const cnt = new Map(); idx.forEach(i => { const v = Fs[i].join(''); cnt.set(v, (cnt.get(v) || 0) + 1); });
+        if (cnt.size < 2) continue;
+        let best = null;
+        for (const [v, c] of [...cnt].sort((a, b) => b[1] - a[1]).slice(0, GL.TOP)) {
+          const F = v.split('').map(Number); let n = c;
+          for (const i of idx) if (Fs[i].join('') !== v && fit(i, 1, [F])) n++;
+          if (!best || n > best.n) best = { F, n };
+        }
+        for (const i of idx) {
+          if (same(Fs[i], best.F)) continue;
+          const pl = fit(i, 1, [best.F]); if (!pl) continue;
+          put(i, 1, [best.F], pl); r.gleich.akkorde++;
+        }
+      }
+      // ---- 2. Figuren-Verzeichnis ----
+      // Lange Stellen zuerst (ganze Zeilen, Refrain), dann kürzere: so sind lange Wiederholungen durchgehend gleich,
+      // und ein Widerspruch zwischen zwei sich überlappenden Figuren landet am Rand einer kurzen Figur statt mitten in einer langen.
+      const varOfN = (i, n) => { let v = ''; for (let w = 0; w < n; w++) v += Fs[i + w].join('') + '|'; return v; };
+      const classesN = n => {
+        const cls = new Map();
+        for (let i = 0; i + n <= G; i++) { const k = key.slice(i, i + n).join('|'); if (!cls.has(k)) cls.set(k, []); cls.get(k).push(i); }
+        return [...cls.values()].filter(L => L.length > 1).sort((a, b) => b.length - a.length || a[0] - b[0]);
+      };
+      for (const n of GL.LAENGEN) {
+        if (n > G) continue;
+        for (let pass = 0; pass < GL.PASSES; pass++) {
+          let changed = false;
+          for (const L of classesN(n)) {
+            const cnt = new Map(); L.forEach(i => { const v = varOfN(i, n); cnt.set(v, (cnt.get(v) || 0) + 1); });
+            let topV = [...cnt].sort((a, b) => b[1] - a[1])[0][0];
+            if (cnt.size > 1) {
+              let best = null;
+              for (const [v, c] of [...cnt].sort((a, b) => b[1] - a[1]).slice(0, GL.TOP)) {
+                const src = L.find(i => varOfN(i, n) === v), T = []; for (let w = 0; w < n; w++) T.push(Fs[src + w].slice());
+                let m = c; for (const i of L) if (varOfN(i, n) !== v && fit(i, n, T)) m++;
+                if (!best || m > best.m) best = { T, m, v };
+              }
+              for (const i of L) { if (varOfN(i, n) === best.v) continue; const pl = fit(i, n, best.T); if (!pl) continue; put(i, n, best.T, pl); r.gleich.figuren++; changed = true; }
+              topV = best.v;
+            }
+            for (const i of L) if (varOfN(i, n) === topV) for (let w = 0; w < n; w++) locked[i + w] = 1;   // ab jetzt fest: spätere (kürzere, seltenere) Figuren dürfen das nicht mehr ändern
+          }
+          if (!changed) break;
+        }
+      }
+      // Die Marke 'anders' gibt es erst ab einer längeren Stelle (GL.MARKE Griffe). Vier Töne, die in zwei verschiedenen Phrasen vorkommen,
+      // sind nicht „dieselbe Stelle“: In Fly Me gehört „A G F“ einmal zu „C H A G F E“ (3-2-1) und einmal zu „A G F E D“ (5-4-3) – beides von Felix am Klavier bestätigt.
+      const MW = Math.min(GL.MARKE, G), varOf = i => varOfN(i, MW), classes = () => classesN(MW);
+      // ---- 3. Marke 'anders' ----
+      for (const L of classes()) {
+        const cnt = new Map(); L.forEach(i => { const v = varOf(i); cnt.set(v, (cnt.get(v) || 0) + 1); });
+        if (cnt.size < 2) continue;
+        const topV = [...cnt].sort((a, b) => b[1] - a[1])[0][0], src = L.find(i => varOf(i) === topV);
+        for (const i of L) { if (varOf(i) === topV) continue; let any = false;
+          { const T = []; for (let w = 0; w < MW; w++) T.push(Fs[src + w]); let why = '';   // warum ließ es sich nicht angleichen? (für den Bericht)
+            for (let w = 0; w < MW && !why; w++) if (!same(Fs[i + w], T[w])) why = frozen[i + w] ? 'vorgabe' : !shapeOk(i + w, T[w]) ? 'griff' : locked[i + w] ? 'andereFigur' : '';
+            if (!why) why = tryWin(i, i + MW - 1, k => (k >= i && k < i + MW ? T[k - i] : Fs[k])) ? 'reihenfolge' : 'unspielbar';
+            r.gleich.grund[why] = (r.gleich.grund[why] || 0) + 1; }
+          for (let w = 0; w < MW; w++) groups[i + w].notes.forEach((nt, q) => { if (Fs[i + w][q] !== Fs[src + w][q]) { mark[nt.src] = 'anders'; any = true; } });
+          if (!any) groups[i].notes.forEach(nt => { mark[nt.src] = 'anders'; }); }
+      }
+      for (const idx of byKey.values()) {
+        if (idx.length < 2) continue;
+        const cnt = new Map(); idx.forEach(i => { const v = Fs[i].join(''); cnt.set(v, (cnt.get(v) || 0) + 1); });
+        if (cnt.size < 2) continue;
+        const topV = [...cnt].sort((a, b) => b[1] - a[1])[0][0];
+        idx.forEach(i => { if (Fs[i].join('') !== topV) groups[i].notes.forEach(nt => { mark[nt.src] = 'anders'; }); });
+      }
+    }
+    // ---- ehrliche Marken (gehen vor) ----
+    groups.forEach((g, i) => {
+      if (g.k > 5) { g.notes.forEach(nt => { mark[nt.src] = 'zuviel'; }); Fs[i] = g.notes.map(() => 0); touched[i] = 1; return; }
+      if (g.k > 1 && !chordShape(g, Fs[i], P).ok) { g.notes.forEach(nt => { mark[nt.src] = 'brechen'; }); return; }
+      if (i > 0 && groups[i - 1].k <= 5 && chordTrans(groups[i - 1], Fs[i - 1], g, Fs[i], P) === INF) g.notes.forEach(nt => { mark[nt.src] = 'springen'; });
+    });
+    // ---- zurückschreiben ----
+    groups.forEach((g, i) => { if (!touched[i]) return; g.notes.forEach((nt, q) => { r.fingers[nt.src] = Fs[i][q]; r.open[nt.src] = false; if (r.alt) r.alt[nt.src] = null; if (Fs[i][q] && r.status[nt.src] !== 'fest' && r.status[nt.src] !== 'gespeichert') r.status[nt.src] = 'gleich'; }); });
+    r.gleich.anders = mark.filter(x => x === 'anders').length;
+    if (r.chords) r.chords.forEach(c => { c.fingers = c.notes.map(sx => r.fingers[sx]); });
+    r.violations = checkHand(notesIn, r.fingers, opts.profile || PROFILES.meine, hand);
+    r.cue = cueFlags(notesIn, r.fingers, hand, fixed);
+    mark.forEach((m, i) => { if (m && !r.cue[i]) r.cue[i] = m; });   // markierte Stellen zeigen ihre Zahl auch in der Anzeige „nur Orientierung“
+    r.version = VERSION;
+    return r;
   }
 
   // ===================================================================

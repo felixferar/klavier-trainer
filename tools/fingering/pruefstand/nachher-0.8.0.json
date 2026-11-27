@@ -1,0 +1,3078 @@
+{
+ "modul": "0.8.0",
+ "songs": 139,
+ "summe": {
+  "stimmen": 276,
+  "toene": 160137,
+  "lang": 57606,
+  "langAnders": 1899,
+  "langAndersOhneMarke": 0,
+  "griffe": 101000,
+  "unmoeglich": 1,
+  "eingabeUngreifbar": 6674,
+  "zuWeit": 3541,
+  "folgen": 73632,
+  "folgenAnders": 3568,
+  "folgenAndersOhneMarke": 1523,
+  "akkArten": 6362,
+  "akkMehrdeutig": 486,
+  "markeAnders": 3804,
+  "markeEhrlich": 19877,
+  "ohneFinger": 0,
+  "ausnahme": 24941,
+  "offen": 11485,
+  "stimmenMitFolgenAnders": 204,
+  "rauschenAnders": 6112,
+  "rauschenToene": 130695,
+  "rauschenStimmen": 260,
+  "rauschenBetroffen": 179,
+  "tonFehltAnders": 856,
+  "tonFehltToene": 130435,
+  "tonFehltStimmen": 260,
+  "halbAnders": 3875,
+  "halbToene": 65279,
+  "halbStimmen": 260,
+  "halbBetroffen": 186,
+  "tonFehltBetroffen": 135
+ },
+ "je": {
+  "handy:D4COOEBwBjk": {
+   "R": {
+    "toene": 224,
+    "unmoeglich": 0,
+    "folgen": 210,
+    "folgenAnders": 2,
+    "lang": 202,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 65,
+    "unmoeglich": 0,
+    "folgen": 30,
+    "folgenAnders": 0,
+    "lang": 22,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:Wa8fAoJmjQA": {
+   "R": {
+    "toene": 81,
+    "unmoeglich": 0,
+    "folgen": 59,
+    "folgenAnders": 2,
+    "lang": 50,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 32,
+    "unmoeglich": 0,
+    "folgen": 20,
+    "folgenAnders": 0,
+    "lang": 6,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:41Z7W_0dJu8": {
+   "R": {
+    "toene": 742,
+    "unmoeglich": 0,
+    "folgen": 710,
+    "folgenAnders": 41,
+    "lang": 631,
+    "langAnders": 10,
+    "akkMehrdeutig": 0,
+    "anders": 19
+   },
+   "L": {
+    "toene": 239,
+    "unmoeglich": 0,
+    "folgen": 219,
+    "folgenAnders": 0,
+    "lang": 207,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:GUnDodr9GLo": {
+   "R": {
+    "toene": 294,
+    "unmoeglich": 0,
+    "folgen": 242,
+    "folgenAnders": 13,
+    "lang": 152,
+    "langAnders": 9,
+    "akkMehrdeutig": 0,
+    "anders": 9
+   },
+   "L": {
+    "toene": 128,
+    "unmoeglich": 0,
+    "folgen": 26,
+    "folgenAnders": 0,
+    "lang": 8,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:163bCfINABY": {
+   "R": {
+    "toene": 188,
+    "unmoeglich": 0,
+    "folgen": 105,
+    "folgenAnders": 7,
+    "lang": 16,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 125,
+    "unmoeglich": 0,
+    "folgen": 68,
+    "folgenAnders": 4,
+    "lang": 28,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   }
+  },
+  "handy:mu6gef4lM80": {
+   "L": {
+    "toene": 314,
+    "unmoeglich": 0,
+    "folgen": 270,
+    "folgenAnders": 30,
+    "lang": 157,
+    "langAnders": 6,
+    "akkMehrdeutig": 0,
+    "anders": 18
+   }
+  },
+  "handy:mHEWSfudL_w": {
+   "R": {
+    "toene": 252,
+    "unmoeglich": 0,
+    "folgen": 145,
+    "folgenAnders": 5,
+    "lang": 88,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   },
+   "L": {
+    "toene": 293,
+    "unmoeglich": 0,
+    "folgen": 128,
+    "folgenAnders": 1,
+    "lang": 101,
+    "langAnders": 1,
+    "akkMehrdeutig": 2,
+    "anders": 8
+   }
+  },
+  "handy:Kkd7grCASvw": {
+   "R": {
+    "toene": 629,
+    "unmoeglich": 0,
+    "folgen": 504,
+    "folgenAnders": 26,
+    "lang": 421,
+    "langAnders": 21,
+    "akkMehrdeutig": 0,
+    "anders": 20
+   },
+   "L": {
+    "toene": 588,
+    "unmoeglich": 0,
+    "folgen": 308,
+    "folgenAnders": 43,
+    "lang": 176,
+    "langAnders": 9,
+    "akkMehrdeutig": 0,
+    "anders": 9
+   }
+  },
+  "handy:0ewwWK9_-iE": {
+   "R": {
+    "toene": 618,
+    "unmoeglich": 0,
+    "folgen": 480,
+    "folgenAnders": 13,
+    "lang": 361,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   },
+   "L": {
+    "toene": 220,
+    "unmoeglich": 0,
+    "folgen": 200,
+    "folgenAnders": 10,
+    "lang": 155,
+    "langAnders": 4,
+    "akkMehrdeutig": 0,
+    "anders": 4
+   }
+  },
+  "handy:7mhJFks2n2g": {
+   "R": {
+    "toene": 1236,
+    "unmoeglich": 0,
+    "folgen": 1171,
+    "folgenAnders": 27,
+    "lang": 1052,
+    "langAnders": 14,
+    "akkMehrdeutig": 0,
+    "anders": 12
+   },
+   "L": {
+    "toene": 289,
+    "unmoeglich": 0,
+    "folgen": 156,
+    "folgenAnders": 30,
+    "lang": 111,
+    "langAnders": 24,
+    "akkMehrdeutig": 0,
+    "anders": 36
+   }
+  },
+  "handy:t4vt9vABnFQ": {
+   "R": {
+    "toene": 158,
+    "unmoeglich": 0,
+    "folgen": 50,
+    "folgenAnders": 6,
+    "lang": 7,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 210,
+    "unmoeglich": 0,
+    "folgen": 102,
+    "folgenAnders": 8,
+    "lang": 46,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   }
+  },
+  "handy:4C0UA95-yko": {
+   "R": {
+    "toene": 48,
+    "unmoeglich": 0,
+    "folgen": 9,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 124,
+    "unmoeglich": 0,
+    "folgen": 118,
+    "folgenAnders": 0,
+    "lang": 102,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:EbIaBqYe-p4": {
+   "R": {
+    "toene": 289,
+    "unmoeglich": 0,
+    "folgen": 236,
+    "folgenAnders": 2,
+    "lang": 140,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 531,
+    "unmoeglich": 0,
+    "folgen": 525,
+    "folgenAnders": 0,
+    "lang": 521,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:4I_Lrdsbbgk": {
+   "R": {
+    "toene": 276,
+    "unmoeglich": 0,
+    "folgen": 99,
+    "folgenAnders": 23,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 319,
+    "unmoeglich": 0,
+    "folgen": 187,
+    "folgenAnders": 23,
+    "lang": 110,
+    "langAnders": 9,
+    "akkMehrdeutig": 1,
+    "anders": 9
+   }
+  },
+  "handy:Dm7Hir7WiDs": {
+   "R": {
+    "toene": 67,
+    "unmoeglich": 0,
+    "folgen": 6,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 163,
+    "unmoeglich": 0,
+    "folgen": 113,
+    "folgenAnders": 2,
+    "lang": 77,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   }
+  },
+  "handy:QCPeOigAKek": {
+   "R": {
+    "toene": 345,
+    "unmoeglich": 0,
+    "folgen": 200,
+    "folgenAnders": 25,
+    "lang": 65,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 3
+   },
+   "L": {
+    "toene": 228,
+    "unmoeglich": 0,
+    "folgen": 118,
+    "folgenAnders": 0,
+    "lang": 81,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:F7hmMGjUYyQ": {
+   "R": {
+    "toene": 359,
+    "unmoeglich": 0,
+    "folgen": 39,
+    "folgenAnders": 1,
+    "lang": 8,
+    "langAnders": 1,
+    "akkMehrdeutig": 5,
+    "anders": 11
+   },
+   "L": {
+    "toene": 374,
+    "unmoeglich": 0,
+    "folgen": 245,
+    "folgenAnders": 18,
+    "lang": 170,
+    "langAnders": 6,
+    "akkMehrdeutig": 1,
+    "anders": 9
+   }
+  },
+  "handy:6jSLH9CDPPQ": {
+   "R": {
+    "toene": 415,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 2,
+    "anders": 2
+   },
+   "L": {
+    "toene": 2143,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 12,
+    "anders": 12
+   }
+  },
+  "handy:R1cuoP25DGg": {
+   "R": {
+    "toene": 427,
+    "unmoeglich": 0,
+    "folgen": 278,
+    "folgenAnders": 24,
+    "lang": 178,
+    "langAnders": 7,
+    "akkMehrdeutig": 2,
+    "anders": 11
+   },
+   "L": {
+    "toene": 217,
+    "unmoeglich": 0,
+    "folgen": 81,
+    "folgenAnders": 1,
+    "lang": 46,
+    "langAnders": 1,
+    "akkMehrdeutig": 2,
+    "anders": 5
+   }
+  },
+  "handy:w7mole4Cfak": {
+   "R": {
+    "toene": 460,
+    "unmoeglich": 0,
+    "folgen": 333,
+    "folgenAnders": 23,
+    "lang": 229,
+    "langAnders": 7,
+    "akkMehrdeutig": 2,
+    "anders": 41
+   },
+   "L": {
+    "toene": 89,
+    "unmoeglich": 0,
+    "folgen": 56,
+    "folgenAnders": 0,
+    "lang": 40,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:eBRQMUKTwvw": {
+   "R": {
+    "toene": 118,
+    "unmoeglich": 0,
+    "folgen": 107,
+    "folgenAnders": 2,
+    "lang": 80,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 283,
+    "unmoeglich": 0,
+    "folgen": 208,
+    "folgenAnders": 23,
+    "lang": 122,
+    "langAnders": 7,
+    "akkMehrdeutig": 0,
+    "anders": 7
+   }
+  },
+  "handy:GlOcqJPFKvw": {
+   "R": {
+    "toene": 755,
+    "unmoeglich": 0,
+    "folgen": 288,
+    "folgenAnders": 23,
+    "lang": 50,
+    "langAnders": 1,
+    "akkMehrdeutig": 4,
+    "anders": 14
+   },
+   "L": {
+    "toene": 874,
+    "unmoeglich": 0,
+    "folgen": 595,
+    "folgenAnders": 58,
+    "lang": 465,
+    "langAnders": 27,
+    "akkMehrdeutig": 0,
+    "anders": 38
+   }
+  },
+  "handy:dZ1nU2mASl0": {
+   "R": {
+    "toene": 244,
+    "unmoeglich": 0,
+    "folgen": 222,
+    "folgenAnders": 3,
+    "lang": 185,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 3
+   },
+   "L": {
+    "toene": 324,
+    "unmoeglich": 0,
+    "folgen": 290,
+    "folgenAnders": 2,
+    "lang": 268,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:XA4VIKz7XzQ": {
+   "R": {
+    "toene": 555,
+    "unmoeglich": 0,
+    "folgen": 426,
+    "folgenAnders": 8,
+    "lang": 374,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 4
+   },
+   "L": {
+    "toene": 681,
+    "unmoeglich": 0,
+    "folgen": 451,
+    "folgenAnders": 10,
+    "lang": 431,
+    "langAnders": 13,
+    "akkMehrdeutig": 2,
+    "anders": 13
+   }
+  },
+  "handy:pSPVgUA6tj8": {
+   "R": {
+    "toene": 708,
+    "unmoeglich": 0,
+    "folgen": 234,
+    "folgenAnders": 11,
+    "lang": 96,
+    "langAnders": 9,
+    "akkMehrdeutig": 6,
+    "anders": 17
+   },
+   "L": {
+    "toene": 274,
+    "unmoeglich": 0,
+    "folgen": 44,
+    "folgenAnders": 2,
+    "lang": 28,
+    "langAnders": 2,
+    "akkMehrdeutig": 3,
+    "anders": 8
+   }
+  },
+  "handy:-534oM1g1AY": {
+   "R": {
+    "toene": 850,
+    "unmoeglich": 0,
+    "folgen": 243,
+    "folgenAnders": 23,
+    "lang": 148,
+    "langAnders": 7,
+    "akkMehrdeutig": 7,
+    "anders": 28
+   },
+   "L": {
+    "toene": 424,
+    "unmoeglich": 0,
+    "folgen": 51,
+    "folgenAnders": 4,
+    "lang": 12,
+    "langAnders": 2,
+    "akkMehrdeutig": 1,
+    "anders": 5
+   }
+  },
+  "handy:Mq_-ISONAq0": {
+   "R": {
+    "toene": 970,
+    "unmoeglich": 0,
+    "folgen": 171,
+    "folgenAnders": 9,
+    "lang": 92,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 761,
+    "unmoeglich": 0,
+    "folgen": 202,
+    "folgenAnders": 3,
+    "lang": 81,
+    "langAnders": 0,
+    "akkMehrdeutig": 4,
+    "anders": 8
+   }
+  },
+  "handy:WAkmTiXXAUU": {
+   "R": {
+    "toene": 737,
+    "unmoeglich": 0,
+    "folgen": 215,
+    "folgenAnders": 4,
+    "lang": 136,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   },
+   "L": {
+    "toene": 890,
+    "unmoeglich": 0,
+    "folgen": 360,
+    "folgenAnders": 22,
+    "lang": 269,
+    "langAnders": 30,
+    "akkMehrdeutig": 4,
+    "anders": 25
+   }
+  },
+  "handy:XQlaVAOKPCQ": {
+   "R": {
+    "toene": 337,
+    "unmoeglich": 0,
+    "folgen": 156,
+    "folgenAnders": 16,
+    "lang": 61,
+    "langAnders": 7,
+    "akkMehrdeutig": 2,
+    "anders": 17
+   },
+   "L": {
+    "toene": 628,
+    "unmoeglich": 0,
+    "folgen": 149,
+    "folgenAnders": 16,
+    "lang": 54,
+    "langAnders": 4,
+    "akkMehrdeutig": 4,
+    "anders": 19
+   }
+  },
+  "handy:f5FxiL9mpyw": {
+   "R": {
+    "toene": 155,
+    "unmoeglich": 0,
+    "folgen": 2,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 6
+   },
+   "L": {
+    "toene": 75,
+    "unmoeglich": 0,
+    "folgen": 10,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:dF6Lts0j23c": {
+   "R": {
+    "toene": 384,
+    "unmoeglich": 0,
+    "folgen": 366,
+    "folgenAnders": 1,
+    "lang": 342,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   },
+   "L": {
+    "toene": 193,
+    "unmoeglich": 0,
+    "folgen": 173,
+    "folgenAnders": 1,
+    "lang": 149,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   }
+  },
+  "handy:-ntPsUf0f8U": {
+   "R": {
+    "toene": 461,
+    "unmoeglich": 0,
+    "folgen": 171,
+    "folgenAnders": 12,
+    "lang": 94,
+    "langAnders": 3,
+    "akkMehrdeutig": 3,
+    "anders": 12
+   },
+   "L": {
+    "toene": 237,
+    "unmoeglich": 0,
+    "folgen": 159,
+    "folgenAnders": 2,
+    "lang": 113,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   }
+  },
+  "handy:w8Jl_DAUUVU": {
+   "R": {
+    "toene": 37,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 9,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:rYglC8WAm5g": {
+   "R": {
+    "toene": 505,
+    "unmoeglich": 0,
+    "folgen": 34,
+    "folgenAnders": 7,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 3,
+    "anders": 2
+   },
+   "L": {
+    "toene": 109,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:j-B1slp477I": {
+   "R": {
+    "toene": 110,
+    "unmoeglich": 0,
+    "folgen": 55,
+    "folgenAnders": 9,
+    "lang": 34,
+    "langAnders": 8,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   },
+   "L": {
+    "toene": 142,
+    "unmoeglich": 0,
+    "folgen": 114,
+    "folgenAnders": 10,
+    "lang": 80,
+    "langAnders": 4,
+    "akkMehrdeutig": 0,
+    "anders": 4
+   }
+  },
+  "handy:HX75Hu2RO5A": {
+   "R": {
+    "toene": 670,
+    "unmoeglich": 0,
+    "folgen": 70,
+    "folgenAnders": 2,
+    "lang": 11,
+    "langAnders": 0,
+    "akkMehrdeutig": 3,
+    "anders": 6
+   },
+   "L": {
+    "toene": 485,
+    "unmoeglich": 0,
+    "folgen": 91,
+    "folgenAnders": 9,
+    "lang": 18,
+    "langAnders": 2,
+    "akkMehrdeutig": 1,
+    "anders": 3
+   }
+  },
+  "handy:Mpc5xqotV_0": {
+   "R": {
+    "toene": 30,
+    "unmoeglich": 0,
+    "folgen": 25,
+    "folgenAnders": 0,
+    "lang": 17,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 421,
+    "unmoeglich": 0,
+    "folgen": 410,
+    "folgenAnders": 34,
+    "lang": 372,
+    "langAnders": 22,
+    "akkMehrdeutig": 0,
+    "anders": 19
+   }
+  },
+  "handy:zk7j7U6rmrE": {
+   "R": {
+    "toene": 341,
+    "unmoeglich": 0,
+    "folgen": 218,
+    "folgenAnders": 0,
+    "lang": 196,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   },
+   "L": {
+    "toene": 303,
+    "unmoeglich": 0,
+    "folgen": 138,
+    "folgenAnders": 5,
+    "lang": 100,
+    "langAnders": 2,
+    "akkMehrdeutig": 3,
+    "anders": 29
+   }
+  },
+  "handy:5Dcdamqps0A": {
+   "R": {
+    "toene": 155,
+    "unmoeglich": 0,
+    "folgen": 99,
+    "folgenAnders": 2,
+    "lang": 68,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 75,
+    "unmoeglich": 0,
+    "folgen": 50,
+    "folgenAnders": 4,
+    "lang": 34,
+    "langAnders": 4,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   }
+  },
+  "handy:rlBBp1Fkr-Y": {
+   "R": {
+    "toene": 341,
+    "unmoeglich": 0,
+    "folgen": 175,
+    "folgenAnders": 18,
+    "lang": 77,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   },
+   "L": {
+    "toene": 491,
+    "unmoeglich": 0,
+    "folgen": 323,
+    "folgenAnders": 42,
+    "lang": 262,
+    "langAnders": 30,
+    "akkMehrdeutig": 0,
+    "anders": 28
+   }
+  },
+  "handy:MRqlO8Bm2B0": {
+   "R": {
+    "toene": 633,
+    "unmoeglich": 0,
+    "folgen": 212,
+    "folgenAnders": 5,
+    "lang": 134,
+    "langAnders": 1,
+    "akkMehrdeutig": 1,
+    "anders": 3
+   },
+   "L": {
+    "toene": 579,
+    "unmoeglich": 0,
+    "folgen": 238,
+    "folgenAnders": 24,
+    "lang": 152,
+    "langAnders": 18,
+    "akkMehrdeutig": 5,
+    "anders": 12
+   }
+  },
+  "handy:9LYQINnSmWk": {
+   "R": {
+    "toene": 248,
+    "unmoeglich": 0,
+    "folgen": 195,
+    "folgenAnders": 17,
+    "lang": 122,
+    "langAnders": 6,
+    "akkMehrdeutig": 0,
+    "anders": 6
+   },
+   "L": {
+    "toene": 528,
+    "unmoeglich": 0,
+    "folgen": 145,
+    "folgenAnders": 0,
+    "lang": 108,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:5jDvGcamttI": {
+   "R": {
+    "toene": 273,
+    "unmoeglich": 0,
+    "folgen": 208,
+    "folgenAnders": 8,
+    "lang": 81,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 108,
+    "unmoeglich": 0,
+    "folgen": 60,
+    "folgenAnders": 3,
+    "lang": 26,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   }
+  },
+  "handy:UaBb3XXCzyE": {
+   "R": {
+    "toene": 1058,
+    "unmoeglich": 0,
+    "folgen": 381,
+    "folgenAnders": 23,
+    "lang": 247,
+    "langAnders": 9,
+    "akkMehrdeutig": 18,
+    "anders": 54
+   },
+   "L": {
+    "toene": 769,
+    "unmoeglich": 0,
+    "folgen": 744,
+    "folgenAnders": 6,
+    "lang": 723,
+    "langAnders": 4,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   }
+  },
+  "handy:_mwgDFm2yIU": {
+   "R": {
+    "toene": 91,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 135,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 2,
+    "anders": 4
+   }
+  },
+  "handy:Ft88vuijEPM": {
+   "R": {
+    "toene": 240,
+    "unmoeglich": 0,
+    "folgen": 205,
+    "folgenAnders": 22,
+    "lang": 147,
+    "langAnders": 13,
+    "akkMehrdeutig": 0,
+    "anders": 28
+   },
+   "L": {
+    "toene": 1115,
+    "unmoeglich": 0,
+    "folgen": 660,
+    "folgenAnders": 0,
+    "lang": 546,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:R-wz9Kqti1g": {
+   "R": {
+    "toene": 35,
+    "unmoeglich": 0,
+    "folgen": 19,
+    "folgenAnders": 0,
+    "lang": 3,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 22,
+    "unmoeglich": 0,
+    "folgen": 14,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:7RHrXXC_CYo": {
+   "R": {
+    "toene": 222,
+    "unmoeglich": 0,
+    "folgen": 81,
+    "folgenAnders": 2,
+    "lang": 27,
+    "langAnders": 1,
+    "akkMehrdeutig": 1,
+    "anders": 3
+   },
+   "L": {
+    "toene": 215,
+    "unmoeglich": 0,
+    "folgen": 136,
+    "folgenAnders": 1,
+    "lang": 100,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:4jJTsWQHmEg": {
+   "R": {
+    "toene": 267,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 1089,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 4,
+    "anders": 8
+   }
+  },
+  "handy:vtt7aVaKySE": {
+   "R": {
+    "toene": 716,
+    "unmoeglich": 0,
+    "folgen": 185,
+    "folgenAnders": 28,
+    "lang": 38,
+    "langAnders": 3,
+    "akkMehrdeutig": 6,
+    "anders": 8
+   }
+  },
+  "handy:rOV7u-puw5A": {
+   "R": {
+    "toene": 259,
+    "unmoeglich": 0,
+    "folgen": 127,
+    "folgenAnders": 1,
+    "lang": 88,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 85,
+    "unmoeglich": 0,
+    "folgen": 23,
+    "folgenAnders": 0,
+    "lang": 13,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:gPCp9XTaWII": {
+   "R": {
+    "toene": 177,
+    "unmoeglich": 0,
+    "folgen": 128,
+    "folgenAnders": 7,
+    "lang": 82,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   },
+   "L": {
+    "toene": 75,
+    "unmoeglich": 0,
+    "folgen": 20,
+    "folgenAnders": 0,
+    "lang": 2,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:zOspOJ4YnGI": {
+   "R": {
+    "toene": 95,
+    "unmoeglich": 0,
+    "folgen": 4,
+    "folgenAnders": 2,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 87,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:rpVvU3rN5Z8": {
+   "R": {
+    "toene": 102,
+    "unmoeglich": 0,
+    "folgen": 2,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 82,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:72glDVZQy48": {
+   "R": {
+    "toene": 103,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 85,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:eNSOqSePW54": {
+   "R": {
+    "toene": 94,
+    "unmoeglich": 0,
+    "folgen": 4,
+    "folgenAnders": 1,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 91,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:VI-PNmEPLDs": {
+   "R": {
+    "toene": 98,
+    "unmoeglich": 0,
+    "folgen": 2,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 83,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:LTTzVvU6wK4": {
+   "R": {
+    "toene": 114,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 81,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:g3ZFZSuI4N8": {
+   "R": {
+    "toene": 113,
+    "unmoeglich": 0,
+    "folgen": 12,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 62,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:VItmwrHTt9c": {
+   "R": {
+    "toene": 113,
+    "unmoeglich": 0,
+    "folgen": 2,
+    "folgenAnders": 1,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 98,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:5yBqBe3mSVQ": {
+   "R": {
+    "toene": 109,
+    "unmoeglich": 0,
+    "folgen": 2,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 87,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:FVlVFPQ6TXE": {
+   "R": {
+    "toene": 100,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 89,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:KyYaCtLsAAk": {
+   "R": {
+    "toene": 629,
+    "unmoeglich": 0,
+    "folgen": 442,
+    "folgenAnders": 44,
+    "lang": 223,
+    "langAnders": 12,
+    "akkMehrdeutig": 2,
+    "anders": 35
+   },
+   "L": {
+    "toene": 703,
+    "unmoeglich": 0,
+    "folgen": 242,
+    "folgenAnders": 10,
+    "lang": 167,
+    "langAnders": 8,
+    "akkMehrdeutig": 0,
+    "anders": 8
+   }
+  },
+  "handy:ADiGiK75FMM": {
+   "R": {
+    "toene": 498,
+    "unmoeglich": 0,
+    "folgen": 324,
+    "folgenAnders": 5,
+    "lang": 198,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 1099,
+    "unmoeglich": 0,
+    "folgen": 352,
+    "folgenAnders": 1,
+    "lang": 303,
+    "langAnders": 1,
+    "akkMehrdeutig": 1,
+    "anders": 3
+   }
+  },
+  "handy:xOj7uhi3w80": {
+   "R": {
+    "toene": 202,
+    "unmoeglich": 0,
+    "folgen": 169,
+    "folgenAnders": 16,
+    "lang": 88,
+    "langAnders": 6,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   },
+   "L": {
+    "toene": 58,
+    "unmoeglich": 0,
+    "folgen": 54,
+    "folgenAnders": 0,
+    "lang": 50,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:5OwchavoI0s": {
+   "R": {
+    "toene": 580,
+    "unmoeglich": 0,
+    "folgen": 276,
+    "folgenAnders": 24,
+    "lang": 136,
+    "langAnders": 6,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   },
+   "L": {
+    "toene": 468,
+    "unmoeglich": 0,
+    "folgen": 231,
+    "folgenAnders": 26,
+    "lang": 177,
+    "langAnders": 29,
+    "akkMehrdeutig": 5,
+    "anders": 29
+   }
+  },
+  "handy:GBdqm09XWbQ": {
+   "R": {
+    "toene": 1018,
+    "unmoeglich": 0,
+    "folgen": 311,
+    "folgenAnders": 22,
+    "lang": 214,
+    "langAnders": 13,
+    "akkMehrdeutig": 6,
+    "anders": 36
+   },
+   "L": {
+    "toene": 439,
+    "unmoeglich": 0,
+    "folgen": 157,
+    "folgenAnders": 0,
+    "lang": 139,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:PufbzTlHfWY": {
+   "R": {
+    "toene": 558,
+    "unmoeglich": 0,
+    "folgen": 383,
+    "folgenAnders": 9,
+    "lang": 359,
+    "langAnders": 10,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   },
+   "L": {
+    "toene": 347,
+    "unmoeglich": 0,
+    "folgen": 118,
+    "folgenAnders": 3,
+    "lang": 74,
+    "langAnders": 2,
+    "akkMehrdeutig": 2,
+    "anders": 5
+   }
+  },
+  "handy:8MmOMEcZrz4": {
+   "R": {
+    "toene": 912,
+    "unmoeglich": 0,
+    "folgen": 601,
+    "folgenAnders": 41,
+    "lang": 536,
+    "langAnders": 35,
+    "akkMehrdeutig": 1,
+    "anders": 22
+   },
+   "L": {
+    "toene": 1443,
+    "unmoeglich": 0,
+    "folgen": 418,
+    "folgenAnders": 2,
+    "lang": 274,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   }
+  },
+  "handy:sBnPmRPAyBI": {
+   "R": {
+    "toene": 1019,
+    "unmoeglich": 0,
+    "folgen": 490,
+    "folgenAnders": 4,
+    "lang": 379,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   },
+   "L": {
+    "toene": 1219,
+    "unmoeglich": 0,
+    "folgen": 414,
+    "folgenAnders": 47,
+    "lang": 335,
+    "langAnders": 68,
+    "akkMehrdeutig": 6,
+    "anders": 49
+   }
+  },
+  "handy:V7dy35ovtj0": {
+   "R": {
+    "toene": 1252,
+    "unmoeglich": 0,
+    "folgen": 504,
+    "folgenAnders": 62,
+    "lang": 257,
+    "langAnders": 36,
+    "akkMehrdeutig": 6,
+    "anders": 48
+   },
+   "L": {
+    "toene": 1048,
+    "unmoeglich": 0,
+    "folgen": 124,
+    "folgenAnders": 29,
+    "lang": 39,
+    "langAnders": 13,
+    "akkMehrdeutig": 11,
+    "anders": 16
+   }
+  },
+  "handy:_3MNRYZWpmU": {
+   "R": {
+    "toene": 547,
+    "unmoeglich": 0,
+    "folgen": 345,
+    "folgenAnders": 15,
+    "lang": 218,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 4
+   },
+   "L": {
+    "toene": 462,
+    "unmoeglich": 0,
+    "folgen": 270,
+    "folgenAnders": 9,
+    "lang": 249,
+    "langAnders": 12,
+    "akkMehrdeutig": 3,
+    "anders": 20
+   }
+  },
+  "handy:Kg8zA6sM85U": {
+   "R": {
+    "toene": 1029,
+    "unmoeglich": 0,
+    "folgen": 474,
+    "folgenAnders": 22,
+    "lang": 321,
+    "langAnders": 17,
+    "akkMehrdeutig": 6,
+    "anders": 40
+   },
+   "L": {
+    "toene": 829,
+    "unmoeglich": 0,
+    "folgen": 199,
+    "folgenAnders": 17,
+    "lang": 68,
+    "langAnders": 12,
+    "akkMehrdeutig": 4,
+    "anders": 8
+   }
+  },
+  "handy:pR19Z4_jpLI": {
+   "R": {
+    "toene": 1000,
+    "unmoeglich": 0,
+    "folgen": 543,
+    "folgenAnders": 20,
+    "lang": 363,
+    "langAnders": 19,
+    "akkMehrdeutig": 0,
+    "anders": 14
+   },
+   "L": {
+    "toene": 1052,
+    "unmoeglich": 0,
+    "folgen": 322,
+    "folgenAnders": 41,
+    "lang": 283,
+    "langAnders": 15,
+    "akkMehrdeutig": 2,
+    "anders": 143
+   }
+  },
+  "handy:3Sp4dW-JdJE": {
+   "R": {
+    "toene": 588,
+    "unmoeglich": 0,
+    "folgen": 375,
+    "folgenAnders": 19,
+    "lang": 251,
+    "langAnders": 16,
+    "akkMehrdeutig": 2,
+    "anders": 26
+   },
+   "L": {
+    "toene": 632,
+    "unmoeglich": 0,
+    "folgen": 506,
+    "folgenAnders": 6,
+    "lang": 471,
+    "langAnders": 5,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   }
+  },
+  "handy:SdijhNhiq3s": {
+   "R": {
+    "toene": 275,
+    "unmoeglich": 0,
+    "folgen": 185,
+    "folgenAnders": 27,
+    "lang": 89,
+    "langAnders": 10,
+    "akkMehrdeutig": 0,
+    "anders": 16
+   },
+   "L": {
+    "toene": 192,
+    "unmoeglich": 0,
+    "folgen": 79,
+    "folgenAnders": 2,
+    "lang": 42,
+    "langAnders": 2,
+    "akkMehrdeutig": 2,
+    "anders": 1
+   }
+  },
+  "handy:0iqbVD-VW4c": {
+   "R": {
+    "toene": 319,
+    "unmoeglich": 0,
+    "folgen": 15,
+    "folgenAnders": 3,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 6,
+    "anders": 19
+   },
+   "L": {
+    "toene": 276,
+    "unmoeglich": 0,
+    "folgen": 104,
+    "folgenAnders": 12,
+    "lang": 19,
+    "langAnders": 0,
+    "akkMehrdeutig": 2,
+    "anders": 4
+   }
+  },
+  "handy:tOpdCxy7N5M": {
+   "R": {
+    "toene": 123,
+    "unmoeglich": 0,
+    "folgen": 97,
+    "folgenAnders": 0,
+    "lang": 85,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 42,
+    "unmoeglich": 0,
+    "folgen": 25,
+    "folgenAnders": 0,
+    "lang": 12,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:wWUPmUOpegY": {
+   "R": {
+    "toene": 702,
+    "unmoeglich": 0,
+    "folgen": 421,
+    "folgenAnders": 60,
+    "lang": 331,
+    "langAnders": 46,
+    "akkMehrdeutig": 0,
+    "anders": 47
+   },
+   "L": {
+    "toene": 895,
+    "unmoeglich": 0,
+    "folgen": 731,
+    "folgenAnders": 26,
+    "lang": 673,
+    "langAnders": 17,
+    "akkMehrdeutig": 0,
+    "anders": 17
+   }
+  },
+  "handy:YzNPnhc0f0E": {
+   "R": {
+    "toene": 241,
+    "unmoeglich": 0,
+    "folgen": 216,
+    "folgenAnders": 0,
+    "lang": 195,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 73,
+    "unmoeglich": 0,
+    "folgen": 51,
+    "folgenAnders": 0,
+    "lang": 32,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:-rsmIxbHUik": {
+   "R": {
+    "toene": 280,
+    "unmoeglich": 0,
+    "folgen": 223,
+    "folgenAnders": 12,
+    "lang": 188,
+    "langAnders": 7,
+    "akkMehrdeutig": 0,
+    "anders": 10
+   },
+   "L": {
+    "toene": 83,
+    "unmoeglich": 0,
+    "folgen": 48,
+    "folgenAnders": 1,
+    "lang": 36,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:RgMoK2SUEyw": {
+   "R": {
+    "toene": 185,
+    "unmoeglich": 0,
+    "folgen": 117,
+    "folgenAnders": 8,
+    "lang": 48,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 202,
+    "unmoeglich": 0,
+    "folgen": 185,
+    "folgenAnders": 0,
+    "lang": 157,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:TdacNfWymGQ": {
+   "R": {
+    "toene": 589,
+    "unmoeglich": 0,
+    "folgen": 430,
+    "folgenAnders": 22,
+    "lang": 381,
+    "langAnders": 15,
+    "akkMehrdeutig": 0,
+    "anders": 10
+   },
+   "L": {
+    "toene": 456,
+    "unmoeglich": 0,
+    "folgen": 273,
+    "folgenAnders": 10,
+    "lang": 265,
+    "langAnders": 18,
+    "akkMehrdeutig": 4,
+    "anders": 35
+   }
+  },
+  "handy:N23HHa0LJ5U": {
+   "R": {
+    "toene": 396,
+    "unmoeglich": 0,
+    "folgen": 205,
+    "folgenAnders": 16,
+    "lang": 152,
+    "langAnders": 6,
+    "akkMehrdeutig": 0,
+    "anders": 6
+   },
+   "L": {
+    "toene": 393,
+    "unmoeglich": 0,
+    "folgen": 360,
+    "folgenAnders": 8,
+    "lang": 333,
+    "langAnders": 16,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   }
+  },
+  "handy:D2WOWFi_Oxw": {
+   "R": {
+    "toene": 484,
+    "unmoeglich": 0,
+    "folgen": 279,
+    "folgenAnders": 36,
+    "lang": 202,
+    "langAnders": 24,
+    "akkMehrdeutig": 0,
+    "anders": 34
+   },
+   "L": {
+    "toene": 732,
+    "unmoeglich": 0,
+    "folgen": 380,
+    "folgenAnders": 20,
+    "lang": 235,
+    "langAnders": 8,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   }
+  },
+  "handy:gUuZIBKlbPU": {
+   "R": {
+    "toene": 509,
+    "unmoeglich": 0,
+    "folgen": 217,
+    "folgenAnders": 2,
+    "lang": 109,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   },
+   "L": {
+    "toene": 710,
+    "unmoeglich": 0,
+    "folgen": 536,
+    "folgenAnders": 52,
+    "lang": 463,
+    "langAnders": 64,
+    "akkMehrdeutig": 0,
+    "anders": 38
+   }
+  },
+  "handy:0qyOH7Xt0pk": {
+   "R": {
+    "toene": 1416,
+    "unmoeglich": 0,
+    "folgen": 520,
+    "folgenAnders": 13,
+    "lang": 323,
+    "langAnders": 13,
+    "akkMehrdeutig": 13,
+    "anders": 44
+   },
+   "L": {
+    "toene": 2616,
+    "unmoeglich": 0,
+    "folgen": 654,
+    "folgenAnders": 69,
+    "lang": 600,
+    "langAnders": 69,
+    "akkMehrdeutig": 0,
+    "anders": 52
+   }
+  },
+  "handy:HQozceVazhI": {
+   "R": {
+    "toene": 476,
+    "unmoeglich": 0,
+    "folgen": 247,
+    "folgenAnders": 29,
+    "lang": 136,
+    "langAnders": 13,
+    "akkMehrdeutig": 2,
+    "anders": 14
+   },
+   "L": {
+    "toene": 364,
+    "unmoeglich": 0,
+    "folgen": 123,
+    "folgenAnders": 3,
+    "lang": 85,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:L_uwufdfKLg": {
+   "R": {
+    "toene": 594,
+    "unmoeglich": 0,
+    "folgen": 344,
+    "folgenAnders": 11,
+    "lang": 253,
+    "langAnders": 7,
+    "akkMehrdeutig": 0,
+    "anders": 7
+   },
+   "L": {
+    "toene": 549,
+    "unmoeglich": 0,
+    "folgen": 280,
+    "folgenAnders": 7,
+    "lang": 223,
+    "langAnders": 7,
+    "akkMehrdeutig": 1,
+    "anders": 7
+   }
+  },
+  "handy:QwKbNj0OJSg": {
+   "R": {
+    "toene": 552,
+    "unmoeglich": 0,
+    "folgen": 210,
+    "folgenAnders": 5,
+    "lang": 103,
+    "langAnders": 3,
+    "akkMehrdeutig": 4,
+    "anders": 20
+   },
+   "L": {
+    "toene": 681,
+    "unmoeglich": 0,
+    "folgen": 338,
+    "folgenAnders": 50,
+    "lang": 256,
+    "langAnders": 35,
+    "akkMehrdeutig": 6,
+    "anders": 32
+   }
+  },
+  "handy:9PbxTdTkNnc": {
+   "R": {
+    "toene": 607,
+    "unmoeglich": 0,
+    "folgen": 408,
+    "folgenAnders": 7,
+    "lang": 327,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   },
+   "L": {
+    "toene": 549,
+    "unmoeglich": 0,
+    "folgen": 167,
+    "folgenAnders": 0,
+    "lang": 129,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 2
+   }
+  },
+  "handy:Lh8A9Pugwgw": {
+   "R": {
+    "toene": 183,
+    "unmoeglich": 0,
+    "folgen": 0,
+    "folgenAnders": 0,
+    "lang": 0,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 2172,
+    "unmoeglich": 0,
+    "folgen": 59,
+    "folgenAnders": 8,
+    "lang": 12,
+    "langAnders": 4,
+    "akkMehrdeutig": 13,
+    "anders": 5
+   }
+  },
+  "handy:2FeFGvxKYeQ": {
+   "R": {
+    "toene": 826,
+    "unmoeglich": 0,
+    "folgen": 444,
+    "folgenAnders": 20,
+    "lang": 331,
+    "langAnders": 10,
+    "akkMehrdeutig": 1,
+    "anders": 26
+   },
+   "L": {
+    "toene": 558,
+    "unmoeglich": 0,
+    "folgen": 248,
+    "folgenAnders": 0,
+    "lang": 179,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:CN_G21YPmIA": {
+   "R": {
+    "toene": 869,
+    "unmoeglich": 0,
+    "folgen": 561,
+    "folgenAnders": 14,
+    "lang": 485,
+    "langAnders": 7,
+    "akkMehrdeutig": 0,
+    "anders": 7
+   },
+   "L": {
+    "toene": 602,
+    "unmoeglich": 0,
+    "folgen": 257,
+    "folgenAnders": 21,
+    "lang": 124,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 3
+   }
+  },
+  "handy:Uvyw6d_O-pM": {
+   "R": {
+    "toene": 893,
+    "unmoeglich": 0,
+    "folgen": 478,
+    "folgenAnders": 1,
+    "lang": 379,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 1148,
+    "unmoeglich": 0,
+    "folgen": 351,
+    "folgenAnders": 2,
+    "lang": 234,
+    "langAnders": 1,
+    "akkMehrdeutig": 1,
+    "anders": 11
+   }
+  },
+  "handy:q6HM_Qoo85w": {
+   "R": {
+    "toene": 1178,
+    "unmoeglich": 0,
+    "folgen": 729,
+    "folgenAnders": 58,
+    "lang": 654,
+    "langAnders": 24,
+    "akkMehrdeutig": 1,
+    "anders": 19
+   },
+   "L": {
+    "toene": 1601,
+    "unmoeglich": 0,
+    "folgen": 506,
+    "folgenAnders": 0,
+    "lang": 408,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:7vlj8Jceiqo": {
+   "R": {
+    "toene": 364,
+    "unmoeglich": 0,
+    "folgen": 289,
+    "folgenAnders": 4,
+    "lang": 233,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   },
+   "L": {
+    "toene": 501,
+    "unmoeglich": 0,
+    "folgen": 192,
+    "folgenAnders": 0,
+    "lang": 124,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "handy:BVgQCW087ak": {
+   "R": {
+    "toene": 1215,
+    "unmoeglich": 0,
+    "folgen": 585,
+    "folgenAnders": 12,
+    "lang": 454,
+    "langAnders": 3,
+    "akkMehrdeutig": 4,
+    "anders": 12
+   },
+   "L": {
+    "toene": 1194,
+    "unmoeglich": 0,
+    "folgen": 631,
+    "folgenAnders": 52,
+    "lang": 545,
+    "langAnders": 39,
+    "akkMehrdeutig": 7,
+    "anders": 51
+   }
+  },
+  "echt:fly_me": {
+   "R": {
+    "toene": 81,
+    "unmoeglich": 0,
+    "folgen": 59,
+    "folgenAnders": 2,
+    "lang": 50,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 32,
+    "unmoeglich": 0,
+    "folgen": 20,
+    "folgenAnders": 0,
+    "lang": 6,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "echt:fuer_elise": {
+   "R": {
+    "toene": 123,
+    "unmoeglich": 0,
+    "folgen": 97,
+    "folgenAnders": 0,
+    "lang": 85,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 42,
+    "unmoeglich": 0,
+    "folgen": 25,
+    "folgenAnders": 0,
+    "lang": 12,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:asd_culture_code_karra_make_me_move": {
+   "R": {
+    "toene": 372,
+    "unmoeglich": 0,
+    "folgen": 309,
+    "folgenAnders": 6,
+    "lang": 280,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   },
+   "L": {
+    "toene": 520,
+    "unmoeglich": 0,
+    "folgen": 210,
+    "folgenAnders": 0,
+    "lang": 194,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:asd_kovan_electro_light_skyline": {
+   "R": {
+    "toene": 916,
+    "unmoeglich": 0,
+    "folgen": 661,
+    "folgenAnders": 18,
+    "lang": 644,
+    "langAnders": 12,
+    "akkMehrdeutig": 0,
+    "anders": 12
+   },
+   "L": {
+    "toene": 1692,
+    "unmoeglich": 0,
+    "folgen": 558,
+    "folgenAnders": 0,
+    "lang": 550,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:asd_thefatrat_anjulie_fly_away": {
+   "R": {
+    "toene": 558,
+    "unmoeglich": 0,
+    "folgen": 400,
+    "folgenAnders": 10,
+    "lang": 379,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   },
+   "L": {
+    "toene": 353,
+    "unmoeglich": 0,
+    "folgen": 122,
+    "folgenAnders": 3,
+    "lang": 84,
+    "langAnders": 2,
+    "akkMehrdeutig": 1,
+    "anders": 3
+   }
+  },
+  "midi:asd_thefatrat_laura_brehm_we_ll_meet_again": {
+   "R": {
+    "toene": 649,
+    "unmoeglich": 0,
+    "folgen": 418,
+    "folgenAnders": 7,
+    "lang": 372,
+    "langAnders": 4,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   },
+   "L": {
+    "toene": 593,
+    "unmoeglich": 0,
+    "folgen": 367,
+    "folgenAnders": 9,
+    "lang": 340,
+    "langAnders": 11,
+    "akkMehrdeutig": 1,
+    "anders": 10
+   }
+  },
+  "midi:asd_tobu_calling": {
+   "R": {
+    "toene": 866,
+    "unmoeglich": 0,
+    "folgen": 522,
+    "folgenAnders": 15,
+    "lang": 488,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 15
+   },
+   "L": {
+    "toene": 633,
+    "unmoeglich": 0,
+    "folgen": 327,
+    "folgenAnders": 0,
+    "lang": 317,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:asd_tobu_itro_cloud_9": {
+   "R": {
+    "toene": 1216,
+    "unmoeglich": 0,
+    "folgen": 786,
+    "folgenAnders": 48,
+    "lang": 762,
+    "langAnders": 8,
+    "akkMehrdeutig": 0,
+    "anders": 8
+   },
+   "L": {
+    "toene": 1742,
+    "unmoeglich": 0,
+    "folgen": 577,
+    "folgenAnders": 0,
+    "lang": 563,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:asd_tobu_itro_sunburst": {
+   "R": {
+    "toene": 948,
+    "unmoeglich": 0,
+    "folgen": 543,
+    "folgenAnders": 2,
+    "lang": 519,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 1366,
+    "unmoeglich": 0,
+    "folgen": 453,
+    "folgenAnders": 2,
+    "lang": 432,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   }
+  },
+  "midi:asd_tobu_jordan_kelvin_james_summer_breeze": {
+   "R": {
+    "toene": 888,
+    "unmoeglich": 0,
+    "folgen": 578,
+    "folgenAnders": 21,
+    "lang": 527,
+    "langAnders": 4,
+    "akkMehrdeutig": 0,
+    "anders": 4
+   },
+   "L": {
+    "toene": 744,
+    "unmoeglich": 0,
+    "folgen": 320,
+    "folgenAnders": 6,
+    "lang": 296,
+    "langAnders": 5,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   }
+  },
+  "midi:augusto_fka_twigs_cellophane": {
+   "R": {
+    "toene": 278,
+    "unmoeglich": 0,
+    "folgen": 195,
+    "folgenAnders": 20,
+    "lang": 113,
+    "langAnders": 11,
+    "akkMehrdeutig": 0,
+    "anders": 25
+   },
+   "L": {
+    "toene": 211,
+    "unmoeglich": 0,
+    "folgen": 95,
+    "folgenAnders": 1,
+    "lang": 46,
+    "langAnders": 1,
+    "akkMehrdeutig": 1,
+    "anders": 0
+   }
+  },
+  "midi:avn_cadmium_jon_becker_melody": {
+   "R": {
+    "toene": 613,
+    "unmoeglich": 0,
+    "folgen": 428,
+    "folgenAnders": 6,
+    "lang": 351,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   },
+   "L": {
+    "toene": 544,
+    "unmoeglich": 0,
+    "folgen": 181,
+    "folgenAnders": 0,
+    "lang": 166,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:avn_jim_yosef_rogue": {
+   "R": {
+    "toene": 1011,
+    "unmoeglich": 0,
+    "folgen": 698,
+    "folgenAnders": 22,
+    "lang": 640,
+    "langAnders": 15,
+    "akkMehrdeutig": 0,
+    "anders": 16
+   },
+   "L": {
+    "toene": 1056,
+    "unmoeglich": 0,
+    "folgen": 348,
+    "folgenAnders": 0,
+    "lang": 340,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:bgph_jim_yosef_firefly_pt_ii": {
+   "R": {
+    "toene": 1071,
+    "unmoeglich": 0,
+    "folgen": 558,
+    "folgenAnders": 3,
+    "lang": 516,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   },
+   "L": {
+    "toene": 1229,
+    "unmoeglich": 0,
+    "folgen": 403,
+    "folgenAnders": 0,
+    "lang": 371,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:cp_clean_bandit_symphony": {
+   "R": {
+    "toene": 832,
+    "unmoeglich": 0,
+    "folgen": 430,
+    "folgenAnders": 12,
+    "lang": 301,
+    "langAnders": 7,
+    "akkMehrdeutig": 4,
+    "anders": 18
+   },
+   "L": {
+    "toene": 925,
+    "unmoeglich": 0,
+    "folgen": 303,
+    "folgenAnders": 13,
+    "lang": 226,
+    "langAnders": 5,
+    "akkMehrdeutig": 5,
+    "anders": 11
+   }
+  },
+  "midi:cp_maroon_5_memories": {
+   "R": {
+    "toene": 601,
+    "unmoeglich": 0,
+    "folgen": 412,
+    "folgenAnders": 28,
+    "lang": 326,
+    "langAnders": 14,
+    "akkMehrdeutig": 0,
+    "anders": 15
+   },
+   "L": {
+    "toene": 453,
+    "unmoeglich": 0,
+    "folgen": 273,
+    "folgenAnders": 1,
+    "lang": 265,
+    "langAnders": 1,
+    "akkMehrdeutig": 3,
+    "anders": 26
+   }
+  },
+  "midi:cp_the_chainsmokers_coldplay_something_just_like_this": {
+   "R": {
+    "toene": 844,
+    "unmoeglich": 0,
+    "folgen": 614,
+    "folgenAnders": 44,
+    "lang": 480,
+    "langAnders": 15,
+    "akkMehrdeutig": 0,
+    "anders": 16
+   },
+   "L": {
+    "toene": 1476,
+    "unmoeglich": 0,
+    "folgen": 540,
+    "folgenAnders": 0,
+    "lang": 499,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:cp_thefatrat_anjulie_fly_away": {
+   "R": {
+    "toene": 558,
+    "unmoeglich": 0,
+    "folgen": 400,
+    "folgenAnders": 10,
+    "lang": 379,
+    "langAnders": 2,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   },
+   "L": {
+    "toene": 353,
+    "unmoeglich": 0,
+    "folgen": 122,
+    "folgenAnders": 3,
+    "lang": 84,
+    "langAnders": 2,
+    "akkMehrdeutig": 1,
+    "anders": 3
+   }
+  },
+  "midi:cp_wiz_khalifa_charlie_puth_see_you_again": {
+   "R": {
+    "toene": 1031,
+    "unmoeglich": 0,
+    "folgen": 318,
+    "folgenAnders": 20,
+    "lang": 226,
+    "langAnders": 1,
+    "akkMehrdeutig": 7,
+    "anders": 27
+   },
+   "L": {
+    "toene": 435,
+    "unmoeglich": 0,
+    "folgen": 166,
+    "folgenAnders": 0,
+    "lang": 154,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:cp_your_name_sparkle": {
+   "R": {
+    "toene": 1922,
+    "unmoeglich": 1,
+    "folgen": 937,
+    "folgenAnders": 81,
+    "lang": 766,
+    "langAnders": 50,
+    "akkMehrdeutig": 13,
+    "anders": 78
+   },
+   "L": {
+    "toene": 1193,
+    "unmoeglich": 0,
+    "folgen": 465,
+    "folgenAnders": 81,
+    "lang": 340,
+    "langAnders": 17,
+    "akkMehrdeutig": 8,
+    "anders": 40
+   }
+  },
+  "midi:flaming_pianoforever_test_piece": {
+   "R": {
+    "toene": 267,
+    "unmoeglich": 0,
+    "folgen": 93,
+    "folgenAnders": 7,
+    "lang": 67,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   },
+   "L": {
+    "toene": 215,
+    "unmoeglich": 0,
+    "folgen": 173,
+    "folgenAnders": 21,
+    "lang": 149,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:fmm_cadmium_jon_becker_melody": {
+   "R": {
+    "toene": 778,
+    "unmoeglich": 0,
+    "folgen": 388,
+    "folgenAnders": 26,
+    "lang": 303,
+    "langAnders": 10,
+    "akkMehrdeutig": 7,
+    "anders": 28
+   },
+   "L": {
+    "toene": 547,
+    "unmoeglich": 0,
+    "folgen": 305,
+    "folgenAnders": 19,
+    "lang": 279,
+    "langAnders": 11,
+    "akkMehrdeutig": 3,
+    "anders": 14
+   }
+  },
+  "midi:fmm_lost_sky_where_we_started": {
+   "R": {
+    "toene": 1802,
+    "unmoeglich": 0,
+    "folgen": 458,
+    "folgenAnders": 25,
+    "lang": 350,
+    "langAnders": 19,
+    "akkMehrdeutig": 11,
+    "anders": 98
+   },
+   "L": {
+    "toene": 1458,
+    "unmoeglich": 0,
+    "folgen": 386,
+    "folgenAnders": 45,
+    "lang": 317,
+    "langAnders": 40,
+    "akkMehrdeutig": 11,
+    "anders": 80
+   }
+  },
+  "midi:fpt_alan_walker_faded": {
+   "R": {
+    "toene": 505,
+    "unmoeglich": 0,
+    "folgen": 355,
+    "folgenAnders": 10,
+    "lang": 252,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 6
+   },
+   "L": {
+    "toene": 1107,
+    "unmoeglich": 0,
+    "folgen": 364,
+    "folgenAnders": 1,
+    "lang": 320,
+    "langAnders": 1,
+    "akkMehrdeutig": 1,
+    "anders": 3
+   }
+  },
+  "midi:fpt_bts_dynamite": {
+   "R": {
+    "toene": 660,
+    "unmoeglich": 0,
+    "folgen": 536,
+    "folgenAnders": 57,
+    "lang": 403,
+    "langAnders": 15,
+    "akkMehrdeutig": 1,
+    "anders": 37
+   },
+   "L": {
+    "toene": 720,
+    "unmoeglich": 0,
+    "folgen": 287,
+    "folgenAnders": 0,
+    "lang": 242,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:fpt_katy_perry_roar": {
+   "R": {
+    "toene": 208,
+    "unmoeglich": 0,
+    "folgen": 185,
+    "folgenAnders": 18,
+    "lang": 120,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 3
+   },
+   "L": {
+    "toene": 57,
+    "unmoeglich": 0,
+    "folgen": 54,
+    "folgenAnders": 0,
+    "lang": 50,
+    "langAnders": 0,
+    "akkMehrdeutig": 0,
+    "anders": 0
+   }
+  },
+  "midi:fpt_lauren_daigle_you_say": {
+   "R": {
+    "toene": 513,
+    "unmoeglich": 0,
+    "folgen": 221,
+    "folgenAnders": 3,
+    "lang": 115,
+    "langAnders": 1,
+    "akkMehrdeutig": 0,
+    "anders": 1
+   },
+   "L": {
+    "toene": 708,
+    "unmoeglich": 0,
+    "folgen": 536,
+    "folgenAnders": 37,
+    "lang": 463,
+    "langAnders": 42,
+    "akkMehrdeutig": 0,
+    "anders": 31
+   }
+  },
+  "midi:fpt_maroon_5_memories": {
+   "R": {
+    "toene": 591,
+    "unmoeglich": 0,
+    "folgen": 438,
+    "folgenAnders": 18,
+    "lang": 393,
+    "langAnders": 7,
+    "akkMehrdeutig": 0,
+    "anders": 9
+   },
+   "L": {
+    "toene": 453,
+    "unmoeglich": 0,
+    "folgen": 273,
+    "folgenAnders": 1,
+    "lang": 265,
+    "langAnders": 1,
+    "akkMehrdeutig": 3,
+    "anders": 26
+   }
+  },
+  "midi:fpt_the_greatest_showman_a_million_dreams": {
+   "R": {
+    "toene": 647,
+    "unmoeglich": 0,
+    "folgen": 340,
+    "folgenAnders": 18,
+    "lang": 246,
+    "langAnders": 6,
+    "akkMehrdeutig": 0,
+    "anders": 6
+   },
+   "L": {
+    "toene": 1118,
+    "unmoeglich": 0,
+    "folgen": 819,
+    "folgenAnders": 26,
+    "lang": 750,
+    "langAnders": 15,
+    "akkMehrdeutig": 0,
+    "anders": 12
+   }
+  },
+  "midi:fpt_the_greatest_showman_never_enough": {
+   "R": {
+    "toene": 398,
+    "unmoeglich": 0,
+    "folgen": 205,
+    "folgenAnders": 16,
+    "lang": 152,
+    "langAnders": 6,
+    "akkMehrdeutig": 0,
+    "anders": 6
+   },
+   "L": {
+    "toene": 392,
+    "unmoeglich": 0,
+    "folgen": 360,
+    "folgenAnders": 8,
+    "lang": 333,
+    "langAnders": 16,
+    "akkMehrdeutig": 0,
+    "anders": 2
+   }
+  },
+  "midi:fpt_we_the_kings_sad_song": {
+   "R": {
+    "toene": 484,
+    "unmoeglich": 0,
+    "folgen": 279,
+    "folgenAnders": 36,
+    "lang": 202,
+    "langAnders": 24,
+    "akkMehrdeutig": 0,
+    "anders": 34
+   },
+   "L": {
+    "toene": 732,
+    "unmoeglich": 0,
+    "folgen": 380,
+    "folgenAnders": 20,
+    "lang": 235,
+    "langAnders": 8,
+    "akkMehrdeutig": 0,
+    "anders": 5
+   }
+  },
+  "midi:gt_axol_alex_skrindo_you": {
+   "R": {
+    "toene": 1700,
+    "unmoeglich": 0,
+    "folgen": 614,
+    "folgenAnders": 38,
+    "lang": 449,
+    "langAnders": 7,
+    "akkMehrdeutig": 15,
+    "anders": 52
+   },
+   "L": {
+    "toene": 1019,
+    "unmoeglich": 0,
+    "folgen": 368,
+    "folgenAnders": 13,
+    "lang": 247,
+    "langAnders": 3,
+    "akkMehrdeutig": 13,
+    "anders": 34
+   }
+  },
+  "midi:gt_jim_yosef_anna_yvette_can_t_wait": {
+   "R": {
+    "toene": 2244,
+    "unmoeglich": 0,
+    "folgen": 828,
+    "folgenAnders": 18,
+    "lang": 690,
+    "langAnders": 0,
+    "akkMehrdeutig": 14,
+    "anders": 63
+   },
+   "L": {
+    "toene": 1887,
+    "unmoeglich": 0,
+    "folgen": 636,
+    "folgenAnders": 54,
+    "lang": 583,
+    "langAnders": 50,
+    "akkMehrdeutig": 2,
+    "anders": 40
+   }
+  },
+  "midi:kk_maroon_5_memories": {
+   "R": {
+    "toene": 591,
+    "unmoeglich": 0,
+    "folgen": 438,
+    "folgenAnders": 18,
+    "lang": 393,
+    "langAnders": 7,
+    "akkMehrdeutig": 0,
+    "anders": 9
+   },
+   "L": {
+    "toene": 453,
+    "unmoeglich": 0,
+    "folgen": 273,
+    "folgenAnders": 1,
+    "lang": 265,
+    "langAnders": 1,
+    "akkMehrdeutig": 3,
+    "anders": 26
+   }
+  },
+  "midi:mk_maroon_5_memories": {
+   "R": {
+    "toene": 590,
+    "unmoeglich": 0,
+    "folgen": 432,
+    "folgenAnders": 20,
+    "lang": 378,
+    "langAnders": 9,
+    "akkMehrdeutig": 0,
+    "anders": 11
+   },
+   "L": {
+    "toene": 453,
+    "unmoeglich": 0,
+    "folgen": 273,
+    "folgenAnders": 1,
+    "lang": 265,
+    "langAnders": 1,
+    "akkMehrdeutig": 3,
+    "anders": 26
+   }
+  },
+  "midi:nn_diviners_contacreast_tropic_love": {
+   "R": {
+    "toene": 1649,
+    "unmoeglich": 0,
+    "folgen": 716,
+    "folgenAnders": 29,
+    "lang": 586,
+    "langAnders": 10,
+    "akkMehrdeutig": 8,
+    "anders": 56
+   },
+   "L": {
+    "toene": 1065,
+    "unmoeglich": 0,
+    "folgen": 530,
+    "folgenAnders": 33,
+    "lang": 421,
+    "langAnders": 29,
+    "akkMehrdeutig": 4,
+    "anders": 62
+   }
+  },
+  "midi:pm_bts_permission_to_dance": {
+   "R": {
+    "toene": 1045,
+    "unmoeglich": 0,
+    "folgen": 123,
+    "folgenAnders": 17,
+    "lang": 9,
+    "langAnders": 3,
+    "akkMehrdeutig": 16,
+    "anders": 145
+   },
+   "L": {
+    "toene": 728,
+    "unmoeglich": 0,
+    "folgen": 88,
+    "folgenAnders": 17,
+    "lang": 12,
+    "langAnders": 4,
+    "akkMehrdeutig": 7,
+    "anders": 27
+   }
+  },
+  "midi:pt_shaun_way_back_home": {
+   "R": {
+    "toene": 607,
+    "unmoeglich": 0,
+    "folgen": 424,
+    "folgenAnders": 24,
+    "lang": 338,
+    "langAnders": 29,
+    "akkMehrdeutig": 2,
+    "anders": 36
+   },
+   "L": {
+    "toene": 637,
+    "unmoeglich": 0,
+    "folgen": 513,
+    "folgenAnders": 4,
+    "lang": 487,
+    "langAnders": 3,
+    "akkMehrdeutig": 0,
+    "anders": 3
+   }
+  },
+  "midi:sn_thefatrat_unity": {
+   "R": {
+    "toene": 2803,
+    "unmoeglich": 0,
+    "folgen": 778,
+    "folgenAnders": 114,
+    "lang": 607,
+    "langAnders": 73,
+    "akkMehrdeutig": 21,
+    "anders": 240
+   },
+   "L": {
+    "toene": 3438,
+    "unmoeglich": 0,
+    "folgen": 718,
+    "folgenAnders": 18,
+    "lang": 568,
+    "langAnders": 7,
+    "akkMehrdeutig": 26,
+    "anders": 170
+   }
+  },
+  "midi:ss_justin_bieber_love_yourself": {
+   "R": {
+    "toene": 939,
+    "unmoeglich": 0,
+    "folgen": 384,
+    "folgenAnders": 13,
+    "lang": 275,
+    "langAnders": 2,
+    "akkMehrdeutig": 4,
+    "anders": 74
+   },
+   "L": {
+    "toene": 521,
+    "unmoeglich": 0,
+    "folgen": 343,
+    "folgenAnders": 2,
+    "lang": 310,
+    "langAnders": 0,
+    "akkMehrdeutig": 1,
+    "anders": 8
+   }
+  },
+  "midi:tfrm_thefatrat_jackpot": {
+   "R": {
+    "toene": 880,
+    "unmoeglich": 0,
+    "folgen": 715,
+    "folgenAnders": 48,
+    "lang": 642,
+    "langAnders": 25,
+    "akkMehrdeutig": 0,
+    "anders": 17
+   },
+   "L": {
+    "toene": 1296,
+    "unmoeglich": 0,
+    "folgen": 573,
+    "folgenAnders": 25,
+    "lang": 448,
+    "langAnders": 4,
+    "akkMehrdeutig": 11,
+    "anders": 147
+   }
+  }
+ }
+}

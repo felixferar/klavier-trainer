@@ -5,3 +5,4 @@ local.properties
 *.iml
 KlavierTrainer.apk
 __pycache__/
+tools/bench/fixtures/finger_handy.json
