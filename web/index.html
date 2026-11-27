@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.69</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.70</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3753,11 +3753,16 @@ if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.
   else if(R.demo){c.strokeStyle=C.demo;c.lineWidth=3;c.strokeRect(1.5,1.5,p.w-3,hy-9)}
   else if(!R.done){c.strokeStyle=wc;c.lineWidth=gold?3:2;c.strokeRect(1.5,1.5,p.w-3,hy-9)}
   const lit=new Map();if(R.demo)for(const n of R.ns)if(n.start<=R.demo.t&&R.demo.t<=n.start+n.dur)lit.set(n.midi,C.demo);
-  for(const [m,t] of R.good)if(now-t<350)lit.set(m,C.ok);for(const [m,t] of R.bad)if(now-t<600)lit.set(m,C.bad);
+  /* v5.70 (Felix 27.11.: „wenn ich Tasten gedrückt halte, sollen sie in der App auch gedrückt bleiben – grün oder rot“): Bisher blitzte die Taste nur kurz auf
+     (richtig 0,35 s, falsch 0,6 s), auch wenn der Finger liegen blieb. Jetzt bleibt sie gefärbt, solange die Taste am Klavier gehalten wird (KB.held); nach dem Loslassen
+     klingt die Farbe wie bisher kurz nach. Ohne Klavier-Verbindung (Mikrofon) bleibt es beim kurzen Aufblitzen. */
+  const zlHeld=(m,t0)=>KB.held.has(m)&&t0>=(KB.rel.get(m)||0);
+  const zlGlow=(m,t0)=>{const r=KB.rel.get(m)||0;return r>t0&&now-r<200}; /* nach dem Loslassen 0,2 s nachklingen */
+  for(const [m,t] of R.good)if(zlHeld(m,t)||zlGlow(m,t)||now-t<350)lit.set(m,C.ok);for(const [m,t] of R.bad)if(zlHeld(m,t)||zlGlow(m,t)||now-t<600)lit.set(m,C.bad);
   const tgt=!R.demo&&!R.done&&R.pos<=R.b&&zlVis(R,R.pos)?gs[R.pos].mids:new Set();
   for(const pass of [0,1])for(let m=lo;m<=hi;m++){const k=X[m];if(!k||k.b!==pass)continue;const h=pass?kb*0.62:kb;
     c.fillStyle=lit.get(m)||(pass?'#1b1f2a':'#eef1f7');c.fillRect(k.x+(pass?0:0.5),hy,k.w-(pass?0:1),h);
-    if(tgt.has(m)&&!lit.has(m)){c.strokeStyle=gold?C.gold:C.rh;c.lineWidth=3;c.strokeRect(k.x+2,hy+2,k.w-4,h-4);
+    if(tgt.has(m)&&(!lit.has(m)||KB.held.has(m))){c.strokeStyle=gold?C.gold:C.rh;c.lineWidth=3;c.strokeRect(k.x+2,hy+2,k.w-4,h-4); /* v5.70: auch auf einer noch gehaltenen Taste zeigen, dass sie gleich wieder dran ist */
       if(S.fingers===true){const G=gs[R.pos],n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2);if(n&&n.fing){const d=Math.min(20,Math.max(13,k.w*0.6)),cx=k.x+k.w/2,cy=hy+h-d/2-5;c.beginPath();c.arc(cx,cy,d/2,0,Math.PI*2);c.fillStyle=G.hands.get(m)==='L'?C.lh:C.rh;c.fill();c.fillStyle='#fff';c.font=`800 ${Math.round(d*0.68)}px Inter,system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5)}}}}}
 
 /* --- Durchgang starten --- */
@@ -5440,7 +5445,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.69 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.70 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
