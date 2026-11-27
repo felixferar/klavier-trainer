@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.59</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.61</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li"><div class="grow"><b>Neuer Lernmodus (Test)</b><small>Prototyp v6: ein „Los“-Knopf auf der Startseite. Der bisherige Auswendig-Modus bleibt.</small></div><button class="btn sm" id="v6Sw" onclick="try{localStorage.setItem('kt_v6on',localStorage.getItem('kt_v6on')==='1'?'0':'1');this.textContent=localStorage.getItem('kt_v6on')==='1'?'An':'Aus';renderHome()}catch(e){}">Aus</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
@@ -3471,6 +3471,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
 
 /* ===== v5.37: Auswendig „Zeilen“ im Takt (Design 4b) =====
    Je Zeile 4 Stufen: 1 Hören (Vorspielen + Muster) · 2 Mit Noten im Takt · 3 Verblassen (v5.43: Noten 50 % → 30 % → jeder 2. Griff) · 4 Aus dem Kopf.
+   v5.61: neuer Lernmodus v6 als Prototyp hinter dem Schalter „Neuer Lernmodus (Test)“ in den Einstellungen (Standard: aus). Quelle: tools/v6/. Ohne Schalter unverändert.
    v5.59: ganzer Song aus dem Kopf = geschafft, wenn er bis zum Ende durchgespielt wurde und höchstens 1 Stocker je 40 Griffe hatte (Stocker = 2,5 s länger als das Lied dort dauert, oder Hilfe).
           Falsche Töne werden gezeigt, entscheiden beim ganzen Song aber nichts mehr. Bei 100 % bleibt der Song spielbar. Zeilen und Stücke unverändert.
    v5.54: tiefes A während des Vorspielens kurz getippt = Vorspielen von vorne (Halten bleibt schneller, 2× bleibt selbst dran).
@@ -5493,7 +5494,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.59 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.61 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
