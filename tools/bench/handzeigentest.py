@@ -45,14 +45,14 @@ async def main():
          'Hand versetzt eine Oktave höher: neue Lage': r['nR'] >= 2 and r['showAfterMove'],
          'Zahl am Anfang der Lage, keine Zahl auf den Tönen dazwischen': r['showFirst'] and r['hideInside'],
          'Akkord: Zahlen beim ersten Mal, nicht bei der direkten Wiederholung': r['chord1'] and r['chord2'],
-         'Klammer mit R auf der Klaviatur': r['lab'] and r['labR'],
+         'Handlage mit R gekennzeichnet (Streifen im Feld, keine Klammer auf der Klaviatur)': r['lab'] and r['labR'],
          'Schild „rechte Hand hierher“ vor dem Versetzen, genau einmal': r['inLine'] and r['hier'] == 1,
          'Warnzeichen: Grund steht als Text da (brechen, springen)': r['warn'] and r['warn2'] and r['warnTxt'].startswith('Weiter Griff'),
          '„hier anders“ zeigt keinen Hinweis': r['anders'],
          'Schalter aus: keine Klammer, mehr Zahlen als mit Klammer': r['offLab'] and r['offDigits'] > r['onDigits'],
          'Stufe „Aus dem Kopf“: Klammer nur zusammen mit einem sichtbaren Griff (Startgriff, Hilfe), sonst nichts': r['goldStage'] >= 3 and r['goldStart'] and r['goldHidden'] and r['goldLab'],
          'Einstellung „Hand zeigen“ da und wird gespeichert': r['sw'] and r.get('saved') and r.get('saved2'),
-         'Version 5.71': r['ver'].startswith('Version 5.71'),
+         'Version 5.72': r['ver'].startswith('Version 5.72'),
          'keine JS-Fehler': not errs}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     if not all(c.values()): print(r, errs)
