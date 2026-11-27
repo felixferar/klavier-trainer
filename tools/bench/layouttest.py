@@ -2,7 +2,8 @@
 import sys,asyncio,json
 sys.argv.append('')
 from playwright.async_api import async_playwright
-exec(open('/tmp/dshot.py').read().split("async def main")[0].replace("import sys,asyncio,json,os",""))
+import os;sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
+from cmpbasis import geo,lo,JS   # früher /tmp/dshot.py (lag nie im Repo)
 async def main():
     async with async_playwright() as p:
         br=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox']);res={}
