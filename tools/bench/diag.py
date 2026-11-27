@@ -134,6 +134,8 @@ def replay(out, still_only=False, phone_rest=False):
             for i in range(0, len(fr), 300):
                 await pg.evaluate("""([M,frames])=>{for(const [f,b] of frames){if(!SCAN.on)break;const raw=atob(b),w=M.w;scanCore((r,x)=>{const i=(r*w+x)*3;return [raw.charCodeAt(i),raw.charCodeAt(i+1),raw.charCodeAt(i+2)]},w,M.n,f)}}""", [M, fr[i:i + 300]])
             got = await pg.evaluate("()=>{SCAN.on=false;return finishScan().map(n=>[n.m,n.start,n.dur,n.hand])}")
+            if os.environ.get('DIAG_EVAL'):  # Fehlersuche: beliebigen Ausdruck nach dem Nachspielen auswerten → replay-dbg.json
+                json.dump(await pg.evaluate(os.environ['DIAG_EVAL']), open(os.path.join(out, 'replay-dbg.json'), 'w'))
             await br.close(); return got
     got = asyncio.run(go())
     json.dump(got, open(os.path.join(out, 'replay-notes.json'), 'w'))
