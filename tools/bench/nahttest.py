@@ -75,7 +75,7 @@ async def main():
          'Mini-Zeile (4 Griffe) wird angehängt, aber nicht, wenn die Zeile zu lang würde': t(lambda: r['mini'] == ['0-12', '13-25', '26-88'] and r['miniLong'][0] == '0-3'),
          'Zurücksetzen löscht die Übergänge': t(lambda: r['reset'] == {'nd': 0, 'nq': None}),
          'Protokoll: mode „naht“ mit Übergang und 60 %': t(lambda: r['log'][0][1] == 1 and r['log'][0][3] == 0.6),
-         'Version 5.66': t(lambda: r['ver'].startswith('Version 5.66')),
+         'Version 5.67': t(lambda: r['ver'].startswith('Version 5.67')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)

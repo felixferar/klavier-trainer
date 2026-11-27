@@ -625,8 +625,8 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
     </div>
     <div class="lbl">Anzeige</div>
     <div class="list">
-      <div class="li"><div class="grow"><b>Notennamen auf den Balken</b><small>Deutsch: B = Ton zwischen A und H</small></div><input type="checkbox" class="sw" id="names2"></div>
-      <div class="li"><div class="grow"><b>Fingersatz</b><small>Standard aus. Einschalten, wenn du an einer Stelle hängst: 1 = Daumen … 5 = kleiner Finger</small></div><input type="checkbox" class="sw" id="fing2"></div>
+      <div class="li"><div class="grow"><b>Notennamen auf den Balken</b><small>Wie in den Videos: B = weiße Taste, Bb = schwarze Taste</small></div><input type="checkbox" class="sw" id="names2"></div>
+      <div class="li"><div class="grow"><b>Fingersatz</b><small>Zeigt in jedem Balken, welcher Finger die Taste drückt: 1 = Daumen … 5 = kleiner Finger</small></div><input type="checkbox" class="sw" id="fing2"></div>
       <div class="li"><div class="grow"><b>Ganze Tastatur zeigen</b><small>Sonst nur der Bereich, den der Song braucht</small></div><input type="checkbox" class="sw" id="full2"></div>
     </div>
     <div class="lbl">Daten</div>
@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.66</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.67</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -2526,7 +2526,8 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
 "use strict";
 /* ================= helpers ================= */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const NAMES=['C','Cis','D','Dis','E','F','Fis','G','Gis','A','B','H'];
+/* v5.67 (Felix 27.11.: „B wird angezeigt, ich drücke B – gemeint war die schwarze Taste“): Namen wie in den YouTube-Videos. B = weiße Taste (deutsch H), Bb = schwarze Taste (deutsch B). */
+const NAMES=['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B']; /* Schreibweise der schwarzen Tasten wie in Synthesia-Videos: Db Eb F# Ab Bb */
 const BLACK=[0,1,0,1,0,0,1,0,1,0,1,0];
 const isBlack=m=>BLACK[m%12]===1;
 const mtof=m=>440*Math.pow(2,(m-69)/12);
@@ -2563,6 +2564,8 @@ function ago(ts){if(!ts)return 'noch nie geübt';const d=Math.floor((Date.now()-
 const PAL={green:{n:'Grün',l:'#63E6A0',d:'#1E9E5A'},blue:{n:'Blau',l:'#74AAFF',d:'#2F64DA'},violet:{n:'Violett',l:'#BBA0FF',d:'#7048E8'},orange:{n:'Orange',l:'#FFB467',d:'#D9731F'},pink:{n:'Rosa',l:'#FF92C9',d:'#D33C8B'},cyan:{n:'Türkis',l:'#63E3E9',d:'#14999F'},yellow:{n:'Gelb',l:'#FFE070',d:'#C29E00'}};
 const KEYSETS={88:[21,108,'A0 – C8'],76:[28,103,'E1 – G7'],73:[28,100,'E1 – E7'],61:[36,96,'C2 – C7'],49:[36,84,'C2 – C6'],37:[48,84,'C3 – C6']};
 const S=Object.assign({layout:88,sound:true,speed:1,hand:'B',other:'show',fingers:false,soundMine:false,swap:false,wait:false,score:true,input:'mic',sens:6,names:true,full:false,look:2.5,reps:3,autoNext:false,speedUp:false,colL:'green',colR:'blue',goal:15},load('kt_settings')||{});
+/* v5.67: Felix will den Fingersatz wieder sehen – einmalig einschalten; der Schalter (Ich › Anzeige) bleibt und gilt danach */
+try{if(!localStorage.getItem('kt_fing567')){localStorage.setItem('kt_fing567','1');S.fingers=true;localStorage.setItem('kt_settings',JSON.stringify(S))}}catch(e){}
 if(S.speed>1)S.speed=1;S.input='touch';S.score=false;S.soundMine=false; /* v4.78: Mikrofon-Eingabe ist entfernt – nie von selbst nach dem Mikrofon fragen */
 const saveS=()=>saveW('kt_settings',S);
 const fmtSpeed=v=>(Math.round(v*100)/100).toLocaleString('de-DE')+'×';
@@ -3192,7 +3195,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
    Nach 3 gescheiterten Versuchen einmal die schwächste Zeile „aus dem Kopf“ (nachüben). Eine angefangene Zeile wird erst fertig gemacht.
    Der alte Ablauf läuft weiter mit window.MEM_ZL=false. */
 const ZL={stall:2.5,stallPer:40,resumeMin:40,naht:3,nahtNeed:2,stallX:1.0,minG:6,hint:false,aDbl:450,aHold:0.35,ffx:3,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
-  col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
+  col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',rhB:'#3F56B8',lhB:'#2B8576',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
 const zlOn=()=>window.MEM_ZL!==false;
 const zlBlk=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
 /* v5.46: Farbwelt je Stufe und Farbe je Situation (jede Farbe hat genau eine Bedeutung) */
@@ -3200,7 +3203,7 @@ const ZLW={noten:'#2EC4D6',blass:'#A78BFA',kopf:'#F472B6',stelle:'#FF9F43'},ZLS=
 function zlWorld(R){return R.spot?'stelle':R.stage===3?'blass':R.k<0?'kopf':R.stage<=2?'noten':'kopf'}
 const ZLI={ohr:'<path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5s-1 3-3 3-3-1-3-3"/><path d="M9 9a3 3 0 0 1 6 0"/>',hand:'<path d="M7 11V5a1.5 1.5 0 0 1 3 0v5"/><path d="M10 10V4a1.5 1.5 0 0 1 3 0v6"/><path d="M13 10V5a1.5 1.5 0 0 1 3 0v7"/><path d="M16 12V8a1.5 1.5 0 0 1 3 0v6a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a1.5 1.5 0 0 1 2.5-1.5L9 13"/>',play:'<path d="M7 5l12 7-12 7z"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',ziel:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',stern:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',atem:'<path d="M4 12h9a3 3 0 1 0-3-3"/><path d="M4 16h13a3 3 0 1 1-3 3"/>'};
 const zlSvg=(n,fill)=>`<svg viewBox="0 0 24 24" aria-hidden="true" ${fill?'fill="#121826" stroke="none"':'fill="none" stroke="#121826" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"'}>${ZLI[n]}</svg>`;
-const ZLN=['C','Cis','D','Dis','E','F','Fis','G','Gis','A','B','H'],zlName=m=>ZLN[((m%12)+12)%12]+(m%12===0?Math.floor(m/12)-1:'');
+const ZLN=NAMES,zlName=m=>ZLN[((m%12)+12)%12]+(m%12===0?Math.floor(m/12)-1:'');
 const zlKey=()=>'zl'+(MEM.hand==='LR'?'':MEM.hand);
 const zlBeat=()=>(MEM.takt&&MEM.takt.beat)||0.5;
 /* Lernstand: cuts = erster Griff jeder Zeile, st = geschaffte Stufen (4 = sitzt), eh = Verblassen-Stufe (0–2), ef = Fehlversuche in Folge dort, stars = beste Sterne aus dem Kopf, song = geschaffte Song-Tempi (0–3) */
@@ -3343,7 +3346,7 @@ function zlRange(z,p){const gs=MEM.gs,N=gs.length;
   if(p.k<0&&p.from>0&&p.from<z.st.length){const L=zlLine(z,p.from);return {a:Math.max(0,L.a-ZL.ov),la:L.a,b:N-1}} /* v5.57: Song ab Zeile x – mit 2 Griffen Anlauf */
   if(p.k<0)return {a:0,la:0,b:N-1};const L=zlLine(z,p.k),pre=p.k>0?Math.max(0,L.a-ZL.ov):L.a;
   return {a:pre,la:L.a,b:L.b}}
-function zlStart(p){memAutoOff();awUseL(false);const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=zlTempoFor(z,p),tup=(zlTpInit(z),p.stage>=4&&!p.spot&&z.tu[zlTKey(p)]===1);if(tup)delete z.tu[zlTKey(p)];
+function zlStart(p){memAutoOff();awUseL(false);try{fingSong(MEM.song)}catch(e){}const z=zlState(),gs=MEM.gs,g=zlRange(z,p),tempo=zlTempoFor(z,p),tup=(zlTpInit(z),p.stage>=4&&!p.spot&&z.tu[zlTKey(p)]===1);if(tup)delete z.tu[zlTKey(p)];
   const ns=MEM.notes.filter(n=>n.start>=gs[g.a].start-0.001&&n.start<=gs[g.b].last+0.001).sort((x,y)=>x.start-y.start);
   const R=MEM.run={zl:1,hint:(()=>{const z=zlState();return ZL.hint&&p.k>=0&&!p.spot&&p.stage>=3&&z.hint&&z.hint[p.k]?Object.assign({},z.hint[p.k]):null})(),tup,bonus:p.bonus?1:0,from:p.k<0&&p.blk==null&&p.from>0?p.from:0,spot:p.spot?Object.assign({},p.spot):null,k:p.k,blk:p.blk!=null?p.blk:null,rep:p.rep?1:0,wj:{},stage:p.stage,half:0,fade:p.stage===3&&p.k>=0?Math.min(2,z.eh[p.k]||0):0,st:p.t||0,tempo,a:g.a,la:g.la,b:g.b,ns,pos:g.a,hit:new Set(),pre:new Set(),wrong:0,help:0,slips:0,early:0,late:0,demos:0,
     peekJ:-1,peekT:0,flashT:-1,clock:0,vt:gs[g.a].start,run:false,lateJ:-1,recent:[],good:new Map(),bad:new Map(),demo:null,done:false,res:null,kb0:kbOn(),t0:Date.now(),
@@ -3546,12 +3549,19 @@ function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p
   for(let j=R.a;j<=R.b;j++){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=hy-6-(G.start-R.vt)*ZL.pps;if(y0<-40)break;
     const anchor=gold&&(j===R.a||j===R.la||R.peekJ===j),dim=j<R.la&&R.k>=0&&!anchor,cur=j===R.pos&&!R.demo;
     for(const m of G.mids){const k=X[m];if(!k)continue;const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2),len=Math.max(18,(n?n.dur:0.3)*ZL.pps);
-      c.globalAlpha=(dim?0.35:1)*(anchor?1:al);c.fillStyle=anchor?wc:G.hands.get(m)==='L'?C.lh:C.rh;c.beginPath();if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.w-2,len);c.fill();
+      c.globalAlpha=(dim?0.35:1)*(anchor?1:al);c.fillStyle=anchor?wc:k.b?(G.hands.get(m)==='L'?C.lhB:C.rhB):G.hands.get(m)==='L'?C.lh:C.rh;c.beginPath(); /* v5.67: Balken auf schwarzen Tasten in dunklerem Ton der Handfarbe */
+if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.w-2,len);c.fill();
       if(cur&&al>0.5){c.strokeStyle='#fff';c.lineWidth=2;c.stroke()}
       if(R.hint&&!R.demo&&j>=R.hint.a&&j<=R.hint.b&&j>R.a){c.save();c.globalAlpha=0.9;c.strokeStyle=C.bad;c.lineWidth=2;c.setLineDash([5,4]);c.strokeRect(k.x-1,Math.max(1,y0-len)-1,k.w+2,Math.min(len,y0)+2);c.restore()} /* v5.51: blasse Hilfe an der Stelle von eben */
       if(R.spot&&j===R.spot.c&&(R.demo||al>0.5)){c.save();c.globalAlpha=1;c.strokeStyle=C.bad;c.lineWidth=3;c.strokeRect(k.x-1,Math.max(1,y0-len)-1,k.w+2,Math.min(len,y0)+2);
         c.fillStyle=C.bad;c.font='700 14px Inter,system-ui';c.textAlign='left';c.textBaseline='bottom';c.fillText('← hier',k.x+k.w+5,y0-2);c.restore()} /* v5.45: Problemgriff rot markieren */
-      c.fillStyle=anchor?'#121826':'#fff';c.font=`600 ${Math.max(10,Math.min(14,k.w*0.55))}px Inter,system-ui`;c.fillText(zlName(m),k.x+k.w/2,y0-3);c.globalAlpha=1}}
+      /* v5.67: unten im Balken die Fingerzahl (weißer Knopf, 1 = Daumen … 5 = kleiner Finger), darüber der Name. Schwarze Taste: Name weiß auf schwarzem Schild („Bb“), weiße Taste: Name ohne Schild („B“). */
+      {const fs=Math.max(10,Math.min(14,k.w*0.55)),fOn=S.fingers===true&&n&&n.fing&&len>=fs+22,fd=Math.min(20,Math.max(14,k.w*0.62)),cx=k.x+k.w/2;let yb=y0-3;
+        if(fOn){const cy=yb-fd/2;c.beginPath();c.arc(cx,cy,fd/2,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.fillStyle='#121826';c.font=`800 ${Math.round(fd*0.68)}px Inter,system-ui`;c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5);c.textBaseline='bottom';yb-=fd+3}
+        const nm=zlName(m);c.font=`${k.b?700:600} ${fs}px Inter,system-ui`;
+        if(k.b){const tw=c.measureText(nm).width+6;c.fillStyle='#0b0e16';c.beginPath();if(c.roundRect)c.roundRect(cx-tw/2,yb-fs-2,tw,fs+3,4);else c.rect(cx-tw/2,yb-fs-2,tw,fs+3);c.fill();c.fillStyle='#fff';c.fillText(nm,cx,yb)}
+        else{c.fillStyle=anchor?'#121826':'#fff';c.fillText(nm,cx,yb)}}
+      c.globalAlpha=1}}
   /* v5.46: Rahmen = Stufenfarbe; falsche Taste = rot mit Leuchten; Vorspielen = blau */
   if(errOn){const g=c.createLinearGradient(0,0,0,hy);g.addColorStop(0,'rgba(255,90,95,.28)');g.addColorStop(.5,'rgba(255,90,95,0)');g.addColorStop(1,'rgba(255,90,95,.28)');c.fillStyle=g;c.fillRect(0,0,p.w,hy-8);c.strokeStyle=C.bad;c.lineWidth=4;c.strokeRect(2,2,p.w-4,hy-10)}
   else if(R.demo){c.strokeStyle=C.demo;c.lineWidth=3;c.strokeRect(1.5,1.5,p.w-3,hy-9)}
@@ -3561,7 +3571,8 @@ function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p
   const tgt=!R.demo&&!R.done&&R.pos<=R.b&&zlVis(R,R.pos)?gs[R.pos].mids:new Set();
   for(const pass of [0,1])for(let m=lo;m<=hi;m++){const k=X[m];if(!k||k.b!==pass)continue;const h=pass?kb*0.62:kb;
     c.fillStyle=lit.get(m)||(pass?'#1b1f2a':'#eef1f7');c.fillRect(k.x+(pass?0:0.5),hy,k.w-(pass?0:1),h);
-    if(tgt.has(m)&&!lit.has(m)){c.strokeStyle=gold?C.gold:C.rh;c.lineWidth=3;c.strokeRect(k.x+2,hy+2,k.w-4,h-4)}}}
+    if(tgt.has(m)&&!lit.has(m)){c.strokeStyle=gold?C.gold:C.rh;c.lineWidth=3;c.strokeRect(k.x+2,hy+2,k.w-4,h-4);
+      if(S.fingers===true){const G=gs[R.pos],n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2);if(n&&n.fing){const d=Math.min(20,Math.max(13,k.w*0.6)),cx=k.x+k.w/2,cy=hy+h-d/2-5;c.beginPath();c.arc(cx,cy,d/2,0,Math.PI*2);c.fillStyle=G.hands.get(m)==='L'?C.lh:C.rh;c.fill();c.fillStyle='#fff';c.font=`800 ${Math.round(d*0.68)}px Inter,system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5)}}}}}
 
 /* --- Durchgang starten --- */
 function awSecNotes(a,b){const t0=MEM.gs[a].start-0.001,t1=MEM.gs[b].last+0.001;return MEM.notes.filter(n=>n.start>=t0&&n.start<=t1)}
@@ -4455,7 +4466,7 @@ function drawFinger(c,n,cx,yb,h,w){if(!fingVis(n))return 0;const fs=fingFs(w),d=
   c.font=`800 ${tag.length>1?fs-2:fs}px Inter,system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillStyle='rgba(7,9,13,.92)';c.fillText(tag,cx,cy+0.5);c.textBaseline='alphabetic';c.textAlign='left';return d+2}
 /* v5.03: Fingersatz-Flagge ⚑ im Player. Markiert die aktuelle Stelle (nochmal drücken in ±0,6 s = weg) und schickt sie wie die Vergleichs-Flaggen
    automatisch ins private Archiv (diag/fingerflags/…): Zeit, alle Töne ±3 s mit Hand, Finger, "offen" und der Begründung der App; dazu ein Bildschirmfoto. */
-const FF_NN=['C','Cis','D','Es','E','F','Fis','G','As','A','B','H'];let FF_T=null;
+const FF_NN=NAMES;let FF_T=null;
 const ffAll=()=>load('kt_fingflags')||{},ffGet=()=>{try{return ffAll()[songId]||[]}catch(e){return []}};
 function ffItem(){try{return LIB.find(x=>x.id===songId)||{}}catch(e){return {}}}
 function ffInfo(){const it=ffItem(),fl=ffGet(),why=n=>{try{const r=song._fingR&&song._fingR[n.fingH];return r&&n._fk!=null?r.explain(n._fk):''}catch(e){return ''}};
@@ -5205,7 +5216,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.66 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.67 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
