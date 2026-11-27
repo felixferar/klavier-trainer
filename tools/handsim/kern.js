@@ -6,7 +6,7 @@
   // x-Lage einer Taste in w: weiße Taste = Mitte, schwarze Taste = auf der Fuge
   const keyX = m => { let w = 0; for (let k = 21; k < m; k++) if (!BLK(k)) w++; return BLK(m) ? w : w + 0.5; };
   const MM = 23.5, ST = 164.5 / 12 / MM;   // ein Halbton im Schnitt in w (Oktave = 7 weiße Tasten)
-  // Spannen je Fingerpaar in Halbtönen: [bequem, sicher maximal]. gemessen = von Felix am Klavier (14.11.2026), sonst geschätzt (Parncutt, an 1–5 skaliert).
+  // Spannen je Fingerpaar in Halbtönen: [bequem, sicher maximal]. Gilt für beide Hände (Felix 27.11.2026: „geht bei beiden Händen gleich“). gemessen = von Felix am Klavier (14.11.2026), sonst geschätzt (Parncutt, an 1–5 skaliert).
   const HAND = { '1-2': [7, 11, 'gemessen'], '1-3': [9, 12, 'geschätzt'], '1-4': [11, 13, 'geschätzt'], '1-5': [12, 14, 'gemessen'], '2-3': [3, 5, 'geschätzt'], '2-4': [5, 7, 'geschätzt'], '2-5': [7, 9, 'geschätzt'],
     '3-4': [2, 4, 'geschätzt'], '3-5': [5, 7, 'geschätzt'], '4-5': [3, 5, 'geschätzt'] };
   // so weit geht jeder Finger bequem zur Seite, gemessen von seiner Ruhelage in w: [zur Daumenseite, zur Kleinfingerseite] (Daumen kann untersetzen, kleiner Finger abspreizen)
