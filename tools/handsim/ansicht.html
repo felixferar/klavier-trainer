@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hand-Simulation Klavier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+/* Eine Welt wie in der App: Nachtblau, linke Hand salbeigrün, rechte Hand blau, Gold für „jetzt“. Aufbau: Bühne oben, Befund darunter. */
+:root{
+  color-scheme: dark;
+  --grund:#0F1730; --flaeche:#19223F; --tief:#0A1024; --text:#F4F1EA; --leise:#9CA3B9;
+  --links:#58C7AC; --rechts:#7C9BFF; --gold:#E3B866; --warn:#E07A6B;
+  --schrift:'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--grund);color:var(--text);font-family:var(--schrift);font-size:16px;line-height:1.45}
+main{max-width:1040px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:26px;font-weight:800;margin:0;text-wrap:balance}
+h2{font-size:17px;font-weight:800;margin:0 0 8px}
+p{margin:0;color:var(--leise);max-width:68ch}
+.zeile{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;font-weight:600;color:var(--text);background:var(--flaeche);border:1.5px solid transparent;border-radius:10px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--leise)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.an{background:var(--gold);color:#1C1405}
+button.haupt{background:var(--gold);color:#1C1405;min-width:96px}
+.buehne{background:var(--tief);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+canvas{display:block;width:100%;height:auto;border-radius:8px;background:var(--tief)}
+input[type=range]{flex:1;min-width:160px;accent-color:var(--gold)}
+.zeit{font-variant-numeric:tabular-nums;color:var(--leise);min-width:92px;text-align:right}
+.karten{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.karte{background:var(--flaeche);border-radius:14px;padding:14px 16px;border-left:5px solid var(--leise)}
+.karte.L{border-left-color:var(--links)} .karte.R{border-left-color:var(--rechts)}
+.zahlen{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-variant-numeric:tabular-nums}
+.zahlen b{font-weight:800;text-align:right}
+.zahlen span{color:var(--leise)}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+li button{width:100%;text-align:left;display:flex;gap:10px;align-items:baseline;font-weight:400}
+li .t{font-variant-numeric:tabular-nums;font-weight:800;min-width:48px}
+li .h{font-weight:800;border-radius:6px;padding:0 7px;color:#0A1024}
+li .h.L{background:var(--links)} li .h.R{background:var(--rechts)}
+li .w{color:var(--warn);font-weight:800}
+.klein{font-size:14px}
+table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+td,th{padding:3px 12px 3px 0;text-align:left} th{color:var(--leise);font-weight:600}
+.gesch{color:var(--warn)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+<main>
+  <header class="zeile" style="justify-content:space-between">
+    <h1>Hand-Simulation</h1>
+    <div class="zeile" id="songs" role="group" aria-label="Song"></div>
+  </header>
+  <p>Zwei nachgebaute Hände spielen den Song mit dem Fingersatz der App. Die Zahl im Kreis ist der Finger (1 = Daumen). Ein gefüllter Kreis drückt gerade eine Taste. Ein Pfeil unter der Hand zeigt, dass sie versetzen muss.</p>
+
+  <section class="buehne" aria-label="Simulation">
+    <canvas id="cv" width="1000" height="470"></canvas>
+    <div class="zeile">
+      <button class="haupt" id="play">Abspielen</button>
+      <div class="zeile" id="tempo" role="group" aria-label="Tempo"></div>
+      <input type="range" id="pos" min="0" max="1000" value="0" aria-label="Stelle im Song">
+      <span class="zeit" id="zeit">0:00 / 0:00</span>
+    </div>
+  </section>
+
+  <section class="karten" id="karten" aria-label="Befund je Hand"></section>
+
+  <section>
+    <h2>Auffällige Stellen</h2>
+    <p class="klein" id="stellenInfo" style="margin-bottom:8px"></p>
+    <ul id="stellen"></ul>
+  </section>
+
+  <section>
+    <h2>Womit die Hand rechnet</h2>
+    <p class="klein" style="margin-bottom:8px">Spanne zwischen zwei Fingern in Halbtönen. Nur zwei Paare sind am Klavier gemessen (14.11.2026, rechte Hand). Der Rest ist geschätzt, die linke Hand ist gespiegelt.</p>
+    <table id="hand"></table>
+  </section>
+</main>
+<script>/*KERN*/</script>
+<script>
+const DATEN=/*DATEN*/;
+const $=s=>document.querySelector(s), cv=$('#cv'), c=cv.getContext('2d');
+const COL={L:'#58C7AC',R:'#7C9BFF',gold:'#E3B866',warn:'#E07A6B',text:'#F4F1EA',leise:'#9CA3B9',tief:'#0A1024',fl:'#19223F'};
+const NM=['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+let song=null, sim=null, t=0, play=false, speed=0.6, last=0, t0=0, t1=1;
+const PPS=95, W=1000, H=470, KB_Y=250, KB_H=110, HAND_Y=KB_Y+KB_H+52;
+function load(id){
+  const d=DATEN[id]; song={id,title:d.title,notes:d.notes.map(n=>({midi:n[0],start:n[1],dur:n[2],hand:n[3],fing:n[4],mark:n[5]}))};
+  sim=HandSim.simSong(song.notes); t0=Math.min(...song.notes.map(n=>n.start))-1; t1=Math.max(...song.notes.map(n=>n.start+n.dur))+0.5; t=t0; play=false; $('#play').textContent='Abspielen';
+  let lo=127,hi=0; for(const n of song.notes){lo=Math.min(lo,n.midi);hi=Math.max(hi,n.midi)} lo-=3;hi+=3; while(HandSim.BLK(lo))lo--; while(HandSim.BLK(hi))hi++; song.lo=lo;song.hi=hi;
+  song.x0=HandSim.keyX(lo)-0.5; song.w=W/(HandSim.keyX(hi)+0.5-song.x0);
+  for(const b of document.querySelectorAll('#songs button'))b.classList.toggle('an',b.dataset.id===id);
+  karten(); stellen(); draw();
+}
+const X=x=>(x-song.x0)*song.w;                      // w → Pixel
+const fmt=s=>{s=Math.max(0,s);return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')};
+function karten(){
+  $('#karten').innerHTML=['L','R'].map(Hd=>{const s=sim[Hd]; if(!s)return ''; const st=s.st;
+    return `<div class="karte ${Hd}"><h2>${Hd==='L'?'Linke Hand':'Rechte Hand'}</h2><div class="zahlen">
+      <b>${st.griffe}</b><span>Griffe</span>
+      <b>${st.lagen}</b><span>mal versetzt die Hand (mindestens eine Taste)</span>
+      <b>${st.spruenge}</b><span>Sprünge (ab 2,5 Tasten)</span>
+      <b>${st.eng}</b><span>Sprünge, für die die Zeit knapp ist</span>
+      <b>${st.weit}</b><span>weite Griffe (über bequem)</span>
+      <b>${st.zuWeit}</b><span>Griffe über der sicheren Spanne</span>
+      <b>${(st.wegCm/100).toFixed(1).replace('.',',')} m</b><span>Weg der Hand im ganzen Song</span></div></div>`}).join('');
+}
+function stellen(){
+  const L=[]; for(const Hd of ['L','R']) if(sim[Hd]) for(const g of sim[Hd].G) for(const f of g.flags) L.push({t:g.start,Hd,k:f.k,txt:f.t});
+  L.sort((a,b)=>a.t-b.t); const hart=L.filter(x=>x.k==='eng'||x.k==='zuWeit').length;
+  $('#stellenInfo').textContent=L.length?`${L.length===1?'1 Stelle':L.length+' Stellen'}, davon ${hart} hart (Zeit zu knapp oder Griff zu weit). Antippen springt hin.`:'Keine. Die Hand kommt überall ohne Sprung und ohne weiten Griff hin.';
+  $('#stellen').innerHTML=L.map((x,i)=>`<li><button data-t="${x.t}"><span class="t">${fmt(x.t-t0-1)}</span><span class="h ${x.Hd}">${x.Hd}</span><span>${x.k==='eng'||x.k==='zuWeit'?'<span class="w">hart · </span>':''}${x.txt.replace(/(\d)\.(\d)/g,'$1,$2')}</span></button></li>`).join('');
+  for(const b of document.querySelectorAll('#stellen button'))b.onclick=()=>{t=+b.dataset.t-1.2;play=false;$('#play').textContent='Abspielen';draw();cv.scrollIntoView({block:'center',behavior:'smooth'})};
+}
+// Zustand einer Hand zur Zeit t: Handfläche c und Fingerspitzen
+function state(Hd){
+  const S=sim[Hd]; if(!S)return null; const G=S.G, s=Hd==='L'?-1:1; let i=-1; for(let k=0;k<G.length;k++){if(G[k].start<=t)i=k;else break}
+  const cur=G[Math.max(0,i)], nxt=G[i+1];
+  const pose=g=>{const tip={}; for(const n of g.notes) if(n.fing>=1) tip[n.fing]={x:HandSim.keyX(n.midi),blk:HandSim.BLK(n.midi),midi:n.midi,end:n.start+Math.max(n.dur,0.12),start:n.start};
+    const P=[]; for(let f=1;f<=5;f++){ if(tip[f]){P.push(Object.assign({f,on:true},tip[f]));continue}
+      // freier Finger: zwischen den gedrückten Nachbarn, sonst in Ruhelage neben der Handfläche
+      let a=null,b=null; for(let q=f-1;q>=1;q--)if(tip[q]){a=q;break} for(let q=f+1;q<=5;q++)if(tip[q]){b=q;break}
+      let x; if(a&&b)x=tip[a].x+(tip[b].x-tip[a].x)*(f-a)/(b-a); else if(a)x=tip[a].x+s*(f-a)*0.95; else if(b)x=tip[b].x-s*(b-f)*0.95; else x=g.c+s*(f-3);
+      P.push({f,on:false,x,blk:false})}
+    return {c:g.c,P}};
+  let A=pose(cur), k=0;
+  if(i<0){k=0} else if(nxt){ const rel=Math.max(cur.start+0.08,Math.min(cur.end,nxt.start-0.05)), a=Math.max(rel,nxt.start-0.45); if(t>a){k=Math.min(1,(t-a)/Math.max(0.05,nxt.start-a)); k=k*k*(3-2*k)} }
+  const B=nxt&&i>=0?pose(nxt):A, mix=(u,v)=>u+(v-u)*k;
+  const P=A.P.map((p,q)=>({f:p.f,x:mix(p.x,B.P[q].x),blk:k>0.5?B.P[q].blk:p.blk,on:p.on&&t<p.end&&t>=p.start&&i>=0}));
+  return {c:mix(A.c,B.c),P,s,move:nxt&&nxt.move>=HandSim.T.LAGE&&nxt.start-t<1.4&&nxt.start>t?nxt:null,from:cur.c};
+}
+function rr(x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h)}
+function draw(){
+  c.clearRect(0,0,W,H); c.fillStyle=COL.tief; c.fillRect(0,0,W,H);
+  // fallende Balken
+  c.save(); c.beginPath(); c.rect(0,0,W,KB_Y-4); c.clip();
+  for(const n of song.notes){ const y1=KB_Y-6-(n.start-t)*PPS, len=Math.max(10,n.dur*PPS), y0=y1-len; if(y1<0||y0>KB_Y)continue;
+    const blk=HandSim.BLK(n.midi), kw=blk?song.w*0.58:song.w-3, x=X(HandSim.keyX(n.midi))-kw/2; c.globalAlpha=blk?0.8:1; c.fillStyle=COL[n.hand]; rr(x,y0,kw,len,5); c.fill(); c.globalAlpha=1;
+    if(len>26){ c.fillStyle=COL.tief; c.font='800 12px Bricolage Grotesque, system-ui'; c.textAlign='center'; c.textBaseline='bottom'; c.fillText(NM[n.midi%12],x+kw/2,y1-4) } }
+  c.restore();
+  c.fillStyle=COL.gold; c.fillRect(0,KB_Y-5,W,2);
+  // Klaviatur
+  const active=new Map(); for(const n of song.notes) if(n.start<=t&&t<n.start+Math.max(n.dur,0.12)) active.set(n.midi,n.hand);
+  for(const pass of [0,1]) for(let m=song.lo;m<=song.hi;m++){ const blk=HandSim.BLK(m); if(blk!==!!pass)continue; const x=X(HandSim.keyX(m));
+    if(!blk){ c.fillStyle=active.has(m)?COL[active.get(m)]:'#EEF1F7'; c.fillRect(x-song.w/2+0.5,KB_Y,song.w-1,KB_H); if(m%12===0){c.fillStyle='#8a90a3';c.font='600 10px Bricolage Grotesque, system-ui';c.textAlign='center';c.textBaseline='bottom';c.fillText('C'+(Math.floor(m/12)-1),x,KB_Y+KB_H-3)} }
+    else { c.fillStyle=active.has(m)?COL[active.get(m)]:'#1B1F2A'; c.fillRect(x-song.w*0.29,KB_Y,song.w*0.58,KB_H*0.62) } }
+  // Hände
+  for(const Hd of ['L','R']){ const st=state(Hd); if(!st)continue; const col=COL[Hd], px=X(st.c), py=HAND_Y;
+    // Handfläche
+    c.globalAlpha=0.9; c.fillStyle=col; rr(px-song.w*2.1,py-16,song.w*4.2,52,22); c.fill(); c.globalAlpha=1;
+    c.fillStyle=COL.tief; c.font='800 16px Bricolage Grotesque, system-ui'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(Hd==='L'?'links':'rechts',px,py+12);
+    // Finger
+    for(const p of st.P){ const tx=X(p.x), ty=p.blk?KB_Y+KB_H*0.36:KB_Y+KB_H*0.80, bx=px+st.s*(p.f-3)*song.w*0.78, by=py-12;
+      c.strokeStyle=col; c.lineWidth=p.f===1?13:11; c.lineCap='round'; c.globalAlpha=p.on?1:0.5; c.beginPath(); c.moveTo(bx,by); c.lineTo(tx,ty); c.stroke(); c.globalAlpha=1;
+      c.beginPath(); c.arc(tx,ty,11,0,Math.PI*2); c.fillStyle=p.on?col:COL.tief; c.fill(); c.lineWidth=2.5; c.strokeStyle=col; c.stroke();
+      c.fillStyle=p.on?COL.tief:col; c.font='800 13px Bricolage Grotesque, system-ui'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(p.f,tx,ty+0.5) }
+    // Pfeil: Hand versetzt gleich
+    if(st.move){ const tx=X(st.move.c), y=py+50, d=Math.sign(tx-X(st.from))||1, sprung=st.move.move>=HandSim.T.SPRUNG, eng=st.move.flags.some(f=>f.k==='eng');
+      c.strokeStyle=c.fillStyle=eng?COL.warn:COL.gold; c.lineWidth=3; c.beginPath(); c.moveTo(X(st.from),y); c.lineTo(tx-d*8,y); c.stroke(); c.beginPath(); c.moveTo(tx,y); c.lineTo(tx-d*11,y-7); c.lineTo(tx-d*11,y+7); c.closePath(); c.fill();
+      c.font='800 12px Bricolage Grotesque, system-ui'; c.textAlign='center'; c.textBaseline='top'; c.fillText(eng?'Sprung, Zeit knapp':sprung?'Sprung':'versetzen',(X(st.from)+tx)/2,y+6) } }
+  $('#zeit').textContent=fmt(t-t0-1)+' / '+fmt(t1-t0-1); $('#pos').value=Math.round(1000*(t-t0)/(t1-t0));
+}
+function frame(now){ if(play){ const dt=Math.min(0.1,(now-last)/1000); t+=dt*speed; if(t>=t1){t=t1;play=false;$('#play').textContent='Abspielen'} draw() } last=now; requestAnimationFrame(frame) }
+$('#play').onclick=()=>{ if(t>=t1-0.01)t=t0; play=!play; $('#play').textContent=play?'Pause':'Abspielen' };
+$('#pos').oninput=e=>{ t=t0+(t1-t0)*e.target.value/1000; draw() };
+$('#songs').innerHTML=Object.keys(DATEN).map(id=>`<button data-id="${id}">${DATEN[id].title}</button>`).join('');
+for(const b of document.querySelectorAll('#songs button'))b.onclick=()=>load(b.dataset.id);
+$('#tempo').innerHTML=[[0.3,'30 %'],[0.6,'60 %'],[1,'100 %']].map(([v,l])=>`<button data-v="${v}" class="${v===0.6?'an':''}">${l}</button>`).join('');
+for(const b of document.querySelectorAll('#tempo button'))b.onclick=()=>{speed=+b.dataset.v;for(const q of document.querySelectorAll('#tempo button'))q.classList.toggle('an',q===b)};
+document.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return; if(e.code==='Space'){e.preventDefault();$('#play').click()} if(e.code==='ArrowRight'){t=Math.min(t1,t+1);draw()} if(e.code==='ArrowLeft'){t=Math.max(t0,t-1);draw()} });
+$('#hand').innerHTML='<tr><th>Finger</th><th>bequem</th><th>sicher höchstens</th><th>Quelle</th></tr>'+Object.entries(HandSim.HAND).map(([k,v])=>`<tr><td>${k.replace('-',' und ')}</td><td>${v[0]}</td><td>${v[1]}</td><td class="${v[2]==='geschätzt'?'gesch':''}">${v[2]}</td></tr>`).join('');
+load(Object.keys(DATEN)[0]); t=song.notes[0].start+0.05; draw(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
