@@ -637,6 +637,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
     <details class="werk" id="werk"><summary>Werkstatt (Entwicklung)</summary>
     <div class="list">
       <div class="li"><div class="grow"><b>Lehrbuch-Fingersatz</b><small>Aus = einfach: Hand in Ruhe versetzen statt Daumen untersetzen (nur schnelle Läufe wie im Buch)</small></div><input type="checkbox" class="sw" id="fingBook"></div>
+      <div class="li"><div class="grow"><b>Hand zeigen (Auswendig-Modus)</b><small>Klammer über den Tasten, auf denen die Hand liegt, und ein Pfeil, wenn sie versetzen muss. Zahlen nur am Anfang einer Handlage, bei neuem Akkord und beim Übersetzen. Aus = Zahl auf jedem Ton.</small></div><input type="checkbox" class="sw" id="handShow"></div>
       <div class="li"><div class="grow"><b>Fingerzahl auf jedem Ton</b><small>Standard an. Aus = nur Orientierung: Zahl nur dort, wo die Hand neu greift (Phrasenanfang, Untersetzen, Lagenwechsel, Akkord-Ankerton)</small></div><input type="checkbox" class="sw" id="fingAll"></div>
       <div class="li"><div class="grow"><b>Empfindlichkeit</b><input type="range" id="sens2" min="1" max="10" step="1"></div></div>
       <div class="li"><div class="grow"><b>Mikrofon testen</b><small id="micInfo2">Zeigt den Ton, den die App gerade hört</small></div><button class="btn sm" id="micTest2">Test</button></div>
@@ -650,7 +651,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.70</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.71</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3725,10 +3726,13 @@ function zlKeyX(lo,hi,w){const wk=[];for(let m=lo;m<=hi;m++)if(!zlBlk(m))wk.push
 /* v5.69 (Entwurf „Hand zeigen“): Felix 27.11.: „Ich weiß nicht, wo meine Hände hin müssen.“ Eine Zahl auf jedem Ton beantwortet das nicht.
    Lage = die Tasten, über denen eine Hand liegen bleibt: Griffe einer Hand werden zusammengefasst, solange alles in eine Oktave (12 Halbtöne) passt.
    Die Klaviatur zeigt die Lage als farbige Klammer; wo die Hand versetzen muss, liegt quer über den Balken eine Linie mit Pfeil.
-   Fingerzahlen auf den Balken nur noch dort, wo man sie braucht (S.fingShow!=='alle'): erster Griff einer Lage, Akkord (wenn er sich ändert), Unter-/Übersetzen, Marken. Auf der Zieltaste steht die Zahl immer. */
+   Fingerzahlen auf den Balken nur noch dort, wo man sie braucht (S.handShow, Standard an; aus = jede Zahl wie in v5.67): erster Griff einer Lage, Akkord (wenn er sich ändert), Unter-/Übersetzen, Marken. Auf der Zieltaste steht die Zahl immer. */
 /* Lage aus dem Fingersatz: Liegt Finger f auf einer Taste, liegen die anderen vier Finger daneben – die Klammer zeigt diese fünf weißen Tasten
    (rechts: Daumen links außen; links: Daumen rechts außen). Ein Griff, der weiter spannt (Oktave 1–5), zeigt seine ganze Spanne.
    Dieselbe Lage gilt, solange die Klammer höchstens eine weiße Taste wandert; sonst versetzt die Hand (neue Lage). */
+/* v5.71: EIN Warnzeichen statt vier Hinweisen (Felix 27.11.: die Hinweise waren ihm zu viel). „hier anders“ wird nicht angezeigt – dort steht einfach die Zahl.
+   Dreieck oben im Balken; ist der Griff dran, steht der Grund in einer Zeile über der Klaviatur. */
+const ZL_WARN={brechen:'Weiter Griff – Töne nacheinander spielen',springen:'Sprung – Hand kurz abheben',zuviel:'Zu viele Töne für eine Hand – Noten prüfen'};
 const zlW=m=>{let w=0;for(let k=21;k<m;k++)if(!zlBlk(k))w++;return zlBlk(m)?w-0.5:w},zlWM=w=>{let c=0;for(let k=21;k<=108;k++){if(zlBlk(k))continue;if(c===w)return k;c++}return w<0?21:108};
 function zlLagen(){const key=(MEM.song&&MEM.song._fingKey)+'|'+MEM.notes.length;if(MEM._lgKey===key)return MEM.lagen;MEM._lgKey=key;const out={L:[],R:[]};
   for(const H of ['L','R']){const ns=MEM.notes.filter(n=>(n.fingH||n.hand||'R')===H).sort((a,b)=>a.start-b.start||a.midi-b.midi);let i=0,seg=null,prevKey='';
@@ -3750,13 +3754,14 @@ function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p
   {const bt=zlBeat(),t0=gs[R.a].start;c.strokeStyle='rgba(255,255,255,.05)';c.lineWidth=1;for(let i=Math.floor((R.vt-t0)/bt)-1;i<Math.floor((R.vt-t0)/bt)+12;i++){const y=hy-6-(t0+i*bt-R.vt)*ZL.pps;if(y<0||y>hy)continue;c.beginPath();c.moveTo(0,y);c.lineTo(p.w,y);c.stroke()}}
   const fr=R.demo?Math.min(1,Math.max(0,(R.demo.t-gs[R.a].start)/Math.max(0.1,gs[R.b].end-gs[R.a].start))):(Math.min(R.pos,R.b+1)-R.a)/(R.b-R.a+1);
   c.fillStyle='rgba(255,255,255,.08)';c.fillRect(0,hy-8,p.w,8);c.fillStyle=R.demo?C.demo:wc;c.fillRect(0,hy-8,p.w*fr,8);
-  const LG=S.fingers===true&&!R.done?zlLagen():null,lgNow={},tNow=gs[Math.min(R.pos,R.b)].start,lgX=sg=>{let a=sg.lo,b=sg.hi;while(!X[a]&&a<b)a++;while(!X[b]&&b>a)b--;return X[a]&&X[b]?[X[a].x,X[b].x+X[b].w]:null};
-  if(LG&&!gold)for(const H of ['L','R']){const col=H==='L'?C.lh:C.rh,L=LG[H];let cur=null;for(const sg of L){if(sg.t0<=tNow+0.03)cur=sg;else break}if(!cur&&L.length&&L[0].t0<=gs[R.b].last+0.03)cur=L[0];lgNow[H]=cur;
+  const LG=S.fingers===true&&!R.done&&S.handShow!==false?zlLagen():null,lgOn=LG&&(!gold||(R.pos<=R.b&&zlVis(R,R.pos))),lgNow={},tNow=gs[Math.min(R.pos,R.b)].start,lgX=sg=>{let a=sg.lo,b=sg.hi;while(!X[a]&&a<b)a++;while(!X[b]&&b>a)b--;return X[a]&&X[b]?[X[a].x,X[b].x+X[b].w]:null};
+  if(lgOn)for(const H of ['L','R']){const col=H==='L'?C.lh:C.rh,L=LG[H];let cur=null;for(const sg of L){if(sg.t0<=tNow+0.03)cur=sg;else break}if(!cur&&L.length&&L[0].t0<=gs[R.b].last+0.03)cur=L[0];lgNow[H]=cur;
     if(cur){const x=lgX(cur);if(x){c.fillStyle=col;c.globalAlpha=0.07;c.fillRect(x[0],0,x[1]-x[0],hy-8);c.globalAlpha=1}}
-    for(const sg of L){if(sg===cur||sg.t0<=tNow||sg.t0>gs[R.b].last+0.03)continue;const y=hy-6-(sg.t0-R.vt)*ZL.pps+7;if(y<16||y>hy-10)continue;const x=lgX(sg);if(!x)continue; /* hier versetzt die Hand: Linie unter dem ersten Griff der neuen Lage, Pfeil in Richtung */
+    if(!gold)for(const sg of L){if(sg===cur||sg.t0<=tNow||sg.t0>gs[R.b].last+0.03)continue;const y=hy-6-(sg.t0-R.vt)*ZL.pps+7;if(y<16||y>hy-10)break;const x=lgX(sg);if(!x)break; /* nur das NÄCHSTE Versetzen je Hand – bei vollen Songs stapelten sich sonst die Schilder */ /* hier versetzt die Hand: Linie unter dem ersten Griff der neuen Lage, Pfeil in Richtung */
       c.save();c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2.5;c.lineCap='round';c.beginPath();c.moveTo(x[0]+3,y);c.lineTo(x[1]-3,y);c.stroke();
       const ax=sg.dir<0?x[0]+3:x[1]-3,d=sg.dir<0?-1:1;if(sg.dir){c.beginPath();c.moveTo(ax+d*9,y);c.lineTo(ax,y-6);c.lineTo(ax,y+6);c.closePath();c.fill()}
-      c.font='700 11px Inter,system-ui';c.textBaseline='top';c.textAlign=sg.dir<0?'left':'right';c.fillText(H==='L'?'linke Hand hierher':'rechte Hand hierher',sg.dir<0?x[0]+4:x[1]-4,y+4);c.restore()}}
+      {const tx=H==='L'?'linke Hand hierher':'rechte Hand hierher';c.font='700 11px Inter,system-ui';const tw=c.measureText(tx).width+12,lx=Math.max(2,Math.min(p.w-tw-2,(x[0]+x[1]-tw)/2)),ly=y+7; /* Schild mit dunklem Grund, damit es auch über Balken lesbar bleibt */
+        c.fillStyle='#0b0e16';c.globalAlpha=0.92;c.beginPath();if(c.roundRect)c.roundRect(lx,ly,tw,18,9);else c.rect(lx,ly,tw,18);c.fill();c.globalAlpha=1;c.fillStyle=col;c.textBaseline='middle';c.textAlign='left';c.fillText(tx,lx+6,ly+9.5)}c.restore();break}}
   c.textAlign='center';c.textBaseline='bottom';
   for(let j=R.a;j<=R.b;j++){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=hy-6-(G.start-R.vt)*ZL.pps;if(y0<-40)break;
     const anchor=gold&&(j===R.a||j===R.la||R.peekJ===j),dim=j<R.la&&R.k>=0&&!anchor,cur=j===R.pos&&!R.demo;
@@ -3768,8 +3773,9 @@ if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.
       if(R.spot&&j===R.spot.c&&(R.demo||al>0.5)){c.save();c.globalAlpha=1;c.strokeStyle=C.bad;c.lineWidth=3;c.strokeRect(k.x-1,Math.max(1,y0-len)-1,k.w+2,Math.min(len,y0)+2);
         c.fillStyle=C.bad;c.font='700 14px Inter,system-ui';c.textAlign='left';c.textBaseline='bottom';c.fillText('← hier',k.x+k.w+5,y0-2);c.restore()} /* v5.45: Problemgriff rot markieren */
       /* v5.67: unten im Balken die Fingerzahl (weißer Knopf, 1 = Daumen … 5 = kleiner Finger), darüber der Name. Schwarze Taste: Name weiß auf schwarzem Schild („Bb“), weiße Taste: Name ohne Schild („B“). */
-      {const fs=Math.max(10,Math.min(14,k.w*0.55)),fOn=S.fingers===true&&n&&n.fing&&len>=fs+22&&(S.fingShow==='alle'||n.fShow!==false),fd=Math.min(20,Math.max(14,k.w*0.62)),cx=k.x+k.w/2;let yb=y0-3;
+      {const fs=Math.max(10,Math.min(14,k.w*0.55)),fOn=S.fingers===true&&n&&n.fing&&len>=fs+22&&(S.handShow===false||n.fShow!==false||j===R.a),warn=S.fingers===true&&n&&ZL_WARN[n.fingMark],fd=Math.min(20,Math.max(14,k.w*0.62)),cx=k.x+k.w/2;let yb=y0-3;
         if(fOn){const cy=yb-fd/2;c.beginPath();c.arc(cx,cy,fd/2,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.fillStyle='#121826';c.font=`800 ${Math.round(fd*0.68)}px Inter,system-ui`;c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5);c.textBaseline='bottom';yb-=fd+3}
+        if(warn&&len>=30){const wx=cx,wy=y0-len+11;c.beginPath();c.moveTo(wx,wy-8);c.lineTo(wx+8,wy+6);c.lineTo(wx-8,wy+6);c.closePath();c.fillStyle=C.gold;c.fill();c.fillStyle='#121826';c.font='800 10px Inter,system-ui';c.textBaseline='middle';c.fillText('!',wx,wy+1);c.textBaseline='bottom'}
         const nm=zlName(m);c.font=`${k.b?700:600} ${fs}px Inter,system-ui`;
         if(k.b){const tw=c.measureText(nm).width+6;c.fillStyle='#0b0e16';c.beginPath();if(c.roundRect)c.roundRect(cx-tw/2,yb-fs-2,tw,fs+3,4);else c.rect(cx-tw/2,yb-fs-2,tw,fs+3);c.fill();c.fillStyle='#fff';c.fillText(nm,cx,yb)}
         else{c.fillStyle=anchor?'#121826':'#fff';c.fillText(nm,cx,yb)}}
@@ -3790,8 +3796,10 @@ if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.
     c.fillStyle=lit.get(m)||(pass?'#1b1f2a':'#eef1f7');c.fillRect(k.x+(pass?0:0.5),hy,k.w-(pass?0:1),h);
     if(tgt.has(m)&&(!lit.has(m)||KB.held.has(m))){c.strokeStyle=gold?C.gold:C.rh;c.lineWidth=3;c.strokeRect(k.x+2,hy+2,k.w-4,h-4); /* v5.70: auch auf einer noch gehaltenen Taste zeigen, dass sie gleich wieder dran ist */
       if(S.fingers===true){const G=gs[R.pos],n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2);if(n&&n.fing){const d=Math.min(20,Math.max(13,k.w*0.6)),cx=k.x+k.w/2,cy=hy+h-d/2-5;c.beginPath();c.arc(cx,cy,d/2,0,Math.PI*2);c.fillStyle=G.hands.get(m)==='L'?C.lh:C.rh;c.fill();c.fillStyle='#fff';c.font=`800 ${Math.round(d*0.68)}px Inter,system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5)}}}}
+  if(S.fingers===true&&!R.done&&!R.demo&&R.pos<=R.b&&zlVis(R,R.pos)){let wt='';for(const m of gs[R.pos].mids){const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-gs[R.pos].start)<0.2);if(n&&ZL_WARN[n.fingMark]){wt=ZL_WARN[n.fingMark];break}}
+    if(wt){c.save();c.font='700 13px Inter,system-ui';const tw=c.measureText(wt).width+34,bx=(p.w-tw)/2,by=8; /* oben im Feld, damit die ankommenden Balken frei bleiben */c.fillStyle=C.gold;c.beginPath();if(c.roundRect)c.roundRect(bx,by,tw,26,13);else c.rect(bx,by,tw,26);c.fill();c.fillStyle='#121826';c.textAlign='left';c.textBaseline='middle';c.fillText('⚠',bx+10,by+13.5);c.fillText(wt,bx+26,by+13.5);c.restore();R.warnTxt=wt}else R.warnTxt=''}
   /* v5.69: Klammer = hier liegt die Hand (über der Klaviatur, in Handfarbe, mit L/R) */
-  if(LG&&!gold)for(const H of ['L','R']){const sg=lgNow[H];if(!sg)continue;const x=lgX(sg);if(!x)continue;const col=H==='L'?C.lh:C.rh,y=hy+3;
+  if(lgOn)for(const H of ['L','R']){const sg=lgNow[H];if(!sg)continue;const x=lgX(sg);if(!x)continue;const col=H==='L'?C.lh:C.rh,y=hy+3;
     c.save();c.strokeStyle=col;c.lineWidth=4;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(x[0]+3,y+9);c.lineTo(x[0]+3,y);c.lineTo(x[1]-3,y);c.lineTo(x[1]-3,y+9);c.stroke();
     const lx=(x[0]+x[1])/2;c.fillStyle=col;c.beginPath();if(c.roundRect)c.roundRect(lx-11,y-8,22,16,8);else c.rect(lx-11,y-8,22,16);c.fill();c.fillStyle='#fff';c.font='800 11px Inter,system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(H,lx,y+0.5);c.restore()}}
 
@@ -5416,7 +5424,7 @@ function renderSettings(){
   for(const side of ['L','R']){const el=$('#col'+side);el.innerHTML='';
     for(const [k,p] of Object.entries(PAL)){const b=document.createElement('button');b.className='swatch'+(S['col'+side]===k?' on':'');b.title=p.n;b.innerHTML=`<i style="background:${p.l}"></i><i style="background:${p.d}"></i>`;
       b.onclick=()=>{S['col'+side]=k;saveS();renderSettings()};el.appendChild(b)}}
-  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#fing2').checked=S.fingers===true;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#fingAll').checked=S.fingShow!=='orient';$('#full2').checked=S.full;
+  $('#goalSel').value=S.goal;$('#dbgChk').checked=!!S.debug;$('#diagChk').checked=!!S.diagConv;$('#inputSel2').value=S.input;$('#sens2').value=S.sens;$('#names2').checked=S.names;$('#handShow').checked=S.handShow!==false;$('#fing2').checked=S.fingers===true;$('#fingBook').checked=S.fingStyle==='lehrbuch';$('#fingAll').checked=S.fingShow!=='orient';$('#full2').checked=S.full;
   $('#calStat2').textContent=calCount()>=NK()?`Alle ${NK()} Tasten kalibriert ✓`:`${calCount()} von ${NK()} Tasten kalibriert`;
   for(const b of $$('#laySet button'))b.classList.toggle('on',+b.dataset.l===S.layout);
 }
@@ -5430,7 +5438,7 @@ $('#sens2').oninput=e=>{S.sens=+e.target.value;saveS()};
 $('#names2').onchange=e=>{S.names=e.target.checked;saveS()};
 $('#fing2').onchange=e=>{S.fingers=e.target.checked;saveS()};
 $('#fingBook').onchange=e=>{S.fingStyle=e.target.checked?'lehrbuch':'einfach';saveS()};
-$('#fingAll').onchange=e=>{S.fingShow=e.target.checked?'alle':'orient';saveS()};
+$('#fingAll').onchange=e=>{S.fingShow=e.target.checked?'alle':'orient';saveS()};$('#handShow').onchange=e=>{S.handShow=!!e.target.checked;saveS()};
 $('#full2').onchange=e=>{S.full=e.target.checked;saveS()};
 let micT2=false;
 $('#micTest2').onclick=async()=>{if(micT2){micT2=false;$('#micTest2').textContent='Test';$('#micInfo2').textContent='Zeigt den Ton, den die App gerade hört';return}
@@ -5475,7 +5483,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.70 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.71 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
