@@ -650,7 +650,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.65</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.66</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -5205,7 +5205,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.65 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.66 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -6065,7 +6065,19 @@ const KB_RES_MAX=0.16;
 function pickKb(list){let best=null;for(const r of list){if(!r||r.n>87||r.det.res>KB_RES_MAX)continue;const sc=r.det.res-Math.min(r.det.nb,40)*0.002;if(!best||sc<best.sc)best={...r,sc}}return best}
 function tryKeyboard(img){const c=cropBars(img),H=img.height;let rows=findKeyboardRows(c.img);if(!rows)return null;
   const map=f=>(c.y0+f*(c.h-1))/(H-1);rows={yC:map(rows.yC),yA:map(rows.yA),yB:map(rows.yB),yT:map(rows.yT)};
-  const det=detectKeys(img,rows.yA);if(!det)return null;return {rows,det,img,n:det.hi-det.lo}}
+  let det=detectKeys(img,rows.yA);
+  /* v5.66 (Felix 27.11.: „Tastatur wird zu spät erkannt, die ersten Noten werden übersprungen“ – Sing: 2,2 s gesucht): liegt in den ersten Sekunden das YouTube-Feld
+     „Weitere Videos“ über dem unteren Teil der schwarzen Tasten, hat genau diese Zeile die meisten dunklen Stücke und wird als Tastenzeile genommen – die Tasten passen dort
+     schlecht (0,196 > KB_RES_MAX) oder es kommen falsche Tasten dazu (38 statt 35). Darüber sind die schwarzen Tasten frei: Zeilen bis 14 % der Bildhöhe über der gewählten
+     prüfen; sind sich dort ≥ 4 Zeilen hintereinander einig (gleiche Tasten, gute Passung) und sagt die gewählte Zeile etwas anderes oder nichts, gilt die Einigkeit.
+     Stimmt die gewählte Zeile mit ihnen überein (der Normalfall), ändert sich nichts. */
+  if(window.KB_CONSENSUS!==false){const st=0.012,key=d=>d&&d.det&&d.det.res<=KB_RES_MAX&&d.det.hi-d.det.lo<=87?d.det.lo+'_'+d.det.hi:null,al=[];
+    for(let i=1;i<=12;i++){const y=rows.yA-i*st;if(y<0.3)break;const d=detectKeys(img,y);al.push({y,det:d})}
+    let bs=-1,bl=0;for(let i=0;i<al.length;){const k=key(al[i]);if(!k){i++;continue}let j=i;while(j+1<al.length&&key(al[j+1])===k)j++;if(j-i+1>bl){bl=j-i+1;bs=i}i=j+1}
+    if(bl>=4&&key({det})!==key(al[bs])){const mid=al[bs+(bl>>1)],k=key(mid);let yTop=al[bs+bl-1].y;
+      for(let y=yTop-0.004;y>0.3;y-=0.004){const d=detectKeys(img,y);if(d&&key({det:d})===k)yTop=y;else break}
+      det=mid.det;rows={yC:Math.max(0,yTop-Math.max(4/H,0.035)),yA:mid.y,yB:rows.yB,yT:yTop};tryKeyboard.fixed=(tryKeyboard.fixed||0)+1}}
+  if(!det)return null;return {rows,det,img,n:det.hi-det.lo}}
 // "blocked" = practically no bright pixel at all (a dark intro with white text has a low mean but ~2 % bright pixels)
 function isBlackImg(img){let br=0,c=0;for(let i=0;i<img.data.length;i+=64){if(img.data[i]+img.data[i+1]+img.data[i+2]>120)br++;c++}return br<c*0.001}
 function imgMean(img){let s=0,c=0;for(let i=0;i<img.data.length;i+=64){s+=img.data[i]+img.data[i+1]+img.data[i+2];c++}return s/c/3}

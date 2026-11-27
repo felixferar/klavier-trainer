@@ -41,7 +41,7 @@ async def main():
          'Knopf → sofort dran, erster Griff startet': t(lambda: not r['btn']['after']['demo'] and r['btn']['after']['pos'] and r['btn']['started']),
          'tiefes A: startet Vorspielen, nochmal = überspringen, dann spielbar': t(lambda: r['a1'] and r['a2'] and r['a3']),
          'Hören überspringen → gleich Mit Noten': t(lambda: r['h']['demo'] and not r['h']['after']['demo'] and r['h']['after']['stage'] == 2),
-         'Version 5.65': t(lambda: r['ver'].startswith('Version 5.65')),
+         'Version 5.66': t(lambda: r['ver'].startswith('Version 5.66')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
