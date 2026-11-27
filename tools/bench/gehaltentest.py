@@ -37,7 +37,7 @@ async def main():
          'nach dem Loslassen klingt Rot kurz nach (0,1 s) und ist nach 0,8 s weg': r['bAfter200'] >= 1 and r['bAfter800'] == 0,
          'ohne Klavier-Verbindung: kurzes Aufblitzen wie bisher': r['m0'] >= 1 and r['mLater'] == 0,
          'ein alter Treffer färbt eine neu gehaltene Taste nicht': r['old'] == 0,
-         'Version 5.73': r['ver'].startswith('Version 5.73'),
+         'Version 5.74': r['ver'].startswith('Version 5.74'),
          'keine JS-Fehler': not errs}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     if not all(c.values()): print(r, errs)

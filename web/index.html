@@ -651,7 +651,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.73</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.74</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3759,17 +3759,21 @@ function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p
   if(lgOn)for(const H of ['L','R']){const col=H==='L'?C.lh:C.rh,L=LG[H];let cur=null;for(const sg of L){if(sg.t0<=tNow+0.03)cur=sg;else break}if(!cur&&L.length&&L[0].t0<=gs[R.b].last+0.03)cur=L[0];lgNow[H]=cur;
  /* v5.73: Streifen im Feld und Schild „… Hand hierher“ entfernt (Felix 27.11. 21:57: zu viel Information; Farbe, Lage des Balkens und die Zahl sagen dasselbe) */}
   c.textAlign='center';c.textBaseline='bottom';
-  for(let j=R.a;j<=R.b;j++){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=hy-6-(G.start-R.vt)*ZL.pps;if(y0<-40)break;
+  /* v5.74 (Felix 27.11. 22:07: „jede Note braucht eine Zahl … wenn der Balken runterfährt, sehe ich nicht mehr, welche Note und welche Zahl – besonders bei kurzen Tönen“):
+     a) Kurze Balken (unter ~35 px) bekamen gar keine Zahl. Jetzt ist jeder Balken mindestens so hoch, dass Zahl UND Name hineinpassen.
+     b) Wartete das Lied auf den Griff, rutschte der Balken noch bis zu einem Viertelschlag hinter die Tasten – ein kurzer Balken war dann fast weg. Jetzt hält er an der Tastenkante an.
+     c) Gezeichnet wird von hinten nach vorn: der nächste Griff liegt immer obenauf und ist ganz zu lesen, auch wenn derselbe Ton schnell wiederholt wird. */
+  for(let j=R.b;j>=R.a;j--){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=R.demo?hy-6-(G.start-R.vt)*ZL.pps:Math.min(hy-9,hy-6-(G.start-R.vt)*ZL.pps);if(y0<-40)continue;
     const anchor=gold&&(j===R.a||j===R.la||R.peekJ===j),dim=j<R.la&&R.k>=0&&!anchor,cur=j===R.pos&&!R.demo;
-    for(const m of G.mids){const k=X[m];if(!k)continue;const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2),len=Math.max(18,(n?n.dur:0.3)*ZL.pps);
+    for(const m of G.mids){const k=X[m];if(!k)continue;const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2),fs=Math.max(10,Math.min(14,k.w*0.55)),fd=Math.min(20,Math.max(14,k.w*0.62)),fOn=S.fingers===true&&!!(n&&n.fing),len=Math.max(fs+10+(fOn?fd+3:0),(n?n.dur:0.3)*ZL.pps);
       c.globalAlpha=(dim?0.35:1)*(anchor?1:al);c.fillStyle=anchor?wc:k.b?(G.hands.get(m)==='L'?C.lhB:C.rhB):G.hands.get(m)==='L'?C.lh:C.rh;c.beginPath(); /* v5.67: Balken auf schwarzen Tasten in dunklerem Ton der Handfarbe */
-if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.w-2,len);c.fill();
+if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.w-2,len);c.fill();{const ga=c.globalAlpha;c.globalAlpha=1;c.strokeStyle=gold?C.dark:C.bg;c.lineWidth=1.5;c.stroke();c.globalAlpha=ga} /* dunkler Rand trennt wiederholte Töne auf derselben Taste */
       if(cur&&al>0.5){c.strokeStyle='#fff';c.lineWidth=2;c.stroke()}
       if(R.hint&&!R.demo&&j>=R.hint.a&&j<=R.hint.b&&j>R.a){c.save();c.globalAlpha=0.9;c.strokeStyle=C.bad;c.lineWidth=2;c.setLineDash([5,4]);c.strokeRect(k.x-1,Math.max(1,y0-len)-1,k.w+2,Math.min(len,y0)+2);c.restore()} /* v5.51: blasse Hilfe an der Stelle von eben */
       if(R.spot&&j===R.spot.c&&(R.demo||al>0.5)){c.save();c.globalAlpha=1;c.strokeStyle=C.bad;c.lineWidth=3;c.strokeRect(k.x-1,Math.max(1,y0-len)-1,k.w+2,Math.min(len,y0)+2);
         c.fillStyle=C.bad;c.font='700 14px Inter,system-ui';c.textAlign='left';c.textBaseline='bottom';c.fillText('← hier',k.x+k.w+5,y0-2);c.restore()} /* v5.45: Problemgriff rot markieren */
       /* v5.67: unten im Balken die Fingerzahl (weißer Knopf, 1 = Daumen … 5 = kleiner Finger), darüber der Name. Schwarze Taste: Name weiß auf schwarzem Schild („Bb“), weiße Taste: Name ohne Schild („B“). */
-      {const fs=Math.max(10,Math.min(14,k.w*0.55)),fOn=S.fingers===true&&n&&n.fing&&len>=fs+22, /* v5.73: Zahl wieder auf JEDEM Balken (Felix 27.11. 21:58: „einfacher, wenn die Zahl immer dasteht“) – die Regel „nur am Anfang einer Handlage“ musste man erst verstehen */fd=Math.min(20,Math.max(14,k.w*0.62)),cx=k.x+k.w/2;let yb=y0-3;
+      {const cx=k.x+k.w/2;let yb=y0-3;
         if(fOn){const cy=yb-fd/2;c.beginPath();c.arc(cx,cy,fd/2,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.fillStyle='#121826';c.font=`800 ${Math.round(fd*0.68)}px Inter,system-ui`;c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5);c.textBaseline='bottom';yb-=fd+3}
         const nm=zlName(m);c.font=`${k.b?700:600} ${fs}px Inter,system-ui`;
         if(k.b){const tw=c.measureText(nm).width+6;c.fillStyle='#0b0e16';c.beginPath();if(c.roundRect)c.roundRect(cx-tw/2,yb-fs-2,tw,fs+3,4);else c.rect(cx-tw/2,yb-fs-2,tw,fs+3);c.fill();c.fillStyle='#fff';c.fillText(nm,cx,yb)}
@@ -5477,7 +5481,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.73 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.74 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
