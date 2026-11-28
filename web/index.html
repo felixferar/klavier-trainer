@@ -651,7 +651,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.75</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.77</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -5487,7 +5487,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.75 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.77 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -5698,11 +5698,11 @@ function scanCore(px,w,n,f){
   if(f<SCAN.start-0.05)return;
   if(SCAN.lastF!=null&&f-SCAN.lastF>0.5&&SCAN.okT!=null)SCAN.hole=true;if(SCAN.lastF==null||f>SCAN.lastF)SCAN.lastF=f;
   const tt=f-SCAN.start;SCAN.frames++;
-  const first=!SCAN.rest;if(first){SCAN.rest=[];SCAN.stab=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[],offs:[]}))}
+  const first=!SCAN.rest;if(first){SCAN.sm=null;SCAN.seams=null;SCAN.z1=null;SCAN.restOk=null;SCAN.dbgRecalNo=null;SCAN.dbgRecalYes=null;SCAN.paleF=0;SCAN.paleT=null;SCAN.rest=[];SCAN.stab=[];SCAN.state=[];SCAN.lane=SCAN.keys.map(()=>({on:false,cnt:0,ons:[],offs:[]}))}
   let laneOcc=null;if(n>=3){if(n>=4){ // several rows a few pixels apart: a tiny gap between two bars of a repeated note is always inside one of them
       const K=SCAN.keys.length,cnt=new Uint8Array(K),gap=new Uint8Array(K),bgc=new Uint8Array(K);SCAN.lrow=SCAN.lrow||[];SCAN.fi=(SCAN.fi||0)+1;
       const trs=[];
-      for(let r=3;r<n;r++){const o=laneBars(px,w,r,r-3),mk=o.mask,kp=SCAN.keyPx.x,st=SCAN.lrow[r]||(SCAN.lrow[r]={prev:new Uint8Array(K),tr:new Int32Array(K).fill(-99),box:new Uint8Array(K)});
+      for(let r=3;r<n;r++){const o=laneBars(px,w,r,r-3),mk=o.mask,kp=SCAN.keyPx.x;if(window.SEAM2!==false)seamRec(r-3,o,w,n-3,tt);const st=SCAN.lrow[r]||(SCAN.lrow[r]={prev:new Uint8Array(K),tr:new Int32Array(K).fill(-99),box:new Uint8Array(K)});
         for(let k=0;k<K;k++){if(o[k])cnt[k]++;if(o.bgK[k])bgc[k]++;
           // a real gap between two bars shows the dark background (not letters) – and it moves down through the rows one after another
           // v5.43: …but not the dark rim right after a note-name box: the box is the bottom of the SAME bar (box → rim → rest of the bar);
@@ -5722,8 +5722,9 @@ function scanCore(px,w,n,f){
           st.prev[k]=o[k]?1:(o.bgK[k]&&!st.box[k]?2:0);if(o.boxK[k])st.box[k]=2;else if(o[k]&&st.box[k])st.box[k]--}trs.push(st.tr)}
       SCAN.gapMin=SCAN.gapMin||new Int32Array(K);for(let k=0;k<K;k++){let c=0,ok=true,last=-1e9,mn=1e9;for(const tr of trs){if(SCAN.fi-tr[k]<=4){c++;if(tr[k]<last)ok=false;last=tr[k];mn=Math.min(mn,tr[k])}}if(c>=3&&ok){gap[k]=c;SCAN.gapMin[k]=mn}}
       const need=Math.max(1,n-3-1);laneOcc=Array.from(cnt,c=>c>=need);SCAN.laneGap=gap;SCAN.laneBgc=bgc}else laneOcc=laneBars(px,w,2,0)}
-  let nPressed=0,nLit=0;
+  let nPressed=0,nLit=0;const kbL=new Float32Array(SCAN.keys.length),kbC=new Uint8Array(SCAN.keys.length);
   for(let k=0;k<SCAN.keys.length;k++){const key=SCAN.keys[k],row=key.black?0:1,cx=Math.round(key.x*(w-1));
+    {const q=px(0,Math.min(w-1,Math.max(0,cx))),hq=rgb2hsv(q[0],q[1],q[2]);kbL[k]=lum(q[0],q[1],q[2]);kbC[k]=hq[1]>0.3&&hq[2]>0.3?1:0} /* v5.68: Zeile der schwarzen Tasten an JEDER Taste (für kbFit unten) */
     const hk=Math.max(1,Math.round((SCAN.kw||0.02)*(w-1)*(key.black?0.15:0.22))),sm=[];for(let j=-2;j<=2;j++){const p=px(row,Math.min(w-1,Math.max(0,cx+Math.round(j*hk/2))));sm.push([lum(p[0],p[1],p[2]),p])}
     sm.sort((p,q)=>p[0]-q[0]);let [r,g,b]=sm[2][1];
     if(first){SCAN.rest[k]=key.rest||[r,g,b];SCAN.state[k]={on:false,cnt:0,off:0,start:0,hue:[]}}
@@ -5731,9 +5732,18 @@ function scanCore(px,w,n,f){
     // self-calibration: a key that keeps exactly the same uncoloured look for ~2 s IS resting – whatever the still image said
     // (e.g. the sampling spot is a bit off and hits the edge of a black key). Without this, a few such keys block the whole reading.
     {const sb=SCAN.stab[k];if(sb&&Math.hypot(r-sb.c[0],g-sb.c[1],b-sb.c[2])<18){sb.n++;sb.c[0]+=(r-sb.c[0])*0.1;sb.c[1]+=(g-sb.c[1])*0.1;sb.c[2]+=(b-sb.c[2])*0.1}else SCAN.stab[k]={c:[r,g,b],n:1};
-      const s2=SCAN.stab[k];if(s2.n>=50&&sat<0.25&&Math.hypot(s2.c[0]-re[0],s2.c[1]-re[1],s2.c[2]-re[2])>20){re=SCAN.rest[k]=s2.c.slice();SCAN.recal=(SCAN.recal||0)+1;if(!SCAN.recalK)SCAN.recalK={};if(SCAN.recalK[k]==null)SCAN.recalK[k]=tt} /* v5.64: gemerkt, welche Taste am Anfang anders aussah als in Ruhe (= etwas lag darüber) */}
+      const s2=SCAN.stab[k],ro=SCAN.restOk||(SCAN.restOk=new Uint16Array(SCAN.keys.length));if(Math.hypot(r-re[0],g-re[1],b-re[2])<20&&ro[k]<60000)ro[k]++;
+      if(s2.n>=50&&!s2.no&&sat<0.25&&Math.hypot(s2.c[0]-re[0],s2.c[1]-re[1],s2.c[2]-re[2])>20){
+        /* v5.77: eine lange gehaltene Taste in blasser Farbe (Sättigung < 0,25, z. B. Malve) ist KEINE neue Ruhefarbe – sonst ist die Taste danach taub, bis sie 2 s lang frei war.
+           Abgelehnt wird nur, was deutlich anders ist (> 45) UND dem jetzigen Aussehen der anderen Tasten derselben Sorte weniger ähnelt als die bisherige Ruhefarbe –
+           und nur bei einer Taste, die schon wie ihre Ruhefarbe ausgesehen hat (sonst: Lesepunkt daneben, wie bisher übernehmen). */
+        let no=false;if(window.RECAL_GUARD!==false&&ro[k]>=30&&Math.hypot(s2.c[0]-re[0],s2.c[1]-re[1],s2.c[2]-re[2])>45){const md=restTyp(key.black),dC=Math.hypot(s2.c[0]-md[0],s2.c[1]-md[1],s2.c[2]-md[2]),dR=Math.hypot(re[0]-md[0],re[1]-md[1],re[2]-md[2]);if(dC>dR+25)no=true}
+        if(no){s2.no=true;(SCAN.dbgRecalNo||(SCAN.dbgRecalNo=[])).push([k,+tt.toFixed(2),s2.c.map(Math.round),re.map(Math.round)])}
+        else{(SCAN.dbgRecalYes||(SCAN.dbgRecalYes=[])).push([k,+tt.toFixed(2),s2.c.map(Math.round),re.map(Math.round),ro[k]]);re=SCAN.rest[k]=s2.c.slice();ro[k]=0;SCAN.recal=(SCAN.recal||0)+1;if(!SCAN.recalK)SCAN.recalK={};if(SCAN.recalK[k]==null)SCAN.recalK[k]=tt}} /* v5.64: gemerkt, welche Taste am Anfang anders aussah als in Ruhe (= etwas lag darüber) */}
     const dist=Math.hypot(r-re[0],g-re[1],b-re[2]);
-    const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45));if(dist>45&&!(sat>0.25&&val>0.3))nPressed++; /* neither the normal key nor a coloured (lit) key */ if(pressed)nLit++;
+    /* v5.76: blasse Tastenfarbe (z. B. Rosa, Sättigung 0,26: FMM „Lost Sky“ – 278 weiße Töne übersehen): wenn sich die Taste sehr deutlich von ihrer Ruhefarbe
+       unterscheidet (> 90), reicht eine schwächere Färbung (> 0,18). Ein grauer Schatten oder eine Einblendung hat keine Farbe (< 0,1). */
+    const pressed=dist>(key.black?55:70)&&(sat>0.28||(key.black&&val>0.45)||(window.PALE_KEY!==false&&dist>90&&sat>0.18&&val>0.3));if(dist>45&&!(sat>0.25&&val>0.3))nPressed++; /* neither the normal key nor a coloured (lit) key */ if(pressed)nLit++;if(pressed&&sat>0.08&&sat<=0.25&&val<=0.7){SCAN.paleF=(SCAN.paleF||0)+1;if(SCAN.paleF===30)SCAN.paleT=tt}
     if(laneOcc&&SCAN.okT==null&&!SCAN.okF){const ln=SCAN.lane[k];ln.seen=false;ln.on=false;ln.pre=null} // keyboard not (yet) visible: what is in this row now is not a bar
     else if(laneOcc){const ln=SCAN.lane[k],occ=laneOcc[k];
       if(occ){ln.cnt++;ln.offF=0;if(!ln.on){ln.on=true;ln.onFi=SCAN.fi;if(ln.seen){ln.ons.push(tt);ln.offs.push(null)}else ln.pre={off:null}}
@@ -5745,14 +5755,14 @@ function scanCore(px,w,n,f){
     const st=SCAN.state[k];
     if(pressed){
       // repeated note: between two strikes the key looks EXACTLY like at rest for a single frame (~40 ms) → a new note, not a flicker
-      if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,sa:st.cn?st.ss/st.cn:0,clean:!!st.split});st.start=tt;st.hue=[];st.cs=0;st.ss=0;st.cn=0;st.split=true}
+      if(st.on&&st.off===1&&st.clean){SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,sa:st.cn?st.ss/st.cn:0,clean:!!st.split,cp:st.cp});st.start=tt;st.hue=[];st.cs=0;st.ss=0;st.cn=0;st.cp=[];st.split=true}
       // D1: a new strike after a gap of 1–4 frames in which the key looked EXACTLY like at rest is a repeated note, not a flicker
       if(!st.on&&st.cnt===0)st.cleanStart=!!(st.hadNote&&st.gapClean&&st.offN>=1&&st.offN<=8);
-      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1){st.start=tt;st.h1=h;st.c1=sat*val}if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.cs=0;st.ss=0;st.cn=0;st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h);if(st.on){st.cs=(st.cs||0)+sat*val;st.ss=(st.ss||0)+sat;st.cn=(st.cn||0)+1}}
+      st.off=0;st.offN=0;st.cnt++;if(!st.on&&st.cnt===1){st.start=tt;st.h1=h;st.c1=sat*val}if(!st.on&&st.cnt>=2){st.on=true;st.hue=[];st.cs=0;st.ss=0;st.cn=0;st.cp=[];st.split=!!st.cleanStart}if(st.on&&sat>0.25)st.hue.push(h);if(st.on){st.cs=(st.cs||0)+sat*val;st.ss=(st.ss||0)+sat;st.cn=(st.cn||0)+1;(st.cp||(st.cp=[])).push(tt,sat*val)}} /* v5.77: cp = Farbkraft je Bild (Zeit, Wert) – für das Vor-Leuchten in finishCore */
     else{ // v4.64: a key lit for a SINGLE frame (≤ 41 ms at 24 fps) is no event yet (flicker) – kept as a candidate; finishCore adopts it if the key's own bar arrived at that moment
       if(!st.on&&st.cnt===1){const L=SCAN.events.single||(SCAN.events.single=[]);L.push({m:key.m,start:st.start,end:tt,hue:st.h1,ch:st.c1||0,single:true})}
       st.cnt=0;{const cl=dist<30&&sat*val<0.2;st.offN=(st.offN||0)+1;st.gapClean=st.offN===1?cl:(st.gapClean&&cl)}
-      if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,sa:st.cn?st.ss/st.cn:0,clean:!!st.split});st.split=false;st.hadNote=true}}
+      if(st.on){st.off++;if(st.off===1){st.end=tt;st.clean=dist<30&&sat*val<0.2}if(st.off>=2){st.on=false;SCAN.events.push({m:key.m,start:st.start,end:st.end,hue:circMean(st.hue),ch:st.cn?st.cs/st.cn:0,sa:st.cn?st.ss/st.cn:0,clean:!!st.split,cp:st.cp});st.cp=[];st.split=false;st.hadNote=true}}
       else if(dist<20){re[0]=re[0]*0.98+r*0.02;re[1]=re[1]*0.98+g*0.02;re[2]=re[2]*0.98+b*0.02}} // slowly follow lighting
   }
   SCAN.lastVt=tt;try{scanQuality()}catch(e){}
@@ -5762,11 +5772,33 @@ function scanCore(px,w,n,f){
   // more than ~40 % of all keys look different at the same time → the keyboard is gone (end screen / outro)
   // the keyboard is no longer visible (end screen / outro): many keys look neither normal nor lit, for ~0.4 s
   // …or far more keys "lit" at once than two hands can press, for ~1 s
-  const odd=nPressed>SCAN.keys.length*0.35?10:(nLit>Math.max(14,SCAN.keys.length*0.4)?25:0);
+  /* v5.68 Abspann mit einer ANDEREN Tastatur (Vorschau des nächsten Videos, anderer Bildausschnitt): dort sah bisher nur ein Teil der Tasten „anders“ aus – zu wenig
+     für die Regel oben, und die App las bis zum Videoende weiter (Melody/FMM: 180 erfundene Töne). Sicherer Maßstab: das Muster selbst. In der Zeile der schwarzen Tasten
+     muss an jeder schwarzen Taste Dunkel (oder Farbe = gedrückt) und an jeder weißen Hell (oder Farbe) stehen. Gemessen an 31 Videos: im Song immer ≥ 0,80 der Tasten,
+     im fremden Abspann 0,45–0,52. Unter 0,72 (und Zeile 1 passt auch nicht, siehe unten) für 25 Bilder = Tastatur weg (wie oben: kommt sie wieder, wird die Phase nur ausgelassen). */
+  let kbFit=1,kbGone=false;if(window.KB_FIT!==false){const K=SCAN.keys.length,wl=[];for(let k=0;k<K;k++)if(!SCAN.keys[k].black)wl.push(kbL[k]);wl.sort((p,q)=>p-q);const wr=wl.length?wl[Math.floor(wl.length*0.8)]:255;
+    let ok=0;for(let k=0;k<K;k++)if(kbC[k]||(SCAN.keys[k].black?kbL[k]<0.5*wr:kbL[k]>0.62*wr))ok++;kbFit=K?ok/K:1;
+    /* …aber: YouTube-Endkarten liegen oft über den schwarzen Tasten, während der Song noch läuft (Allerlei von Nicolai: 12–13 s Musik unter den Karten). Dann stimmt die
+       Zeile der WEISSEN Tasten weiter. Zweiter Maßstab: ihr feines Muster (Trennlinien zwischen den Tasten) – Helligkeit minus Umgebung, verglichen mit dem Muster vom Anfang.
+       Gemessen: unter Endkarten unverändert (0,66 von 0,67), im fremden Abspann die Hälfte (0,23 von 0,42). Tastatur weg = Zeile 0 passt nicht UND Zeile 1 < 70 % ihres Anfangswerts. */
+    const z=SCAN.z1||(SCAN.z1={n:0,ref:null,c0:null});
+    if(z.n<30||kbFit<0.72||SCAN.frames%10===0){const a0=Math.max(0,Math.round(SCAN.keys[0].x*(w-1)-(SCAN.kw||0.02)*(w-1)/2)),a1=Math.min(w-1,Math.round(SCAN.keys[K-1].x*(w-1)+(SCAN.kw||0.02)*(w-1)/2)),m=a1-a0+1,rr=Math.max(2,Math.round((SCAN.kw||0.02)*(w-1)*0.5));
+      if(m>20&&(!z.ref||z.ref.length===m)){const Lm=new Float32Array(m),cs=new Float32Array(m+1),hp=new Float32Array(m);for(let i=0;i<m;i++){const q=px(1,a0+i);Lm[i]=lum(q[0],q[1],q[2]);cs[i+1]=cs[i]+Lm[i]}
+        for(let i=0;i<m;i++){const b0=Math.max(0,i-rr),b1=Math.min(m-1,i+rr);hp[i]=Lm[i]-(cs[b1+1]-cs[b0])/(b1-b0+1)}
+        const cor=()=>{let sx=0,sa=0,sb=0;for(let i=0;i<m;i++){sx+=hp[i]*z.ref[i];sa+=hp[i]*hp[i];sb+=z.ref[i]*z.ref[i]}return sx/Math.sqrt(sa*sb+1e-9)};
+        if(z.n<30){if(SCAN.okT!=null){if(!z.ref)z.ref=new Float32Array(m);for(let i=0;i<m;i++)z.ref[i]+=hp[i]/30;z.n++}} /* Bezugsmuster: Mittel der ersten 30 Bilder mit Tastatur */
+        else if(kbFit>=0.72){const c=cor();z.c0=z.c0==null?c:z.c0+(c-z.c0)*0.05;z.b0=z.b0==null?kbFit:z.b0+(kbFit-z.b0)*0.05} /* üblicher Wert im Song (gedrückte Tasten verändern das Muster etwas): gleitendes Mittel, jedes 10. Bild */
+        /* nur wenn die Tastatur im Song gut passt (echte Tastaturen mit Händen und Lichtschein passen nie sauber: Kassia 0,76 und Muster 0,01 – dort sagt die Prüfung nichts) */
+        else if(z.c0!=null&&z.c0>=0.3&&z.b0>=0.85)kbGone=cor()<0.7*z.c0}}
+    /* v5.76: nur ein PLÖTZLICHER Wechsel zählt als „Tastatur weg“ (fremder Abspann, anderes Bild: der Wert fällt von einem Bild aufs nächste).
+       Zoomt die Kamera langsam (echte Hände, Love Makes the World Go 'Round: 0,94 → 0,49 über 8 s), stimmen die Tasten in der Mitte weiter – dort wird weitergelesen wie bisher. */
+    {const h=z.h||(z.h=[]);if(kbFit<0.72){if(!z.low){z.low=true;let mx=0;for(const q of h)if(tt-q[0]<=1.5&&q[1]>mx)mx=q[1];z.abr=mx-kbFit>=0.15}if(!z.abr&&window.KB_ABRUPT!==false)kbGone=false}else z.low=false;
+      h.push([tt,kbFit]);while(h.length&&tt-h[0][0]>1.6)h.shift()}}
+  const odd=nPressed>SCAN.keys.length*0.35?10:(nLit>Math.max(14,SCAN.keys.length*0.4)?25:(kbGone?25:0));
   // never stop early: remember such phases; if the keyboard comes back (overlay, transition, a lot of glow) the phase is just left out.
   // Only a phase after which the keyboard never looks normal again is the outro – decided at the very end of the video.
   SCAN.oddR=SCAN.oddR||[];const lastR=SCAN.oddR[SCAN.oddR.length-1];
-  if(odd){SCAN.normF=0;if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene===odd&&!(lastR&&lastR.to==null))SCAN.oddR.push({from:SCAN.sceneT-0.3,to:null})}
+  if(odd){SCAN.normF=0;if(!SCAN.scene)SCAN.sceneT=tt;SCAN.scene=(SCAN.scene||0)+1;if(SCAN.scene>=odd&&!(lastR&&lastR.to==null))SCAN.oddR.push({from:SCAN.sceneT-0.3,to:null})}
   else{SCAN.scene=0;SCAN.normF=(SCAN.normF||0)+1;if(lastR&&lastR.to==null&&SCAN.normF>=8)lastR.to=tt-8/25}
 }
 /* v4.93: a pixel that looks like a falling bar (coloured and not dark) or like bright letters */
@@ -5787,13 +5819,20 @@ function laneBgInit(px,row,w,ww){const B=new Float32Array(w*3),m=new Uint8Array(
   return B}
 // falling bars in one pixel row: find each coloured bar (a run of pixels) and give it to exactly one key – by its centre and width.
 // (sampling at a fixed spot fails for black keys: the bars of the two white neighbours reach almost up to it, especially in blurry videos)
+/* v5.77: wie sehen die Tasten einer Sorte JETZT aus (Median je Farbkanal über das, was jede Taste gerade ruhig zeigt)? Ändert sich das ganze Bild (heller, Einblendung), ändert sich das mit. */
+function restTyp(black){const R=[[],[],[]];SCAN.keys.forEach((k,i)=>{if(!!k.black!==!!black)return;const sb=SCAN.stab&&SCAN.stab[i],c=sb&&sb.n>=10?sb.c:SCAN.rest[i];if(c)for(let j=0;j<3;j++)R[j].push(c[j])});return R.map(a=>{a.sort((x,y)=>x-y);return a.length?a[a.length>>1]:0})}
 function laneBars(px,w,row,li,noBg){
   const ww=Math.max(2,(SCAN.kw||0.02)*(w-1)),keys=SCAN.keys,occ=new Array(keys.length).fill(false);
   if(noBg){const B=new Float32Array(w*3);SCAN._zbg=B}else{SCAN.laneBg=SCAN.laneBg||[];}if(!noBg&&(!SCAN.laneBg[li]||SCAN.laneBg[li].length!==w*3)){SCAN.laneBg[li]=laneBgInit(px,row,w,ww);(SCAN.laneBgN||(SCAN.laneBgN=[]))[li]=new Uint8Array(w)}
   const bg=noBg?SCAN._zbg:SCAN.laneBg[li],bn=noBg?new Uint8Array(w):SCAN.laneBgN[li],mask=new Uint8Array(w); // 1 = bar colour, 2 = bright and grey (letters on a bar), 0 = background
-  for(let x=0;x<w;x++){const p=px(row,x),[,sa,va]=rgb2hsv(p[0],p[1],p[2]),i=x*3,dd=Math.hypot(p[0]-bg[i],p[1]-bg[i+1],p[2]-bg[i+2]);
+  /* v5.77: blasse Balken (Sättigung 0,10–0,22, nicht weißlich: Malve, Graublau) zählen nur in Videos, die nachweislich blass leuchtende Tasten haben
+     (mindestens 30 Bilder lang war eine Taste blass gedrückt). Sonst würden in normalen Videos die Mischpixel zwischen zwei Balken als Balken zählen und Lücken schließen
+     (Sing: ein Bb4-Anschlag ging so verloren). */
+  const pale=window.BAR_PALE!==false&&(window.BAR_PALE==='immer'||(SCAN.paleF||0)>=30);
+  const LU=noBg?null:new Uint8Array(w),WH=noBg?null:new Uint8Array(w); /* v5.68: Helligkeit und „weiß“ (Schrift) je Pixel – für die Naht-Suche (seamRec) */
+  for(let x=0;x<w;x++){const p=px(row,x),[,sa,va]=rgb2hsv(p[0],p[1],p[2]),i=x*3,dd=Math.hypot(p[0]-bg[i],p[1]-bg[i+1],p[2]-bg[i+2]);if(LU){LU[x]=(p[0]+p[1]+p[2])/3;if(va>0.7&&sa<0.2)WH[x]=1}
     if(noBg){if(sa>0.3&&va>0.3)mask[x]=1;else if(va>0.6&&sa<=0.3)mask[x]=2;continue}
-    if(sa>0.3&&va>0.3&&dd>45)mask[x]=1;else if(va>0.6&&sa<=0.3&&dd>45)mask[x]=2;if(mask[x]){bn[x]=0;continue}if(dd<30){bg[i]+=(p[0]-bg[i])*0.05;bg[i+1]+=(p[1]-bg[i+1])*0.05;bg[i+2]+=(p[2]-bg[i+2])*0.05;bn[x]=0}
+    if((sa>(window.BAR_SAT||0.22)||(pale&&sa>(window.PALE_SAT||0.1)&&va<=(window.PALE_VAL||0.7)))&&va>0.3&&dd>45)mask[x]=1;else if(va>0.6&&sa<=0.3&&dd>45)mask[x]=2;if(mask[x]){bn[x]=0;continue}if(dd<30){bg[i]+=(p[0]-bg[i])*0.05;bg[i+1]+=(p[1]-bg[i+1])*0.05;bg[i+2]+=(p[2]-bg[i+2])*0.05;bn[x]=0}
     /* v4.93: the 'background' here looks like a bar (bar colour learned at the start) and the row now shows plain dark background for 4 frames → that is the real background */
     else if(va<0.35&&barLike(bg[i],bg[i+1],bg[i+2])){if(++bn[x]>=4){bg[i]=p[0];bg[i+1]=p[1];bg[i+2]=p[2];bn[x]=0}}else bn[x]=0}
   if(!SCAN.keyPx||SCAN.keyPx.w!==w){const xs=keys.map(k=>k.x*(w-1)),bnd=[];keys.forEach((k,i)=>{if(!k.black){bnd.push(xs[i]-ww/2,xs[i]+ww/2)}});SCAN.keyPx={w,x:xs,bnd}}const kx=SCAN.keyPx.x;
@@ -5829,7 +5868,103 @@ function laneBars(px,w,row,li,noBg){
   const bgK=new Uint8Array(keys.length);for(let k=0;k<keys.length;k++){const hw=ww*(keys[k].black?0.18:0.3),a0=Math.max(0,Math.round(kx[k]-hw)),a1=Math.min(w-1,Math.round(kx[k]+hw));let c=0;for(let x=a0;x<=a1;x++)if(!mask[x])c++;bgK[k]=c>=(a1-a0+1)*0.75?1:0}
   // v5.43: a white note-name box across the key (most of its middle bright and grey, KISHAKEYS draws one at the bottom of every bar)
   const boxK=new Uint8Array(keys.length);for(let k=0;k<keys.length;k++){const hw=ww*(keys[k].black?0.18:0.3),a0=Math.max(0,Math.round(kx[k]-hw)),a1=Math.min(w-1,Math.round(kx[k]+hw));let c=0;for(let x=a0;x<=a1;x++)if(mask[x]===2)c++;boxK[k]=c>=(a1-a0+1)*0.5?1:0}
-  occ.mask=mask;occ.bgK=bgK;occ.boxK=boxK;return occ}
+  occ.mask=mask;occ.bgK=bgK;occ.boxK=boxK;occ.lum=LU;occ.wh=WH;return occ}
+/* v5.68 Nähte (Felix 27.11.: „mehrere Töne hintereinander werden als ein langer Ton gezählt“). Kanal-MIDI-Messung: 24 % aller Töne folgen ohne Pause auf denselben Ton,
+   und drei Viertel aller übersehenen Töne sind genau solche. Die Naht zwischen zwei Balken ist dünn und wandert in 1–3 Bildern durch die Lesezeilen; die bisherigen Regeln
+   (≥ 3 Zeilen nacheinander, Einbruch nur 1–2 Bilder lang, tiefer als 70 %) hingen davon ab, wie oft dasselbe Videobild aufgenommen wurde.
+   Neu, in zwei Schritten:
+   1. seamRec schreibt beim Lesen je Bild, Lesezeile und Taste drei Zahlen mit: mittlere Helligkeit über die ganze Tastenbreite, Anteil Balkenfarbe, Anteil weiß (Schrift).
+   2. seamFind sucht NACH dem Lesen – mit dem ganzen Verlauf vor Augen – kurze Einbrüche mitten im Balken: Helligkeit ≤ 88 % des Balkens davor UND danach
+      (Median der bis zu 6 Balken-Bilder auf jeder Seite, ohne Randbilder), höchstens 0,13 s lang. Die Zeilen sehen dieselbe Naht kurz nacheinander (Versatz aus den
+      Balkenanfängen gemessen). Eine Naht gilt, wenn ≥ 2 Zeilen sie sehen und eine davon ≤ 75 % – oder eine einzige Zeile ≤ 50 % (dünne Naht, die nur ein Bild traf).
+   seamApply trägt jede Naht als Balkenende + neuen Balkenanfang in die Bahn ein; das Teilen des Tons macht wie bisher finishCore (SPLIT_SEAM). */
+const SEAM2={W:6,qdip:0.88,maxdur:0.13,colmin:140,minlev:14,win:0.045,q2:0.75,q1:0.5,white:13,vHi:40,vLo:25,labShare:0.2};
+function seamRec(ri,o,w,R,tt){const K=SCAN.keys.length;let sm=SCAN.sm;
+  if(!sm||sm.K!==K||sm.R!==R||sm.w!==w){const ww=Math.max(2,(SCAN.kw||0.02)*(w-1)),kx=SCAN.keyPx.x,win=new Int32Array(K*4);
+    for(let k=0;k<K;k++){const bl=SCAN.keys[k].black,hw=ww*(bl?0.18:0.3),hf=ww*(bl?0.32:0.5);win[k*4]=Math.max(0,Math.round(kx[k]-hw));win[k*4+1]=Math.min(w-1,Math.round(kx[k]+hw));win[k*4+2]=Math.max(0,Math.round(kx[k]-hf));win[k*4+3]=Math.min(w-1,Math.round(kx[k]+hf))}
+    sm=SCAN.sm={K,R,w,win,n:0,t:[],ch:[]}}
+  if(ri===0){if((sm.n&1023)===0)sm.ch.push(new Uint8Array(1024*R*K*4));sm.t.push(tt);sm.n++}
+  const f=sm.n-1,ch=sm.ch[f>>10],base=((f&1023)*R+ri)*K*4,win=sm.win,lum=o.lum,mk=o.mask,wh=o.wh;
+  for(let k=0;k<K;k++){const a0=win[k*4],a1=win[k*4+1],f0=win[k*4+2],f1=win[k*4+3];let sl=0,sc=0,sg=0;
+    let lo=255,hi=0;for(let x=f0;x<=f1;x++)sl+=lum[x];for(let x=a0;x<=a1;x++){if(mk[x]===1)sc++;if(wh[x])sg++;const v=lum[x];if(v<lo)lo=v;if(v>hi)hi=v}
+    const p=base+k*4,nm=a1-a0+1;ch[p]=Math.round(sl/(f1-f0+1));ch[p+1]=Math.round(255*sc/nm);ch[p+2]=Math.round(255*sg/nm);ch[p+3]=hi-lo}}
+function seamFind(){const sm=SCAN.sm;if(!sm||sm.n<40)return [];
+  const N=sm.n,K=sm.K,R=sm.R,T=sm.t,P=SEAM2,X=new Float32Array(N),C=new Uint8Array(N),G=new Uint8Array(N),V=new Uint8Array(N);
+  const ser=(r,k,c,out)=>{for(let f=0;f<N;f++)out[f]=sm.ch[f>>10][((f&1023)*R+r)*K*4+k*4+c];return out};
+  const med=a=>{a.sort((p,q)=>p-q);const n=a.length;return n%2?a[n>>1]:(a[n/2-1]+a[n/2])/2};
+  // Zeitversatz der Lesezeilen gegeneinander: Balkenanfänge derselben Taste, bezogen auf die oberste Zeile (Mittel ohne die äußeren Fünftel)
+  const rise=[];for(let r=0;r<R;r++){rise.push([]);for(let k=0;k<K;k++){ser(r,k,1,C);const a=[];for(let f=1;f<N;f++)if(C[f]>=P.colmin&&C[f-1]<P.colmin)a.push(T[f]);rise[r].push(a)}}
+  const rd=[0];for(let r=1;r<R;r++){const ds=[];for(let k=0;k<K;k++){const a=rise[0][k],b=rise[r][k];let j=0;for(const t0 of a){while(j<b.length&&b[j]<t0-0.02)j++;if(j<b.length&&b[j]-t0<0.2)ds.push(b[j]-t0)}}
+    ds.sort((p,q)=>p-q);const n=ds.length,c=Math.floor(n/5);let s=0;for(let i=c;i<n-c;i++)s+=ds[i];rd.push(n>=20?s/(n-2*c):0)}
+  SCAN.seamRd=rd;SCAN.seamRise=rise[0];const out=[],evK=[];
+  for(let k=0;k<K;k++){const ev=[];evK.push(ev);
+    for(let r=0;r<R;r++){ser(r,k,1,C);let cnt=0;const idx=[];for(let f=0;f<N;f++)if(C[f]>=P.colmin){cnt++;if(f>0&&C[f-1]>=P.colmin&&f+1<N&&C[f+1]>=P.colmin)idx.push(f)}
+      if(cnt<8||idx.length<6)continue;ser(r,k,0,X);ser(r,k,2,G);ser(r,k,3,V);const m=idx.length;
+      // Hintergrund der Bahn: häufigste Helligkeit der Bilder ohne Balken
+      const h=new Float32Array(256);let nb=0;for(let f=0;f<N;f++)if(C[f]<51)nb++;for(let f=0;f<N;f++)if(nb<20||C[f]<51)h[X[f]]++;
+      let bg=0,bv=-1;for(let v=0;v<256;v++){let s=0;for(let j=Math.max(0,v-2);j<=Math.min(255,v+2);j++)s+=h[j];if(s>bv){bv=s;bg=v}}
+      const q=new Float32Array(N).fill(9);let pb=0,pa=0;
+      for(let i=0;i<N;i++){while(pb<m&&idx[pb]<i)pb++;while(pa<m&&idx[pa]<=i)pa++;if(pb<1||pa>m-1||T[i]-T[idx[pb-1]]>0.3||T[idx[pa]]-T[i]>0.3)continue;
+        const a=[],b=[];for(let j=Math.max(0,pb-P.W);j<pb;j++)if(T[i]-T[idx[j]]<=0.3)a.push(X[idx[j]]-bg);for(let j=pa;j<Math.min(m,pa+P.W);j++)if(T[idx[j]]-T[i]<=0.3)b.push(X[idx[j]]-bg);
+        const Lb=med(a),La=med(b),ref=Math.min(Lb,La);if(!(ref>=P.minlev)||ref<0.45*Math.max(Lb,La))continue;q[i]=(X[i]-bg)/ref}
+      /* Balkenstücke am Stück (Balkenfarbe oder Einbruch): je Einbruch wird gemerkt, wie weit er vom Anfang seines Balkens liegt (s = Beginn, e = Ende, n = der wievielte im Stück) */
+      for(let a=0;a<N;){if(!(C[a]>=P.colmin||q[a]<=P.qdip)){a++;continue}let b2=a;while(b2+1<N&&(C[b2+1]>=P.colmin||q[b2+1]<=P.qdip))b2++;
+        let st=a,nth=0;
+        for(let i=a;i<=b2;){if(!(q[i]<=P.qdip)){i++;continue}let j=i;while(j+1<=b2&&q[j+1]<=P.qdip)j++;
+          if(j+1<N){const d={t:T[j+1]-rd[r],r,q:9,s:T[i]-T[st],e:T[j+1]-T[st],n:nth,w:false,x:true,v:0,v2:0};ev.push(d);
+            if(T[j+1]-T[i]<=P.maxdur){d.x=false;let b=i;for(let f=i;f<=j;f++)if(q[f]<q[b])b=f;d.q=q[b];
+              // weiße Schrift im Balken (Notenname) ist keine Naht: dort ist deutlich mehr Weiß als im Balken davor/danach
+              let g=0;for(let f=Math.max(0,i-3);f<Math.min(N,j+4);f++)if(G[f]>g)g=G[f];
+              let lo=0,hi=m;while(lo<hi){const mid=(lo+hi)>>1;if(idx[mid]<b)lo=mid+1;else hi=mid}const p0=lo;let p1=p0;while(p1<m&&idx[p1]<=b)p1++;
+              const gr=[],vr=[];for(let z=Math.max(0,p0-P.W);z<p0;z++){gr.push(G[idx[z]]);vr.push(V[idx[z]])}for(let z=p1;z<Math.min(m,p1+P.W);z++){gr.push(G[idx[z]]);vr.push(V[idx[z]])}
+              d.w=!(g-(gr.length?med(gr):0)<=P.white);
+              // Schrift jeder Farbe: quer über die Balkenmitte ist das Bild im Einbruch unruhig (helle und dunkle Stellen nebeneinander) – eine echte Lücke ist ein glatter Strich
+              let vm=0;for(let f=i;f<=j;f++)if(V[f]>vm)vm=V[f];const v0=vr.length?med(vr):0;d.v=vm-v0;
+              // …und knapp daneben: ein Schild ist ein dunkles Kästchen mit Schrift in der Mitte – die dunklen Ränder sind die Einbrüche, die Schrift selbst ist hell. Davor 0,08 s, danach ein Bild.
+              for(let f=i-1;f>=0&&T[i]-T[f]<=0.08;f--)if(V[f]>vm)vm=V[f];for(let f=j+1;f<N&&T[f]-T[j]<=(window.LAB_AFTER==null?0.045:window.LAB_AFTER);f++)if(V[f]>vm)vm=V[f];d.v2=vm-v0}}
+          nth++;st=j+1;i=j+1}
+        a=b2+1}}
+  }
+  /* v5.76: Namensschilder. In manchen Videos trägt jeder Balken unten ein dunkles Kästchen mit dem Notennamen (kein weißer Buchstabe). Für die Naht-Suche sah das aus wie
+     eine Lücke kurz nach dem Balkenanfang – 74 und 196 falsche Töne in zwei Videos des Archivs. Erkennung am Video: bei mindestens jeder fünften gefundenen Naht steht
+     Schrift im Einbruch (Spanne über 40; gemessen: Schild-Videos 36 % und 44 %, alle anderen 0–9 %). Dann gilt: Einbruch mit Schrift = Schild. Und je Balken ist der erste
+     Einbruch an der üblichen Schild-Stelle das Schild, auch wenn die Schrift dort gerade nicht getroffen wurde; erst der nächste kann eine Naht sein – danach kommt wieder ein Schild.
+     In allen anderen Videos bleibt die Naht-Suche, wie sie gemessen wurde. */
+  const dts=[];for(let f=1;f<N;f++)dts.push(T[f]-T[f-1]);const tol=1.5*(dts.length?med(dts):0.04)+0.005;
+  const clus=ev=>{ev.sort((a,b)=>a.t-b.t);const cl=[];for(const e of ev){const c=cl[cl.length-1];if(c&&e.t-c[0].t<=P.win){const o=c.find(x=>x.r===e.r);if(!o)c.push(e);else if(e.q<o.q)c[c.indexOf(o)]=e}else cl.push([e])}
+    return cl.filter(c=>{let mq=9;for(const e of c)if(e.q<mq)mq=e.q;return (c.length>=2&&mq<=P.q2)||mq<=P.q1})};
+  let nA=0,nV=0;const ls=[],le=[];
+  for(let k=0;k<K;k++)for(const c of clus(evK[k].filter(e=>!e.w&&!e.x))){nA++;if(med(c.map(e=>e.v))>P.vHi){nV++;for(const e of c)if(e.n===0&&e.v>P.vHi){ls.push(e.s);le.push(e.e)}}}
+  const lab=SCAN.seamLab={n:nA,v:nV,on:window.SEAM_LABEL!==false&&nA>=15&&nV>=P.labShare*nA,s:ls.length>=5?med(ls):null,e:le.length>=5?med(le):null};
+  if(lab.s!=null&&!(lab.s<=0.15&&lab.e<=0.3)){lab.s=null;lab.e=null} /* nur wenn die Schilder wirklich gleich am Balkenanfang sitzen */
+  for(let k=0;k<K;k++){let ev=evK[k];
+    if(lab.on){const keep=[];for(let r=0;r<R;r++){let exp=true,lbl=false;for(const e of ev){if(e.r!==r)continue;if(e.n===0){exp=true;lbl=false} /* neues Balkenstück */
+        if(e.w||(!e.x&&e.v2>P.vLo)){exp=false;lbl=true;continue} /* Schrift im Einbruch oder knapp daneben: das Schild dieses Balkens */
+        if(exp&&lab.s!=null&&e.s<=lab.s+tol&&e.e<=lab.e+tol){exp=false;lbl=true;continue} /* erster Einbruch an der Schild-Stelle */
+        if(lbl&&e.s<=tol)continue;  /* gleich hinter einem Schild-Einbruch: noch dasselbe Schild (die Schrift hat es in zwei Stücke geteilt) */
+        lbl=false;if(e.x){exp=true;continue}  /* lange Lücke: danach beginnt ein neuer Balken */
+        keep.push(e);exp=true}}ev=keep} /* Naht: der nächste Balken beginnt, mit eigenem Schild */
+    else ev=ev.filter(e=>!e.w&&!e.x);
+    // dieselbe Naht in mehreren Zeilen (nach Abzug des Zeilenversatzes höchstens 45 ms auseinander) → eine
+    for(const c of clus(ev)){let mq=9;for(const e of c)if(e.q<mq)mq=e.q;out.push({k,t:med(c.map(e=>e.t)),n:c.length,q:mq,v:med(c.map(e=>e.v))})}}
+  return out}
+/* stärkster Weiß-Anteil (Schrift) in der Bahn einer Taste zwischen zwei Zeitpunkten, über alle Lesezeilen (0…255); ohne Mitschrift 255 = „unbekannt, lieber nicht“ */
+function seamWhite(k,t0,t1){const sm=SCAN.sm;if(!sm||k==null||k>=sm.K)return 255;const T=sm.t;let lo=0,hi=sm.n;while(lo<hi){const m=(lo+hi)>>1;if(T[m]<t0-0.05)lo=m+1;else hi=m}
+  let g=0;for(let f=lo;f<sm.n&&T[f]<=t1+0.05;f++){const ch=sm.ch[f>>10],b=(f&1023)*sm.R*sm.K*4;for(let r=0;r<sm.R;r++){const v=ch[b+(r*sm.K+k)*4+2];if(v>g)g=v}}return g}
+/* Anteil der Bilder (über alle Lesezeilen), in denen die MITTE der Bahn dieser Taste Balkenfarbe zeigt, zwischen zwei Bahn-Zeiten. Der Balken einer Nachbartaste
+   streift die Bahn nur am Rand – die Mitte füllt nur der eigene Balken (bei weißen Tasten; schwarze liegen zwischen zwei weißen Balken). Ohne Mitschrift 0. */
+function seamCover(k,t0,t1){const sm=SCAN.sm;if(!sm||!sm.n||k==null||k<0)return 0;const T=sm.t,rd=SCAN.seamRd||[],off=SCAN.seamOff||0;let n=0,c=0;
+  for(let r=0;r<sm.R;r++){const a=t0-off+(rd[r]||0),b=t1-off+(rd[r]||0);let lo=0,hi=sm.n;while(lo<hi){const m=(lo+hi)>>1;if(T[m]<a)lo=m+1;else hi=m}
+    for(let f=lo;f<sm.n&&T[f]<=b;f++){n++;if(sm.ch[f>>10][((f&1023)*sm.R+r)*sm.K*4+k*4+1]>=200)c++}}
+  return n?c/n:0}
+function seamApply(){const S=seamFind(),R0=SCAN.seamRise||[];let add=0;
+  /* Zeit der Naht = Balken in der obersten Zeile wieder da. Die Bahn meldet einen Balkenanfang etwas später (sobald er in 3 Zeilen steht): Abstand an den normalen Balkenanfängen messen */
+  const ds=[];SCAN.lane.forEach((L,k)=>{const a=R0[k]||[];let j=0;for(const o of L.ons){while(j<a.length&&a[j]<o-0.2)j++;let b=null;for(let i=j;i<a.length&&a[i]<o+0.2;i++)if(b==null||Math.abs(a[i]-o)<Math.abs(b-o))b=a[i];if(b!=null)ds.push(o-b)}});
+  ds.sort((p,q)=>p-q);const off=ds.length>=10?ds[ds.length>>1]:(SCAN.seamRd||[0])[2]||0;SCAN.seamOff=off;
+  for(const s of S){const L=SCAN.lane[s.k];if(!L)continue;const t=s.t+off;if(L.ons.some(o=>Math.abs(o-t)<0.07))continue;
+    let i=-1;for(let j=0;j<L.ons.length;j++)if(L.ons[j]<t-0.04&&(L.offs[j]==null||L.offs[j]>t+0.04))i=j;
+    if(i<0)continue;L.ons.splice(i+1,0,t);L.offs.splice(i+1,0,L.offs[i]);L.offs[i]=t;add++;if(s.n>=(window.SEAM_SN||3)&&s.q<=(window.SEAM_SQ||0.5))(L.strong||(L.strong=new Set())).add(t);(L.sq||(L.sq=new Map())).set(t,s.q)}
+  SCAN.seams=S;SCAN.seamN=add}
 // notes that were struck before the reading started (YouTube: while the app was still looking for the keyboard):
 // in the still images the bars are visible above the keys. bar bottom height ÷ fall speed = how long until / since it reached the keys.
 function earlyFromBars(ev){
@@ -5894,6 +6029,7 @@ function finishCore(raw,preview){
     if(bb!==null)for(const e of ev){const ons=SCAN.lane[kIdx.get(e.m)].ons;for(const o of ons){const x=e.start-o;if(Math.abs(x-bb*0.04)<=0.06)ds.push(x)}}
     ds.sort((a,b)=>a-b);const d=ds.length>=3?ds[ds.length>>1]:null;SCAN.barDelay=d;
     SCAN.dK=d===null?null:[estBD(ev.filter(e=>!SCAN.keys[kIdx.get(e.m)].black),kIdx),estBD(ev.filter(e=>SCAN.keys[kIdx.get(e.m)].black),kIdx)];const dk=e=>{const v=SCAN.dK&&SCAN.dK[SCAN.keys[kIdx.get(e.m)].black?1:0];return v!=null?v:d};
+    if(!preview&&window.SEAM2!==false){try{seamApply()}catch(e){SCAN.seamErr=String(e)}} /* v5.68: Nähte erst NACH der Messung des Balken-Verzugs eintragen (sie sollen ihn nicht verschieben) */
     // a held note that only flickered (sparkles, labels, fading glow): same key, short gap and no new bar arrived → one long note
     {const byKey=new Map();for(const e of ev){if(!byKey.has(e.m))byKey.set(e.m,[]);byKey.get(e.m).push(e)}const out=[];
       for(const [m,list] of byKey){list.sort((a,b)=>a.start-b.start);const ons=SCAN.lane[kIdx.get(m)].ons,offs=SCAN.lane[kIdx.get(m)].offs;let cur=null;
@@ -5904,10 +6040,51 @@ function finishCore(raw,preview){
             const held=d!==null&&ons.some((o,i)=>Math.abs(o+dk(cur)-cur.start)<0.15&&(offs[i]==null||offs[i]+dk(cur)>=e.start-0.05)&&!(offs[i]!=null&&offs[i]-o<0.045));
             /* v5.58b: und nur Lücken unter 0,035 s (≈ 1 Bild) – auch unter einem durchgehenden Balken ist eine Taste, die 2+ Bilder lang aus war, losgelassen
                (Videos mit lückenlos aneinanderstoßenden Balken bei Tonwiederholungen). Kanal-MIDI-Test 21 Videos: F1@100 Mittel 0,9423 → 0,9472 (V7dy +6,4, L_uwuf +2,3, 8MmO +1,0; Kg8z −0,08). */
-            if(gap<=(held?0.25:0.1)&&gap<0.035&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
+            if(gap<=(held?0.25:0.1)&&gap<0.035&&!newBar&&!e.clean){cur.end=Math.max(cur.end,e.end);if(cur.cp&&e.cp)cur.cp=cur.cp.concat(e.cp);continue}out.push(cur)}cur={...e}}if(cur)out.push(cur)}
       ev=out.sort((a,b)=>a.start-b.start)}
-    if(d!==null){const out=[];for(const e of ev){const L=SCAN.lane[kIdx.get(e.m)],own=L.ons.some(o=>Math.abs(o+dk(e)-e.start)<0.12)||!!(L.pre&&(L.pre.off==null||e.start-dk(e)<=L.pre.off+0.1)),
-      ons=L.ons.map((o,i)=>[o,i]).filter(([o,i])=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)).map(([o,i])=>[o+dk(e),i>0&&L.offs[i-1]!=null&&Math.abs(L.offs[i-1]-o)<0.001]).filter(([x,seam])=>x>e.start+(seam&&window.SEAM_DIP!==false?SPLIT_SEAM:own?SPLIT_MIN:SPLIT_OWN)&&x<e.end-0.05).map(q=>q[0]); /* v5.65: eine Naht mitten im Balken (voriger Balken endet genau hier) ist ein sicherer Neuanschlag – schon ab 0,1 s nach dem Tonanfang */ /* v5.43: not at a one-frame piece (rim at the top of a pill) */
+    /* v5.77 Lichtschein vor und nach dem Ton (Videos mit Leuchteffekt, Lh8A „River Flows In You“: über 20 echte schwarze Töne verworfen). Der herabfallende Balken – oder der Ton
+       auf der Nachbartaste – hellt eine Taste schon 0,2–0,4 s vorher schwach auf und lässt sie danach nachleuchten. Die Taste gilt die ganze Zeit als gedrückt: der Ton begann
+       scheinbar zu früh, ohne Balken, und seine mittlere Farbkraft war zu schwach – er wurde als Lichtschein gestrichen (oder sein Anfang lag 0,2 s daneben).
+       Die Farbkraft einer Taste ändert sich dabei in STUFEN (z. B. 0,45 → 0,82 → 0,31, jeweils von einem Bild zum nächsten). Jetzt: hat ein Ereignis mehrere Stufen und trägt
+       die kräftigste den EIGENEN Balken (Balkenanfang an ihrem Anfang und Bahn-Mitte gefüllt, oder Bahn-Mitte fast durchgehend gefüllt), dann sind schwächere Stufen ohne
+       eigenen Balken davor und danach (< 0,75 der kräftigen) nur Lichtschein: der Ton beginnt und endet mit der kräftigen Stufe, seine Farbkraft ist die dieser Stufe. */
+    if(d!==null&&window.PREGLOW!==false&&SCAN.sm){let nP=0;const R=window.STEP_R||1.6;
+      for(const e of ev){const cp=e.cp;if(!cp||cp.length<16)continue;const n=cp.length>>1,c=i=>cp[2*i+1],t=i=>cp[2*i],k=kIdx.get(e.m),L=SCAN.lane[k],dd=dk(e);if(!L)continue;
+        /* Stufen suchen: je 3 Bilder davor und danach ruhig (Schwankung ≤ 12 %), Verhältnis ≥ 1,6 und Unterschied ≥ 0,12 */
+        const cut=[];let last=-9;for(let i=3;i+2<n;i++){const B=[c(i-3),c(i-2),c(i-1)].sort((x,y)=>x-y),A=[c(i),c(i+1),c(i+2)].sort((x,y)=>x-y),lb=B[1],la=A[1];
+          if(B[2]-B[0]>0.12*lb+0.02||A[2]-A[0]>0.12*la+0.02||Math.abs(la-lb)<0.12||Math.max(la,lb)<R*Math.max(Math.min(la,lb),0.02))continue;if(i-last<3)continue;cut.push(i);last=i}
+        if(!cut.length)continue;
+        const seg=[];{let a=0;for(const i of cut.concat([n])){let sum=0;for(let j=a;j<i;j++)sum+=c(j);seg.push({a,b:i,lvl:sum/(i-a),s:a===0?e.start:t(a),e:i===n?e.end:t(i)});a=i}}
+        for(const g of seg){const a=g.s+0.02-dd,b=Math.min(g.e,g.s+0.4)-0.02-dd,cov=b-a>=0.03?seamCover(k,a,b):0;
+          g.bar=cov>=0.8||(cov>=0.5&&L.ons.some((o,i)=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)&&o+dd>=g.s-0.15&&o+dd<=g.s+0.08))}
+        let S=null;for(const g of seg)if(g.bar&&(!S||g.lvl>S.lvl))S=g;if(!S)continue;
+        /* …außer die schwache Stufe hat selbst einen Balkenanfang, und dieser Balken läuft bis in die kräftige Stufe weiter: dann ist es EIN Ton, der nur am Anfang
+           abgedunkelt war (Sing: YouTube-Einblendung über den ersten Sekunden – der Tonanfang rutschte sonst 0,45 s nach hinten) */
+        const own=g=>g!==S&&L.ons.some((o,i)=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)&&o+dd>=g.s-0.15&&o+dd<=g.s+0.08&&(L.offs[i]==null||L.offs[i]+dd>S.s+0.05));
+        const keep=seg.map(g=>g.bar||g.lvl>=(window.STEP_HALO||0.75)*S.lvl||own(g));let i0=keep.indexOf(true),i1=keep.lastIndexOf(true);if(i0===0&&i1===seg.length-1)continue;
+        if(keep.slice(i0,i1+1).includes(false))continue; /* schwache Stufe mitten zwischen kräftigen: nichts ändern */
+        let sum=0,cnt=0;for(let j=seg[i0].a;j<seg[i1].b;j++){sum+=c(j);cnt++}
+        e.start=seg[i0].s;e.end=seg[i1].e;e.ch=sum/cnt;e.cp=cp.slice(2*seg[i0].a,2*seg[i1].b);e.pre=true;nP++}
+      SCAN.dbgPre=nP;if(nP)ev.sort((a,b)=>a.start-b.start)}
+    if(d!==null){const out=[],lastEnd=new Map(),ownO=new Map(),ownS=new Set();
+      if(window.SPLIT_OWNSEAM!==false){const byK=new Map();for(const e of ev){if(!byK.has(e.m))byK.set(e.m,[]);byK.get(e.m).push(e)}
+        for(const [m,l] of byK){const L=SCAN.lane[kIdx.get(m)];if(!L)continue;const dm=dk(l[0]);
+          L.ons.forEach((o,i)=>{if(L.offs[i]!=null&&L.offs[i]-o<0.045)return;const x=o+dm;let be=null,bd=0.08;for(const e of l){const q=Math.abs(e.start-x);if(q<=bd){bd=q;be=e}}
+            if(be){const c=ownO.get(be);if(c==null||Math.abs(c+dm-be.start)>bd)ownO.set(be,o)}})}
+        for(const [e,o] of ownO)ownS.add(e.m+':'+o)}
+      for(const e of ev){const L=SCAN.lane[kIdx.get(e.m)],own=L.ons.some(o=>Math.abs(o+dk(e)-e.start)<0.12)||!!(L.pre&&(L.pre.off==null||e.start-dk(e)<=L.pre.off+0.1)),
+      /* v5.77: beginnt der Ton als Neuanschlag (die Taste war gerade erst aus, ≤ 0,1 s) und hat dieser Anfang keinen eigenen Balkenanfang (±0,06 s), dann IST die erste sichere Naht
+         kurz danach (< 0,12 s) dieser Neuanschlag – nur etwas später gemessen. Dort nicht noch einmal teilen (sonst bleibt ein 0,1-s-Stummel stehen). */
+      pe=lastEnd.get(e.m),loose=window.SEAM_LOOSE!==false&&pe!=null&&e.start-pe<=0.1&&!L.ons.some(o=>Math.abs(o+dk(e)-e.start)<=0.06),
+      /* v5.77: der Ton beginnt, wo sein Balken beginnt – die Taste leuchtet bei schnellen Wiederholungen oft erst 0,03–0,1 s später wieder auf (oder etwas früher: der gemessene
+         Balken-Verzug schwankt um ± 0,06 s). Jeder Balkenanfang/jede Naht gehört deshalb zu dem Tonanfang, der ihm am nächsten liegt (± 0,08 s; ownO oben). Die eigene Naht teilt
+         ihren Ton nie; der Abstand „Naht mindestens 0,1 s nach dem Tonanfang“ zählt bei einer deutlichen Naht (Tiefe ≤ 0,5) ab dem eigenen Balkenanfang, nicht ab dem Aufleuchten. */
+      oo=ownO.get(e),s0e=oo==null?e.start:Math.min(oo+dk(e),e.start),
+      /* v5.76: …ebenso ein neuer Balken nach einer kurzen, echten Lücke: davor steht ein ganzer Balken dieser Taste (≥ 0,06 s), dann ≤ 0,15 s Pause, dann der neue –
+         und in der Pause stand keine weiße Schrift (ein Notenname unterbricht den Balken auch, ist aber kein neuer Ton). Schnelle Tonwiederholungen (Sechzehntel,
+         0,18 s Abstand) blieben sonst ein Ton, weil ein Balken erst ab 0,2 s teilen durfte. */
+      rep=(o,i)=>own&&window.SPLIT_REP!==false&&i>0&&L.offs[i-1]!=null&&o-L.offs[i-1]<=0.15&&o-L.offs[i-1]>0.001&&L.offs[i-1]-L.ons[i-1]>=0.06&&seamWhite(kIdx.get(e.m),L.offs[i-1],o)<=SEAM2.white,
+      ons=L.ons.map((o,i)=>[o,i]).filter(([o,i])=>!(L.offs[i]!=null&&L.offs[i]-o<0.045)&&!(ownS.has(e.m+':'+o))&&!(SCAN.paleT!=null&&o>=SCAN.paleT-0.01&&o<=SCAN.paleT+0.15)) /* v5.77: in dem Moment, in dem blasse Balken zu zählen beginnen, „beginnt“ in der Bahn kein Balken */.map(([o,i])=>[o+dk(e),(i>0&&L.offs[i-1]!=null&&Math.abs(L.offs[i-1]-o)<0.001&&window.SEAM_DIP!==false)||rep(o,i),!!(L.strong&&L.strong.has(o)),L.sq&&L.sq.has(o)?L.sq.get(o):9]).filter(([x,seam,strong,sq])=>x>Math.max(e.start+0.04,(seam&&sq<=(window.SPLIT_BARQ||0.5)?s0e:e.start)+(seam?(strong?(loose?0.12:(window.SPLIT_STRONG||0.07)):SPLIT_SEAM):own?SPLIT_MIN:SPLIT_OWN))&&x<e.end-0.05).map(q=>q[0]);lastEnd.set(e.m,e.end); /* v5.65: eine Naht mitten im Balken (voriger Balken endet genau hier) ist ein sicherer Neuanschlag – schon ab 0,1 s nach dem Tonanfang */ /* v5.43: not at a one-frame piece (rim at the top of a pill) */
       let s0=e.start;for(const x of ons){out.push({...e,start:s0,end:x-0.02});s0=x}out.push({...e,start:s0})}ev=out.sort((a,b)=>a.start-b.start)}}
   /* v5.58 (Felix 26.11., „Sing“ – Anfang): ein Akkord, der schon beim Lesestart in der Balken-Zeile stand (lane.pre), aber an einer Taste nichts zeigt,
      weil dort etwas über der Tastatur lag (YouTube-Feld „Weitere Videos“ nach dem Start): endet der Balken genau mit den Balken der anderen Akkordtöne (±0,06 s)
@@ -5943,14 +6120,76 @@ function finishCore(raw,preview){
   // ghost notes: a key next to a real note only lights up from its glow / a slightly misplaced sample point. A real note always has its own bar
   // falling onto exactly this key – so a note without its own bar is dropped if a neighbouring key has a real note at the same moment.
   if(SCAN.lane&&SCAN.barDelay!=null){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay;
-    for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];{const de=SCAN.dK&&SCAN.dK[SCAN.keys[kIdx.get(e.m)].black?1:0],dd=de!=null?de:d;e.bar=ln.ons.some(o=>o+dd>=e.start-0.15&&o+dd<=e.start+0.08)||!!(ln.pre&&(ln.pre.off==null||e.start-dd<=ln.pre.off+0.1))||!!e.early}}
+    for(const e of ev){const ln=SCAN.lane[kIdx.get(e.m)];{const de=SCAN.dK&&SCAN.dK[SCAN.keys[kIdx.get(e.m)].black?1:0],dd=de!=null?de:d;e.bar=ln.ons.some(o=>o+dd>=e.start-0.15&&o+dd<=e.start+0.08)||!!(ln.pre&&(ln.pre.off==null||e.start-dd<=ln.pre.off+0.1))||!!e.early;
+        /* v5.68: …oder die Bahn dieser Taste ist während des Tons belegt (≥ 70 % der ersten 0,4 s). Bei einer Tonwiederholung ohne Pause läuft EIN Balken durch –
+           ohne erkannte Naht gab es keinen Balkenanfang in der Nähe, der Ton galt als „ohne Balken“ und wurde neben einem Nachbarton als Leucht-Geist gelöscht. */
+        if(!e.bar&&window.BAR_COVER!==false){const a=e.start+0.02,b=Math.min(e.end,e.start+0.4)-0.02;if(b-a>=0.03){let c=0;for(let i=0;i<ln.ons.length;i++){const s0=ln.ons[i]+dd,s1=(ln.offs[i]==null?1e9:ln.offs[i]+dd+(window.COVER_TAIL==null?0.03:window.COVER_TAIL));c+=Math.max(0,Math.min(b,s1)-Math.max(a,s0))}if(c>=0.7*(b-a))e.bar=true}}
+        /* v5.76: Eine schwarze Taste liegt zwischen zwei weißen Balken. Der Balken EINER weißen Nachbartaste streift ihre Bahn (halbe Mitte) – das galt bisher als Balken,
+           und der Leucht-Geist daneben war damit vor allen Regeln geschützt. Der eigene Balken füllt die Mitte der Bahn. Tut er das in weniger als der Hälfte der Bilder,
+           ist es nicht der eigene Balken. (Nur mit Mitschrift der Naht-Suche; ohne sie bleibt alles wie bisher.) */
+        if(!e.early&&SCAN.sm&&SCAN.keys[kIdx.get(e.m)].black){const a=e.start+0.02-dd,b=Math.min(e.end,e.start+0.4)-0.02-dd;if(b-a>=0.04){e.cov=seamCover(kIdx.get(e.m),a,b); /* v5.77: e.cov = wie voll war die Bahn-Mitte (auch für Töne ohne Balkenanfang) */
+            if(e.bar&&window.BAR_VETO!==false&&e.cov<(window.VETO_COV||0.5)){e.bar=false;e.veto=true}}}}}
     const withBar=ev.filter(e=>e.bar).length;SCAN.dbg=ev.map(e=>({m:e.m,s:+e.start.toFixed(2),e:+e.end.toFixed(2),bar:e.bar,hue:e.hue==null?null:Math.round(e.hue)}));SCAN.dbgD=d;
     const wEv=ev.filter(e=>isWhitePC(e.m%12)),wBar=wEv.filter(e=>e.bar).length;
     if(wEv.length?wBar>=wEv.length*0.5:withBar>=ev.length*0.5){ // only if this video really has readable bars (some videos only light the keys); judged on white keys – ghost notes (mostly black keys) must not switch this off
       // E: a key lit as strongly as the neighbour AND as strongly as the bar-confirmed notes of its kind (white/black) is a real strike whose bar was missed – glow only tints (measured: real ≥ 0.86 / 0.75, glow ≤ 0.66 / 0.59)
       const chRef=[0,1].map(bl=>{const a=ev.filter(e=>e.bar&&e.ch>0&&!isWhitePC(e.m%12)===!!bl).map(e=>e.ch).sort((p,q)=>p-q);return a.length?a[a.length>>1]:null});
-      const full=(e,f)=>e.ch>0&&f.ch>0&&e.ch>=0.7*f.ch&&chRef[isWhitePC(e.m%12)?0:1]!=null&&e.ch>=0.7*chRef[isWhitePC(e.m%12)?0:1];
+      /* v5.76: „so stark wie üblich“ gilt je FARBE. Zwei Hände haben oft verschieden kräftige Farben (Rogue: die dunklere Hand liegt bei 0,71 der helleren) –
+         am Mittel aller Töne gemessen sahen ihre echten Töne aus wie Lichtschein. Bezug: Median der Töne mit Balken derselben Tastenart und Farbe (±30°, mind. 5). */
+      const refC=new Map(),refLo=new Map(),ref=(bl,h)=>{const key=(bl?'b':'w')+Math.round(h/10);if(refC.has(key))return refC.get(key);
+          const a=ev.filter(e=>e.bar&&e.ch>0&&e.hue!=null&&!isWhitePC(e.m%12)===!!bl&&hueDist(e.hue,h)<30).map(e=>e.ch).sort((p,q)=>p-q);let v=a.length>=5?a[a.length>>1]:null;refLo.set(key,a.length>=5?a[Math.floor(a.length*0.2)]:null);
+          /* Haben in einem Video mit Lichtschein mehr Geister als echte Töne einen (scheinbaren) Balken, ist der Median der schwarzen Tasten selbst ein Geist
+             (theflamingpiano: 0,24 statt 0,65; die weißen 0,63). Echte schwarze Töne liegen bei 0,7–1,05 der weißen derselben Farbe – darunter als 0,45 gilt der Bezug nicht. */
+          if(bl&&window.REF_ANCHOR!==false){const w=ref(0,h);if(w)v=v!=null?Math.max(v,0.45*w):0.7*w} /* zu wenige schwarze Töne mit eigenem Balken in dieser Farbe: üblich sind 0,7 der weißen */
+          refC.set(key,v);return v};
+      const relE=e=>{const bl=!isWhitePC(e.m%12),r=(window.GH_REL!==false&&e.hue!=null?ref(bl,e.hue):null)||chRef[bl?1:0];return r?e.ch/r:null};
+      const GE=window.GH_E||0.86,full=(e,f)=>{if(!(e.ch>0&&f.ch>0))return false;if(window.GH_REL===false)return e.ch>=GE*f.ch&&chRef[isWhitePC(e.m%12)?0:1]!=null&&e.ch>=GE*chRef[isWhitePC(e.m%12)?0:1];
+        /* Lichtschein hat die Farbe seiner Quelle (gemessen: 92–99 % der Geister liegen höchstens 10° neben dem Nachbarn; die echten Töne der dunkleren schwarzen Tasten
+           in Rogue 10–20° daneben): nur gegen einen Nachbarn GLEICHER Farbe (unter 10°) wird zusätzlich direkt verglichen, wie bisher */
+        const re=relE(e);if(re==null||re<GE)return false;return e.hue==null||f.hue==null||hueDist(e.hue,f.hue)>=(window.GH_HUE||10)||e.ch>=GE*f.ch};
       SCAN.preGhost=ev.slice();ev=ev.filter(e=>e.bar||!ev.some(f=>f!==e&&f.bar&&Math.abs(f.m-e.m)<=2&&Math.abs(f.start-e.start)<0.15&&!full(e,f))&&e.end-e.start>=0.06);
+      /* v5.76 Leucht-Geist auf der schwarzen Nachbartaste – auch wenn sie (in unscharfen Videos) scheinbar einen Balken hat oder stärker leuchtet als die 0,7 von Regel E.
+         In Videos mit Leuchteffekt (Cosmic PIANO, theflamingpiano) färbt eine gedrückte weiße Taste die schwarze Taste direkt daneben mit: gleiche Farbe, gleicher Anfang,
+         gleiches Ende, aber deutlich schwächer. Gemessen (Symphony, Memories): Geister 0,25–0,77 der üblichen Farbkraft, echte schwarze Töne 0,87–1,03.
+         Regel: schwarze Taste, direkt daneben (±1) eine weiße mit Balken, gleiche Farbe (±30°), zeitlich ganz innerhalb dieses Tons, und – jeweils bezogen auf die
+         übliche Farbkraft dieser Farbe für schwarze bzw. weiße Tasten (Median der Töne mit Balken, mind. 5) – weniger als 0,62 der Kraft des weißen Tons. */
+      if(window.GLOW1!==false){
+        const gl=e=>{if(isWhitePC(e.m%12)||!(e.ch>0)||e.hue==null)return false;const rb=ref(1,e.hue),rw=ref(0,e.hue);if(!rb||!rw)return false;
+          return ev.some(f=>f!==e&&Math.abs(f.m-e.m)===1&&isWhitePC(f.m%12)&&f.bar&&f.ch>0&&f.hue!=null&&hueDist(e.hue,f.hue)<30&&e.start>=f.start-0.06&&e.end<=f.end+0.08&&e.ch/rb<(Math.abs(e.start-f.start)<=0.06&&Math.abs(e.end-f.end)<=0.08?(window.GLOW1_SAME||0.85):(window.GLOW1_T||0.72))*f.ch/rw)};
+        /* …und der weitere Lichtschein: in diesen Videos hellt eine gedrückte Taste auch schwarze Tasten 2–3 Halbtöne weiter schwach auf (auf weißen Tasten sieht man
+           ihn nicht, sie sind schon weiß). Ohne eigenen Balken, weniger als 0,6 der üblichen Farbkraft, und im Umkreis von 3 Halbtönen klingt ein kräftiger Ton
+           (≥ 0,8, mit Balken) derselben Farbe, der den schwachen zeitlich ganz umschließt → Lichtschein. Gemessen: Geister 0,24–0,48, echte Töne ohne Balken ≥ 0,71. */
+        const gl2=e=>{if(e.bar||isWhitePC(e.m%12)||!(e.ch>0)||e.hue==null)return false;const rb=ref(1,e.hue);if(!rb||e.ch/rb>=0.6)return false;
+          return ev.some(f=>{if(f===e||!f.bar||Math.abs(f.m-e.m)>3||!(f.ch>0)||f.hue==null||hueDist(e.hue,f.hue)>=30||e.start<f.start-0.06||e.end>f.end+0.08)return false;const rf=ref(!isWhitePC(f.m%12),f.hue);return !!rf&&f.ch/rf>=0.8})};
+        /* …und ganz ohne kräftigen Ton daneben: eine schwarze Taste ohne eigenen Balken, die nicht einmal halb so kräftig leuchtet wie üblich, ist Lichtschein.
+           Gemessen: echte Töne ohne Balken ≥ 0,9 ihres Bezugs, einzelne Geister 0,24–0,53. */
+        /* Bezug hier: das untere Fünftel der schwarzen Töne mit eigenem Balken (nicht die Mitte). Spielen zwei Hände in ähnlichem Farbton, aber verschieden kräftig
+           (River Flows In You: 0,24 und 0,60), sähe die schwächere Hand sonst immer aus wie Lichtschein. Der Boden 0,45 der weißen bleibt. */
+        const gl3=e=>{if(window.GLOW3===false||e.bar||isWhitePC(e.m%12)||!(e.ch>0)||e.hue==null)return false;const rm=ref(1,e.hue);if(!rm)return false;
+          const lo=refLo.get('b'+Math.round(e.hue/10)),w=ref(0,e.hue),rb=window.GLOW3_LO===false||lo==null?rm:Math.max(Math.min(lo,rm),w?0.45*w:0);return e.ch/rb<0.55};
+        /* …und der eindeutige Fall: in der Bahn der schwarzen Taste lag nur der Balken der Nachbartaste (siehe oben), und die Taste leuchtet genau so lange wie die weiße
+           Nachbartaste. Dann sitzt der Messpunkt der schwarzen Taste auf der weißen (River Flows In You: 68-mal Bb4 mit B4 und C#5 mit D5, so kräftig wie echte Töne). */
+        /* v5.77: …ebenso, wenn die Bahn der schwarzen Taste nachweislich LEER war (Mitte in weniger als 15 % der Bilder gefüllt, kein Balkenanfang) – so kräftig der Ton auch leuchtet
+           (Lh8A: C#4 leuchtet 13-mal genau so lang und so kräftig wie das C4 daneben, ohne dass je ein Balken auf C#4 fiel). */
+        /* …aber nur an Tasten, deren Bahn sonst nachweislich gefüllt ist (mindestens 3 Töne dieser Taste mit gefüllter Bahn-Mitte) – sonst misst die Bahn dort nichts */
+        const covOk=new Map();for(const e of ev)if(e.cov!=null&&e.cov>=0.5)covOk.set(e.m,(covOk.get(e.m)||0)+1);
+        const gl4=e=>window.GLOW4!==false&&(e.veto===true||(window.GLOW4_EMPTY!==false&&!e.bar&&e.cov!=null&&e.cov<0.15&&(covOk.get(e.m)||0)>=3))&&ev.some(f=>f!==e&&Math.abs(f.m-e.m)===1&&isWhitePC(f.m%12)&&f.bar&&Math.abs(e.start-f.start)<=0.06&&Math.abs(e.end-f.end)<=0.08);
+        const gone=new Set(ev.filter(e=>gl(e)||(window.GLOW2!==false&&gl2(e))||gl3(e)||gl4(e)));SCAN.dbgGlow=gone.size;if(gone.size)ev=ev.filter(e=>!gone.has(e))}
+  /* v5.76: Tonwiederholung, deren zweiter Anschlag an der Taste nicht zu sehen war. Bei schnellen Wiederholungen (Sechzehntel, 0,12 s) ist die Taste zwischen zwei Anschlägen
+     ein Bild lang aus und dann nur ein Bild lang an – ein Ein-Bild-Ton zählt nicht. Der Balken zeigt es aber: der Balken dieses Tons endet an einer Naht, direkt dahinter
+     kommt ein neuer Balken derselben Taste (≥ 0,06 s), und die Taste zeigt in dessen Mitte nichts. Der erste Ton ist erkannt → der zweite kommt aus dem Balken (gleiche Hand).
+     Geht die Taste über die Naht hinweg durch, ist es kein Fall für diese Regel (dann teilt die Naht den Ton schon).
+     Nur weiße Tasten, und nur wenn der neue Balken die MITTE der Bahn füllt (≥ 80 % der Bilder): der Balken der Nachbartaste streift die Bahn auch und sieht in der
+     Bahn-Belegung genauso aus (ohne diese Grenze: 1000 falsche Nachbartöne in 29 Videos). Und nicht in Videos mit Lichtschein (dort wurden Leucht-Geister entfernt:
+     gemessen 64–215 je Video, in allen anderen 0–3) – Flammen und Schein über der Tastatur sehen in der Bahn aus wie Balken. */
+  if(SCAN.lane&&SCAN.barDelay!=null&&window.BAR_REP!==false&&(SCAN.dbgGlow||0)<=5){const K=SCAN.keys,d=SCAN.barDelay,add=[];
+    for(let k=0;k<K.length;k++){const L=SCAN.lane[k];if(!L||L.ons.length<2||(K[k].black&&window.BAR_REP_BLACK!==true))continue;const nbr=K[k].black?ev.filter(e=>Math.abs(e.m-K[k].m)===1):null;const de=SCAN.dK&&SCAN.dK[K[k].black?1:0],dd=de!=null?de:d,own=ev.filter(e=>e.m===K[k].m);if(!own.length)continue;let prev=null;
+      for(let i=0;i<L.ons.length;i++){const s0=L.ons[i]+dd,s1=L.offs[i]==null?null:L.offs[i]+dd,seam=i>0&&L.offs[i-1]!=null&&Math.abs(L.offs[i-1]-L.ons[i])<0.001;
+        let mine=own.find(e=>Math.abs(e.start-s0)<=0.12)||null;
+        if(!mine&&seam&&prev&&s1!=null&&s1-s0>=0.06&&(SCAN.cut==null||s1<=SCAN.cut)){const mid=(s0+s1)/2;
+          if(!own.some(e=>(e.start<mid&&e.end>mid)||(e.start>=s0-0.08&&e.start<s1-0.02))&&seamCover(k,L.ons[i]+0.015,L.offs[i]-0.015)>=(window.BAR_REP_COV||0.8)&&!(nbr&&nbr.some(o=>Math.abs(o.start-s0)<=0.06||(o.start<s0+0.03&&o.end>s0+0.05)))){mine={m:K[k].m,start:s0,end:s1,hue:prev.hue,ch:prev.ch,sa:prev.sa,fromBar:true,bar:true};add.push(mine)}}
+        prev=mine}}
+    if(add.length){SCAN.dbgBarRep=add.length;ev=ev.concat(add).sort((a,b)=>a.start-b.start)}}
       // a long lit key without any falling bar (> 8 s) is an overlay / end screen / lit-up logo, not a note (measured: no bar-less note > 4.2 s in 20 recordings)
       // overlay / end screen: ≥3 such keys lit at the same moment (a screen lighting up many keys) or a key that is almost colourless (dark tint); one or two held bass notes whose bar was missed stay
       {const lg=ev.filter(e=>!e.bar&&e.end-e.start>8),T=lg.filter(e=>lg.filter(o=>Math.abs(o.start-e.start)<0.3).length>=3||!(e.ch>=0.15)).map(e=>e.start);
@@ -6002,14 +6241,24 @@ function finishCore(raw,preview){
   if(SCAN.lane&&SCAN.barDelay!=null&&raw.single&&raw.single.length){const kIdx=new Map(SCAN.keys.map((k,i)=>[k.m,i])),d=SCAN.barDelay,add=[];
     const first=ev.length?ev[0].start:0,lastE=ev.length?Math.max(...ev.map(e=>e.end)):0;
     const cs0=ev.filter(e=>e.bar&&e.ch>0).map(e=>e.ch).sort((p,q)=>p-q),ref0=cs0.length?cs0[cs0.length>>1]:null; // a real strike lights the key as strongly as the bar-confirmed notes (measured: real 0.98–1.0 of that, glow ≤ 0.86)
-    for(const c of raw.single){if(SCAN.okT!=null&&c.end<SCAN.okT+0.05)continue;if(c.start<first||c.start>lastE)continue;if(ref0==null||!(c.ch>=0.9*ref0))continue; // only between the first and the last real note (intro / outro graphics must not move the song)
+    /* v5.77: der Maßstab je Tastensorte – schwarze Tasten leuchten in vielen Videos dunkler als weiße (sBnP: Vorschläge auf C#5/D#5 galten deshalb als zu schwach) */
+    const refT=bl=>{const a=ev.filter(e=>e.bar&&e.ch>0&&!isWhitePC(e.m%12)===bl).map(e=>e.ch).sort((p,q)=>p-q);return a.length>=5?a[a.length>>1]:ref0},refB=window.SINGLE_REFT===false?ref0:refT(true),refW=window.SINGLE_REFT===false?ref0:refT(false);
+    for(const c of raw.single){if(SCAN.okT!=null&&c.end<SCAN.okT+0.05)continue;if(c.start<first||c.start>lastE)continue;{const r0=isWhitePC(c.m%12)?refW:refB;if(r0==null||!(c.ch>=0.9*r0))continue} // only between the first and the last real note (intro / outro graphics must not move the song)
       
       const ki=kIdx.get(c.m);if(ki==null)continue;const ln=SCAN.lane[ki],de=SCAN.dK&&SCAN.dK[SCAN.keys[ki].black?1:0],dd=de!=null?de:d;
       let bi=-1,bd=0.09;for(let i=0;i<ln.ons.length;i++){const x=Math.abs(ln.ons[i]+dd-c.start);if(x<bd){bd=x;bi=i}}
-      if(bi<0)continue;                                                                     // no own bar at that moment: flicker / glow
+      /* v5.77: Vorschlagnoten von 30–40 ms (sBnP: 42 übersehen). Ihr Balken ist nur wenige Pixel hoch und steht in der Bahn höchstens 1 Bild lang – zu kurz für einen
+         Balkenanfang. Die Mitschrift der Bahn zeigt ihn trotzdem: Bahn-Mitte genau zur Balkenzeit gefüllt, davor und danach leer (kein langer Balken, der nur kurz aufblitzt).
+         Nicht in Videos mit Leuchteffekt. Gemessen an 12 Videos: 16 echte Töne dazu, kein falscher. */
+      const smOk=()=>{if(window.SINGLE_SM===false||!SCAN.sm||(SCAN.dbgGlow||0)>5)return false;const t=c.start-dd;
+        return seamCover(ki,t-0.03,t+0.04)>0&&seamCover(ki,t-0.25,t-0.08)<0.3&&seamCover(ki,t+0.08,t+0.2)<0.5&&!add.some(e=>e.m===c.m&&Math.abs(e.start-c.start)<0.1)};
+      if(bi<0&&!smOk())continue;                                                            // no own bar at that moment: flicker / glow
       if(ev.some(e=>e.m===c.m&&c.start<e.end+0.06&&c.end>e.start-0.06))continue;            // the key already has a note there
+      /* v5.77: ohne Balkenanfang, oder mit einem „langen Balken“, der gar nicht der eigene ist (in der Bahn einer schwarzen Taste liegen auch die Balken der Nachbartasten):
+         dann zählt die Mitschrift (smOk) – der Ton ist kurz */
+      if(bi<0){add.push({m:c.m,start:c.start,end:c.start+0.05,hue:c.hue,ch:c.ch,bar:true,early:false,fromSm:true});continue}
       if(ln.offs[bi]==null)continue;const len=ln.offs[bi]-ln.ons[bi];
-      if(!(len<=0.14))continue;                                                             // a key lit for one frame means a note of that length – a long bar with a one-frame light is something else (lost light), not adopted
+      if(!(len<=0.14)){if(smOk())add.push({m:c.m,start:c.start,end:c.start+0.05,hue:c.hue,ch:c.ch,bar:true,early:false,fromSm:true});continue}   // a key lit for one frame means a note of that length – a long bar with a one-frame light is something else (lost light), not adopted
       add.push({m:c.m,start:c.start,end:c.start+Math.min(0.5,Math.max(0.05,len)),hue:c.hue,ch:c.ch,bar:true,early:false})}
     {const cs=ev.filter(e=>e.bar&&e.ch>0).map(e=>e.ch).sort((p,q)=>p-q);SCAN.adopted=add.map(c=>({m:c.m,s:+c.start.toFixed(2),ch:+c.ch.toFixed(2),ref:cs.length?+cs[cs.length>>1].toFixed(2):null}))}
     if(add.length)ev=ev.concat(add).sort((a,b)=>a.start-b.start)}
@@ -6038,6 +6287,23 @@ function finishCore(raw,preview){
   const hSplit=SCAN.handFix&&SCAN.handFix.split;
   // notes without a clear colour: the hand whose notes are nearest in pitch at that time
   const handOf=e=>{if(!twoHands)return 'R';if(hSplit)return e.m<hSplit?'L':'R';const g=grp(e);if(g!=null)return g===leftG?'L':'R';let best=null,bd=1e9;for(const o of ev){const og=grp(o);if(og==null)continue;const d=Math.abs(o.m-e.m)+Math.abs(o.start-e.start)*4;if(d<bd){bd=d;best=og}}return best==null?'R':(best===leftG?'L':'R')};
+  /* v5.76: Beginn am Balken ausrichten. Zwischen zwei schnellen Anschlägen derselben Taste bleibt die Taste im Video oft 60–90 ms dunkel und leuchtet erst spät wieder auf
+     (0qyO: 80 ms nach dem Anschlag). Der Balken sagt es genauer: er kommt genau zum Anschlag unten an. Liegt der Beginn eines Tons 20–100 ms NACH der Ankunft seines Balkens,
+     gilt die Ankunft des Balkens (nie später, und nicht vor dem Ton davor auf derselben Taste). Nur bei Tonwiederholungen an einer Naht und nicht in Leucht-Videos:
+     für alle Töne angewandt wurden 6 von 29 Videos schlechter (Lichtschein, ungenauer Balken-Verzug). */
+  if(!preview&&SCAN.lane&&SCAN.barDelay!=null&&window.BAR_SNAP!==false&&(SCAN.dbgGlow||0)<=5){const kI=new Map(SCAN.keys.map((k,i)=>[k.m,i])),byM=new Map();let nS=0;
+    for(const e of ev){if(!byM.has(e.m))byM.set(e.m,[]);byM.get(e.m).push(e)}
+    for(const [m,L0] of byM){const k=kI.get(m),ln=k==null?null:SCAN.lane[k];if(!ln||!ln.ons.length)continue;const blk=SCAN.keys[k].black,nb=blk?(byM.get(m-1)||[]).concat(byM.get(m+1)||[]):null;const de=SCAN.dK&&SCAN.dK[SCAN.keys[k].black?1:0],dd=de!=null?de:SCAN.barDelay;L0.sort((a,b)=>a.start-b.start);
+      for(let i=0;i<L0.length;i++){const e=L0[i];let best=null;
+        if(i===0||e.start-L0[i-1].end>0.15)continue; /* nur die Wiederholung: der Ton davor auf derselben Taste endet höchstens 0,15 s vorher */
+        for(let j=1;j<ln.ons.length;j++){if(window.SNAP_ANY!==true&&!(ln.offs[j-1]!=null&&Math.abs(ln.offs[j-1]-ln.ons[j])<0.001))continue; /* …und der Balken beginnt an einer Naht */
+          const x=ln.ons[j]+dd,xe=ln.offs[j]==null?1e9:ln.offs[j]+dd;if(!(x<=e.start-0.02&&x>=e.start-(window.SNAP_MAX||0.1)&&xe>e.start+0.02&&(best==null||x>best)))continue;
+          /* der Balken ab der Naht muss der EIGENE sein (Bahn-Mitte gefüllt). In der Bahn einer schwarzen Taste liegt aber auch der Balken der weißen Nachbartaste und füllt
+             die Mitte mit (2FeF: 12 neue Fehler): beginnt genau dann ein Ton auf einer Nachbartaste, gehört die Naht zu dessen Balken – dann wird nichts verschoben */
+          if(nb&&nb.some(o=>Math.abs(o.start-x)<=0.06))continue;
+          if(seamCover(k,ln.ons[j]+0.015,Math.min(ln.offs[j]==null?1e9:ln.offs[j],ln.ons[j]+0.25)-0.015)<(window.SNAP_COV||0.8))continue;best=x}
+        if(best==null)continue;if(best<L0[i-1].start+0.05)continue;if(L0[i-1].end>best)L0[i-1].end=best;e.start=best;nS++}}
+    SCAN.dbgSnap=nS;ev.sort((a,b)=>a.start-b.start)}
   // intro: the first note starts after 1 s
   const off=ev.length?Math.max(0,Math.min(...ev.map(e=>e.start))-1):0;SCAN.firstNote=SCAN.start+off+1;
   return ev.map(e=>({m:e.m,start:e.start-off,dur:Math.max(0.05,e.end-e.start),hand:handOf(e)}));
@@ -6129,6 +6395,8 @@ function scanStop(){
   const L=notes.filter(n=>n.hand==='L').length;
   $('#scDoneTxt').textContent=`${notes.length} Noten erkannt (${notes.length-L} rechts, ${L} links) · ${fmt(Math.max(...notes.map(n=>n.start+n.dur)))} Min`;
   $('#scName').value=(ytItem&&ytItem.title&&ytItem.title!=='YouTube-Video'?ytItem.title:'Song aus Video').slice(0,60);
+  /* v5.76: Das Bild wechselt mitten im Video auf eine andere Tastatur oder etwas ganz anderes (Sammel-Videos mit zwei Songs) – der Song endet dann dort. Das wird gesagt, damit ein kurzer Song nicht wie ein Fehler aussieht. */
+  try{const c=SCAN.cut,end=SCAN.lastF!=null&&SCAN.start!=null?SCAN.lastF-SCAN.start:null;if(c!=null&&end!=null&&end-c>20&&c<0.75*end)setTimeout(()=>toast(`Ab ${fmt(c+SCAN.start)} im Video ist etwas anderes zu sehen als am Anfang (zum Beispiel eine andere Tastatur). Der Song endet deshalb dort.`,7000),1500)}catch(e){}
   SCAN.result=notes;if(ytAuto){ytAuto=false;convProgress(100,'Fertig');setTimeout(()=>{convUI(false);if(SCAN.result)scanSave(true)},500);return}$('#scanDone').classList.add('on');$('#gDim').classList.add('on');
 }
 /* where the keyboard sits in the video picture (fractions of the picture), saved with the song so a later comparison view can lay the notes over the video */

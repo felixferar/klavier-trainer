@@ -25,12 +25,12 @@ KINDS = ['verschmolzen', 'zerschnitten', 'verschoben', 'uebersehen', 'nachbar', 
 def truth_for(midi, got):
     """wie midiref.evaluate: beste Spur-Kombination, Tempo und Versatz angepasst → Soll-Töne in Video-Zeit"""
     trs = R.midi_tracks(midi); idx = list(range(len(trs)))
-    combos = [c for r in range(1, len(idx) + 1) for c in itertools.combinations(idx, r)] if len(idx) <= 4 else [tuple(idx)]
+    combos = [c for r in range(1, len(idx) + 1) for c in itertools.combinations(idx, r)] if len(idx) <= 4 else [R.pick_tracks(trs, got)]
     best = None
     for co in combos:
         exp = sorted(((n, s, d, 'R') for i in co for n, s, d in trs[i]['notes']), key=lambda x: x[1])
         a, b, o = R.fit(exp, got)
-        tr = [(n + o, a * s + b, a * d) for n, s, d, _ in exp]
+        tr = [n[:3] for n in R.dedupe([(n + o, a * s + b, a * d) for n, s, d, _ in exp])]   # bereinigt: doppelte Töne sind ein Anschlag (siehe midiref.py, Schritt 5)
         f = S.score(dict(notes=[dict(m=m, s=s, d=d, h='R') for m, s, d in tr], style=dict(one_color=True)), got).get('F1@100', 0)
         if best is None or f > best[0]: best = (f, tr)
     return best

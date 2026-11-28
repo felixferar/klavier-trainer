@@ -11,6 +11,12 @@ Schritte:
   3. --tracks auto: jede Spur-Kombination wird probiert (bei ≤ 4 Spuren mit Noten), die beste nach F1@100 gilt – so fällt z. B. eine
      Gesangs-Spur weg, die im Video nicht gezeigt wird. Welche Spuren genommen wurden, steht in der Ausgabe.
   4. Bewertung mit score.py (F1 ±50/±100 ms, Längen, zerschnitten/verschmolzen).
+  5. (27.11.2026) Der Sollwert wird bereinigt, bevor verglichen wird – sonst zählt die Messung Fehler, die keine sind:
+     a) Doppelte Töne (gleiche Taste, Anfang ≤ 50 ms auseinander: dieselbe Note in zwei Spuren, oder zwei Note-on im selben Moment → Ton mit Dauer 0)
+        sind EIN Anschlag. Vorher galt der zweite als „übersehen“ (q6HM 48, V7dy 82, 0qyO 57, Kg8z 835 solche Scheinfehler).
+     b) Beginnt ein Ton, während derselbe Ton aus einer anderen Spur noch klingt, endet der erste dort (im Video läuft ein Balken in den nächsten).
+     c) Mehr als 4 Spuren: statt „alle Spuren“ wird schrittweise gewählt (Spur dazu/weg, solange F1@100 steigt). Lost Sky hat 8 Spuren, das Video
+        zeigt aber weder Streicher noch Chor.
 Warnung: passt die beste Zuordnung schlecht (F1@100 < 0,6), ist die MIDI vermutlich nicht die Datei des Videos → aussortieren.
 """
 import sys, os, json, itertools, collections
@@ -86,13 +92,53 @@ def fit(exp, got):
     return a, b, oct_
 
 
+def dedupe(notes, tol=0.05):
+    """[(m, s, d, …)] → doppelte Anschläge derselben Taste (Anfang ≤ tol auseinander) zu einem; ein Ton endet, wo der nächste derselben Taste beginnt"""
+    by = collections.defaultdict(list)
+    for n in notes: by[n[0]].append([n[1], n[1] + n[2], n[3:]])
+    out = []
+    for m, l in by.items():
+        l.sort(key=lambda x: x[0]); res = []; cur = None
+        for s, e, rest in l:
+            if cur is not None and s - cur[0] <= tol: cur[1] = max(cur[1], e); continue
+            if cur is not None: res.append(cur)
+            cur = [s, e, rest]
+        if cur is not None: res.append(cur)
+        for i, (s, e, rest) in enumerate(res):
+            if i + 1 < len(res) and res[i + 1][0] < e: e = res[i + 1][0]
+            out.append((m, s, max(0.0, e - s)) + tuple(rest))
+    return sorted(out, key=lambda x: x[1])
+
+
+def _f1(exp, got, tol=0.1):
+    if not exp or not got: return 0.0
+    sh = S._best_shift([(m, s, d, 'R') for m, s, d in exp], got, 0)
+    return 2 * len(S._match(exp, [(g[0], g[1] - sh, g[2]) for g in got], 0, 0, tol)) / (len(exp) + len(got))
+
+
+def pick_tracks(trs, got):
+    """Spurauswahl bei mehr als 4 Spuren: mit der besten Einzelspur anfangen, dann Spuren dazunehmen/weglassen, solange F1@100 steigt (Zeitachse aus allen Spuren)"""
+    n = len(trs); allexp = sorted(((x[0], x[1], x[2], 'R') for t in trs for x in t['notes']), key=lambda x: x[1])
+    a, b, o = fit(allexp, got)
+    conv = lambda idx: dedupe([(m + o, a * s + b, a * d) for i in idx for m, s, d in trs[i]['notes']])
+    cur = (max(range(n), key=lambda i: _f1(conv((i,)), got)),); sc = _f1(conv(cur), got); ch = True
+    while ch:
+        ch = False
+        for i in range(n):
+            c2 = tuple(sorted(set(cur) ^ {i}))
+            if not c2: continue
+            s2 = _f1(conv(c2), got)
+            if s2 > sc + 1e-9: cur, sc, ch = c2, s2, True
+    return cur
+
+
 def evaluate(midi, got, tracks='auto'):
     trs = midi_tracks(midi); got = sorted(S._notes(got), key=lambda x: x[1])
     if tracks == 'all': combos = [tuple(range(len(trs)))]
     elif tracks != 'auto': combos = [tuple(int(x) for x in tracks.split(','))]
     else:
         idx = list(range(len(trs)))
-        combos = [c for r in range(1, len(idx) + 1) for c in itertools.combinations(idx, r)] if len(idx) <= 4 else [tuple(idx)]
+        combos = [c for r in range(1, len(idx) + 1) for c in itertools.combinations(idx, r)] if len(idx) <= 4 else [pick_tracks(trs, got)]
     best = None
     for co in combos:
         exp = []
@@ -102,6 +148,7 @@ def evaluate(midi, got, tracks='auto'):
             exp += [(n, s, d, h) for n, s, d in trs[i]['notes']]
         exp.sort(key=lambda x: x[1])
         a, b, oct_ = fit(exp, got)
+        exp = dedupe(exp)                                             # Schritt 5: doppelte Töne sind ein Anschlag
         truth = dict(notes=[dict(m=n + oct_, s=a * s + b, d=a * d, h=h) for n, s, d, h in exp], style=dict(one_color=False))
         r = S.score(truth, got)
         r.update(tracks=[trs[i]['name'] or str(trs[i]['track']) for i in co], tempo=round(a, 4), versatz=round(b, 3), midi_oct=oct_ // 12)
