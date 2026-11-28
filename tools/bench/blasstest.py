@@ -41,7 +41,7 @@ async def main():
          'Blasse Farbe: kein Ton zu viel': not a['extra'],
          f"Vor-Leuchten: alle {v['soll']} Töne beginnen am Balken (± 80 ms)": v['hit'] == v['soll'],
          'Vor-Leuchten: kein Ton zu viel': not v['extra'],
-         'Version 5.78': r['ver'].startswith('Version 5.78'),
+         'Version 5.79': r['ver'].startswith('Version 5.79'),
          'keine JS-Fehler': not errs}
     for k, x in c.items(): print(('OK   ' if x else 'FEHL ') + k)
     if not all(c.values()): print({k: x for k, x in r.items() if isinstance(x, dict)}, errs)

@@ -17,6 +17,8 @@ JS = r"""async()=>{const o={};const ns=[];let t=1.5;for(let r=0;r<6;r++){for(con
    const ok=ZL.col.ok.toLowerCase(),bad=ZL.col.bad.toLowerCase();return {ok:seen.filter(s=>s[0]===ok).length,bad:seen.filter(s=>s[0]===bad&&s[4]<200&&s[3]<80).length}};
  const real=performance.now.bind(performance);let off=0;performance.now=()=>real()+off;
  const down=m=>{KB.held.add(m);zlPress(m)},up=m=>{KB.held.delete(m);KB.rel.set(m,performance.now())};
+ // 0) v5.79: D einmal falsch (vor dem Akkord) – kommt später richtig dran
+ down(62);off+=50;up(62);off+=1000;
  // 1) richtige Taste (C des ersten Akkords) gehalten
  down(60);o.g0=keyCol().ok;off+=1200;o.gHeld=keyCol().ok;up(60);off+=100;o.gAfter100=keyCol().ok;off+=400;o.gAfter500=keyCol().ok;
  // 2) falsche Taste gehalten
@@ -25,6 +27,8 @@ JS = r"""async()=>{const o={};const ns=[];let t=1.5;for(let r=0;r<6;r++){for(con
  zlPress(64);o.m0=keyCol().ok;off+=1200;o.mLater=keyCol().ok;
  // 4) Taste gehalten, obwohl ihr Treffer VOR dem letzten Loslassen lag (alter Treffer zählt nicht als gehalten)
  down(67);off+=50;up(67);off+=600;KB.held.add(67);o.old=keyCol().ok;KB.held.delete(67);
+ // 5) v5.79: jetzt ist D dran – richtig gedrückt, gehalten, losgelassen: klingt GRÜN nach, nicht rot (der Fehlgriff von vorhin zählt nicht mehr)
+ o.pos=MEM.gs[R.pos].mids.has(62);down(62);off+=800;o.dHeld=keyCol();up(62);off+=80;o.dAfter=keyCol();
  o.ver=document.querySelector('#verTxt').textContent;performance.now=real;return o}"""
 async def main():
     async with async_playwright() as p:
@@ -37,7 +41,8 @@ async def main():
          'nach dem Loslassen klingt Rot kurz nach (0,1 s) und ist nach 0,8 s weg': r['bAfter200'] >= 1 and r['bAfter800'] == 0,
          'ohne Klavier-Verbindung: kurzes Aufblitzen wie bisher': r['m0'] >= 1 and r['mLater'] == 0,
          'ein alter Treffer färbt eine neu gehaltene Taste nicht': r['old'] == 0,
-         'Version 5.78': r['ver'].startswith('Version 5.78'),
+         'v5.79: Taste früher einmal falsch, jetzt richtig gehalten → grün, auch beim Loslassen kein Rot': r['pos'] and r['dHeld']['bad'] == 0 and r['dAfter']['bad'] == 0 and r['dAfter']['ok'] >= 1,
+         'Version 5.79': r['ver'].startswith('Version 5.79'),
          'keine JS-Fehler': not errs}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     if not all(c.values()): print(r, errs)

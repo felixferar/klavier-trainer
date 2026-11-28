@@ -651,7 +651,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.78</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.79</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -3386,7 +3386,7 @@ function memHome(){if(zlOn()&&MEM.item){$('#zlHome').classList.add('hidden');$('
    Der alte Ablauf läuft weiter mit window.MEM_ZL=false. */
 /* v5.78 (Felix 28.11.): zoeg = so viel länger als das Lied an einem Griff dauert gilt beim Üben „Mit Noten im Takt“ als langes Suchen, zoegMax davon sind je Zeile erlaubt;
    grBack = so oft hintereinander zu lange gesucht → noch einmal „Griffe üben“ */
-const ZL={zoeg:1.0,zoegMax:1,grBack:3,stall:2.5,stallPer:40,resumeMin:40,naht:3,nahtNeed:2,stallX:1.0,minG:6,hint:false,aDbl:450,aHold:0.35,ffx:3,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
+const ZL={chordWin:0.12,zoeg:1.0,zoegMax:1,grBack:3,stall:2.5,stallPer:40,resumeMin:40,naht:3,nahtNeed:2,stallX:1.0,minG:6,hint:false,aDbl:450,aHold:0.35,ffx:3,spotMax:4,need:2,tolPer:10,repAfter:3,ov:2,peek:1.5,pause:1.6,flash:0.8,tempo:0.6,songT:[0.6,0.8,1],pps:110,names:['','Hören','Mit Noten','Verblassen','Aus dem Kopf'],fade:[0.5,0.3,0.3],
   col:{bg:'#121826',dark:'#0c111c',rh:'#6C8CFF',lh:'#4FC3B0',rhB:'#3F56B8',lhB:'#2B8576',ok:'#22C58B',bad:'#FF5A5F',demo:'#4C8DFF',gold:'#FFC93C',open:'#2a3346',mu:'#9aa4bf'}};
 const zlOn=()=>window.MEM_ZL!==false;
 const zlBlk=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
@@ -3555,7 +3555,7 @@ function zlAlpha(R,j){if(R.demo)return 1;if(R.peekJ===j&&R.clock<R.peekT)return 
   if(R.stage===3&&R.k>=0){const f=R.fade||0;if(f>=2&&(j-R.la)%2)return 0;return ZL.fade[Math.min(f,2)]}if(R.stage===3&&R.k<0)return ZL.fade[1];return 0}
 function zlAlphaBase(R,j){const h=R.hint;R.hint=null;const v=zlAlpha(R,j);R.hint=h;return v}
 function zlVis(R,j){return zlAlpha(R,j)>0.5?1:0} /* verblasste Noten (≤ 50 %) gelten als „nicht sichtbar“: keine leuchtende Zieltaste, B hilft */
-function zlReset(R){const gs=MEM.gs;R.pos=R.a;R.hit.clear();R.pre.clear();R.wrong=0;R.help=0;R.wset=new Set();R.hset=new Set();R.hold={};R.wkey={};R.wraw=0;R.mash=[];R.calmT=-9;R.wj={};R.slips=0;R.early=0;R.late=0;R.lateJ=-1;R.peekJ=-1;R.flashT=-1;R.waits=[];R.lastG=null;R.run=false;R.vt=gs[R.a].start;R.done=false;R.res=null;R.t0=Date.now()}
+function zlReset(R){const gs=MEM.gs;R.pos=R.a;R.hit.clear();R.pre.clear();R.hitT=new Map();R.apart=0;R.apartMsg=null;R.apartJ=-1;R.wrong=0;R.help=0;R.wset=new Set();R.hset=new Set();R.hold={};R.wkey={};R.wraw=0;R.mash=[];R.calmT=-9;R.wj={};R.slips=0;R.early=0;R.late=0;R.lateJ=-1;R.peekJ=-1;R.flashT=-1;R.waits=[];R.lastG=null;R.run=false;R.vt=gs[R.a].start;R.done=false;R.res=null;R.t0=Date.now()}
 function zlDemo(R,auto){if(!auto&&R.pos>R.a&&!R.done&&!R.demo){zlLog(R,0,{abort:1,why:'A',from:R.from||undefined});R.demos=0;
     const rs=zlAbortSong(R);if(rs){const n=zlStart(rs);Object.assign(n,{aLast:R.aLast,aDown:R.aDown,aT:0,aInDemo:false});try{toast(`Neuer Anlauf ab Zeile ${rs.from+1} – davor hat alles ✓`,2500)}catch(e){}zlDemo(n,false);return}} /* v5.57: langer Song – A setzt kurz vor der Stelle neu an, nicht bei Griff 1 */
   R.demos++;const gs=MEM.gs,G=gs[R.b];zlReset(R);
@@ -3593,15 +3593,21 @@ function zlPress(m){const R=MEM.run,gs=MEM.gs,now=performance.now();
   if(R.done)return;
   if(m===AW.helpKey){if(R.pos<=R.b&&!zlVis(R,R.pos)){R.hset.add(R.pos);if(!R.wset.has(R.pos)){R.wset.add(R.pos);R.help++;const q=zlLineOf(zlState(),R.pos);R.wj[q]=(R.wj[q]||0)+1}R.peekJ=R.pos;R.peekT=R.clock+ZL.peek;zlUI(R)}return}
   if(R.pos>R.b)return;const G=gs[R.pos];
-  if(G.mids.has(m)){R.hit.add(m);R.good.set(m,now);zlAdv(R);return}
+  /* v5.79 (Felix 28.11.: „Akkorde werden nicht zusammengezählt – Hauptsache die 3 Noten, auch nacheinander“): Ein Akkord zählt nur, wenn alle seine Töne
+     GLEICHZEITIG angeschlagen werden – höchstens ZL.chordWin (0,12 s) zwischen dem ersten und dem letzten Anschlag. Ein Akkordton, der länger her ist, fällt wieder heraus:
+     dann den ganzen Akkord noch einmal zusammen anschlagen. Zählt nicht als Fehler. */
+  const hT=R.hitT||(R.hitT=new Map());
+  if(G.mids.has(m)){if(G.mids.size>1&&ZL.chordWin){let drop=false;for(const q of [...R.hit]){const tq=hT.get(q);if(tq!=null&&R.clock-tq>ZL.chordWin){R.hit.delete(q);drop=true}}if(drop)zlApart(R)}
+    R.hit.add(m);hT.set(m,R.clock);R.good.set(m,now);zlAdv(R);return}
   if(R.recent.some(x=>R.clock-x.at<=0.25&&gs[x.j].mids.has(m))){R.good.set(m,now);return} /* später Ton desselben Akkords */
-  const nx=gs[R.pos+1];if(nx&&R.pos<R.b&&nx.start-G.start<=0.16&&nx.mids.has(m)){R.pre.add(m);R.good.set(m,now);return} /* fast gleichzeitig notierter Nachbargriff */
+  const nx=gs[R.pos+1];if(nx&&R.pos<R.b&&nx.start-G.start<=0.16&&nx.mids.has(m)){R.pre.add(m);hT.set(m,R.clock);R.good.set(m,now);return} /* fast gleichzeitig notierter Nachbargriff */
   /* v5.43: ein Fehler je Griff – wer an einer Stelle mehrfach daneben greift (oder vor Frust irgendwas drückt), hat dort 1 Fehler, nicht 10 */
   try{fxKnock()}catch(e){} /* v5.57: leises Holz-Klopfen statt Stille */
   R.wraw++;R.mash=R.mash.filter(t=>R.clock-t<1);R.mash.push(R.clock);if(R.mash.length>=4)R.calmT=R.clock+3;
   if(R.wkey[R.pos]==null)R.wkey[R.pos]=m;
   if(!R.wset.has(R.pos)){R.wset.add(R.pos);R.wrong++;const q=zlLineOf(zlState(),R.pos);R.wj[q]=(R.wj[q]||0)+1}
   R.bad.set(m,now);R.lastWrong=R.clock;zlUI(R)}
+function zlApart(R){if(R.apartJ===R.pos)return;R.apartJ=R.pos;R.apart=(R.apart||0)+1;if(R.clock-(R.apartMsg==null?-99:R.apartMsg)>8){R.apartMsg=R.clock;try{toast('Akkord: alle Töne gleichzeitig anschlagen',2200)}catch(e){}}}
 function zlAdv(R){const gs=MEM.gs,tol=zlBeat()/4;while(R.pos<=R.b){const G=gs[R.pos];for(const m of G.mids)if(!R.hit.has(m))return;
   if(!R.run){R.run=true;R.vt=G.start} /* der erste Griff startet den Takt */
   else if(R.gr)R.vt=Math.max(R.vt,G.start); /* v5.78 Griffe üben: schneller greifen ist nie „zu früh“ */
@@ -3700,7 +3706,7 @@ function zlFinish(R){if(R.spot)return zlFinishSpot(R);const z=zlState(),tol=zlTo
   if(!(R.k<0&&R.stage===3)){const tt=zlTempoAfter(z,R,ok);if(tt)sub=(sub||'')+tt}
   next=ok||(R.k<0&&(z.rep!=null||z.nq!=null))?zlPick(z):Object.assign({k:R.k,stage:R.stage,t:R.st},R.blk!=null?{blk:R.blk}:{},R.rep?{rep:1}:{},R.bonus?{bonus:1}:{});if(!ok&&next&&next.k<0&&next.blk==null&&next.stage>=4&&!next.spot)zlSongP(z,next);
   if(ok)try{(R.k<0&&R.stage>=4?fxBig:fxLine)()}catch(e){} /* v5.57: Zeile → kurzes Arpeggio · Stück/ganzer Song (inkl. neues Tempo) → voller Akkord */
-  R.ok=ok;memSaveAll();zlLog(R,ok?1:0,{from:R.from||undefined,gr:R.gr?1:undefined,zoeg:R.k>=0&&R.stage===2&&!R.gr&&!R.spot?zN:undefined,stall:R.stall,stars,tol,wraw:R.wraw,fade:R.stage===3&&R.k>=0?(R.fade||0):undefined,chk:R.k<0?(z.bc[R.blk!=null?'b'+R.blk:'s'+R.st]||[]).length:undefined,kc:R.k>=0?z.kc[R.k]:undefined,hint:R.hint?[R.hint.a,R.hint.b]:undefined});R.demos=0;R.res={ok,stars,msg,sub,tim,flash,kind,hist:hist.length>1?hist.slice():null};R.next=next;R.doneT=ok?ZL.pause+0.6:hintSet?ZL.pause+1.2:ZL.pause;zlUI(R)}
+  R.ok=ok;memSaveAll();zlLog(R,ok?1:0,{from:R.from||undefined,zs:R.apart||undefined,gr:R.gr?1:undefined,zoeg:R.k>=0&&R.stage===2&&!R.gr&&!R.spot?zN:undefined,stall:R.stall,stars,tol,wraw:R.wraw,fade:R.stage===3&&R.k>=0?(R.fade||0):undefined,chk:R.k<0?(z.bc[R.blk!=null?'b'+R.blk:'s'+R.st]||[]).length:undefined,kc:R.k>=0?z.kc[R.k]:undefined,hint:R.hint?[R.hint.a,R.hint.b]:undefined});R.demos=0;R.res={ok,stars,msg,sub,tim,flash,kind,hist:hist.length>1?hist.slice():null};R.next=next;R.doneT=ok?ZL.pause+0.6:hintSet?ZL.pause+1.2:ZL.pause;zlUI(R)}
 /* Protokoll: ein Eintrag je Durchgang im Format von tools/lernauswertung.py (t, song, k, mode, ok, abort, hints, wrong, n, dur in ms, demos, waits).
    Vorspielen zählt in „demos“; ein Abbruch erst, wenn schon ein Griff gespielt war (vorher = nur zuhören). */
 const ZL_MODE=['','hoeren','noten','blass','kopf'];
@@ -3790,7 +3796,7 @@ function zlDraw(){const R=MEM.run,cv=$('#zlCv');if(!R||!R.zl||!cv)return;const p
     R.dv={tg,now,off,a:R.a,k:R.k};vd=tg-off}else R.dv=null;
   for(let j=R.b;j>=R.a;j--){const al=zlAlpha(R,j);if(!al||(!R.demo&&j<R.pos))continue;const G=gs[j],y0=hy-6-(G.start-vd)*ZL.pps;if(y0<-40)continue;
     const anchor=gold&&(j===R.a||j===R.la||R.peekJ===j),dim=j<R.la&&R.k>=0&&!anchor,cur=j===R.pos&&!R.demo;
-    for(const m of G.mids){const k=X[m];if(!k)continue;const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2),fs=Math.max(10,Math.min(14,k.w*0.55)),fd=Math.min(20,Math.max(14,k.w*0.62)),fOn=S.fingers===true&&!!(n&&n.fing),len=Math.max(fs+10+(fOn?fd+3:0),(n?n.dur:0.3)*ZL.pps);
+    for(const m of G.mids){const k=X[m];if(!k)continue;const n=MEM.notes.find(q=>q.midi===m&&Math.abs(q.start-G.start)<0.2),fs=Math.max(10,Math.min(14,k.w*0.55)),fd=Math.min(20,Math.max(14,k.w*0.62)),fOn=S.fingers===true&&!!(n&&n.fing),len0=(n?n.dur:0.3)*ZL.pps,row=len0<fs+10+(fOn?fd+3:0),rh=fOn?fd+4:fs+6,len=Math.max(row?rh:8,len0); /* v5.79 (Felix 28.11.: „Balken länger da als der Ton“): der Balken ist so lang, wie der Ton klingt. Seit v5.74 war er mindestens so hoch wie Zahl + Name – kurze Töne sahen 2–3× zu lang aus. Bei kurzen Tönen stehen Zahl und Name nebeneinander in einer Zeile (statt übereinander) – der Balken ist dann nur so hoch wie diese Zeile. */
       c.globalAlpha=(dim?0.35:1)*(anchor?1:al);c.fillStyle=anchor?wc:k.b?(G.hands.get(m)==='L'?C.lhB:C.rhB):G.hands.get(m)==='L'?C.lh:C.rh;c.beginPath(); /* v5.67: Balken auf schwarzen Tasten in dunklerem Ton der Handfarbe */
 if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.w-2,len);c.fill();{const ga=c.globalAlpha;c.globalAlpha=1;c.strokeStyle=gold?C.dark:C.bg;c.lineWidth=1.5;c.stroke();c.globalAlpha=ga} /* dunkler Rand trennt wiederholte Töne auf derselben Taste */
       if(cur&&al>0.5){c.strokeStyle='#fff';c.lineWidth=2;c.stroke()}
@@ -3798,7 +3804,12 @@ if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.
       if(R.spot&&j===R.spot.c&&(R.demo||al>0.5)){c.save();c.globalAlpha=1;c.strokeStyle=C.bad;c.lineWidth=3;c.strokeRect(k.x-1,Math.max(1,y0-len)-1,k.w+2,Math.min(len,y0)+2);
         c.fillStyle=C.bad;c.font='700 14px Inter,system-ui';c.textAlign='left';c.textBaseline='bottom';c.fillText('← hier',k.x+k.w+5,y0-2);c.restore()} /* v5.45: Problemgriff rot markieren */
       /* v5.67: unten im Balken die Fingerzahl (weißer Knopf, 1 = Daumen … 5 = kleiner Finger), darüber der Name. Schwarze Taste: Name weiß auf schwarzem Schild („Bb“), weiße Taste: Name ohne Schild („B“). */
-      {const cx=k.x+k.w/2;let yb=y0-3;
+      if(row){const nm=zlName(m),cy=y0-len/2;let f2=fs,d2=fOn?Math.min(fd,len-4):0;c.font=`${k.b?700:600} ${f2}px Inter,system-ui`;let tw=c.measureText(nm).width;
+        while(f2>9&&(fOn?d2+2:0)+tw>k.w-4){f2--;if(fOn)d2=Math.max(11,d2-1);c.font=`${k.b?700:600} ${f2}px Inter,system-ui`;tw=c.measureText(nm).width}
+        const W=(fOn?d2+2:0)+tw;let x0=k.x+k.w/2-W/2;c.textBaseline='middle';
+        if(fOn){c.beginPath();c.arc(x0+d2/2,cy,d2/2,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.fillStyle='#121826';c.font=`800 ${Math.round(d2*0.68)}px Inter,system-ui`;c.textAlign='center';c.fillText(String(n.fing),x0+d2/2,cy+0.5);x0+=d2+2}
+        c.font=`${k.b?700:600} ${f2}px Inter,system-ui`;c.textAlign='left';c.fillStyle=anchor?'#121826':'#fff';c.fillText(nm,x0,cy+0.5);c.textAlign='center';c.textBaseline='bottom'}
+      else{const cx=k.x+k.w/2;let yb=y0-3;
         if(fOn){const cy=yb-fd/2;c.beginPath();c.arc(cx,cy,fd/2,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.fillStyle='#121826';c.font=`800 ${Math.round(fd*0.68)}px Inter,system-ui`;c.textBaseline='middle';c.fillText(String(n.fing),cx,cy+0.5);c.textBaseline='bottom';yb-=fd+3}
         const nm=zlName(m);c.font=`${k.b?700:600} ${fs}px Inter,system-ui`;
         if(k.b){const tw=c.measureText(nm).width+6;c.fillStyle='#0b0e16';c.beginPath();if(c.roundRect)c.roundRect(cx-tw/2,yb-fs-2,tw,fs+3,4);else c.rect(cx-tw/2,yb-fs-2,tw,fs+3);c.fill();c.fillStyle='#fff';c.fillText(nm,cx,yb)}
@@ -3814,7 +3825,11 @@ if(c.roundRect)c.roundRect(k.x+1,y0-len,k.w-2,len,5);else c.rect(k.x+1,y0-len,k.
      klingt die Farbe wie bisher kurz nach. Ohne Klavier-Verbindung (Mikrofon) bleibt es beim kurzen Aufblitzen. */
   const zlHeld=(m,t0)=>KB.held.has(m)&&t0>=(KB.rel.get(m)||0);
   const zlGlow=(m,t0)=>{const r=KB.rel.get(m)||0;return r>t0&&now-r<200}; /* nach dem Loslassen 0,2 s nachklingen */
-  for(const [m,t] of R.good)if(zlHeld(m,t)||zlGlow(m,t)||now-t<350)lit.set(m,C.ok);for(const [m,t] of R.bad)if(zlHeld(m,t)||zlGlow(m,t)||now-t<600)lit.set(m,C.bad);
+  /* v5.79 (Felix 28.11.: „Taste richtig gedrückt und gehalten, gehe zur nächsten – auf einmal ist die erste rot“): Je Taste zählt nur der LETZTE Anschlag.
+     Bisher wurden der letzte richtige und der letzte falsche Anschlag getrennt geprüft. Beim Loslassen klang Rot nach (zlGlow), sobald die Taste in diesem Durchgang
+     IRGENDWANN einmal falsch war – also auch nach einem richtigen, gehaltenen Ton. */
+  {const last=new Map();for(const [m,t] of R.good)last.set(m,[t,C.ok,350]);for(const [m,t] of R.bad){const o=last.get(m);if(!o||t>o[0])last.set(m,[t,C.bad,600])}
+    for(const [m,[t,col,ms]] of last)if(zlHeld(m,t)||zlGlow(m,t)||now-t<ms)lit.set(m,col)}
   const tgt=!R.demo&&!R.done&&R.pos<=R.b&&zlVis(R,R.pos)?gs[R.pos].mids:new Set();
   for(const pass of [0,1])for(let m=lo;m<=hi;m++){const k=X[m];if(!k||k.b!==pass)continue;const h=pass?kb*0.62:kb;
     c.fillStyle=lit.get(m)||(pass?'#1b1f2a':'#eef1f7');c.fillRect(k.x+(pass?0:0.5),hy,k.w-(pass?0:1),h);
@@ -5506,7 +5521,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.78 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.79 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}

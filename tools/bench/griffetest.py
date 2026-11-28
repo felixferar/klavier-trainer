@@ -65,7 +65,7 @@ async def main():
          '3× hintereinander zu lange gesucht → zurück zu Griffe üben': t(lambda: [f['gf'] for f in r['back']['fails']] == [1, 2, 0] and r['back']['fails'][2]['gq'] == 0 and 'Griffe üben' in r['back']['fails'][2]['sub'] and r['back']['gr'] == 1),
          'Protokoll: Griffe üben mit gr=1, im Takt mit Anzahl „lange gesucht“': t(lambda: r['log']['gr'] >= 2 and 2 in r['log']['zoeg'] and 1 in r['log']['zoeg']),
          "„So geht's“ erklärt Griffe üben": t(lambda: r['how']),
-         'Version 5.78': t(lambda: r['ver'].startswith('Version 5.78')),
+         'Version 5.79': t(lambda: r['ver'].startswith('Version 5.79')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
