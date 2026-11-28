@@ -89,7 +89,7 @@ async def main():
          'Bildwechsel: die Töne davor sind alle da': not [m for m in x['miss'] if float(m.split('@')[1]) < 8.6],
          'Kamera-Zoom: kein Schnitt, der Song wird bis zum Ende gelesen': z['cut'] is None and z['last'] is not None and z['last'] > 12,
          'Kamera-Zoom: mindestens 28 von 30 Tönen': z['hit'] >= 28,
-         'Version 5.79': r['ver'].startswith('Version 5.79'),
+         'Version 5.80': r['ver'].startswith('Version 5.80'),
          'keine JS-Fehler': not errs}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     if not all(c.values()): print({k: {a: v[a] for a in ('soll', 'ist', 'hit', 'miss', 'extra', 'cut', 'lab', 'last')} for k, v in r.items() if isinstance(v, dict)}, errs)

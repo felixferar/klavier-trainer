@@ -651,7 +651,7 @@ body:not(.dev) #werk,body:not(.dev) #tlFlag,body:not(.dev) #pFlag{display:none!i
       <div class="li"><div class="grow"><b>Links automatisch abholen</b><small>Die App holt neue Links selbst aus deinem privaten Archiv („klavier-diagnose“, Datei queue/pending.txt) und wandelt sie um, wenn sie offen ist, gerade nichts läuft und du ca. 2 Min. nichts angetippt hast. Das Display bleibt dann an – am besten am Ladegerät. Braucht den Zugangsschlüssel von oben.</small></div><input type="checkbox" class="sw" id="rqChk"></div>
     </div>
     </details>
-    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.79</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
+    <div class="list" style="margin-top:18px"><div class="li"><div class="grow"><b>App aktualisieren</b><small id="verTxt">Version 5.80</small></div><button class="btn sm" id="reloadBtn">Neu laden</button></div>
       <div class="li hidden" id="oldApp"><div class="grow"><b>Neue App-Version installieren</b><small>Behebt verlorene Daten beim Start ohne Internet. Deine Daten werden übernommen.</small></div><a class="btn sm pri" style="text-decoration:none" href="https://github.com/felixferar/klavier-trainer/releases/download/app/KlavierTrainer.apk">Laden</a></div></div>
   </div>
 </div>
@@ -5521,7 +5521,7 @@ const kbRetryDue=()=>NAT.ok&&KB.sup&&KB.saved&&!kbOn()&&KB.state!=='connecting'&
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')});
 setInterval(()=>{if(document.visibilityState==='visible'&&kbRetryDue())nat('kbAuto')},30000);
 function updVer(){const src=NAT.info&&NAT.info.source,h=location.host;
-  $('#verTxt').textContent='Version 5.79 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
+  $('#verTxt').textContent='Version 5.80 · '+(src==='online'?'online (Updates automatisch)':src==='cache'?'offline – zuletzt geladene Version':src==='offline'?'offline – eingebaute Version':h.endsWith('github.io')?'online (Updates automatisch)':h.startsWith('appassets')?'offline-Version':'Vorschau');
   $('#oldApp').classList.toggle('hidden',!OLD_APP)}
 updVer();
 if(OLD_APP&&load('kt_oldhint')!==dayKey()){save('kt_oldhint',dayKey());setTimeout(()=>toast('Neue App-Version verfügbar – siehe Einstellungen',4500),1500)}
@@ -6004,6 +6004,7 @@ function seamApply(){const S=seamFind(),R0=SCAN.seamRise||[];let add=0;
 function earlyFromBars(ev){
   const kbSeen=f=>{const W=f.width,H=f.height;let ok=0;for(const k of SCAN.keys){const y=Math.round((k.black?scanRows.yA:scanRows.yB)*(H-1)),x=Math.round(k.x*(W-1)),i=(y*W+x)*4,re=k.rest||[0,0,0];
       if(Math.hypot(f.data[i]-re[0],f.data[i+1]-re[1],f.data[i+2]-re[2])<50)ok++}return ok>=SCAN.keys.length*0.7}; // most keys look exactly like the resting keyboard
+  if(SCAN.rw!=null)return ev; // v5.80: das Video ist nach dem Fund zurückgesprungen – alles wurde richtig gelesen, nichts nachbauen
   const fr=(SCAN.fromFile?[]:(scanFrames||[])).filter(f=>f&&f.t!=null&&kbSeen(f)),d=SCAN.barDelay;if(!fr.length||d==null||!(d>0.02)||!scanRows||!scanDet)return ev;
   const img0=fr[0],H=img0.height,W=img0.width,yT=(scanRows.yT!=null?scanRows.yT:scanRows.yA-0.05)*(H-1),lane=laneHigh(scanRows,scanDet,img0),yL=(lane[0]+lane[lane.length-1])/2*(H-1);
   const pps=(yT-yL)/d;if(!(pps>10))return ev;
@@ -6392,7 +6393,7 @@ async function scanRun(live){
   // resting colour of each key from the still image
   const W=scanImg.width,H=scanImg.height,d=scanImg.data;
   restColors(keys,[scanImg,...(scanFrames&&scanFrames.length?scanFrames.slice(-5):[])],scanRows); // always include the image the keyboard was found in (earlier frames may still show the intro)
-  liveN.t=0;liveN.n=0;Object.assign(SCAN,{octV:null,octBusy:false,octFix:null,qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false});
+  liveN.t=0;liveN.n=0;Object.assign(SCAN,{octV:null,octBusy:false,octFix:null,qMin:null,qWarned:false,oddR:[],normF:0,gapMin:null,lrow:null,fi:0,laneGap:null,laneBg:null,laneBgN:null,wov:null,keyPx:null,barDelay:null,kw:scanDet.w/scanDet.W,fromFile:false,hole:false,lastF:null,on:true,keys,rest:null,state:null,lane:null,events:[],frames:0,vtMap:[],lastVt:0,scene:0,cut:null,okF:0,okT:null,oneColor:false,rw:SCAN.nextRw!=null?SCAN.nextRw:null});SCAN.nextRw=null;
   SCAN.start=+$('#scStart').dataset.v||0;if(live){try{SCAN.start=ytp.getCurrentTime()}catch(e){}}
   $('#scanOv').classList.add('hidden');if(!ytAuto)$('#scanBar').classList.remove('hidden');
   try{if(!live){ytp.setPlaybackRate(1);ytRate=1}if(ytAuto)ytp.mute()}catch(e){}
@@ -6407,7 +6408,7 @@ async function scanRun(live){
   const r=await nat('scanStart',SCAN.natArgs,'scanStarted');
   if(!r||!r.ok){SCAN.on=false;$('#scanBar').classList.add('hidden');toast('Scan konnte nicht starten');return}
   diagStart({w:r.w,n:7,box:{x:box.left,y:box.top,w:box.width,h:box.height},rowsSent:[scanRows.yA,scanRows.yB,scanRows.yC,...laneHigh(scanRows,scanDet,scanImg)],
-    scanRows,scanDet,keys:SCAN.keys.map(k=>({...k,rest:k.rest&&k.rest.slice()})),kw:SCAN.kw,start:SCAN.start,live:!!live,
+    scanRows,scanDet,keys:SCAN.keys.map(k=>({...k,rest:k.rest&&k.rest.slice()})),kw:SCAN.kw,start:SCAN.start,live:!!live,rewound:SCAN.rw,
     searchStills:(scanFrames||[]).slice(-16).map(f=>({t:f.t,t0:f.t0,img:imgJpeg(f,0.6)}))});
   if(prep){const t0=performance.now(); // until the keyboard looks normal (≥ ~1.2 s, lets the resting colours settle); at most 7 s
     while(ytAuto&&SCAN.on&&performance.now()-t0<7000&&(SCAN.okT==null||SCAN.frames<30))await sleep(100);
@@ -6674,6 +6675,24 @@ async function waitMainVideo(maxMs){ // YouTube ads: player state is not "playin
     if(st===1&&ct>last+0.02){ok++;if(ok>=2)return true}else{ok=0;if(st!==1){try{ytp.playVideo()}catch(e){}}}
     convProgress(null,st===1?'Video startet …':'Werbung läuft – bitte warten …');last=ct;await sleep(st===1?120:500)}
   return false}
+/* v5.80: Wohin zurückspringen? Von hinten durch die Suchbilder gehen, solange dort dieselbe Tastatur zu sehen ist (gleiche Tasten an der gefundenen Zeile).
+   Tastatur in allen Suchbildern → an den Start (st). Sonst kurz vor das erste Bild mit Tastatur (davor: Vorspann – der wird nicht nochmal gelesen).
+   Gefunden fast sofort (≤ 0,3 s nach dem Start) → kein Sprung nötig (null). */
+function rewindTo(frames,best,st){if(!frames.length||!best||!best.det)return null;
+  const last=frames[frames.length-1],tf=last.t!=null?last.t:st;if(!(tf>st+0.3))return null;
+  const same=f=>{try{const d=detectKeys(f,best.rows.yA);return !!d&&Math.abs(d.lo-best.det.lo)<=1&&Math.abs(d.hi-best.det.hi)<=1}catch(e){return false}};
+  let i=frames.length;while(i>0&&same(frames[i-1]))i--;
+  let to;if(i===0)to=st; // in allen Suchbildern zu sehen (auch wenn ältere schon verworfen sind): an den Start – einen Vorspann erkennt das Lesen selbst (wie bei der Videodatei)
+  else if(i<frames.length)to=(frames[i].t0!=null?frames[i].t0:frames[i].t)-0.5; // kurz bevor sie zum ersten Mal zu sehen war
+  else to=tf-2; // nur im Mittelbild erkannt: ein Stück zurück
+  to=Math.max(st,to);return tf-to>0.3?to:null}
+// zurückspulen, ohne anzuhalten (angehalten legt YouTube den Play-Knopf und „Weitere Videos“ über die Tastatur); wartet, bis das Video an der Stelle wieder läuft
+async function seekBack(to){try{ytp.setPlaybackRate(0.25);ytRate=0.25;ytp.seekTo(to,true);ytp.playVideo()}catch(e){return false}
+  const t0=performance.now();let ok=0,last=-1;
+  while(performance.now()-t0<15000){if(!ytAuto)return false;let stt=-1,ct=-1;try{stt=ytp.getPlayerState();ct=ytp.getCurrentTime()}catch(e){}
+    if(stt===1&&ct>=to-0.2&&ct<to+1.5&&ct>last){if(++ok>=2)return true}else{ok=0;if(stt===2){try{ytp.playVideo()}catch(e){}}}
+    last=ct;await sleep(120)}
+  return false}
 async function autoConvert(it){
   if(!NAT.ok){ytAuto=false;toast('Für die Umwandlung brauchst du die neue App-Version (Einstellungen → App aktualisieren).',5000);return}
   const st=it.start||0;convUI(true);convProgress(0,'Video wird geladen …','Song wird erstellt …');
@@ -6685,7 +6704,7 @@ async function autoConvert(it){
   let black=0,dur=0;try{dur=ytp.getDuration()}catch(e){}
   // the video runs once from start to end – no jumping. While it plays, the app looks for the keyboard (skips the channel intro);
   // as soon as it is found, reading starts at exactly that moment. Falling notes need a few seconds to reach the keys, so nothing is lost.
-  const frames=[];let ct=st,ct0=null;
+  const frames=[];let ct=st,ct0=null;SCAN.nextRw=null;
   while(ytAuto){
     try{ct=ytp.getCurrentTime();if(ytp.getPlayerState()===0)break}catch(e){}
     if(ct>st+150||(dur&&ct>dur-3))break;
@@ -6696,6 +6715,11 @@ async function autoConvert(it){
     if(f){if(isBlackImg(f)){black++;if(black>=8)break}else{black=0;frames.push(f);if(frames.length>14)frames.shift()}}
     let best=null;if(frames.length){const last5=frames.slice(-5),cand=last5.length>=3?[medianImage(last5),last5[last5.length-1]]:[last5[last5.length-1]];best=pickKb(cand.map(tryKeyboard))}
     if(best){scanImg=best.img;scanRows=best.rows;scanDet=best.det;scanOct=0;SCAN.p0=st;scanFrames=frames.slice();
+      /* v5.80 (Felix 28.11., Snowman: „die ersten Balken sind schon runtergelaufen, bis die App das Klavier erkennt – dann soll der Scan einfach von vorn starten“):
+         Sobald die Tastatur gefunden ist, weiß die App, wo sie liegt. Das Video springt zurück an die Stelle, ab der die Tastatur schon zu sehen war (ohne Vorspann:
+         an den Anfang), und liest ab dort. Bisher ging es an der Fundstelle weiter, und was in der Suchzeit lief, wurde nur aus den Suchbildern nachgebaut (ungenau). */
+      const to=window.KB_REWIND===false?null:rewindTo(frames,best,st);
+      if(to!=null){convProgress(null,'Tastatur gefunden – das Video springt zurück an den Anfang …');if(!await seekBack(to)||!ytAuto){if(ytAuto){ytAuto=false;convUI(false);showConvError('Das Video ließ sich nicht zurückspulen. Bitte nochmal starten.')}return}SCAN.nextRw=to}
       $('#scanOv').classList.add('hidden');convProgress(null,'Noten werden gelesen …');scanRun(true);return}
     if(ct0==null)ct0=gt;
     if(frames.length>=5&&gt-ct0>25){ // 25 s Video ohne erkannte Tastatur → Video anhalten, von Hand markieren lassen
