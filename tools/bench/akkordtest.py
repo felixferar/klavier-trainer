@@ -49,7 +49,7 @@ async def main():
          'leicht versetzt (0,04 s je Ton) → zählt als gleichzeitig': t(lambda: r['near']['pos'] and r['near']['apart'] == 0),
          'Zeile danach sauber zu Ende → geschafft (nicht gleichzeitig ist kein Fehler)': t(lambda: r['fin']['done'] and r['fin']['ok'] and r['fin']['wrong'] == 0),
          'Protokoll: zs zählt „nicht gleichzeitig“': t(lambda: r['zs'] == [1]),
-         'Version 5.79': t(lambda: r['ver'].startswith('Version 5.79')),
+         'Version 5.80': t(lambda: r['ver'].startswith('Version 5.80')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
