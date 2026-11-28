@@ -21,8 +21,10 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  o.pat=[0,1,2,3,4,5].map(k=>zlPattern(k));
  /* Stufe 1 Hören → Stufe 2 */
  zlGo();o.s1={stage:R().stage,demo:!!R().demo,stat:$('#zlStat').textContent};demoEnd();o.s1b={stage:R().stage,st:z().st[0],run:R().run};
+ /* v5.78: Stufe 2 beginnt mit „Griffe üben“ (ohne Takt) → danach dieselbe Stufe im Takt */
+ let r=R();o.gr={gr:r.gr,chip:$('#zlChip').textContent};play(r,r.a,r.b);o.gr.ok=r.res.ok;o.gr.next=r.next;o.gr.gq=z().gq[0];o.gr.st=z().st[0];tick(4);r=R();o.gr.after={stage:r.stage,gr:r.gr};
  /* Stufe 2 im Takt, sauber → ★★★ */
- let r=R();play(r,r.a,r.b);o.s2={stars:r.res.stars,ok:r.res.ok,next:r.next,slips:r.slips,fb:$('#zlFb').textContent};
+ play(r,r.a,r.b);o.s2={stars:r.res.stars,ok:r.res.ok,next:r.next,slips:r.slips,fb:$('#zlFb').textContent};
  tick(4);r=noSpot();o.s3start={stage:r.stage,fade:r.fade,demo:!!r.demo,a:r.a,b:r.b,txt:$('#zlStat').textContent};
  o.s3vis={a:zlVis(r,r.a),n:zlVis(r,r.a+1),al:zlAlpha(r,r.a+1)};
  /* Verblassen 1/3: einmal zu spät → ★★, trotzdem weiter */
@@ -83,6 +85,7 @@ async def main():
          'Fly Me: 8 Zeilen aus dem Takt-Schnitt': r['home']['cuts'] == [0, 13, 26, 35, 46, 59, 72, 81],
          'Muster: Zeile 1 „A – D – G – C · immer 5 Töne runter“, Zeile 5/6 = wie Zeile 1/2': r['pat'][0] == 'Bass: A – D – G – C · immer 5 Töne runter' and r['pat'][4].startswith('Wie Zeile 1') and r['pat'][5].startswith('Wie Zeile 2'),
          'Stufe 1 Hören: spielt von selbst vor, danach Stufe 2, wartet auf den ersten Ton': r['s1']['stage'] == 1 and r['s1']['demo'] and 'Hören' in r['s1']['stat'] and r['s1b']['stage'] == 2 and r['s1b']['st'] == 1 and r['s1b']['run'] is False,
+         'v5.78: Stufe 2 beginnt mit „Griffe üben“, danach dieselbe Zeile im Takt': r['gr']['gr'] == 1 and r['gr']['chip'] == 'Griffe üben' and r['gr']['ok'] and r['gr']['next'] == {'k': 0, 'stage': 2} and r['gr']['gq'] == 1 and r['gr']['st'] == 1 and r['gr']['after'] == {'stage': 2, 'gr': 0},
          'Stufe 2 im Takt sauber → ★★★, weiter mit Verblassen': r['s2']['stars'] == 3 and r['s2']['ok'] and r['s2']['slips'] == 0 and r['s2']['next'] == {'k': 0, 'stage': 3} and '★★★' in r['s2']['fb'],
          'Verblassen 1/3: kein Vorspielen, Noten halb sichtbar (50 %), Anker voll': r['s3start']['stage'] == 3 and r['s3start']['fade'] == 0 and not r['s3start']['demo'] and 'Verblassen 1/3' in r['s3start']['txt'] and r['s3vis']['a'] == 1 and r['s3vis']['n'] == 0 and r['s3vis']['al'] == 0.5,
          'zu spät: das Lied wartet (eine Viertel-Zählzeit nach der Note), zählt als Wackler': r['late']['late'] == 1 and r['late']['pos'] == 2 and 0.1 < r['late']['vt'] < 0.2,
@@ -103,7 +106,7 @@ async def main():
          'Übernahme v5.36 → v5.37 ohne Verlust': '"st":[4,4,1,0,4,4,0,0]' in r['from536'] and '"cv":2' in r['from536'] and '"song":0' in r['from536'],
          'Übernahme alter Stand: 3 3 2 1 3 3 0 0 → 44004400': r['mig'] == '44004400',
          'Protokoll (lernauswertung.py): k, mode, ok, wrong, hints, n, dur, demos, waits, Sterne, Tempo': all(e[10] == 'number' for e in lg) and {e[1] for e in lg} >= {'noten', 'blass', 'kopf', 'song'} and any(e[11] == 2 and e[12] >= 1 for e in lg) and any(e[1] == 'song' and e[13] == 0.7 for e in lg) and any(e[5] == 1 and e[6] == 'A' for e in lg) and not any(e[1] == 'hoeren' for e in lg) and any(e[1] == 'noten' and e[7] >= 1 for e in lg),
-         'Version 5.77': r['ver'].startswith('Version 5.77'),
+         'Version 5.78': r['ver'].startswith('Version 5.78'),
          'keine Fehler': not errs}
     for k, v in c.items(): print(('OK  ' if v else 'FAIL') + ' ' + k)
     print('OK' if all(c.values()) else 'FEHLER'); sys.exit(0 if all(c.values()) else 1)

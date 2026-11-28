@@ -13,7 +13,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
  startLearn(it);o.start={run:!!MEM.run,zlHome:!$('#zlHome').classList.contains('hidden'),oldRun:!$('#memRunV').classList.contains('hidden'),hand:MEM.hand,gs:MEM.gs.length,all:MEM.gsAll&&MEM.gsAll.length};
  /* alter Zustand „linke Hand allein“ hängt noch: Übersicht und Durchgang müssen wieder beide Hände nehmen */
  awUseL(true);zlHome();o.home={gs:MEM.gs.length,all:MEM.gsAll.length};
- awUseL(true);const z=zlState();z.st[0]=1;memSaveAll();const r=zlStart({k:0,stage:2});o.run={gs:MEM.gs.length,b:r.b,same:zlState()===z,st0:zlState().st[0]};
+ awUseL(true);const z=zlState();z.st[0]=1;z.gq[0]=1; /* v5.78: Griffe schon geübt – hier geht es um den Durchgang im Takt */memSaveAll();const r=zlStart({k:0,stage:2});o.run={gs:MEM.gs.length,b:r.b,same:zlState()===z,st0:zlState().st[0]};
  const gs=MEM.gs;for(let j=r.a;j<=r.b;j++){if(j>r.a){let n=0;while(r.vt<gs[j].start-0.01&&n++<2000)zlTick(r,0.02)}for(const m of gs[j].mids)memPress(m,'kb')}
  o.after={ok:r.res&&r.res.ok,st0:zlState().st[0],next:r.next,log:(load('kt_v8log')||[]).slice(-1)[0].st};
  /* v5.38: viele Zeilen → nur ein Ausschnitt im Pfad (sonst läuft er über den ✕-Knopf) */

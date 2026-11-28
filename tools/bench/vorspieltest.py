@@ -11,7 +11,7 @@ JS = r"""(S)=>{window.toast=()=>{};window.AW_NOLOOP=true;window.playTone=()=>{};
    press=j=>{for(const m of gs[j].mids)memPress(m,'kb')},
    untilAfterLast=(r,dt)=>{let n=0;while(r.demo&&r.demo.t<gs[r.b].start+dt&&n++<9999)zlTick(r,0.02)},
    playAll=r=>{for(let j=r.pos;j<=r.b;j++){press(j);for(let i=0;i<40;i++)zlTick(r,0.02)}};
- z.st=[4,4,4,4,4,4,4,1];memSaveAll();
+ z.st=[4,4,4,4,4,4,4,1];z.gq[7]=1; /* v5.78: Griffe schon geübt – hier geht es um den Durchgang im Takt */memSaveAll();
  /* v5.43: kein Echo mehr – Vorspielen per tiefstem A in „Mit Noten“ (Zeile 8 mit dem 5,3 s langen Schlussakkord) */
  const sA=()=>{const r=zlStart({k:7,stage:2});memPress(AW.restart,'kb');return r};
  /* 1) Nachklang höchstens ~3 s (vorher 9,2 s) */

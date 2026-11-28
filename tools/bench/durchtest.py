@@ -64,7 +64,7 @@ async def main():
          'Hilfe (B) geholt → zählt als 1 Stocker': t(lambda: r['e']['ok'] and r['e']['stall'] == 1),
          'Stück „am Stück“ unverändert streng (Toleranz)': t(lambda: r['f']['blk'] is not None and r['f']['stage'] == 4 and not r['f']['ok']),
          'bei 100 % bleibt der ganze Song spielbar': t(lambda: r['g']['k'] == -1 and r['g']['blk'] is None and r['g']['tempo'] == 1),
-         'Version 5.77': t(lambda: r['ver'].startswith('Version 5.77')),
+         'Version 5.78': t(lambda: r['ver'].startswith('Version 5.78')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     print('errs', errs); sys.exit(0 if all(c.values()) else 1)
