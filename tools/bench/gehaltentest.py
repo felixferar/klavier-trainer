@@ -42,7 +42,7 @@ async def main():
          'ohne Klavier-Verbindung: kurzes Aufblitzen wie bisher': r['m0'] >= 1 and r['mLater'] == 0,
          'ein alter Treffer färbt eine neu gehaltene Taste nicht': r['old'] == 0,
          'v5.79: Taste früher einmal falsch, jetzt richtig gehalten → grün, auch beim Loslassen kein Rot': r['pos'] and r['dHeld']['bad'] == 0 and r['dAfter']['bad'] == 0 and r['dAfter']['ok'] >= 1,
-         'Version 5.80': r['ver'].startswith('Version 5.80'),
+         'Version 5.81': r['ver'].startswith('Version 5.81'),
          'keine JS-Fehler': not errs}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     if not all(c.values()): print(r, errs)

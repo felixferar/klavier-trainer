@@ -16,11 +16,11 @@ async def main():
           o.vis=$('#tlTrack').getBoundingClientRect().height>20;o.t=$('#tlT').textContent;o.v=$('#tlV').textContent;
           const r=$('#tlTrack').getBoundingClientRect(),ev=(t,x)=>new PointerEvent(t,{clientX:x,clientY:r.top+5,pointerId:1,bubbles:true});
           const tr=$('#tlTrack');tr.setPointerCapture=()=>{};tr.dispatchEvent(ev('pointerdown',r.left+r.width/2));tr.dispatchEvent(ev('pointerup',r.left+r.width/2));
-          o.seek=seek;o.expect=tlDur()/2+CMP.off;
+          o.seek=seek;{const R=tlRange();o.expect=(R.a+R.b)/2+CMP.off} /* v5.81: Leiste = ganzes Video */
           $('#tlFlag').click();o.f1=tlFlags().length;vt=seek;tlDraw();$('#tlFlag').click();o.f2=tlFlags().length;
           vt=3+CMP.off;$('#tlFlag').click();o.f3=tlFlags().length;
           return o}""")
         print(r,errs)
-        ok=r['cmp'] and r['vis'] and r['t']=='0:10,0' and 'Video' in r['v'] and abs(r['seek']-r['expect'])<0.5 and r['f1']==1 and r['f2']==0 and r['f3']==1 and not errs
+        ok=r['cmp'] and r['vis'] and r['t']=='0:12,0' and ('Song' in r['v']) and abs(r['seek']-r['expect'])<0.5 and r['f1']==1 and r['f2']==0 and r['f3']==1 and not errs
         print('OK' if ok else 'FAIL');sys.exit(0 if ok else 1)
 asyncio.run(main())

@@ -51,7 +51,7 @@ async def main():
          'Schalter aus: keine Klammer, gleich viele Zahlen': r['offLab'] and r['offDigits'] == r['onDigits'],
          'Stufe „Aus dem Kopf“: Klammer nur zusammen mit einem sichtbaren Griff (Startgriff, Hilfe), sonst nichts': r['goldStage'] >= 3 and r['goldStart'] and r['goldHidden'] and r['goldLab'],
          'Einstellung „Hand zeigen“ da und wird gespeichert': r['sw'] and r.get('saved') and r.get('saved2'),
-         'Version 5.80': r['ver'].startswith('Version 5.80'),
+         'Version 5.81': r['ver'].startswith('Version 5.81'),
          'keine JS-Fehler': not errs}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     if not all(c.values()): print(r, errs)

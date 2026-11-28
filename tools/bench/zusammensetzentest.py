@@ -74,7 +74,7 @@ async def main():
          'Ganzer Song (v5.59): 8 Griffe daneben, aber flüssig → geschafft; Tempo steigt je Durchgang bis 100 %; danach bleibt der Song spielbar': t(lambda: r['song']['ok8'] and 'Durchgespielt' in r['song']['msg'] and '8 Griffe daneben' in r['song']['msg'] and r['song']['clean']['ok'] and r['song']['clean']['song'] == 1 and r['song']['t2'] == 0.8 and r['song']['tl'][:3] == [0.8, 0.9, 1.0] and r['song']['end']['song'] == 3 and r['song']['end']['next'] is not None and r['song']['end']['next']['k'] == -1),
          'Zurücksetzen löscht alles': t(lambda: r['reset'] == {'st': '00000000', 'bd': 0, 'bc': 0, 'kc': '00000000', 'song': 0, 'rep': None}),
          'Protokoll: block mit blk/tol/chk, kopf mit kc, nachüben': t(lambda: any(e[0] == 'block' and e[3] == '0-1' and e[2] == 2 and e[5] is not None for e in r['log']) and any(e[0] == 'kopf' and e[6] == 1 for e in r['log']) and any(e[0] == 'kopf' and e[4] == 1 for e in r['log']) and any(e[0] == 'song' and e[2] == 8 for e in r['log'])),
-         'Version 5.80': t(lambda: r['ver'].startswith('Version 5.80')),
+         'Version 5.81': t(lambda: r['ver'].startswith('Version 5.81')),
          'keine JS-Fehler': not errs and 'crash' not in r}
     bad = [k for k, v in c.items() if not v]
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)

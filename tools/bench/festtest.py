@@ -69,7 +69,7 @@ async def main():
          'zweites Tippen rechnet neu und speichert': r['recalc'],
          'Griff mit 6 Tönen: kein Abbruch; diese Töne ohne Zahl mit Marke „zuviel“, alle anderen mit Zahl': r['ok7'] and r['six'] == 6 and r['sixNo'] and r['rest7'],
          'Speicher voll: Zahlen trotzdem da, nichts halb gespeichert': r['full'],
-         'Version 5.80': r['ver'].startswith('Version 5.80'),
+         'Version 5.81': r['ver'].startswith('Version 5.81'),
          'keine JS-Fehler': not errs}
     for k, v in c.items(): print(('OK   ' if v else 'FEHL ') + k)
     if not all(c.values()): print(r, errs)
